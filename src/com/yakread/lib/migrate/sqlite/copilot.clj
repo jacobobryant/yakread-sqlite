@@ -408,6 +408,18 @@
                         (> (instant->epoch-ms valid-to) (instant->epoch-ms now)))]
     (and valid-from-ok valid-to-ok)))
 
+(defn valid-operation?
+  "Check if a transaction operation should be processed.
+   Returns true for:
+   - Delete operations with a non-nil ID
+   - Put operations that are not evicted and not transaction functions"
+  [op doc-or-id]
+  (or (and (= op :xtdb.api/delete)
+           (some? doc-or-id))
+      (and (= op :xtdb.api/put)
+           (not (:xtdb.api/evicted? doc-or-id))
+           (not (:xt/fn doc-or-id)))))
+
 (defn normalize-tx
   "Normalize a transaction into a sequence of operations.
    Each operation is a map with :op, :tx-time, :valid-from, :valid-to, :doc/:id.
@@ -420,12 +432,7 @@
   (for [tx-op tx-ops
         :let [[op & args] tx-op
               [doc-or-id valid-from valid-to] args]
-        :when (and (or (and (= op :xtdb.api/delete)
-                            (some? doc-or-id))
-                       (and (= op :xtdb.api/put)
-                            (not (:xtdb.api/evicted? doc-or-id))
-                            (not (:xt/fn doc-or-id))))
-                   ;; Filter by valid time
+        :when (and (valid-operation? op doc-or-id)
                    (valid-now? valid-from valid-to now))]
     {:op op
      :tx-time tx-time
@@ -477,24 +484,22 @@
 ;; State tracking for component entities
 ;; ============================================================================
 
-(def component-id->table
-  "Map from component entity ID to its table."
-  (atom {}))
-
-(def doc-id->component-ids
-  "Map from parent document ID to set of component entity IDs."
-  (atom {}))
-
-(def doc-id->table
-  "Map from document ID to its table."
-  (atom {}))
+(def ^:private import-state
+  "Consolidated state for tracking documents and their components during import.
+   Contains:
+   - :component-id->table - Map from component entity ID to its table
+   - :doc-id->component-ids - Map from parent document ID to set of component entity IDs
+   - :doc-id->table - Map from document ID to its table"
+  (atom {:component-id->table {}
+         :doc-id->component-ids {}
+         :doc-id->table {}}))
 
 (defn reset-state!
-  "Reset the state tracking atoms."
+  "Reset the state tracking atom."
   []
-  (reset! component-id->table {})
-  (reset! doc-id->component-ids {})
-  (reset! doc-id->table {}))
+  (reset! import-state {:component-id->table {}
+                        :doc-id->component-ids {}
+                        :doc-id->table {}}))
 
 (defn get-component-ids
   "Get the component IDs for a document from a doc (digest-items, skips)."
@@ -522,7 +527,7 @@
   [conn {:keys [doc id]}]
   (when-some [{:keys [table] :as converted} (convert-doc doc)]
     ;; Track the document's table
-    (swap! doc-id->table assoc id table)
+    (swap! import-state assoc-in [:doc-id->table id] table)
 
     ;; Upsert the main document
     (upsert-row! conn table (:row converted))
@@ -530,14 +535,14 @@
     ;; Handle component entities (digest-items, skips)
     (let [component-table (get-component-table table)]
       (when component-table
-        (let [old-component-ids (get @doc-id->component-ids id #{})
+        (let [old-component-ids (get-in @import-state [:doc-id->component-ids id] #{})
               new-component-ids (get-component-ids doc table)
               deleted-ids (set/difference old-component-ids new-component-ids)]
 
           ;; Delete removed component entities
           (doseq [deleted-id deleted-ids]
             (delete-row! conn component-table (uuid->bytes deleted-id))
-            (swap! component-id->table dissoc deleted-id))
+            (swap! import-state update :component-id->table dissoc deleted-id))
 
           ;; Insert/update component entities
           (let [component-rows (case table
@@ -549,28 +554,28 @@
 
           ;; Track new component IDs
           (doseq [cid new-component-ids]
-            (swap! component-id->table assoc cid component-table))
+            (swap! import-state assoc-in [:component-id->table cid] component-table))
 
           ;; Update component ID tracking
-          (swap! doc-id->component-ids assoc id new-component-ids))))))
+          (swap! import-state assoc-in [:doc-id->component-ids id] new-component-ids))))))
 
 (defn handle-delete-op!
   "Handle a delete operation - delete the document and its component entities."
   [conn {:keys [id]}]
-  (when-some [table (get @doc-id->table id)]
+  (when-some [table (get-in @import-state [:doc-id->table id])]
     ;; Delete main document
     (delete-row! conn table (uuid->bytes id))
 
     ;; Delete component entities
-    (let [component-ids (get @doc-id->component-ids id #{})]
+    (let [component-ids (get-in @import-state [:doc-id->component-ids id] #{})]
       (doseq [cid component-ids]
-        (when-some [ctable (get @component-id->table cid)]
+        (when-some [ctable (get-in @import-state [:component-id->table cid])]
           (delete-row! conn ctable (uuid->bytes cid))
-          (swap! component-id->table dissoc cid))))
+          (swap! import-state update :component-id->table dissoc cid))))
 
     ;; Clean up tracking
-    (swap! doc-id->table dissoc id)
-    (swap! doc-id->component-ids dissoc id)))
+    (swap! import-state update :doc-id->table dissoc id)
+    (swap! import-state update :doc-id->component-ids dissoc id)))
 
 (defn process-op!
   "Process a single normalized operation."
