@@ -296,6 +296,8 @@
        (contains? (:keys ast) :xt/id)))
 
 (defn deref-ast [schema malli-opts]
+  ;; Silent catch is intentional - some schemas (e.g., abstract/self-referential) 
+  ;; may fail to dereference, which is expected and we skip them
   (some-> (try (malli/deref-recursive schema malli-opts) (catch Exception _))
           malli/ast))
 
@@ -408,6 +410,8 @@
 (defn- get-sqlite-coerce
   "Get the :sqlite/coerce value from a malli schema properties, if any."
   [malli-opts attr-schema]
+  ;; Silent catch is intentional - some schemas may fail to dereference,
+  ;; in which case we use the original schema
   (let [schema (try (malli/deref-recursive attr-schema malli-opts) (catch Exception _ attr-schema))
         ast (malli/ast schema)
         props (:properties ast)]
