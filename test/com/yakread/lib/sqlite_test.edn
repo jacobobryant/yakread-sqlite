@@ -2,6 +2,7 @@
  [[com.yakread.lib.test :as t]
   [clojure.data.generators :as gen]
   [com.yakread.lib.sqlite :refer :all]
+  [com.wsscode.pathom3.connect.operation :as pco]
   [taoensso.nippy :as nippy]
   [tick.core :as tick]],
  :tests
@@ -73,32 +74,32 @@
   {:doc "sqlite-resolvers creates resolver with correct name for user table"
    :eval (let [resolvers (sqlite-resolvers)
                user-resolver (first (filter #(= 'com.yakread.lib.sqlite/user-sqlite-resolver
-                                                (-> % :config ::com.wsscode.pathom3.connect.operation/op-name))
+                                                (-> % :config ::pco/op-name))
                                             resolvers))]
            (some? user-resolver))}
   _
   {:doc "sqlite-resolvers resolver has :xt/id as input"
    :eval (let [resolvers (sqlite-resolvers)
                user-resolver (first (filter #(= 'com.yakread.lib.sqlite/user-sqlite-resolver
-                                                (-> % :config ::com.wsscode.pathom3.connect.operation/op-name))
+                                                (-> % :config ::pco/op-name))
                                             resolvers))
-               input (-> user-resolver :config ::com.wsscode.pathom3.connect.operation/input)]
+               input (-> user-resolver :config ::pco/input)]
            input)}
   _
   {:doc "sqlite-resolvers resolver has batch? true"
    :eval (let [resolvers (sqlite-resolvers)
                user-resolver (first (filter #(= 'com.yakread.lib.sqlite/user-sqlite-resolver
-                                                (-> % :config ::com.wsscode.pathom3.connect.operation/op-name))
+                                                (-> % :config ::pco/op-name))
                                             resolvers))
-               batch? (-> user-resolver :config ::com.wsscode.pathom3.connect.operation/batch?)]
+               batch? (-> user-resolver :config ::pco/batch?)]
            batch?)}
   _
   {:doc "sqlite-resolvers resolver output includes expected user attributes"
    :eval (let [resolvers (sqlite-resolvers)
                user-resolver (first (filter #(= 'com.yakread.lib.sqlite/user-sqlite-resolver
-                                                (-> % :config ::com.wsscode.pathom3.connect.operation/op-name))
+                                                (-> % :config ::pco/op-name))
                                             resolvers))
-               output (-> user-resolver :config ::com.wsscode.pathom3.connect.operation/output)]
+               output (-> user-resolver :config ::pco/output)]
            ;; Check that some expected user attributes are in output
            [(some #(= :user/email %) output)
             (some #(= :user/plan %) output)
