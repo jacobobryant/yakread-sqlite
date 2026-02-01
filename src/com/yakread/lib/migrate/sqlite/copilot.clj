@@ -4,6 +4,12 @@
    This namespace provides functions to read serialized XTDB v1 documents
    (typically stored as nippy files) and insert them into SQLite.
 
+   Handles:
+   - Put operations (insert/update)
+   - Delete operations
+   - Component entity tracking (digest-items, skips) with proper deletion
+   - Valid time filtering (ignores operations with valid time ranges that don't overlap now)
+
    For testing purposes, plain EDN files can be used instead of nippy."
   (:require
    [clojure.edn :as edn]
@@ -315,6 +321,40 @@
 ;; Digest item handling - these are split out from digest docs in old schema
 ;; ============================================================================
 
+(defn name-uuid
+  "Generate a deterministic UUID from strings."
+  [& strs]
+  (java.util.UUID/nameUUIDFromBytes (.getBytes (apply str strs))))
+
+(defn digest-item-id
+  "Generate a deterministic ID for a digest item."
+  [digest-id item-id kind]
+  (name-uuid digest-id item-id kind))
+
+(defn skip-item-id
+  "Generate a deterministic ID for a skip item."
+  [reclist-id item-id]
+  (name-uuid reclist-id item-id))
+
+(defn extract-digest-item-ids
+  "Extract the set of digest-item IDs from a digest document."
+  [doc]
+  (let [digest-id (:xt/id doc)]
+    (into #{}
+          (concat
+           (for [item-id (:digest/icymi doc)]
+             (digest-item-id digest-id item-id :icymi))
+           (for [item-id (:digest/discover doc)]
+             (digest-item-id digest-id item-id :discover))))))
+
+(defn extract-skip-item-ids
+  "Extract the set of skip IDs from a reclist document."
+  [doc]
+  (let [reclist-id (:xt/id doc)]
+    (into #{}
+          (for [item-id (:skip/items doc)]
+            (skip-item-id reclist-id item-id)))))
+
 (defn extract-digest-items
   "Extract digest items from a digest document that uses the old schema
    with :digest/icymi and :digest/discover vectors."
@@ -323,15 +363,13 @@
     (concat
      (for [item-id (:digest/icymi doc)]
        {:table :digest_item
-        :row {:id (uuid->bytes (java.util.UUID/nameUUIDFromBytes
-                                (.getBytes (str digest-id item-id :icymi))))
+        :row {:id (uuid->bytes (digest-item-id digest-id item-id :icymi))
               :digest_id (uuid->bytes digest-id)
               :item_id (uuid->bytes item-id)
               :kind (digest-item-kind-enum :icymi)}})
      (for [item-id (:digest/discover doc)]
        {:table :digest_item
-        :row {:id (uuid->bytes (java.util.UUID/nameUUIDFromBytes
-                                (.getBytes (str digest-id item-id :discover))))
+        :row {:id (uuid->bytes (digest-item-id digest-id item-id :discover))
               :digest_id (uuid->bytes digest-id)
               :item_id (uuid->bytes item-id)
               :kind (digest-item-kind-enum :discover)}}))))
@@ -347,35 +385,65 @@
   (let [reclist-id (:xt/id doc)]
     (for [item-id (:skip/items doc)]
       {:table :skip
-       :row {:id (uuid->bytes (java.util.UUID/nameUUIDFromBytes
-                               (.getBytes (str reclist-id item-id))))
+       :row {:id (uuid->bytes (skip-item-id reclist-id item-id))
              :reclist_id (uuid->bytes reclist-id)
              :item_id (uuid->bytes item-id)}})))
 
 ;; ============================================================================
-;; Reading data
+;; Transaction normalization and valid time handling
 ;; ============================================================================
 
-(defn extract-docs-from-txes
-  "Extract documents from XTDB v1 transactions.
-   Each transaction is a map with :xtdb.api/tx-ops containing vectors like
-   [:xtdb.api/put <doc>] or [:xtdb.api/delete <doc-id>].
-   Returns a sequence of documents from :put operations."
-  [txes]
-  (for [tx txes
-        tx-op (:xtdb.api/tx-ops tx)
-        :when (= :xtdb.api/put (first tx-op))]
-    (second tx-op)))
+(defn valid-now?
+  "Check if an operation's valid time range overlaps with the current time.
+   If valid-from and valid-to are both nil, the operation is valid from now until forever.
+   If only valid-from is set, it's valid from that time until forever.
+   If valid-to is set, the operation has an end time.
 
-(defn read-edn-file
-  "Read XTDB v1 transactions from an EDN file and extract documents.
-   The file should contain a vector of transactions, where each transaction
-   has :xtdb.api/tx-ops and :xtdb.api/tx-time keys."
+   For SQLite (non-temporal), we only care about operations that are valid NOW.
+   This means: valid-from <= now AND (valid-to is nil OR valid-to > now)"
+  [valid-from valid-to now]
+  (let [valid-from-ok (or (nil? valid-from)
+                          (<= (instant->epoch-ms valid-from) (instant->epoch-ms now)))
+        valid-to-ok (or (nil? valid-to)
+                        (> (instant->epoch-ms valid-to) (instant->epoch-ms now)))]
+    (and valid-from-ok valid-to-ok)))
+
+(defn normalize-tx
+  "Normalize a transaction into a sequence of operations.
+   Each operation is a map with :op, :tx-time, :valid-from, :valid-to, :doc/:id.
+
+   Filters out:
+   - Operations with :xtdb.api/evicted? flag
+   - Operations that are transaction functions (:xt/fn)
+   - Operations with valid time ranges that don't overlap with current time"
+  [{:xtdb.api/keys [tx-ops tx-time]} now]
+  (for [tx-op tx-ops
+        :let [[op & args] tx-op
+              [doc-or-id valid-from valid-to] args]
+        :when (and (or (and (= op :xtdb.api/delete)
+                            (some? doc-or-id))
+                       (and (= op :xtdb.api/put)
+                            (not (:xtdb.api/evicted? doc-or-id))
+                            (not (:xt/fn doc-or-id))))
+                   ;; Filter by valid time
+                   (valid-now? valid-from valid-to now))]
+    {:op op
+     :tx-time tx-time
+     :valid-from valid-from
+     :valid-to valid-to
+     :doc (when (= op :xtdb.api/put) doc-or-id)
+     :id (case op
+           :xtdb.api/put (:xt/id doc-or-id)
+           :xtdb.api/delete doc-or-id
+           nil)}))
+
+(defn read-edn-txes
+  "Read XTDB v1 transactions from an EDN file.
+   Returns the raw transaction data (a vector of transactions)."
   [file]
-  (let [txes (edn/read-string {:readers (merge time-literals/tags
-                                               {'inst #(Instant/parse %)})}
-                              (slurp file))]
-    (extract-docs-from-txes txes)))
+  (edn/read-string {:readers (merge time-literals/tags
+                                    {'inst #(Instant/parse %)})}
+                   (slurp file)))
 
 (defn read-nippy-file
   "Read XTDB v1 transactions from a nippy file.
@@ -387,30 +455,214 @@
 ;; SQLite operations
 ;; ============================================================================
 
-(defn insert-row!
-  "Insert a single row into a SQLite table."
+(defn upsert-row!
+  "Insert or replace a row in a SQLite table."
   [conn table row]
   (let [row (into {} (filter (comp some? val)) row)
         sql-map {:insert-into table
-                 :values [row]}
+                 :values [row]
+                 :on-conflict {:do-update-set (keys row)}}
         [sql-str & params] (sql/format sql-map)]
     (jdbc/execute! conn (into [sql-str] params))))
 
-(defn insert-rows!
-  "Insert multiple rows into SQLite in batches."
-  [conn rows & {:keys [batch-size] :or {batch-size 100}}]
-  (doseq [batch (partition-all batch-size rows)]
-    (jdbc/with-transaction [tx conn]
-      (doseq [{:keys [table row]} batch]
-        (insert-row! tx table row)))))
+(defn delete-row!
+  "Delete a row from a SQLite table by ID."
+  [conn table id-bytes]
+  (let [sql-map {:delete-from table
+                 :where [:= :id id-bytes]}
+        [sql-str & params] (sql/format sql-map)]
+    (jdbc/execute! conn (into [sql-str] params))))
+
+;; ============================================================================
+;; State tracking for component entities
+;; ============================================================================
+
+(def component-id->table
+  "Map from component entity ID to its table."
+  (atom {}))
+
+(def doc-id->component-ids
+  "Map from parent document ID to set of component entity IDs."
+  (atom {}))
+
+(def doc-id->table
+  "Map from document ID to its table."
+  (atom {}))
+
+(defn reset-state!
+  "Reset the state tracking atoms."
+  []
+  (reset! component-id->table {})
+  (reset! doc-id->component-ids {})
+  (reset! doc-id->table {}))
+
+(defn get-component-ids
+  "Get the component IDs for a document from a doc (digest-items, skips)."
+  [doc table]
+  (case table
+    :digest (extract-digest-item-ids doc)
+    :reclist (extract-skip-item-ids doc)
+    #{}))
+
+(defn get-component-table
+  "Get the table name for component entities of a given parent table."
+  [parent-table]
+  (case parent-table
+    :digest :digest_item
+    :reclist :skip
+    nil))
+
+;; ============================================================================
+;; Operation handlers
+;; ============================================================================
+
+(defn handle-put-op!
+  "Handle a put operation - insert/update the document and its components.
+   Also handles deletion of removed component entities."
+  [conn {:keys [doc id]}]
+  (when-some [{:keys [table] :as converted} (convert-doc doc)]
+    ;; Track the document's table
+    (swap! doc-id->table assoc id table)
+
+    ;; Upsert the main document
+    (upsert-row! conn table (:row converted))
+
+    ;; Handle component entities (digest-items, skips)
+    (let [component-table (get-component-table table)]
+      (when component-table
+        (let [old-component-ids (get @doc-id->component-ids id #{})
+              new-component-ids (get-component-ids doc table)
+              deleted-ids (set/difference old-component-ids new-component-ids)]
+
+          ;; Delete removed component entities
+          (doseq [deleted-id deleted-ids]
+            (delete-row! conn component-table (uuid->bytes deleted-id))
+            (swap! component-id->table dissoc deleted-id))
+
+          ;; Insert/update component entities
+          (let [component-rows (case table
+                                 :digest (extract-digest-items doc)
+                                 :reclist (extract-skip-items doc)
+                                 [])]
+            (doseq [{:keys [row]} component-rows]
+              (upsert-row! conn component-table row)))
+
+          ;; Track new component IDs
+          (doseq [cid new-component-ids]
+            (swap! component-id->table assoc cid component-table))
+
+          ;; Update component ID tracking
+          (swap! doc-id->component-ids assoc id new-component-ids))))))
+
+(defn handle-delete-op!
+  "Handle a delete operation - delete the document and its component entities."
+  [conn {:keys [id]}]
+  (when-some [table (get @doc-id->table id)]
+    ;; Delete main document
+    (delete-row! conn table (uuid->bytes id))
+
+    ;; Delete component entities
+    (let [component-ids (get @doc-id->component-ids id #{})]
+      (doseq [cid component-ids]
+        (when-some [ctable (get @component-id->table cid)]
+          (delete-row! conn ctable (uuid->bytes cid))
+          (swap! component-id->table dissoc cid))))
+
+    ;; Clean up tracking
+    (swap! doc-id->table dissoc id)
+    (swap! doc-id->component-ids dissoc id)))
+
+(defn process-op!
+  "Process a single normalized operation."
+  [conn op]
+  (case (:op op)
+    :xtdb.api/put (handle-put-op! conn op)
+    :xtdb.api/delete (handle-delete-op! conn op)
+    nil))
 
 ;; ============================================================================
 ;; Main import functions
 ;; ============================================================================
 
+(defn tx-files
+  "Get sorted list of transaction files from a directory."
+  [dir]
+  (->> (io/file dir)
+       file-seq
+       (filter #(.isFile %))
+       (sort-by #(parse-long (.getName %)))))
+
+(defn import-from-edn!
+  "Import data from an EDN file into SQLite.
+
+   The file should contain a vector of XTDB v1 transactions in the same
+   format as the nippy files in storage/migrate-export/. Each transaction
+   has :xtdb.api/tx-ops and :xtdb.api/tx-time keys.
+
+   Handles:
+   - Put operations (insert/update)
+   - Delete operations
+   - Component entity tracking (digest-items, skips)
+   - Valid time filtering
+
+   Options:
+   - :conn - SQLite connection
+   - :edn-file - Path to EDN file containing XTDB v1 transactions
+   - :now - (optional) Reference time for valid time filtering, defaults to current time"
+  [{:keys [conn edn-file now]}]
+  (let [now (or now (Instant/now))
+        txes (read-edn-txes edn-file)
+        ops (mapcat #(normalize-tx % now) txes)
+        op-count (atom 0)]
+    (reset-state!)
+    (log/info "Importing from" edn-file)
+    (jdbc/with-transaction [tx conn]
+      (doseq [op ops]
+        (process-op! tx op)
+        (swap! op-count inc)))
+    (log/info "Processed" @op-count "operations from" edn-file)
+    {:processed @op-count}))
+
+(defn import-from-nippy-files!
+  "Import data from multiple nippy files (XTDB v1 transaction exports).
+
+   This expects the files to be in the format written by
+   com.biffweb.migrate.xtdb1/export! - each file contains a vector
+   of XTDB v1 transactions.
+
+   Handles:
+   - Put operations (insert/update)
+   - Delete operations
+   - Component entity tracking (digest-items, skips)
+   - Valid time filtering
+
+   Options:
+   - :conn - SQLite connection
+   - :dir - Directory containing nippy files
+   - :now - (optional) Reference time for valid time filtering, defaults to current time"
+  [{:keys [conn dir now]}]
+  (let [now (or now (Instant/now))
+        files (tx-files dir)]
+    (reset-state!)
+    (log/info "Found" (count files) "nippy files in" dir)
+    (doseq [f files
+            :let [file-index (parse-long (.getName f))
+                  _ (log/info "Processing file" file-index)
+                  txes (read-nippy-file f)
+                  ops (mapcat #(normalize-tx % now) txes)]]
+      (jdbc/with-transaction [tx conn]
+        (doseq [op ops]
+          (process-op! tx op))))
+    :done))
+
+;; ============================================================================
+;; Pure functions for testing
+;; ============================================================================
+
 (defn docs->rows
   "Convert a sequence of XTDB v1 documents to SQLite rows.
-   Returns a sequence of {:table <keyword> :row <map>}."
+   Returns a sequence of {:table <keyword> :row <map>}.
+   Note: This is a simplified function for testing that doesn't handle deletes."
   [docs]
   (mapcat (fn [doc]
             (when-some [{:keys [table] :as converted} (convert-doc doc)]
@@ -423,52 +675,18 @@
                  (extract-skip-items doc)))))
           docs))
 
-(defn import-from-edn!
-  "Import data from an EDN file into SQLite.
-
-   The file should contain a vector of XTDB v1 transactions in the same
-   format as the nippy files in storage/migrate-export/. Each transaction
-   has :xtdb.api/tx-ops and :xtdb.api/tx-time keys.
-
-   Options:
-   - :edn-file - Path to EDN file containing XTDB v1 transactions"
-  [{:keys [conn edn-file]}]
-  (let [docs (read-edn-file edn-file)
-        rows (docs->rows docs)]
-    (log/info "Importing" (count rows) "rows from" edn-file)
-    (insert-rows! conn rows)
-    {:imported (count rows)}))
-
-(defn import-from-nippy-files!
-  "Import data from multiple nippy files (XTDB v1 transaction exports).
-
-   This expects the files to be in the format written by
-   com.biffweb.migrate.xtdb1/export! - each file contains a vector
-   of XTDB v1 transactions.
-
-   Options:
-   - :dir - Directory containing nippy files"
-  [{:keys [conn dir]}]
-  (let [files (->> (io/file dir)
-                   file-seq
-                   (filter #(.isFile %))
-                   (sort-by #(parse-long (.getName %))))]
-    (log/info "Found" (count files) "nippy files in" dir)
-    (doseq [f files
-            :let [file-index (parse-long (.getName f))
-                  _ (log/info "Processing file" file-index)
-                  txes (read-nippy-file f)
-                  docs (extract-docs-from-txes txes)
-                  rows (docs->rows docs)]]
-      (insert-rows! conn rows))
-    :done))
-
-;; ============================================================================
-;; Pure function for testing document conversion
-;; ============================================================================
-
 (defn convert-docs
   "Pure function to convert a sequence of XTDB v1 documents to SQLite rows.
-   Used for testing - does not perform any I/O."
+   Used for testing - does not perform any I/O.
+   Note: This is a simplified function that doesn't handle deletes."
   [docs]
   (docs->rows docs))
+
+(defn extract-docs-from-txes
+  "Extract documents from XTDB v1 transactions (put operations only).
+   Used for testing - doesn't handle deletes or valid time filtering."
+  [txes]
+  (for [tx txes
+        tx-op (:xtdb.api/tx-ops tx)
+        :when (= :xtdb.api/put (first tx-op))]
+    (second tx-op)))

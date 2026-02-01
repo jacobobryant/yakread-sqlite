@@ -304,4 +304,88 @@
    :result {:count 2,
             :ids #{#uuid "00010000-0000-0000-0000-000000000001"
                    #uuid "00020000-0000-0000-0000-000000000002"}}}
+  _
+  {:doc "valid-now? returns true when no valid time specified"
+   :eval (valid-now? nil nil (java.time.Instant/parse "2024-01-15T12:00:00Z")),
+   :result true}
+  _
+  {:doc "valid-now? returns true when valid-from is in the past"
+   :eval (valid-now? (java.time.Instant/parse "2024-01-01T00:00:00Z")
+                     nil
+                     (java.time.Instant/parse "2024-01-15T12:00:00Z")),
+   :result true}
+  _
+  {:doc "valid-now? returns false when valid-from is in the future"
+   :eval (valid-now? (java.time.Instant/parse "2024-02-01T00:00:00Z")
+                     nil
+                     (java.time.Instant/parse "2024-01-15T12:00:00Z")),
+   :result false}
+  _
+  {:doc "valid-now? returns false when valid-to is in the past"
+   :eval (valid-now? nil
+                     (java.time.Instant/parse "2024-01-01T00:00:00Z")
+                     (java.time.Instant/parse "2024-01-15T12:00:00Z")),
+   :result false}
+  _
+  {:doc "valid-now? returns true when now is within valid range"
+   :eval (valid-now? (java.time.Instant/parse "2024-01-01T00:00:00Z")
+                     (java.time.Instant/parse "2024-02-01T00:00:00Z")
+                     (java.time.Instant/parse "2024-01-15T12:00:00Z")),
+   :result true}
+  _
+  {:doc "normalize-tx extracts both put and delete operations"
+   :eval
+   (let [tx {:xtdb.api/tx-time (java.time.Instant/parse "2024-01-15T12:00:00Z")
+             :xtdb.api/tx-ops
+             [[:xtdb.api/put {:xt/id #uuid "00010000-0000-0000-0000-000000000001"
+                             :user/email "test@example.com"}]
+              [:xtdb.api/delete #uuid "00020000-0000-0000-0000-000000000002"]]}
+         now (java.time.Instant/parse "2024-01-15T12:00:00Z")
+         ops (normalize-tx tx now)]
+     {:count (count ops)
+      :op-types (set (map :op ops))}),
+   :result {:count 2, :op-types #{:xtdb.api/put :xtdb.api/delete}}}
+  _
+  {:doc "normalize-tx filters out operations with future valid-from"
+   :eval
+   (let [tx {:xtdb.api/tx-time (java.time.Instant/parse "2024-01-15T12:00:00Z")
+             :xtdb.api/tx-ops
+             [[:xtdb.api/put {:xt/id #uuid "00010000-0000-0000-0000-000000000001"
+                             :user/email "test@example.com"}
+               (java.time.Instant/parse "2024-02-01T00:00:00Z")]]} ; valid-from in future
+         now (java.time.Instant/parse "2024-01-15T12:00:00Z")
+         ops (normalize-tx tx now)]
+     (count ops)),
+   :result 0}
+  _
+  {:doc "normalize-tx filters out operations with past valid-to"
+   :eval
+   (let [tx {:xtdb.api/tx-time (java.time.Instant/parse "2024-01-15T12:00:00Z")
+             :xtdb.api/tx-ops
+             [[:xtdb.api/put {:xt/id #uuid "00010000-0000-0000-0000-000000000001"
+                             :user/email "test@example.com"}
+               nil ; valid-from
+               (java.time.Instant/parse "2024-01-01T00:00:00Z")]]} ; valid-to in past
+         now (java.time.Instant/parse "2024-01-15T12:00:00Z")
+         ops (normalize-tx tx now)]
+     (count ops)),
+   :result 0}
+  _
+  {:doc "extract-digest-item-ids generates deterministic IDs"
+   :eval
+   (let [doc {:xt/id #uuid "000a0000-0000-0000-0000-000000000001"
+              :digest/icymi [#uuid "00050000-0000-0000-0000-000000000001"]
+              :digest/discover [#uuid "00050000-0000-0000-0000-000000000002"]}
+         ids (extract-digest-item-ids doc)]
+     (count ids)),
+   :result 2}
+  _
+  {:doc "extract-skip-item-ids generates deterministic IDs"
+   :eval
+   (let [doc {:xt/id #uuid "000d0000-0000-0000-0000-000000000001"
+              :skip/items [#uuid "00050000-0000-0000-0000-000000000001"
+                           #uuid "00050000-0000-0000-0000-000000000002"]}
+         ids (extract-skip-item-ids doc)]
+     (count ids)),
+   :result 2}
   _]}

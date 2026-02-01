@@ -218,4 +218,55 @@
    [:xtdb.api/put
     {:xt/id #uuid "000f0000-0000-0000-0000-000000000001"
      :mv.user/user #uuid "00010000-0000-0000-0000-000000000001"
-     :mv.user/current-item #uuid "00050000-0000-0000-0000-000000000001"}]]}]
+     :mv.user/current-item #uuid "00050000-0000-0000-0000-000000000001"}]]}
+
+ ;; Transaction 10: Delete a user
+ {:xtdb.api/tx-time #inst "2024-01-29T10:00:00Z"
+  :xtdb.api/tx-ops
+  [[:xtdb.api/delete #uuid "00010000-0000-0000-0000-000000000002"]]}
+
+ ;; Transaction 11: Update digest with fewer items (should delete removed digest-items)
+ ;; This updates the digest from Transaction 6, removing one item from icymi
+ {:xtdb.api/tx-time #inst "2024-01-29T11:00:00Z"
+  :xtdb.api/tx-ops
+  [[:xtdb.api/put
+    {:xt/id #uuid "000a0000-0000-0000-0000-000000000001"
+     :digest/user #uuid "00010000-0000-0000-0000-000000000001"
+     :digest/sent-at #inst "2024-01-28T08:00:00Z"
+     :digest/subject #uuid "00050000-0000-0000-0000-000000000001"
+     ;; Removed the icymi item, only discover remains
+     :digest/discover [#uuid "00050000-0000-0000-0000-000000000003"]}]]}
+
+ ;; Transaction 12: Update reclist with fewer skip items
+ {:xtdb.api/tx-time #inst "2024-01-29T12:00:00Z"
+  :xtdb.api/tx-ops
+  [[:xtdb.api/put
+    {:xt/id #uuid "000d0000-0000-0000-0000-000000000001"
+     :skip/user #uuid "00010000-0000-0000-0000-000000000001"
+     :skip/timeline-created-at #inst "2024-01-27T10:00:00Z"
+     :skip/clicked #{#uuid "00050000-0000-0000-0000-000000000003"}
+     ;; Removed one item from skip/items
+     :skip/items [#uuid "00050000-0000-0000-0000-000000000001"]}]]}
+
+ ;; Transaction 13: Delete a feed (tests main entity deletion)
+ {:xtdb.api/tx-time #inst "2024-01-30T10:00:00Z"
+  :xtdb.api/tx-ops
+  [[:xtdb.api/delete #uuid "00020000-0000-0000-0000-000000000002"]]}
+
+ ;; Transaction 14: Operation with valid time range that should be ignored
+ ;; This has valid-from in the future, so it shouldn't be processed when now < valid-from
+ {:xtdb.api/tx-time #inst "2024-01-30T11:00:00Z"
+  :xtdb.api/tx-ops
+  [[:xtdb.api/put
+    {:xt/id #uuid "00010000-0000-0000-0000-000000000099"
+     :user/email "future-user@example.com"}
+    #inst "2030-01-01T00:00:00Z"]]} ; valid-from in far future
+
+ ;; Transaction 15: Operation with past valid-to (historical data, should be ignored)
+ {:xtdb.api/tx-time #inst "2024-01-30T12:00:00Z"
+  :xtdb.api/tx-ops
+  [[:xtdb.api/put
+    {:xt/id #uuid "00010000-0000-0000-0000-000000000098"
+     :user/email "historical-user@example.com"}
+    nil  ; valid-from (nil means from tx-time)
+    #inst "2020-01-01T00:00:00Z"]]}] ; valid-to in the past
