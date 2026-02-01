@@ -7,7 +7,6 @@
    - Coercion functions for reading SQLite values back to Clojure values
    - Pathom resolvers for SQLite tables (similar to xtdb2-resolvers)"
   (:require
-   [clojure.edn :as edn]
    [clojure.java.io :as io]
    [clojure.string :as str]
    [com.wsscode.pathom3.connect.operation :as pco]
