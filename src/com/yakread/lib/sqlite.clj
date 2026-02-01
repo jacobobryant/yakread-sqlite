@@ -34,6 +34,14 @@
     (let [bb (ByteBuffer/wrap byte-array)]
       (UUID. (.getLong bb) (.getLong bb)))))
 
+(defn uuid->bytes
+  "Convert a UUID to a 16-byte array for SQLite BLOB storage."
+  [^UUID uuid]
+  (let [bb (ByteBuffer/allocate 16)]
+    (.putLong bb (.getMostSignificantBits uuid))
+    (.putLong bb (.getLeastSignificantBits uuid))
+    (.array bb)))
+
 (defn epoch-ms->instant
   "Convert epoch milliseconds to an Instant."
   [ms]
@@ -79,31 +87,6 @@
 ;; ============================================================================
 ;; Schema Parsing
 ;; ============================================================================
-
-(def ^:private enum-patterns
-  "Regex patterns and value mappings for parsing CHECK constraints into enum coercions."
-  {:plan              {0 :quarter
-                       1 :annual}
-   :moderation        {0 :approved
-                       1 :blocked}
-   :approve-state     {0 :pending
-                       1 :approved
-                       2 :rejected}
-   :source            {0 :web
-                       1 :email}
-   :charge-status     {0 :pending
-                       1 :confirmed
-                       2 :failed}
-   :kind              {0 :icymi
-                       1 :discover}
-   :record-type       {0 :feed
-                       1 :email
-                       2 :direct}
-   :candidate-status  {0 :ingest-failed
-                       1 :blocked
-                       2 :approved}
-   :ad-credit-source  {0 :charge
-                       1 :manual}})
 
 (defn- parse-column-line
   "Parse a single column definition line from a CREATE TABLE statement.
@@ -490,12 +473,7 @@
                     ::pco/batch? true}
                    (fn [{:keys [biff/db] :as env} inputs]
                      (let [ids (mapv :xt/id inputs)
-                           id-bytes (mapv (fn [id]
-                                            (let [bb (ByteBuffer/allocate 16)]
-                                              (.putLong bb (.getMostSignificantBits id))
-                                              (.putLong bb (.getLeastSignificantBits id))
-                                              (.array bb)))
-                                          ids)
+                           id-bytes (mapv uuid->bytes ids)
                            sql-map {:select :*
                                     :from (keyword table-name)
                                     :where [:in :id id-bytes]}
@@ -509,16 +487,8 @@
                              inputs)))))))
 
 ;; ============================================================================
-;; Utility Functions
+;; Utility Functions for Writing
 ;; ============================================================================
-
-(defn uuid->bytes
-  "Convert a UUID to a 16-byte array for SQLite BLOB storage."
-  [^UUID uuid]
-  (let [bb (ByteBuffer/allocate 16)]
-    (.putLong bb (.getMostSignificantBits uuid))
-    (.putLong bb (.getLeastSignificantBits uuid))
-    (.array bb)))
 
 (defn instant->epoch-ms
   "Convert an Instant or ZonedDateTime to epoch milliseconds."
