@@ -671,10 +671,15 @@
    format as the nippy files in storage/migrate-export/. Each transaction
    has :xtdb.api/tx-ops and :xtdb.api/tx-time keys.
 
+   Note: This function processes a single file with empty initial state. If you
+   need to process multiple files sequentially with state preserved across calls
+   (e.g., for proper component entity tracking across files), use
+   `import-from-nippy-files!` instead.
+
    Handles:
    - Put operations (insert/update)
    - Delete operations
-   - Component entity tracking (digest-items, skips)
+   - Component entity tracking (digest-items, skips) within the file
    - Valid time filtering
 
    Options:
@@ -701,10 +706,15 @@
    com.biffweb.migrate.xtdb1/export! - each file contains a vector
    of XTDB v1 transactions.
 
+   Error handling: If any file fails to read or process, the function will throw
+   immediately. This fail-fast approach ensures data integrity - partial imports
+   can be investigated before continuing. The exception will include context about
+   which file failed.
+
    Handles:
    - Put operations (insert/update)
    - Delete operations
-   - Component entity tracking (digest-items, skips)
+   - Component entity tracking (digest-items, skips) across files
    - Valid time filtering
 
    Options:
@@ -721,13 +731,20 @@
         :done
         (let [f (first remaining-files)
               file-index (parse-long (.getName f))
-              _ (log/info "Processing file" file-index)
-              txes (read-nippy-file f)  ; Side effect: file I/O
-              {:keys [txs state]} (compute-txs-for-file state txes now)]
-          ;; Side effect: database write
-          (jdbc/with-transaction [tx conn]
-            (execute-txs! tx txs))
-          (recur (rest remaining-files) state))))))
+              _ (log/info "Processing file" file-index)]
+          (try
+            (let [txes (read-nippy-file f)  ; Side effect: file I/O
+                  {:keys [txs state]} (compute-txs-for-file state txes now)]
+              ;; Side effect: database write
+              (jdbc/with-transaction [tx conn]
+                (execute-txs! tx txs))
+              (recur (rest remaining-files) state))
+            (catch Exception e
+              (throw (ex-info "Error processing nippy file"
+                              {:file (.getPath f)
+                               :file-index file-index
+                               :processed-files (- (count files) (count remaining-files))}
+                              e)))))))))
 
 ;; ============================================================================
 ;; Pure functions for testing
