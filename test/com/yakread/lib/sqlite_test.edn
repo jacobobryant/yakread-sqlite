@@ -1,0 +1,107 @@
+{:require
+ [[com.yakread.lib.test :as t]
+  [clojure.data.generators :as gen]
+  [com.yakread.lib.sqlite :refer :all]
+  [taoensso.nippy :as nippy]
+  [tick.core :as tick]],
+ :tests
+ [{:doc "bytes->uuid and uuid->bytes roundtrip"
+   :eval
+   (let [uuid #uuid "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+         bytes (uuid->bytes uuid)]
+     (bytes->uuid bytes))}
+  _
+  {:doc "epoch-ms->instant converts milliseconds to Instant"
+   :eval (str (epoch-ms->instant 1705320000000))}
+  _
+  {:doc "epoch-ms->zdt converts milliseconds to ZonedDateTime"
+   :eval (str (epoch-ms->zdt 1705320000000))}
+  _
+  {:doc "int->bool converts 0 to false"
+   :eval (int->bool 0)}
+  _
+  {:doc "int->bool converts 1 to true"
+   :eval (int->bool 1)}
+  _
+  {:doc "int->bool returns nil for nil"
+   :eval (int->bool nil)}
+  _
+  {:doc "str->local-time parses time string"
+   :eval (str (str->local-time "08:30:00"))}
+  _
+  {:doc "thaw-blob thaws nippy-frozen data"
+   :eval (thaw-blob (nippy/freeze #{:monday :wednesday}))}
+  _
+  {:doc "make-enum-reader creates reader that converts int to keyword"
+   :eval (let [reader (make-enum-reader {0 :quarter 1 :annual})]
+           [(reader 0) (reader 1)])}
+  _
+  {:doc "parse-schema extracts tables from schema.sql"
+   :eval (let [schema (load-schema)]
+           (sort (keys schema)))}
+  _
+  {:doc "parse-schema extracts columns for user table"
+   :eval (let [schema (load-schema)
+               user-cols (get schema :user)]
+           (mapv :column-name user-cols))}
+  _
+  {:doc "parse-schema extracts column types correctly"
+   :eval (let [schema (load-schema)
+               user-cols (get schema :user)
+               email-col (first (filter #(= "email" (:column-name %)) user-cols))]
+           {:name (:column-name email-col)
+            :type (:column-type email-col)})}
+  _
+  {:doc "parse-schema extracts enum values from CHECK constraint"
+   :eval (let [schema (load-schema)
+               user-cols (get schema :user)
+               plan-col (first (filter #(= "plan" (:column-name %)) user-cols))]
+           {:name (:column-name plan-col)
+            :enum-values (:enum-values plan-col)})}
+  _
+  {:doc "parse-schema extracts comment annotations for nippy columns"
+   :eval (let [schema (load-schema)
+               user-cols (get schema :user)
+               roles-col (first (filter #(= "roles" (:column-name %)) user-cols))]
+           {:name (:column-name roles-col)
+            :comment (:comment roles-col)})}
+  _
+  {:doc "sqlite-resolvers returns resolvers for all tables"
+   :eval (let [resolvers (sqlite-resolvers)]
+           (count resolvers))}
+  _
+  {:doc "sqlite-resolvers creates resolver with correct name for user table"
+   :eval (let [resolvers (sqlite-resolvers)
+               user-resolver (first (filter #(= 'com.yakread.lib.sqlite/user-sqlite-resolver
+                                                (-> % :config ::com.wsscode.pathom3.connect.operation/op-name))
+                                            resolvers))]
+           (some? user-resolver))}
+  _
+  {:doc "sqlite-resolvers resolver has :xt/id as input"
+   :eval (let [resolvers (sqlite-resolvers)
+               user-resolver (first (filter #(= 'com.yakread.lib.sqlite/user-sqlite-resolver
+                                                (-> % :config ::com.wsscode.pathom3.connect.operation/op-name))
+                                            resolvers))
+               input (-> user-resolver :config ::com.wsscode.pathom3.connect.operation/input)]
+           input)}
+  _
+  {:doc "sqlite-resolvers resolver has batch? true"
+   :eval (let [resolvers (sqlite-resolvers)
+               user-resolver (first (filter #(= 'com.yakread.lib.sqlite/user-sqlite-resolver
+                                                (-> % :config ::com.wsscode.pathom3.connect.operation/op-name))
+                                            resolvers))
+               batch? (-> user-resolver :config ::com.wsscode.pathom3.connect.operation/batch?)]
+           batch?)}
+  _
+  {:doc "sqlite-resolvers resolver output includes expected user attributes"
+   :eval (let [resolvers (sqlite-resolvers)
+               user-resolver (first (filter #(= 'com.yakread.lib.sqlite/user-sqlite-resolver
+                                                (-> % :config ::com.wsscode.pathom3.connect.operation/op-name))
+                                            resolvers))
+               output (-> user-resolver :config ::com.wsscode.pathom3.connect.operation/output)]
+           ;; Check that some expected user attributes are in output
+           [(some #(= :user/email %) output)
+            (some #(= :user/plan %) output)
+            (some #(= :user/roles %) output)])}
+  _
+  ]}
