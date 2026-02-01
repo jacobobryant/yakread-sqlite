@@ -459,47 +459,18 @@
   (nippy/thaw-from-file file))
 
 ;; ============================================================================
-;; SQLite operations
+;; State management for component entities (pure functions)
 ;; ============================================================================
 
-(defn upsert-row!
-  "Insert or replace a row in a SQLite table."
-  [conn table row]
-  (let [row (into {} (filter (comp some? val)) row)
-        sql-map {:insert-into table
-                 :values [row]
-                 :on-conflict {:do-update-set (keys row)}}
-        [sql-str & params] (sql/format sql-map)]
-    (jdbc/execute! conn (into [sql-str] params))))
-
-(defn delete-row!
-  "Delete a row from a SQLite table by ID."
-  [conn table id-bytes]
-  (let [sql-map {:delete-from table
-                 :where [:= :id id-bytes]}
-        [sql-str & params] (sql/format sql-map)]
-    (jdbc/execute! conn (into [sql-str] params))))
-
-;; ============================================================================
-;; State tracking for component entities
-;; ============================================================================
-
-(def ^:private import-state
-  "Consolidated state for tracking documents and their components during import.
+(def empty-state
+  "Initial state for tracking documents and their components during import.
    Contains:
    - :component-id->table - Map from component entity ID to its table
    - :doc-id->component-ids - Map from parent document ID to set of component entity IDs
    - :doc-id->table - Map from document ID to its table"
-  (atom {:component-id->table {}
-         :doc-id->component-ids {}
-         :doc-id->table {}}))
-
-(defn reset-state!
-  "Reset the state tracking atom."
-  []
-  (reset! import-state {:component-id->table {}
-                        :doc-id->component-ids {}
-                        :doc-id->table {}}))
+  {:component-id->table {}
+   :doc-id->component-ids {}
+   :doc-id->table {}})
 
 (defn get-component-ids
   "Get the component IDs for a document from a doc (digest-items, skips)."
@@ -518,72 +489,154 @@
     nil))
 
 ;; ============================================================================
-;; Operation handlers
+;; SQLite transaction representation (pure data)
 ;; ============================================================================
 
-(defn handle-put-op!
-  "Handle a put operation - insert/update the document and its components.
-   Also handles deletion of removed component entities."
-  [conn {:keys [doc id]}]
+(defn make-upsert-tx
+  "Create an upsert transaction as pure data."
+  [table row]
+  {:type :upsert
+   :table table
+   :row (into {} (filter (comp some? val)) row)})
+
+(defn make-delete-tx
+  "Create a delete transaction as pure data."
+  [table id-bytes]
+  {:type :delete
+   :table table
+   :id id-bytes})
+
+;; ============================================================================
+;; Pure operation handlers (return transactions and state updates)
+;; ============================================================================
+
+(defn handle-put-op
+  "Handle a put operation - returns SQLite transactions and new state.
+   Pure function that doesn't perform any side effects.
+
+   Returns {:txs [...], :state {...}, :xtdb1-op {...}} or nil if doc is unknown."
+  [state {:keys [doc id] :as xtdb1-op}]
   (when-some [{:keys [table] :as converted} (convert-doc doc)]
-    ;; Track the document's table
-    (swap! import-state assoc-in [:doc-id->table id] table)
+    (let [component-table (get-component-table table)
+          old-component-ids (get-in state [:doc-id->component-ids id] #{})
+          new-component-ids (get-component-ids doc table)
+          deleted-ids (set/difference old-component-ids new-component-ids)
 
-    ;; Upsert the main document
-    (upsert-row! conn table (:row converted))
+          ;; Main document upsert
+          main-tx (make-upsert-tx table (:row converted))
 
-    ;; Handle component entities (digest-items, skips)
-    (let [component-table (get-component-table table)]
-      (when component-table
-        (let [old-component-ids (get-in @import-state [:doc-id->component-ids id] #{})
-              new-component-ids (get-component-ids doc table)
-              deleted-ids (set/difference old-component-ids new-component-ids)]
+          ;; Component entity upserts
+          component-txs (when component-table
+                          (let [component-rows (case table
+                                                 :digest (extract-digest-items doc)
+                                                 :reclist (extract-skip-items doc)
+                                                 [])]
+                            (mapv #(make-upsert-tx component-table (:row %)) component-rows)))
 
-          ;; Delete removed component entities
-          (doseq [deleted-id deleted-ids]
-            (delete-row! conn component-table (uuid->bytes deleted-id))
-            (swap! import-state update :component-id->table dissoc deleted-id))
+          ;; Component entity deletes (for removed items)
+          delete-txs (when component-table
+                       (mapv #(make-delete-tx component-table (uuid->bytes %)) deleted-ids))
 
-          ;; Insert/update component entities
-          (let [component-rows (case table
-                                 :digest (extract-digest-items doc)
-                                 :reclist (extract-skip-items doc)
-                                 [])]
-            (doseq [{:keys [row]} component-rows]
-              (upsert-row! conn component-table row)))
+          ;; Update state
+          new-state (cond-> state
+                      true
+                      (assoc-in [:doc-id->table id] table)
 
-          ;; Track new component IDs
-          (doseq [cid new-component-ids]
-            (swap! import-state assoc-in [:component-id->table cid] component-table))
+                      component-table
+                      (->
+                       ;; Remove deleted component IDs from tracking
+                       (update :component-id->table #(apply dissoc % deleted-ids))
+                       ;; Add new component IDs to tracking
+                       (update :component-id->table into (for [cid new-component-ids]
+                                                           [cid component-table]))
+                       ;; Update doc-id->component-ids
+                       (assoc-in [:doc-id->component-ids id] new-component-ids)))]
+      {:txs (vec (concat [main-tx] component-txs delete-txs))
+       :state new-state
+       :xtdb1-op xtdb1-op})))
 
-          ;; Update component ID tracking
-          (swap! import-state assoc-in [:doc-id->component-ids id] new-component-ids))))))
+(defn handle-delete-op
+  "Handle a delete operation - returns SQLite transactions and new state.
+   Pure function that doesn't perform any side effects.
 
-(defn handle-delete-op!
-  "Handle a delete operation - delete the document and its component entities."
-  [conn {:keys [id]}]
-  (when-some [table (get-in @import-state [:doc-id->table id])]
-    ;; Delete main document
-    (delete-row! conn table (uuid->bytes id))
+   Returns {:txs [...], :state {...}, :xtdb1-op {...}} or nil if doc is unknown."
+  [state {:keys [id] :as xtdb1-op}]
+  (when-some [table (get-in state [:doc-id->table id])]
+    (let [component-ids (get-in state [:doc-id->component-ids id] #{})
 
-    ;; Delete component entities
-    (let [component-ids (get-in @import-state [:doc-id->component-ids id] #{})]
-      (doseq [cid component-ids]
-        (when-some [ctable (get-in @import-state [:component-id->table cid])]
-          (delete-row! conn ctable (uuid->bytes cid))
-          (swap! import-state update :component-id->table dissoc cid))))
+          ;; Main document delete
+          main-tx (make-delete-tx table (uuid->bytes id))
 
-    ;; Clean up tracking
-    (swap! import-state update :doc-id->table dissoc id)
-    (swap! import-state update :doc-id->component-ids dissoc id)))
+          ;; Component entity deletes
+          component-txs (vec (for [cid component-ids
+                                   :let [ctable (get-in state [:component-id->table cid])]
+                                   :when ctable]
+                               (make-delete-tx ctable (uuid->bytes cid))))
 
-(defn process-op!
-  "Process a single normalized operation."
-  [conn op]
+          ;; Update state
+          new-state (-> state
+                        (update :doc-id->table dissoc id)
+                        (update :doc-id->component-ids dissoc id)
+                        (update :component-id->table #(apply dissoc % component-ids)))]
+      {:txs (into [main-tx] component-txs)
+       :state new-state
+       :xtdb1-op xtdb1-op})))
+
+(defn process-op
+  "Process a single normalized operation.
+   Pure function that returns {:txs [...], :state {...}, :xtdb1-op {...}} or nil."
+  [state op]
   (case (:op op)
-    :xtdb.api/put (handle-put-op! conn op)
-    :xtdb.api/delete (handle-delete-op! conn op)
+    :xtdb.api/put (handle-put-op state op)
+    :xtdb.api/delete (handle-delete-op state op)
     nil))
+
+(defn process-ops
+  "Process a sequence of operations, threading state through.
+   Pure function that returns a sequence of {:txs [...], :state {...}, :xtdb1-op {...}}.
+   Each result includes the state after that operation."
+  [initial-state ops]
+  (loop [state initial-state
+         remaining ops
+         results []]
+    (if (empty? remaining)
+      results
+      (let [op (first remaining)
+            result (process-op state op)]
+        (if result
+          (recur (:state result)
+                 (rest remaining)
+                 (conj results result))
+          (recur state
+                 (rest remaining)
+                 results))))))
+
+;; ============================================================================
+;; SQLite execution (side effects)
+;; ============================================================================
+
+(defn execute-tx!
+  "Execute a single SQLite transaction."
+  [conn {:keys [type table row id]}]
+  (case type
+    :upsert
+    (let [sql-map {:insert-into table
+                   :values [row]
+                   :on-conflict {:do-update-set (keys row)}}
+          [sql-str & params] (sql/format sql-map)]
+      (jdbc/execute! conn (into [sql-str] params)))
+
+    :delete
+    (let [sql-map {:delete-from table
+                   :where [:= :id id]}
+          [sql-str & params] (sql/format sql-map)]
+      (jdbc/execute! conn (into [sql-str] params)))))
+
+(defn execute-txs!
+  "Execute a sequence of SQLite transactions."
+  [conn txs]
+  (doseq [tx txs]
+    (execute-tx! conn tx)))
 
 ;; ============================================================================
 ;; Main import functions
@@ -596,6 +649,20 @@
        file-seq
        (filter #(.isFile %))
        (sort-by #(parse-long (.getName %)))))
+
+(defn compute-txs-for-file
+  "Compute all SQLite transactions for a single file.
+   Pure function that returns {:txs [...], :state <new-state>, :tx-results [...]}.
+
+   :tx-results contains the individual results with :txs, :state, and :xtdb1-op for each operation."
+  [initial-state txes now]
+  (let [ops (vec (mapcat #(normalize-tx % now) txes))
+        results (process-ops initial-state ops)
+        all-txs (vec (mapcat :txs results))
+        final-state (or (:state (last results)) initial-state)]
+    {:txs all-txs
+     :state final-state
+     :tx-results results}))
 
 (defn import-from-edn!
   "Import data from an EDN file into SQLite.
@@ -617,19 +684,18 @@
   [{:keys [conn edn-file now]}]
   (let [now (or now (Instant/now))
         txes (read-edn-txes edn-file)
-        ops (mapcat #(normalize-tx % now) txes)
-        op-count (atom 0)]
-    (reset-state!)
+        {:keys [txs]} (compute-txs-for-file empty-state txes now)]
     (log/info "Importing from" edn-file)
     (jdbc/with-transaction [tx conn]
-      (doseq [op ops]
-        (process-op! tx op)
-        (swap! op-count inc)))
-    (log/info "Processed" @op-count "operations from" edn-file)
-    {:processed @op-count}))
+      (execute-txs! tx txs))
+    (log/info "Processed" (count txs) "transactions from" edn-file)
+    {:processed (count txs)}))
 
 (defn import-from-nippy-files!
   "Import data from multiple nippy files (XTDB v1 transaction exports).
+
+   This is the only function that performs side effects (file I/O, database writes).
+   All helper functions it calls are pure.
 
    This expects the files to be in the format written by
    com.biffweb.migrate.xtdb1/export! - each file contains a vector
@@ -648,17 +714,20 @@
   [{:keys [conn dir now]}]
   (let [now (or now (Instant/now))
         files (tx-files dir)]
-    (reset-state!)
     (log/info "Found" (count files) "nippy files in" dir)
-    (doseq [f files
-            :let [file-index (parse-long (.getName f))
-                  _ (log/info "Processing file" file-index)
-                  txes (read-nippy-file f)
-                  ops (mapcat #(normalize-tx % now) txes)]]
-      (jdbc/with-transaction [tx conn]
-        (doseq [op ops]
-          (process-op! tx op))))
-    :done))
+    (loop [remaining-files files
+           state empty-state]
+      (if (empty? remaining-files)
+        :done
+        (let [f (first remaining-files)
+              file-index (parse-long (.getName f))
+              _ (log/info "Processing file" file-index)
+              txes (read-nippy-file f)  ; Side effect: file I/O
+              {:keys [txs state]} (compute-txs-for-file state txes now)]
+          ;; Side effect: database write
+          (jdbc/with-transaction [tx conn]
+            (execute-txs! tx txs))
+          (recur (rest remaining-files) state))))))
 
 ;; ============================================================================
 ;; Pure functions for testing
@@ -695,3 +764,90 @@
         tx-op (:xtdb.api/tx-ops tx)
         :when (= :xtdb.api/put (first tx-op))]
     (second tx-op)))
+
+;; ============================================================================
+;; Dry run function
+;; ============================================================================
+
+(defn group-txs-by-table
+  "Group transactions by their table.
+   Returns a map of table -> [txs...]."
+  [txs]
+  (group-by :table txs))
+
+(defn sample-n
+  "Take up to n random items from a collection.
+   Returns a vector of the sampled items."
+  [n coll]
+  (let [items (vec coll)
+        cnt (count items)]
+    (if (<= cnt n)
+      items
+      (vec (take n (shuffle items))))))
+
+(defn tx-result->sample-data
+  "Convert a tx-result to a map suitable for dry-run output.
+   Returns {:xtdb1-op {...}, :sqlite-txs [...]}."
+  [{:keys [txs xtdb1-op]}]
+  {:xtdb1-op xtdb1-op
+   :sqlite-txs txs})
+
+(defn dry-run
+  "Process a single random nippy file and return sample SQLite transactions.
+
+   This function:
+   1. Picks a single nippy file at random from the directory
+   2. Computes all the SQLite transactions resulting from that file (as pure data)
+   3. Returns 3 random SQLite transactions for each table, along with their
+      corresponding XTDB v1 operations
+
+   This is useful for debugging and verifying the migration logic without
+   actually writing to the database.
+
+   Options:
+   - :dir - Directory containing nippy files
+   - :now - (optional) Reference time for valid time filtering, defaults to current time
+   - :samples-per-table - (optional) Number of samples to return per table, defaults to 3
+
+   Returns a map with:
+   - :file - The name of the file that was processed
+   - :total-txs - Total number of SQLite transactions computed
+   - :tables - Map of table -> {:sample-count N, :total-count M, :samples [...]}
+               where each sample is {:xtdb1-op {...}, :sqlite-txs [...]}"
+  [{:keys [dir now samples-per-table]}]
+  (let [now (or now (Instant/now))
+        samples-per-table (or samples-per-table 3)
+        files (tx-files dir)]
+    (when (empty? files)
+      (throw (ex-info "No nippy files found in directory" {:dir dir})))
+
+    (let [;; Pick a random file
+          file (rand-nth files)
+          file-name (.getName file)
+
+          ;; Read and process the file (pure operations)
+          txes (read-nippy-file file)
+          {:keys [tx-results]} (compute-txs-for-file empty-state txes now)
+
+          ;; Group results by the tables they affect
+          ;; Each tx-result has :txs (list of sqlite txs) and :xtdb1-op
+          ;; We want to group by which tables each result touches
+          results-by-table (reduce (fn [acc {:keys [txs] :as result}]
+                                     (let [tables (distinct (map :table txs))]
+                                       (reduce (fn [a t]
+                                                 (update a t (fnil conj []) result))
+                                               acc
+                                               tables)))
+                                   {}
+                                   tx-results)
+
+          ;; Sample from each table
+          table-samples (into {}
+                              (for [[table results] results-by-table]
+                                (let [sampled (sample-n samples-per-table results)]
+                                  [table {:sample-count (count sampled)
+                                          :total-count (count results)
+                                          :samples (mapv tx-result->sample-data sampled)}])))]
+      {:file file-name
+       :total-txs (count (mapcat :txs tx-results))
+       :tables table-samples})))

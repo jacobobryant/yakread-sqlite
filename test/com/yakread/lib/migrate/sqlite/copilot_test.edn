@@ -388,4 +388,147 @@
          ids (extract-skip-item-ids doc)]
      (count ids)),
    :result 2}
+  _
+  {:doc "handle-put-op returns SQLite transactions and new state"
+   :eval
+   (let [state empty-state
+         doc {:xt/id #uuid "00010000-0000-0000-0000-000000000001"
+              :user/email "test@example.com"}
+         result (handle-put-op state {:doc doc :id (:xt/id doc) :op :xtdb.api/put})]
+     {:has-txs (some? (:txs result))
+      :has-state (some? (:state result))
+      :has-xtdb1-op (some? (:xtdb1-op result))
+      :tx-count (count (:txs result))
+      :first-tx-type (:type (first (:txs result)))}),
+   :result {:has-txs true
+            :has-state true
+            :has-xtdb1-op true
+            :tx-count 1
+            :first-tx-type :upsert}}
+  _
+  {:doc "handle-put-op handles digest with component entities"
+   :eval
+   (let [state empty-state
+         doc {:xt/id #uuid "000a0000-0000-0000-0000-000000000001"
+              :digest/user #uuid "00010000-0000-0000-0000-000000000001"
+              :digest/sent-at (java.time.Instant/parse "2024-01-15T12:00:00Z")
+              :digest/icymi [#uuid "00050000-0000-0000-0000-000000000001"]
+              :digest/discover [#uuid "00050000-0000-0000-0000-000000000002"]}
+         result (handle-put-op state {:doc doc :id (:xt/id doc) :op :xtdb.api/put})
+         txs (:txs result)]
+     {:tx-count (count txs)
+      :tables (set (map :table txs))}),
+   :result {:tx-count 3
+            :tables #{:digest :digest_item}}}
+  _
+  {:doc "handle-delete-op returns nil for unknown document"
+   :eval
+   (handle-delete-op empty-state {:id #uuid "00010000-0000-0000-0000-000000000001" :op :xtdb.api/delete}),
+   :result nil}
+  _
+  {:doc "handle-delete-op returns transactions for known document"
+   :eval
+   (let [;; First add a document to state
+         doc {:xt/id #uuid "00010000-0000-0000-0000-000000000001"
+              :user/email "test@example.com"}
+         put-result (handle-put-op empty-state {:doc doc :id (:xt/id doc) :op :xtdb.api/put})
+         state-after-put (:state put-result)
+         ;; Then delete it
+         delete-result (handle-delete-op state-after-put {:id (:xt/id doc) :op :xtdb.api/delete})]
+     {:has-txs (some? (:txs delete-result))
+      :tx-count (count (:txs delete-result))
+      :first-tx-type (:type (first (:txs delete-result)))}),
+   :result {:has-txs true
+            :tx-count 1
+            :first-tx-type :delete}}
+  _
+  {:doc "process-ops returns results for each operation"
+   :eval
+   (let [ops [{:op :xtdb.api/put
+               :doc {:xt/id #uuid "00010000-0000-0000-0000-000000000001"
+                     :user/email "test@example.com"}
+               :id #uuid "00010000-0000-0000-0000-000000000001"}
+              {:op :xtdb.api/put
+               :doc {:xt/id #uuid "00020000-0000-0000-0000-000000000001"
+                     :feed/url "https://example.com/feed.xml"}
+               :id #uuid "00020000-0000-0000-0000-000000000001"}]
+         results (process-ops empty-state ops)]
+     {:result-count (count results)
+      :all-have-txs (every? :txs results)
+      :all-have-state (every? :state results)}),
+   :result {:result-count 2
+            :all-have-txs true
+            :all-have-state true}}
+  _
+  {:doc "compute-txs-for-file returns all transactions"
+   :eval
+   (let [txes [{:xtdb.api/tx-time (java.time.Instant/parse "2024-01-15T12:00:00Z")
+                :xtdb.api/tx-ops
+                [[:xtdb.api/put {:xt/id #uuid "00010000-0000-0000-0000-000000000001"
+                                 :user/email "test@example.com"}]
+                 [:xtdb.api/put {:xt/id #uuid "00020000-0000-0000-0000-000000000001"
+                                 :feed/url "https://example.com/feed.xml"}]]}]
+         now (java.time.Instant/parse "2024-01-15T12:00:00Z")
+         result (compute-txs-for-file empty-state txes now)]
+     {:has-txs (some? (:txs result))
+      :has-state (some? (:state result))
+      :has-tx-results (some? (:tx-results result))
+      :tx-count (count (:txs result))}),
+   :result {:has-txs true
+            :has-state true
+            :has-tx-results true
+            :tx-count 2}}
+  _
+  {:doc "make-upsert-tx creates upsert transaction"
+   :eval
+   (let [tx (make-upsert-tx :user {:id (uuid->bytes #uuid "00010000-0000-0000-0000-000000000001")
+                                    :email "test@example.com"
+                                    :nil-value nil})]
+     {:type (:type tx)
+      :table (:table tx)
+      :row-keys (set (keys (:row tx)))}),
+   :result {:type :upsert
+            :table :user
+            :row-keys #{:id :email}}}
+  _
+  {:doc "make-delete-tx creates delete transaction"
+   :eval
+   (let [tx (make-delete-tx :user (uuid->bytes #uuid "00010000-0000-0000-0000-000000000001"))]
+     {:type (:type tx)
+      :table (:table tx)
+      :has-id (some? (:id tx))}),
+   :result {:type :delete
+            :table :user
+            :has-id true}}
+  _
+  {:doc "sample-n returns all items when n >= count"
+   :eval
+   (let [items [1 2 3]
+         sampled (sample-n 5 items)]
+     {:count (count sampled)
+      :all-present (= (set sampled) #{1 2 3})}),
+   :result {:count 3
+            :all-present true}}
+  _
+  {:doc "sample-n returns n items when n < count"
+   :eval
+   (let [items [1 2 3 4 5]
+         sampled (sample-n 3 items)]
+     {:count (count sampled)
+      :all-from-original (every? (set items) sampled)}),
+   :result {:count 3
+            :all-from-original true}}
+  _
+  {:doc "group-txs-by-table groups transactions correctly"
+   :eval
+   (let [txs [{:type :upsert :table :user :row {:id 1}}
+              {:type :upsert :table :feed :row {:id 2}}
+              {:type :upsert :table :user :row {:id 3}}]
+         grouped (group-txs-by-table txs)]
+     {:tables (set (keys grouped))
+      :user-count (count (get grouped :user))
+      :feed-count (count (get grouped :feed))}),
+   :result {:tables #{:user :feed}
+            :user-count 2
+            :feed-count 1}}
   _]}
