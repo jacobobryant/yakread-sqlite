@@ -1,0 +1,272 @@
+;; Example data for testing the SQLite import migration
+;; This file mimics the structure of the nippy files in storage/migrate-export/
+;; which are exported by com.biffweb.migrate.xtdb1/export!
+;;
+;; Each file contains a vector of XTDB v1 transactions.
+;; Each transaction is a map with:
+;;   - :xtdb.api/tx-ops - vector of transaction operations
+;;   - :xtdb.api/tx-time - the transaction timestamp
+;;
+;; Transaction operations are vectors like:
+;;   [:xtdb.api/put <document>]
+;;   [:xtdb.api/delete <doc-id>]
+;;
+;; Usage:
+;;   (require '[com.yakread.lib.migrate.sqlite.copilot :as copilot])
+;;   (copilot/import-from-edn! {:conn sqlite-conn
+;;                               :edn-file "resources/example-data/sample-import.edn"})
+
+[;; Transaction 1: Create users
+ {:xtdb.api/tx-time #inst "2024-01-01T10:00:00Z"
+  :xtdb.api/tx-ops
+  [[:xtdb.api/put
+    {:xt/id #uuid "00010000-0000-0000-0000-000000000001"
+     :user/email "alice@example.com"
+     :user/roles #{:admin}
+     :user/joined-at #inst "2024-01-01T10:00:00Z"
+     :user/digest-days #{:monday :wednesday :friday}
+     :user/timezone* "America/New_York"
+     :user/from-the-sample false
+     :user/use-original-links true
+     :user/email-username "alice"}]
+   [:xtdb.api/put
+    {:xt/id #uuid "00010000-0000-0000-0000-000000000002"
+     :user/email "bob@example.com"
+     :user/joined-at #inst "2024-01-15T14:30:00Z"
+     :user/timezone* "Europe/London"
+     :user/plan :annual}]]}
+
+ ;; Transaction 2: Create feeds
+ {:xtdb.api/tx-time #inst "2024-01-02T08:00:00Z"
+  :xtdb.api/tx-ops
+  [[:xtdb.api/put
+    {:xt/id #uuid "00020000-0000-0000-0000-000000000001"
+     :feed/url "https://example.com/blog/feed.xml"
+     :feed/synced-at #inst "2024-02-01T08:00:00Z"
+     :feed/title "Example Blog"
+     :feed/description "A blog about various topics"
+     :feed/moderation :approved}]
+   [:xtdb.api/put
+    {:xt/id #uuid "00020000-0000-0000-0000-000000000002"
+     :feed/url "https://news.ycombinator.com/rss"
+     :feed/synced-at #inst "2024-02-01T07:00:00Z"
+     :feed/title "Hacker News"
+     :feed/moderation :approved}]]}
+
+ ;; Transaction 3: Create subscriptions
+ {:xtdb.api/tx-time #inst "2024-01-05T11:00:00Z"
+  :xtdb.api/tx-ops
+  [;; Feed subscriptions
+   [:xtdb.api/put
+    {:xt/id #uuid "00030000-0000-0000-0000-000000000001"
+     :sub/user #uuid "00010000-0000-0000-0000-000000000001"
+     :sub/created-at #inst "2024-01-05T11:00:00Z"
+     :sub/pinned-at #inst "2024-01-10T09:00:00Z"
+     :sub.feed/feed #uuid "00020000-0000-0000-0000-000000000001"}]
+   [:xtdb.api/put
+    {:xt/id #uuid "00030000-0000-0000-0000-000000000002"
+     :sub/user #uuid "00010000-0000-0000-0000-000000000001"
+     :sub/created-at #inst "2024-01-06T12:00:00Z"
+     :sub.feed/feed #uuid "00020000-0000-0000-0000-000000000002"}]
+   ;; Email subscription
+   [:xtdb.api/put
+    {:xt/id #uuid "00030000-0000-0000-0000-000000000003"
+     :sub/user #uuid "00010000-0000-0000-0000-000000000001"
+     :sub/created-at #inst "2024-01-20T15:00:00Z"
+     :sub.email/from "newsletter@techweekly.com"}]]}
+
+ ;; Transaction 4: Create items
+ {:xtdb.api/tx-time #inst "2024-01-25T10:00:00Z"
+  :xtdb.api/tx-ops
+  [;; Feed items
+   [:xtdb.api/put
+    {:xt/id #uuid "00050000-0000-0000-0000-000000000001"
+     :item/ingested-at #inst "2024-01-25T10:00:00Z"
+     :item/title "Getting Started with Clojure"
+     :item/url "https://example.com/blog/clojure-intro"
+     :item/published-at #inst "2024-01-24T08:00:00Z"
+     :item/excerpt "Learn the basics of Clojure programming..."
+     :item/author-name "Alice Smith"
+     :item/lang "en"
+     :item/length 2500
+     :item.feed/feed #uuid "00020000-0000-0000-0000-000000000001"
+     :item.feed/guid "clojure-intro-2024"}]
+   [:xtdb.api/put
+    {:xt/id #uuid "00050000-0000-0000-0000-000000000002"
+     :item/ingested-at #inst "2024-01-26T11:00:00Z"
+     :item/title "Why Functional Programming Matters"
+     :item/url "https://example.com/blog/fp-matters"
+     :item/published-at #inst "2024-01-25T09:00:00Z"
+     :item/excerpt "Functional programming has many benefits..."
+     :item/author-name "Bob Jones"
+     :item/lang "en"
+     :item/length 3200
+     :item.feed/feed #uuid "00020000-0000-0000-0000-000000000001"
+     :item.feed/guid "fp-matters-2024"}]
+   [:xtdb.api/put
+    {:xt/id #uuid "00050000-0000-0000-0000-000000000003"
+     :item/ingested-at #inst "2024-01-27T09:00:00Z"
+     :item/title "Show HN: My new project"
+     :item/url "https://news.ycombinator.com/item?id=12345"
+     :item/published-at #inst "2024-01-27T08:00:00Z"
+     :item.feed/feed #uuid "00020000-0000-0000-0000-000000000002"
+     :item.feed/guid "hn-12345"}]
+   ;; Email item
+   [:xtdb.api/put
+    {:xt/id #uuid "00050000-0000-0000-0000-000000000004"
+     :item/ingested-at #inst "2024-01-28T14:00:00Z"
+     :item/title "Tech Weekly Newsletter #42"
+     :item/excerpt "This week in tech..."
+     :item.email/sub #uuid "00030000-0000-0000-0000-000000000003"
+     :item.email/raw-content-key #uuid "00070000-0000-0000-0000-000000000001"
+     :item.email/list-unsubscribe "mailto:unsubscribe@techweekly.com"}]
+   ;; Direct (bookmarked) item
+   [:xtdb.api/put
+    {:xt/id #uuid "00050000-0000-0000-0000-000000000005"
+     :item/ingested-at #inst "2024-01-29T16:00:00Z"
+     :item/title "An Interesting Article I Found"
+     :item/url "https://interesting-site.com/article"
+     :item/doc-type :item/direct
+     :item.direct/candidate-status :approved}]]}
+
+ ;; Transaction 5: User-item interactions
+ {:xtdb.api/tx-time #inst "2024-01-25T11:00:00Z"
+  :xtdb.api/tx-ops
+  [[:xtdb.api/put
+    {:xt/id #uuid "00090000-0000-0000-0000-000000000001"
+     :user-item/user #uuid "00010000-0000-0000-0000-000000000001"
+     :user-item/item #uuid "00050000-0000-0000-0000-000000000001"
+     :user-item/viewed-at #inst "2024-01-25T11:00:00Z"
+     :user-item/favorited-at #inst "2024-01-25T11:05:00Z"}]
+   [:xtdb.api/put
+    {:xt/id #uuid "00090000-0000-0000-0000-000000000002"
+     :user-item/user #uuid "00010000-0000-0000-0000-000000000001"
+     :user-item/item #uuid "00050000-0000-0000-0000-000000000002"
+     :user-item/viewed-at #inst "2024-01-26T12:00:00Z"
+     :user-item/bookmarked-at #inst "2024-01-26T12:10:00Z"}]
+   [:xtdb.api/put
+    {:xt/id #uuid "00090000-0000-0000-0000-000000000003"
+     :user-item/user #uuid "00010000-0000-0000-0000-000000000001"
+     :user-item/item #uuid "00050000-0000-0000-0000-000000000003"
+     :user-item/viewed-at #inst "2024-01-27T10:00:00Z"
+     :user-item/disliked-at #inst "2024-01-27T10:01:00Z"}]]}
+
+ ;; Transaction 6: Digest with old schema (icymi/discover embedded)
+ {:xtdb.api/tx-time #inst "2024-01-28T08:00:00Z"
+  :xtdb.api/tx-ops
+  [[:xtdb.api/put
+    {:xt/id #uuid "000a0000-0000-0000-0000-000000000001"
+     :digest/user #uuid "00010000-0000-0000-0000-000000000001"
+     :digest/sent-at #inst "2024-01-28T08:00:00Z"
+     :digest/subject #uuid "00050000-0000-0000-0000-000000000001"
+     :digest/icymi [#uuid "00050000-0000-0000-0000-000000000002"]
+     :digest/discover [#uuid "00050000-0000-0000-0000-000000000003"]}]]}
+
+ ;; Transaction 7: Reclist with old schema (skip/items embedded)
+ {:xtdb.api/tx-time #inst "2024-01-27T10:00:00Z"
+  :xtdb.api/tx-ops
+  [[:xtdb.api/put
+    {:xt/id #uuid "000d0000-0000-0000-0000-000000000001"
+     :skip/user #uuid "00010000-0000-0000-0000-000000000001"
+     :skip/timeline-created-at #inst "2024-01-27T10:00:00Z"
+     :skip/clicked #{#uuid "00050000-0000-0000-0000-000000000003"}
+     :skip/items [#uuid "00050000-0000-0000-0000-000000000001"
+                  #uuid "00050000-0000-0000-0000-000000000002"]}]]}
+
+ ;; Transaction 8: Ad and related records
+ {:xtdb.api/tx-time #inst "2024-01-20T10:00:00Z"
+  :xtdb.api/tx-ops
+  [[:xtdb.api/put
+    {:xt/id #uuid "000b0000-0000-0000-0000-000000000001"
+     :ad/user #uuid "00010000-0000-0000-0000-000000000002"
+     :ad/approve-state :approved
+     :ad/updated-at #inst "2024-01-20T10:00:00Z"
+     :ad/balance 10000
+     :ad/recent-cost 500
+     :ad/bid 100
+     :ad/budget 5000
+     :ad/url "https://myproduct.com"
+     :ad/title "Check out MyProduct!"
+     :ad/description "The best product for developers."
+     :ad/paused false}]
+   [:xtdb.api/put
+    {:xt/id #uuid "000c0000-0000-0000-0000-000000000001"
+     :ad.click/user #uuid "00010000-0000-0000-0000-000000000001"
+     :ad.click/ad #uuid "000b0000-0000-0000-0000-000000000001"
+     :ad.click/created-at #inst "2024-01-25T12:00:00Z"
+     :ad.click/cost 100
+     :ad.click/source :web}]
+   [:xtdb.api/put
+    {:xt/id #uuid "000c0000-0000-0000-0000-000000000002"
+     :ad.credit/ad #uuid "000b0000-0000-0000-0000-000000000001"
+     :ad.credit/source :charge
+     :ad.credit/amount 5000
+     :ad.credit/created-at #inst "2024-01-15T10:00:00Z"
+     :ad.credit/charge-status :confirmed}]]}
+
+ ;; Transaction 9: Materialized views
+ {:xtdb.api/tx-time #inst "2024-01-28T12:00:00Z"
+  :xtdb.api/tx-ops
+  [[:xtdb.api/put
+    {:xt/id #uuid "000e0000-0000-0000-0000-000000000001"
+     :mv.sub/sub #uuid "00030000-0000-0000-0000-000000000001"
+     :mv.sub/affinity-low 0.3
+     :mv.sub/affinity-high 0.85
+     :mv.sub/last-published #inst "2024-01-26T11:00:00Z"
+     :mv.sub/unread 2
+     :mv.sub/read 15}]
+   [:xtdb.api/put
+    {:xt/id #uuid "000f0000-0000-0000-0000-000000000001"
+     :mv.user/user #uuid "00010000-0000-0000-0000-000000000001"
+     :mv.user/current-item #uuid "00050000-0000-0000-0000-000000000001"}]]}
+
+ ;; Transaction 10: Delete a user
+ {:xtdb.api/tx-time #inst "2024-01-29T10:00:00Z"
+  :xtdb.api/tx-ops
+  [[:xtdb.api/delete #uuid "00010000-0000-0000-0000-000000000002"]]}
+
+ ;; Transaction 11: Update digest with fewer items (should delete removed digest-items)
+ ;; This updates the digest from Transaction 6, removing one item from icymi
+ {:xtdb.api/tx-time #inst "2024-01-29T11:00:00Z"
+  :xtdb.api/tx-ops
+  [[:xtdb.api/put
+    {:xt/id #uuid "000a0000-0000-0000-0000-000000000001"
+     :digest/user #uuid "00010000-0000-0000-0000-000000000001"
+     :digest/sent-at #inst "2024-01-28T08:00:00Z"
+     :digest/subject #uuid "00050000-0000-0000-0000-000000000001"
+     ;; Removed the icymi item, only discover remains
+     :digest/discover [#uuid "00050000-0000-0000-0000-000000000003"]}]]}
+
+ ;; Transaction 12: Update reclist with fewer skip items
+ {:xtdb.api/tx-time #inst "2024-01-29T12:00:00Z"
+  :xtdb.api/tx-ops
+  [[:xtdb.api/put
+    {:xt/id #uuid "000d0000-0000-0000-0000-000000000001"
+     :skip/user #uuid "00010000-0000-0000-0000-000000000001"
+     :skip/timeline-created-at #inst "2024-01-27T10:00:00Z"
+     :skip/clicked #{#uuid "00050000-0000-0000-0000-000000000003"}
+     ;; Removed one item from skip/items
+     :skip/items [#uuid "00050000-0000-0000-0000-000000000001"]}]]}
+
+ ;; Transaction 13: Delete a feed (tests main entity deletion)
+ {:xtdb.api/tx-time #inst "2024-01-30T10:00:00Z"
+  :xtdb.api/tx-ops
+  [[:xtdb.api/delete #uuid "00020000-0000-0000-0000-000000000002"]]}
+
+ ;; Transaction 14: Operation with valid time range that should be ignored
+ ;; This has valid-from in the future, so it shouldn't be processed when now < valid-from
+ {:xtdb.api/tx-time #inst "2024-01-30T11:00:00Z"
+  :xtdb.api/tx-ops
+  [[:xtdb.api/put
+    {:xt/id #uuid "00010000-0000-0000-0000-000000000099"
+     :user/email "future-user@example.com"}
+    #inst "2030-01-01T00:00:00Z"]]} ; valid-from in far future
+
+ ;; Transaction 15: Operation with past valid-to (historical data, should be ignored)
+ {:xtdb.api/tx-time #inst "2024-01-30T12:00:00Z"
+  :xtdb.api/tx-ops
+  [[:xtdb.api/put
+    {:xt/id #uuid "00010000-0000-0000-0000-000000000098"
+     :user/email "historical-user@example.com"}
+    nil  ; valid-from (nil means from tx-time)
+    #inst "2020-01-01T00:00:00Z"]]}] ; valid-to in the past
