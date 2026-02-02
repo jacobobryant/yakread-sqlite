@@ -407,10 +407,14 @@
     (tick/in (Instant/ofEpochMilli ms) "UTC")))
 
 (defn int->bool
-  "Convert 0/1 integer to boolean."
+  "Convert 0/1 integer to boolean. Throws for unexpected values."
   [n]
   (when (some? n)
-    (= n 1)))
+    (case n
+      0 false
+      1 true
+      (throw (ex-info "Invalid boolean value, expected 0 or 1"
+                      {:value n})))))
 
 (defn str->local-time
   "Parse a string to LocalTime."

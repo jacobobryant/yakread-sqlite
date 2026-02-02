@@ -30,6 +30,10 @@
   {:doc "fast-thaw thaws nippy-frozen data"
    :eval (fast-thaw (nippy/fast-freeze #{:monday :wednesday}))}
   _
+  {:doc "fast-freeze and fast-thaw roundtrip"
+   :eval (let [data {:brand "visa" :last4 "1234" :exp-year 2025 :exp-month 12}]
+           (= data (fast-thaw (fast-freeze data))))}
+  _
   {:doc "make-enum-reader creates reader that converts int to keyword"
    :eval (let [reader (make-enum-reader {0 :quarter 1 :annual})]
            [(reader 0) (reader 1)])}
