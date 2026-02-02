@@ -60,9 +60,17 @@
 ;; Schema Type Aliases (for commonly used types)
 ;; ============================================================================
 
-(def text2000 [:string {:max 2000}])
-(def text5000 [:string {:max 5000}])
-(def day-enum [:enum :sunday :monday :tuesday :wednesday :thursday :friday :saturday])
+(def text2000 
+  "Common string type for text fields with max 2000 characters."
+  [:string {:max 2000}])
+
+(def text5000 
+  "String type for longer text fields with max 5000 characters."
+  [:string {:max 5000}])
+
+(def day-enum 
+  "Enum for days of the week."
+  [:enum :sunday :monday :tuesday :wednesday :thursday :friday :saturday])
 
 ;; ============================================================================
 ;; SQLite Malli Schema
@@ -331,6 +339,8 @@
   "Infer SQLite type from malli AST. Throws if type cannot be determined."
   [attr-key ast]
   (let [type-val (get-schema-type ast)]
+    ;; Note: inst? here is a symbol (from malli schema), not the function.
+    ;; case treats test constants as literals, so this matches the symbol 'inst?
     (case type-val
       :uuid "BLOB"
       :string "TEXT"
@@ -363,6 +373,8 @@
   "Infer the coercion type for an attribute from its malli AST."
   [malli-opts attr-key ast attr-schema]
   (let [type-val (get-schema-type ast)]
+    ;; Note: inst? here is a symbol (from malli schema), not the function.
+    ;; case treats test constants as literals, so this matches the symbol 'inst?
     (case type-val
       :uuid :uuid
       :boolean :bool
