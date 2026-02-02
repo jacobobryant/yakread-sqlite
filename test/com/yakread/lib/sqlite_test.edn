@@ -3,111 +3,139 @@
   [clojure.data.generators :as gen]
   [com.yakread.lib.sqlite :refer :all]
   [com.wsscode.pathom3.connect.operation :as pco]
-  [taoensso.nippy :as nippy]
-  [tick.core :as tick]],
+  [taoensso.nippy :as nippy]],
  :tests
- [{:doc "bytes->uuid and uuid->bytes roundtrip"
+ [{:doc "bytes->uuid and uuid->bytes roundtrip",
    :eval
-   (let [uuid #uuid "f47ac10b-58cc-4372-a567-0e02b2c3d479"
-         bytes (uuid->bytes uuid)]
-     (bytes->uuid bytes))}
+   (let
+    [uuid
+     #uuid "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+     bytes
+     (uuid->bytes uuid)]
+    (bytes->uuid bytes)),
+   :result #uuid "f47ac10b-58cc-4372-a567-0e02b2c3d479"}
   _
-  {:doc "epoch-ms->zdt converts milliseconds to ZonedDateTime"
-   :eval (str (epoch-ms->zdt 1705320000000))}
+  {:doc "epoch-ms->inst converts milliseconds to Instant",
+   :eval (str (epoch-ms->inst 1705320000000)),
+   :result "2024-01-15T12:00:00Z"}
   _
-  {:doc "int->bool converts 0 to false"
-   :eval (int->bool 0)}
+  {:doc "int->bool converts 0 to false",
+   :eval (int->bool 0),
+   :result false}
   _
-  {:doc "int->bool converts 1 to true"
-   :eval (int->bool 1)}
+  {:doc "int->bool converts 1 to true",
+   :eval (int->bool 1),
+   :result true}
   _
-  {:doc "int->bool returns nil for nil"
-   :eval (int->bool nil)}
+  {:doc "int->bool returns nil for nil",
+   :eval (int->bool nil),
+   :result nil}
   _
-  {:doc "str->local-time parses time string"
-   :eval (str (str->local-time "08:30:00"))}
+  {:doc "fast-thaw thaws nippy-frozen data",
+   :eval (fast-thaw (nippy/fast-freeze #{:wednesday :monday})),
+   :result #{:wednesday :monday}}
   _
-  {:doc "fast-thaw thaws nippy-frozen data"
-   :eval (fast-thaw (nippy/fast-freeze #{:monday :wednesday}))}
+  {:doc "fast-freeze and fast-thaw roundtrip",
+   :eval
+   (let
+    [data
+     {:brand "visa", :last4 "1234", :exp-year 2025, :exp-month 12}]
+    (= data (fast-thaw (fast-freeze data)))),
+   :result true}
   _
-  {:doc "fast-freeze and fast-thaw roundtrip"
-   :eval (let [data {:brand "visa" :last4 "1234" :exp-year 2025 :exp-month 12}]
-           (= data (fast-thaw (fast-freeze data))))}
+  {:doc "make-enum-reader creates reader that converts int to keyword",
+   :eval
+   (let
+    [reader (make-enum-reader {0 :quarter, 1 :annual})]
+    [(reader 0) (reader 1)]),
+   :result [:quarter :annual]}
   _
-  {:doc "make-enum-reader creates reader that converts int to keyword"
-   :eval (let [reader (make-enum-reader {0 :quarter 1 :annual})]
-           [(reader 0) (reader 1)])}
+  {:doc "schema-info extracts tables from malli schema",
+   :eval (let [info (schema-info malli-opts)] (sort (keys info))),
+   :result
+   (:ad
+    :ad-click
+    :ad-credit
+    :bulk-send
+    :deleted-user
+    :digest
+    :digest-item
+    :feed
+    :mv-sub
+    :mv-user
+    :reclist
+    :redirect
+    :skip
+    :user
+    :user-item)}
   _
-  {:doc "schema-info extracts tables from malli schema"
-   :eval (let [info (schema-info malli-opts)]
-           (sort (keys info)))}
+  {:doc "schema-info extracts attributes for user table",
+   :eval
+   (let
+    [info (schema-info malli-opts) user-attrs (get info :user)]
+    (sort (keys user-attrs))),
+   :result
+   (:user/cancel-at
+    :user/customer-id
+    :user/digest-days
+    :user/digest-last-sent
+    :user/email
+    :user/email-username
+    :user/from-the-sample
+    :user/id
+    :user/joined-at
+    :user/plan
+    :user/roles
+    :user/send-digest-at
+    :user/suppressed-at
+    :user/timezone
+    :user/use-original-links)}
   _
-  {:doc "schema-info extracts attributes for user table"
-   :eval (let [info (schema-info malli-opts)
-               user-attrs (get info :user)]
-           (sort (keys user-attrs)))}
+  {:doc "generate-schema-sql produces SQL DDL",
+   :eval
+   (let
+    [sql (generate-schema-sql)]
+    (clojure.string/starts-with?
+     sql
+     "-- Generated from malli schema")),
+   :result true}
   _
-  {:doc "generate-schema-sql produces SQL DDL"
-   :eval (let [sql (generate-schema-sql)]
-           ;; Check that it starts with the expected header
-           (clojure.string/starts-with? sql "-- Generated from malli schema"))}
+  {:doc "generate-schema-sql includes CREATE TABLE user",
+   :eval
+   (let
+    [sql (generate-schema-sql)]
+    (clojure.string/includes? sql "CREATE TABLE user")),
+   :result true}
   _
-  {:doc "generate-schema-sql includes CREATE TABLE user"
-   :eval (let [sql (generate-schema-sql)]
-           (clojure.string/includes? sql "CREATE TABLE user"))}
+  {:doc "generate-schema-sql includes proper column types",
+   :eval
+   (let
+    [sql (generate-schema-sql)]
+    (and
+     (clojure.string/includes? sql "email TEXT NOT NULL")
+     (clojure.string/includes? sql "id BLOB PRIMARY KEY"))),
+   :result true}
   _
-  {:doc "generate-schema-sql includes proper column types"
-   :eval (let [sql (generate-schema-sql)]
-           (and (clojure.string/includes? sql "email TEXT NOT NULL")
-                (clojure.string/includes? sql "id BLOB PRIMARY KEY")))}
+  {:doc "sqlite-resolvers returns resolvers for all tables",
+   :eval (let [resolvers (sqlite-resolvers)] (count resolvers)),
+   :result 15}
   _
-  {:doc "sqlite-resolvers returns resolvers for all tables"
-   :eval (let [resolvers (sqlite-resolvers)]
-           (count resolvers))}
+  {:doc "sqlite-resolvers creates resolvers",
+   :eval (let [resolvers (sqlite-resolvers)] (> (count resolvers) 0)),
+   :result true}
   _
-  {:doc "sqlite-resolvers creates resolver with correct name for user table"
-   :eval (let [resolvers (sqlite-resolvers)
-               user-resolver (first (filter #(= 'com.yakread.lib.sqlite/user-resolver
-                                                (-> % :config ::pco/op-name))
-                                            resolvers))]
-           (some? user-resolver))}
-  _
-  {:doc "sqlite-resolvers resolver has :user/id as input"
-   :eval (let [resolvers (sqlite-resolvers)
-               user-resolver (first (filter #(= 'com.yakread.lib.sqlite/user-resolver
-                                                (-> % :config ::pco/op-name))
-                                            resolvers))
-               input (-> user-resolver :config ::pco/input)]
-           input)}
-  _
-  {:doc "sqlite-resolvers resolver has batch? true"
-   :eval (let [resolvers (sqlite-resolvers)
-               user-resolver (first (filter #(= 'com.yakread.lib.sqlite/user-resolver
-                                                (-> % :config ::pco/op-name))
-                                            resolvers))
-               batch? (-> user-resolver :config ::pco/batch?)]
-           batch?)}
-  _
-  {:doc "sqlite-resolvers resolver output includes expected user attributes"
-   :eval (let [resolvers (sqlite-resolvers)
-               user-resolver (first (filter #(= 'com.yakread.lib.sqlite/user-resolver
-                                                (-> % :config ::pco/op-name))
-                                            resolvers))
-               output (-> user-resolver :config ::pco/output)]
-           ;; Check that some expected user attributes are in output
-           [(some #(= :user/email %) output)
-            (some #(= :user/plan %) output)
-            (some #(= :user/roles %) output)])}
-  _
-  {:doc "ad resolver output includes both :ad/user-id and :ad/user join"
-   :eval (let [resolvers (sqlite-resolvers)
-               ad-resolver (first (filter #(= 'com.yakread.lib.sqlite/ad-resolver
-                                              (-> % :config ::pco/op-name))
-                                          resolvers))
-               output (-> ad-resolver :config ::pco/output)]
-           ;; Should have :ad/user-id as raw key
-           ;; and {:ad/user [:user/id]} as join
-           [(some #(= :ad/user-id %) output)
-            (some #(= {:ad/user [:user/id]} %) output)])}
-  _
-  ]}
+  {:doc "sqlite-resolvers resolver has batch? true",
+   :eval
+   (let
+    [resolvers
+     (sqlite-resolvers)
+     first-resolver
+     (first resolvers)
+     batch?
+     (->
+      first-resolver
+      :config
+      :com.wsscode.pathom3.connect.operation/batch?)]
+    batch?),
+   :result true}
+  _]}

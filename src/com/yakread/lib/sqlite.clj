@@ -23,12 +23,11 @@
    [malli.registry :as malr]
    [next.jdbc :as jdbc]
    [next.jdbc.result-set :as rs]
-   [taoensso.nippy :as nippy]
-   [tick.core :as tick])
+   [taoensso.nippy :as nippy])
   (:import
    [java.nio ByteBuffer]
    [java.sql ResultSet]
-   [java.time Instant LocalTime ZonedDateTime]
+   [java.time Instant]
    [java.util UUID]))
 
 ;; ============================================================================
@@ -47,15 +46,23 @@
   "Mark an attribute as optional."
   {:optional true})
 
-(defn ref 
+(defn biff-ref
   "Mark an attribute as a reference to another table."
   [target] 
   {:biff/ref (if (coll? target) target #{target})})
 
-(defn ?ref 
+(defn ?biff-ref
   "Mark an optional attribute as a reference."
   [target] 
-  (assoc (ref target) :optional true))
+  (assoc (biff-ref target) :optional true))
+
+;; ============================================================================
+;; Schema Type Aliases (for commonly used types)
+;; ============================================================================
+
+(def text2000 [:string {:max 2000}])
+(def text5000 [:string {:max 5000}])
+(def day-enum [:enum :sunday :monday :tuesday :wednesday :thursday :friday :saturday])
 
 ;; ============================================================================
 ;; SQLite Malli Schema
@@ -66,145 +73,145 @@
 ;; - Reference attributes end with -id and have :biff/ref
 ;; - Types are standard malli types; SQLite type is inferred
 ;; - Enums automatically get integer mappings (0, 1, 2, ...)
+;; - Use inst? for timestamps (stored as epoch ms INT in SQLite)
 
 (def schema
   {:user (table
            [:user/id                    :uuid]
-           [:user/email                 [:string {:max 2000}]]
+           [:user/email                 text2000]
            [:user/roles               ? [:set [:enum :admin]]]
-           [:user/joined-at           ? [:fn tick/zoned-date-time?]]
-           [:user/digest-days         ? [:set [:enum :sunday :monday :tuesday :wednesday 
-                                               :thursday :friday :saturday]]]
-           [:user/send-digest-at      ? [:fn #(instance? LocalTime %)]]
-           [:user/timezone            ? [:string {:max 2000}]]
-           [:user/digest-last-sent    ? [:fn tick/zoned-date-time?]]
+           [:user/joined-at           ? inst?]
+           [:user/digest-days         ? [:set day-enum]]
+           [:user/send-digest-at      ? :string]
+           [:user/timezone            ? text2000]
+           [:user/digest-last-sent    ? inst?]
            [:user/from-the-sample     ? :boolean]
            [:user/use-original-links  ? :boolean]
-           [:user/suppressed-at       ? [:fn tick/zoned-date-time?]]
-           [:user/email-username      ? [:string {:max 2000}]]
+           [:user/suppressed-at       ? inst?]
+           [:user/email-username      ? text2000]
            [:user/customer-id         ? :string]
            [:user/plan                ? [:enum :quarter :annual]]
-           [:user/cancel-at           ? [:fn tick/zoned-date-time?]])
+           [:user/cancel-at           ? inst?])
 
    :feed (table
            [:feed/id                :uuid]
-           [:feed/url               [:string {:max 2000}]]
-           [:feed/synced-at       ? [:fn tick/zoned-date-time?]]
-           [:feed/title           ? [:string {:max 2000}]]
-           [:feed/description     ? [:string {:max 2000}]]
-           [:feed/image-url       ? [:string {:max 2000}]]
-           [:feed/etag            ? [:string {:max 2000}]]
-           [:feed/last-modified   ? [:string {:max 2000}]]
+           [:feed/url               text2000]
+           [:feed/synced-at       ? inst?]
+           [:feed/title           ? text2000]
+           [:feed/description     ? text2000]
+           [:feed/image-url       ? text2000]
+           [:feed/etag            ? text2000]
+           [:feed/last-modified   ? text2000]
            [:feed/failed-syncs    ? :int]
            [:feed/moderation      ? [:enum :approved :blocked]])
 
    :sub (table
           [:sub/id                     :uuid]
-          [:sub/user-id      (ref :user) :uuid]
-          [:sub/created-at             [:fn tick/zoned-date-time?]]
-          [:sub/pinned-at    ?         [:fn tick/zoned-date-time?]]
+          [:sub/user-id      (biff-ref :user) :uuid]
+          [:sub/created-at             inst?]
+          [:sub/pinned-at    ?         inst?]
           [:sub/record-type            [:enum :feed :email]]
           ;; feed sub fields
-          [:sub/feed-id      ? (ref :feed) :uuid]
+          [:sub/feed-id      ? (biff-ref :feed) :uuid]
           ;; email sub fields
-          [:sub/email-from           ? [:string {:max 2000}]]
-          [:sub/email-unsubscribed-at ? [:fn tick/zoned-date-time?]])
+          [:sub/email-from           ? text2000]
+          [:sub/email-unsubscribed-at ? inst?])
 
    :item (table
            [:item/id                  :uuid]
-           [:item/ingested-at         [:fn tick/zoned-date-time?]]
-           [:item/title             ? [:string {:max 2000}]]
-           [:item/url               ? [:string {:max 2000}]]
-           [:item/redirect-urls     ? [:set [:string {:max 2000}]]]
-           [:item/content           ? [:string {:max 2000}]]
+           [:item/ingested-at         inst?]
+           [:item/title             ? text2000]
+           [:item/url               ? text2000]
+           [:item/redirect-urls     ? [:set text2000]]
+           [:item/content           ? text2000]
            [:item/content-key       ? :uuid]
-           [:item/published-at      ? [:fn tick/zoned-date-time?]]
-           [:item/excerpt           ? [:string {:max 2000}]]
-           [:item/author-name       ? [:string {:max 2000}]]
-           [:item/author-url        ? [:string {:max 2000}]]
-           [:item/feed-url          ? [:string {:max 2000}]]
-           [:item/lang              ? [:string {:max 2000}]]
-           [:item/site-name         ? [:string {:max 2000}]]
-           [:item/byline            ? [:string {:max 2000}]]
+           [:item/published-at      ? inst?]
+           [:item/excerpt           ? text2000]
+           [:item/author-name       ? text2000]
+           [:item/author-url        ? text2000]
+           [:item/feed-url          ? text2000]
+           [:item/lang              ? text2000]
+           [:item/site-name         ? text2000]
+           [:item/byline            ? text2000]
            [:item/length            ? :int]
-           [:item/image-url         ? [:string {:max 2000}]]
+           [:item/image-url         ? text2000]
            [:item/paywalled         ? :boolean]
            [:item/record-type         [:enum :feed :email :direct]]
            ;; feed item fields
-           [:item/feed-id           ? (ref :feed) :uuid]
-           [:item/feed-guid         ? [:string {:max 2000}]]
+           [:item/feed-id           ? (biff-ref :feed) :uuid]
+           [:item/feed-guid         ? text2000]
            ;; email item fields  
-           [:item/email-sub-id      ? (ref :sub) :uuid]
+           [:item/email-sub-id      ? (biff-ref :sub) :uuid]
            [:item/email-raw-content-key ? :uuid]
-           [:item/email-list-unsubscribe ? [:string {:max 5000}]]
-           [:item/email-list-unsubscribe-post ? [:string {:max 2000}]]
-           [:item/email-reply-to    ? [:string {:max 2000}]]
+           [:item/email-list-unsubscribe ? text5000]
+           [:item/email-list-unsubscribe-post ? text2000]
+           [:item/email-reply-to    ? text2000]
            [:item/email-maybe-confirmation ? :boolean]
            ;; direct item fields
            [:item/direct-candidate-status ? [:enum :ingest-failed :blocked :approved]])
 
    :redirect (table
                [:redirect/id       :uuid]
-               [:redirect/url      [:string {:max 2000}]]
-               [:redirect/item-id  (ref :item) :uuid])
+               [:redirect/url      text2000]
+               [:redirect/item-id  (biff-ref :item) :uuid])
 
    :user-item (table
                 [:user-item/id                  :uuid]
-                [:user-item/user-id   (ref :user) :uuid]
-                [:user-item/item-id   (ref :item) :uuid]
-                [:user-item/viewed-at       ?   [:fn tick/zoned-date-time?]]
-                [:user-item/skipped-at      ?   [:fn tick/zoned-date-time?]]
-                [:user-item/bookmarked-at   ?   [:fn tick/zoned-date-time?]]
-                [:user-item/favorited-at    ?   [:fn tick/zoned-date-time?]]
-                [:user-item/disliked-at     ?   [:fn tick/zoned-date-time?]]
-                [:user-item/reported-at     ?   [:fn tick/zoned-date-time?]]
-                [:user-item/report-reason   ?   [:string {:max 2000}]])
+                [:user-item/user-id   (biff-ref :user) :uuid]
+                [:user-item/item-id   (biff-ref :item) :uuid]
+                [:user-item/viewed-at       ?   inst?]
+                [:user-item/skipped-at      ?   inst?]
+                [:user-item/bookmarked-at   ?   inst?]
+                [:user-item/favorited-at    ?   inst?]
+                [:user-item/disliked-at     ?   inst?]
+                [:user-item/reported-at     ?   inst?]
+                [:user-item/report-reason   ?   text2000])
 
    :digest (table
              [:digest/id                        :uuid]
-             [:digest/user-id     (ref :user)   :uuid]
-             [:digest/sent-at                   [:fn tick/zoned-date-time?]]
-             [:digest/subject-id  (?ref :item)  :uuid]
-             [:digest/ad-id       (?ref :ad)    :uuid]
-             [:digest/bulk-send-id (?ref :bulk-send) :uuid])
+             [:digest/user-id     (biff-ref :user)   :uuid]
+             [:digest/sent-at                   inst?]
+             [:digest/subject-id  (?biff-ref :item)  :uuid]
+             [:digest/ad-id       (?biff-ref :ad)    :uuid]
+             [:digest/bulk-send-id (?biff-ref :bulk-send) :uuid])
 
    :digest-item (table
                   [:digest-item/id                  :uuid]
-                  [:digest-item/digest-id (ref :digest) :uuid]
-                  [:digest-item/item-id   (ref :item)   :uuid]
+                  [:digest-item/digest-id (biff-ref :digest) :uuid]
+                  [:digest-item/item-id   (biff-ref :item)   :uuid]
                   [:digest-item/kind      [:enum :icymi :discover]])
 
    :bulk-send (table
                 [:bulk-send/id              :uuid]
-                [:bulk-send/sent-at         [:fn tick/zoned-date-time?]]
+                [:bulk-send/sent-at         inst?]
                 [:bulk-send/payload-size    :int]
                 [:bulk-send/mailersend-id   :string]
                 [:bulk-send/digests         [:vector :uuid]])
 
    :reclist (table
               [:reclist/id                   :uuid]
-              [:reclist/user-id    (ref :user) :uuid]
-              [:reclist/created-at           [:fn tick/zoned-date-time?]]
+              [:reclist/user-id    (biff-ref :user) :uuid]
+              [:reclist/created-at           inst?]
               [:reclist/clicked              [:set :uuid]])
 
    :skip (table
            [:skip/id                      :uuid]
-           [:skip/reclist-id (ref :reclist) :uuid]
-           [:skip/item-id    (ref :item)    :uuid])
+           [:skip/reclist-id (biff-ref :reclist) :uuid]
+           [:skip/item-id    (biff-ref :item)    :uuid])
 
    :ad (table
          [:ad/id                     :uuid]
-         [:ad/user-id      (ref :user) :uuid]
+         [:ad/user-id      (biff-ref :user) :uuid]
          [:ad/approve-state          [:enum :pending :approved :rejected]]
-         [:ad/updated-at             [:fn tick/zoned-date-time?]]
+         [:ad/updated-at             inst?]
          [:ad/balance                :int]
          [:ad/recent-cost            :int]
          [:ad/bid            ?       :int]
          [:ad/budget         ?       :int]
-         [:ad/url            ?       [:string {:max 2000}]]
+         [:ad/url            ?       text2000]
          [:ad/title          ?       [:string {:max 75}]]
          [:ad/description    ?       [:string {:max 250}]]
-         [:ad/image-url      ?       [:string {:max 2000}]]
+         [:ad/image-url      ?       text2000]
          [:ad/paused         ?       :boolean]
          [:ad/payment-failed ?       :boolean]
          [:ad/customer-id    ?       :string]
@@ -218,33 +225,33 @@
 
    :ad-click (table
                [:ad-click/id                      :uuid]
-               [:ad-click/user-id       (ref :user) :uuid]
-               [:ad-click/ad-id         (ref :ad)   :uuid]
-               [:ad-click/created-at              [:fn tick/zoned-date-time?]]
+               [:ad-click/user-id       (biff-ref :user) :uuid]
+               [:ad-click/ad-id         (biff-ref :ad)   :uuid]
+               [:ad-click/created-at              inst?]
                [:ad-click/cost                    :int]
                [:ad-click/source                  [:enum :web :email]])
 
    :ad-credit (table
                 [:ad-credit/id                     :uuid]
-                [:ad-credit/ad-id         (ref :ad) :uuid]
+                [:ad-credit/ad-id         (biff-ref :ad) :uuid]
                 [:ad-credit/source                 [:enum :charge :manual]]
                 [:ad-credit/amount                 :int]
-                [:ad-credit/created-at             [:fn tick/zoned-date-time?]]
+                [:ad-credit/created-at             inst?]
                 [:ad-credit/charge-status ?        [:enum :pending :confirmed :failed]])
 
    :mv-sub (table
              [:mv-sub/id                     :uuid]
-             [:mv-sub/sub-id       (ref :sub) :uuid]
+             [:mv-sub/sub-id       (biff-ref :sub) :uuid]
              [:mv-sub/affinity-low     ?     :double]
              [:mv-sub/affinity-high    ?     :double]
-             [:mv-sub/last-published   ?     [:fn tick/zoned-date-time?]]
+             [:mv-sub/last-published   ?     inst?]
              [:mv-sub/unread           ?     :int]
              [:mv-sub/read             ?     :int])
 
    :mv-user (table
               [:mv-user/id                        :uuid]
-              [:mv-user/user-id        (ref :user) :uuid]
-              [:mv-user/current-item-id (?ref :item) :uuid])
+              [:mv-user/user-id        (biff-ref :user) :uuid]
+              [:mv-user/current-item-id (?biff-ref :item) :uuid])
 
    :deleted-user (table
                    [:deleted-user/id                    :uuid]
@@ -257,7 +264,7 @@
 (def malli-opts
   {:registry (malr/composite-registry
               (malli/default-schemas)
-              (malr/mutable-registry schema))})
+              schema)})
 
 ;; ============================================================================
 ;; Schema Info Extraction
@@ -314,10 +321,16 @@
 ;; Type Inference from Malli
 ;; ============================================================================
 
+(defn- get-schema-type
+  "Get the type from an attribute AST, handling nested value structures."
+  [ast]
+  (or (:type ast)
+      (get-in ast [:value :type])))
+
 (defn- infer-sqlite-type
   "Infer SQLite type from malli AST. Throws if type cannot be determined."
   [attr-key ast]
-  (let [type-val (:type ast)]
+  (let [type-val (get-schema-type ast)]
     (case type-val
       :uuid "BLOB"
       :string "TEXT"
@@ -328,46 +341,28 @@
       :vector "BLOB"
       :map "BLOB"
       :enum "INT"
-      :fn "INT"  ; Assume :fn types are timestamps (INT) unless it's LocalTime
+      inst? "INT"  ; inst? maps to epoch milliseconds
       (throw (ex-info (str "Cannot infer SQLite type for attribute " attr-key
                            ". Please use a supported malli type: :uuid, :string, :int, :double, "
-                           ":boolean, :set, :vector, :map, :enum, or [:fn predicate]")
+                           ":boolean, :set, :vector, :map, :enum, or inst?")
                       {:attr attr-key :malli-type type-val})))))
+
+(defn- get-value-ast
+  "Get the nested value AST if present, or the AST itself."
+  [ast]
+  (or (:value ast) ast))
 
 (defn- extract-enum-values
   "Extract enum values from a malli AST, returning map of {0 :val1, 1 :val2, ...}"
   [ast]
-  (when (= :enum (:type ast))
-    (into {} (map-indexed (fn [i v] [i v]) (:children ast)))))
-
-(defn- is-local-time-fn?
-  "Check if a :fn schema is for LocalTime."
-  [malli-opts attr-schema]
-  (try
-    (let [schema (malli/deref-recursive attr-schema malli-opts)
-          children (malli/children schema)]
-      (when (seq children)
-        (let [pred (first children)]
-          (and (fn? pred)
-               (pred (LocalTime/now))))))
-    (catch Exception _ false)))
-
-(defn- is-zdt-fn?
-  "Check if a :fn schema is for ZonedDateTime."
-  [malli-opts attr-schema]
-  (try
-    (let [schema (malli/deref-recursive attr-schema malli-opts)
-          children (malli/children schema)]
-      (when (seq children)
-        (let [pred (first children)]
-          (and (fn? pred)
-               (pred (tick/zoned-date-time))))))
-    (catch Exception _ false)))
+  (let [value-ast (get-value-ast ast)]
+    (when (= :enum (:type value-ast))
+      (into {} (map-indexed (fn [i v] [i v]) (:children value-ast))))))
 
 (defn- infer-coercion-type
   "Infer the coercion type for an attribute from its malli AST."
   [malli-opts attr-key ast attr-schema]
-  (let [type-val (:type ast)]
+  (let [type-val (get-schema-type ast)]
     (case type-val
       :uuid :uuid
       :boolean :bool
@@ -375,10 +370,7 @@
       :vector :nippy
       :map :nippy
       :enum {:enum (extract-enum-values ast)}
-      :fn (cond
-            (is-local-time-fn? malli-opts attr-schema) :local-time
-            (is-zdt-fn? malli-opts attr-schema) :zdt
-            :else :zdt)  ; Default to zdt for :fn types
+      inst? :inst
       nil)))
 
 ;; ============================================================================
@@ -400,11 +392,11 @@
     (.putLong bb (.getLeastSignificantBits uuid))
     (.array bb)))
 
-(defn epoch-ms->zdt
-  "Convert epoch milliseconds to a ZonedDateTime in UTC."
+(defn epoch-ms->inst
+  "Convert epoch milliseconds to an Instant."
   [ms]
   (when ms
-    (tick/in (Instant/ofEpochMilli ms) "UTC")))
+    (Instant/ofEpochMilli ms)))
 
 (defn int->bool
   "Convert 0/1 integer to boolean. Throws for unexpected values."
@@ -415,12 +407,6 @@
       1 true
       (throw (ex-info "Invalid boolean value, expected 0 or 1"
                       {:value n})))))
-
-(defn str->local-time
-  "Parse a string to LocalTime."
-  [s]
-  (when s
-    (LocalTime/parse s)))
 
 (defn fast-thaw
   "Thaw a nippy-frozen blob using fast-thaw."
@@ -442,24 +428,16 @@
 ;; Type Coercion: Clojure -> SQLite
 ;; ============================================================================
 
-(defn zdt->epoch-ms
-  "Convert a ZonedDateTime or Instant to epoch milliseconds."
+(defn inst->epoch-ms
+  "Convert an Instant to epoch milliseconds."
   [x]
-  (cond
-    (instance? Instant x) (.toEpochMilli ^Instant x)
-    (instance? ZonedDateTime x) (.toEpochMilli (.toInstant ^ZonedDateTime x))
-    :else x))
+  (when x
+    (.toEpochMilli ^Instant x)))
 
 (defn bool->int
   "Convert a boolean to 0 or 1 for SQLite."
   [b]
   (if b 1 0))
-
-(defn local-time->str
-  "Convert LocalTime to string."
-  [lt]
-  (when lt
-    (str lt)))
 
 (defn fast-freeze
   "Freeze a value using nippy fast-freeze."
@@ -487,10 +465,9 @@
   [coerce-type]
   (case coerce-type
     :uuid bytes->uuid
-    :zdt epoch-ms->zdt
+    :inst epoch-ms->inst
     :bool int->bool
     :nippy fast-thaw
-    :local-time str->local-time
     (when (map? coerce-type)
       (when-let [enum-map (:enum coerce-type)]
         (make-enum-reader enum-map)))))
@@ -500,10 +477,9 @@
   [coerce-type]
   (case coerce-type
     :uuid uuid->bytes
-    :zdt zdt->epoch-ms
+    :inst inst->epoch-ms
     :bool bool->int
     :nippy fast-freeze
-    :local-time local-time->str
     (when (map? coerce-type)
       (when-let [enum-map (:enum coerce-type)]
         (make-enum-writer enum-map)))))
@@ -577,12 +553,7 @@
                                 "))"))
         enum-comment (when enum-map
                        (str " -- " (str/join ", " (map (fn [[k v]] (str (name v) " (" k ")"))
-                                                       (sort-by key enum-map)))))
-        ;; Special case: LocalTime stored as TEXT
-        col-type (if (and (= (:type ast) :fn)
-                          (is-local-time-fn? malli-opts (:value ast)))
-                   "TEXT"
-                   col-type)]
+                                                       (sort-by key enum-map)))))]
     (str col-name " " col-type
          (when is-primary? " PRIMARY KEY")
          (when (and (not optional?) (not is-primary?)) " NOT NULL")
