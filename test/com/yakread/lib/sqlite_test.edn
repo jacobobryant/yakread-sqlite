@@ -12,9 +12,6 @@
          bytes (uuid->bytes uuid)]
      (bytes->uuid bytes))}
   _
-  {:doc "epoch-ms->instant converts milliseconds to Instant"
-   :eval (str (epoch-ms->instant 1705320000000))}
-  _
   {:doc "epoch-ms->zdt converts milliseconds to ZonedDateTime"
    :eval (str (epoch-ms->zdt 1705320000000))}
   _
@@ -30,42 +27,35 @@
   {:doc "str->local-time parses time string"
    :eval (str (str->local-time "08:30:00"))}
   _
-  {:doc "thaw-blob thaws nippy-frozen data"
-   :eval (thaw-blob (nippy/freeze #{:monday :wednesday}))}
+  {:doc "fast-thaw thaws nippy-frozen data"
+   :eval (fast-thaw (nippy/fast-freeze #{:monday :wednesday}))}
   _
   {:doc "make-enum-reader creates reader that converts int to keyword"
    :eval (let [reader (make-enum-reader {0 :quarter 1 :annual})]
            [(reader 0) (reader 1)])}
   _
-  {:doc "parse-schema extracts tables from schema.sql"
-   :eval (let [schema (load-schema)]
-           (sort (keys schema)))}
+  {:doc "schema-info extracts tables from malli schema"
+   :eval (let [info (schema-info malli-opts)]
+           (sort (keys info)))}
   _
-  {:doc "parse-schema extracts columns for user table"
-   :eval (let [schema (load-schema)
-               user-cols (get schema :user)]
-           (mapv :column-name user-cols))}
+  {:doc "schema-info extracts attributes for user table"
+   :eval (let [info (schema-info malli-opts)
+               user-attrs (get info :user)]
+           (sort (keys user-attrs)))}
   _
-  {:doc "parse-schema extracts column types correctly"
-   :eval (let [schema (load-schema)
-               user-cols (get schema :user)
-               email-col (first (filter #(= "email" (:column-name %)) user-cols))]
-           {:name (:column-name email-col)
-            :type (:column-type email-col)})}
+  {:doc "generate-schema-sql produces SQL DDL"
+   :eval (let [sql (generate-schema-sql)]
+           ;; Check that it starts with the expected header
+           (clojure.string/starts-with? sql "-- Generated from malli schema"))}
   _
-  {:doc "parse-schema extracts enum values from CHECK constraint"
-   :eval (let [schema (load-schema)
-               user-cols (get schema :user)
-               plan-col (first (filter #(= "plan" (:column-name %)) user-cols))]
-           {:name (:column-name plan-col)
-            :enum-values (:enum-values plan-col)})}
+  {:doc "generate-schema-sql includes CREATE TABLE user"
+   :eval (let [sql (generate-schema-sql)]
+           (clojure.string/includes? sql "CREATE TABLE user"))}
   _
-  {:doc "parse-schema extracts comment annotations for nippy columns"
-   :eval (let [schema (load-schema)
-               user-cols (get schema :user)
-               roles-col (first (filter #(= "roles" (:column-name %)) user-cols))]
-           {:name (:column-name roles-col)
-            :comment (:comment roles-col)})}
+  {:doc "generate-schema-sql includes proper column types"
+   :eval (let [sql (generate-schema-sql)]
+           (and (clojure.string/includes? sql "email TEXT NOT NULL")
+                (clojure.string/includes? sql "id BLOB PRIMARY KEY")))}
   _
   {:doc "sqlite-resolvers returns resolvers for all tables"
    :eval (let [resolvers (sqlite-resolvers)]
@@ -73,14 +63,14 @@
   _
   {:doc "sqlite-resolvers creates resolver with correct name for user table"
    :eval (let [resolvers (sqlite-resolvers)
-               user-resolver (first (filter #(= 'com.yakread.lib.sqlite/user-sqlite-resolver
+               user-resolver (first (filter #(= 'com.yakread.lib.sqlite/user-resolver
                                                 (-> % :config ::pco/op-name))
                                             resolvers))]
            (some? user-resolver))}
   _
-  {:doc "sqlite-resolvers resolver has :xt/id as input"
+  {:doc "sqlite-resolvers resolver has :user/id as input"
    :eval (let [resolvers (sqlite-resolvers)
-               user-resolver (first (filter #(= 'com.yakread.lib.sqlite/user-sqlite-resolver
+               user-resolver (first (filter #(= 'com.yakread.lib.sqlite/user-resolver
                                                 (-> % :config ::pco/op-name))
                                             resolvers))
                input (-> user-resolver :config ::pco/input)]
@@ -88,7 +78,7 @@
   _
   {:doc "sqlite-resolvers resolver has batch? true"
    :eval (let [resolvers (sqlite-resolvers)
-               user-resolver (first (filter #(= 'com.yakread.lib.sqlite/user-sqlite-resolver
+               user-resolver (first (filter #(= 'com.yakread.lib.sqlite/user-resolver
                                                 (-> % :config ::pco/op-name))
                                             resolvers))
                batch? (-> user-resolver :config ::pco/batch?)]
@@ -96,7 +86,7 @@
   _
   {:doc "sqlite-resolvers resolver output includes expected user attributes"
    :eval (let [resolvers (sqlite-resolvers)
-               user-resolver (first (filter #(= 'com.yakread.lib.sqlite/user-sqlite-resolver
+               user-resolver (first (filter #(= 'com.yakread.lib.sqlite/user-resolver
                                                 (-> % :config ::pco/op-name))
                                             resolvers))
                output (-> user-resolver :config ::pco/output)]
@@ -104,5 +94,16 @@
            [(some #(= :user/email %) output)
             (some #(= :user/plan %) output)
             (some #(= :user/roles %) output)])}
+  _
+  {:doc "ad resolver output includes both :ad/user-id and :ad/user join"
+   :eval (let [resolvers (sqlite-resolvers)
+               ad-resolver (first (filter #(= 'com.yakread.lib.sqlite/ad-resolver
+                                              (-> % :config ::pco/op-name))
+                                          resolvers))
+               output (-> ad-resolver :config ::pco/output)]
+           ;; Should have :ad/user-id as raw key
+           ;; and {:ad/user [:user/id]} as join
+           [(some #(= :ad/user-id %) output)
+            (some #(= {:ad/user [:user/id]} %) output)])}
   _
   ]}

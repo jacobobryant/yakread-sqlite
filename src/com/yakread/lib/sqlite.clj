@@ -1,26 +1,385 @@
 (ns com.yakread.lib.sqlite
-  "SQLite integration utilities including Pathom resolvers.
+  "SQLite integration using malli schema as the source of truth.
    
    This namespace provides:
-   - Schema parsing from resources/schema.sql
-   - Column metadata extraction including comment annotations
-   - Coercion functions for reading SQLite values back to Clojure values
-   - Pathom resolvers for SQLite tables (similar to xtdb2-resolvers)"
+   1. Malli schema as the source of truth (generates SQLite DDL)
+   2. SQLite DDL generation from malli schema
+   3. Pathom resolvers generated from malli schema (like xtdb2-resolvers)
+   
+   Type inference:
+   - SQLite types are inferred from malli types (no explicit :sqlite/type needed)
+   - Coercion is inferred from malli types (no explicit :sqlite/coerce needed)
+   - Enums are auto-mapped to integers (0, 1, 2, ...)
+   
+   Note: next.jdbc automatically converts underscores to hyphens in column names,
+   and honeysql converts hyphens to underscores."
   (:require
-   [clojure.java.io :as io]
    [clojure.string :as str]
    [com.wsscode.pathom3.connect.operation :as pco]
    [com.wsscode.pathom3.connect.planner :as-alias pcp]
    [com.yakread.lib.core :as lib.core]
    [honey.sql :as sql]
+   [malli.core :as malli]
+   [malli.registry :as malr]
    [next.jdbc :as jdbc]
    [next.jdbc.result-set :as rs]
    [taoensso.nippy :as nippy]
    [tick.core :as tick])
   (:import
    [java.nio ByteBuffer]
+   [java.sql ResultSet]
    [java.time Instant LocalTime ZonedDateTime]
    [java.util UUID]))
+
+;; ============================================================================
+;; Schema Helpers
+;; ============================================================================
+
+(defn table 
+  "Define a table schema. Options map is optional."
+  [& args]
+  (let [[options map-args] (if (map? (first args))
+                             [(first args) (rest args)]
+                             [{} args])]
+    (into [:map (merge {:closed true} options)] map-args)))
+
+(def ? 
+  "Mark an attribute as optional."
+  {:optional true})
+
+(defn ref 
+  "Mark an attribute as a reference to another table."
+  [target] 
+  {:biff/ref (if (coll? target) target #{target})})
+
+(defn ?ref 
+  "Mark an optional attribute as a reference."
+  [target] 
+  (assoc (ref target) :optional true))
+
+;; ============================================================================
+;; SQLite Malli Schema
+;; ============================================================================
+;; 
+;; Schema design:
+;; - Each table has :table/id instead of :xt/id 
+;; - Reference attributes end with -id and have :biff/ref
+;; - Types are standard malli types; SQLite type is inferred
+;; - Enums automatically get integer mappings (0, 1, 2, ...)
+
+(def schema
+  {:user (table
+           [:user/id                    :uuid]
+           [:user/email                 [:string {:max 2000}]]
+           [:user/roles               ? [:set [:enum :admin]]]
+           [:user/joined-at           ? [:fn tick/zoned-date-time?]]
+           [:user/digest-days         ? [:set [:enum :sunday :monday :tuesday :wednesday 
+                                               :thursday :friday :saturday]]]
+           [:user/send-digest-at      ? [:fn #(instance? LocalTime %)]]
+           [:user/timezone            ? [:string {:max 2000}]]
+           [:user/digest-last-sent    ? [:fn tick/zoned-date-time?]]
+           [:user/from-the-sample     ? :boolean]
+           [:user/use-original-links  ? :boolean]
+           [:user/suppressed-at       ? [:fn tick/zoned-date-time?]]
+           [:user/email-username      ? [:string {:max 2000}]]
+           [:user/customer-id         ? :string]
+           [:user/plan                ? [:enum :quarter :annual]]
+           [:user/cancel-at           ? [:fn tick/zoned-date-time?]])
+
+   :feed (table
+           [:feed/id                :uuid]
+           [:feed/url               [:string {:max 2000}]]
+           [:feed/synced-at       ? [:fn tick/zoned-date-time?]]
+           [:feed/title           ? [:string {:max 2000}]]
+           [:feed/description     ? [:string {:max 2000}]]
+           [:feed/image-url       ? [:string {:max 2000}]]
+           [:feed/etag            ? [:string {:max 2000}]]
+           [:feed/last-modified   ? [:string {:max 2000}]]
+           [:feed/failed-syncs    ? :int]
+           [:feed/moderation      ? [:enum :approved :blocked]])
+
+   :sub (table
+          [:sub/id                     :uuid]
+          [:sub/user-id      (ref :user) :uuid]
+          [:sub/created-at             [:fn tick/zoned-date-time?]]
+          [:sub/pinned-at    ?         [:fn tick/zoned-date-time?]]
+          [:sub/record-type            [:enum :feed :email]]
+          ;; feed sub fields
+          [:sub/feed-id      ? (ref :feed) :uuid]
+          ;; email sub fields
+          [:sub/email-from           ? [:string {:max 2000}]]
+          [:sub/email-unsubscribed-at ? [:fn tick/zoned-date-time?]])
+
+   :item (table
+           [:item/id                  :uuid]
+           [:item/ingested-at         [:fn tick/zoned-date-time?]]
+           [:item/title             ? [:string {:max 2000}]]
+           [:item/url               ? [:string {:max 2000}]]
+           [:item/redirect-urls     ? [:set [:string {:max 2000}]]]
+           [:item/content           ? [:string {:max 2000}]]
+           [:item/content-key       ? :uuid]
+           [:item/published-at      ? [:fn tick/zoned-date-time?]]
+           [:item/excerpt           ? [:string {:max 2000}]]
+           [:item/author-name       ? [:string {:max 2000}]]
+           [:item/author-url        ? [:string {:max 2000}]]
+           [:item/feed-url          ? [:string {:max 2000}]]
+           [:item/lang              ? [:string {:max 2000}]]
+           [:item/site-name         ? [:string {:max 2000}]]
+           [:item/byline            ? [:string {:max 2000}]]
+           [:item/length            ? :int]
+           [:item/image-url         ? [:string {:max 2000}]]
+           [:item/paywalled         ? :boolean]
+           [:item/record-type         [:enum :feed :email :direct]]
+           ;; feed item fields
+           [:item/feed-id           ? (ref :feed) :uuid]
+           [:item/feed-guid         ? [:string {:max 2000}]]
+           ;; email item fields  
+           [:item/email-sub-id      ? (ref :sub) :uuid]
+           [:item/email-raw-content-key ? :uuid]
+           [:item/email-list-unsubscribe ? [:string {:max 5000}]]
+           [:item/email-list-unsubscribe-post ? [:string {:max 2000}]]
+           [:item/email-reply-to    ? [:string {:max 2000}]]
+           [:item/email-maybe-confirmation ? :boolean]
+           ;; direct item fields
+           [:item/direct-candidate-status ? [:enum :ingest-failed :blocked :approved]])
+
+   :redirect (table
+               [:redirect/id       :uuid]
+               [:redirect/url      [:string {:max 2000}]]
+               [:redirect/item-id  (ref :item) :uuid])
+
+   :user-item (table
+                [:user-item/id                  :uuid]
+                [:user-item/user-id   (ref :user) :uuid]
+                [:user-item/item-id   (ref :item) :uuid]
+                [:user-item/viewed-at       ?   [:fn tick/zoned-date-time?]]
+                [:user-item/skipped-at      ?   [:fn tick/zoned-date-time?]]
+                [:user-item/bookmarked-at   ?   [:fn tick/zoned-date-time?]]
+                [:user-item/favorited-at    ?   [:fn tick/zoned-date-time?]]
+                [:user-item/disliked-at     ?   [:fn tick/zoned-date-time?]]
+                [:user-item/reported-at     ?   [:fn tick/zoned-date-time?]]
+                [:user-item/report-reason   ?   [:string {:max 2000}]])
+
+   :digest (table
+             [:digest/id                        :uuid]
+             [:digest/user-id     (ref :user)   :uuid]
+             [:digest/sent-at                   [:fn tick/zoned-date-time?]]
+             [:digest/subject-id  (?ref :item)  :uuid]
+             [:digest/ad-id       (?ref :ad)    :uuid]
+             [:digest/bulk-send-id (?ref :bulk-send) :uuid])
+
+   :digest-item (table
+                  [:digest-item/id                  :uuid]
+                  [:digest-item/digest-id (ref :digest) :uuid]
+                  [:digest-item/item-id   (ref :item)   :uuid]
+                  [:digest-item/kind      [:enum :icymi :discover]])
+
+   :bulk-send (table
+                [:bulk-send/id              :uuid]
+                [:bulk-send/sent-at         [:fn tick/zoned-date-time?]]
+                [:bulk-send/payload-size    :int]
+                [:bulk-send/mailersend-id   :string]
+                [:bulk-send/digests         [:vector :uuid]])
+
+   :reclist (table
+              [:reclist/id                   :uuid]
+              [:reclist/user-id    (ref :user) :uuid]
+              [:reclist/created-at           [:fn tick/zoned-date-time?]]
+              [:reclist/clicked              [:set :uuid]])
+
+   :skip (table
+           [:skip/id                      :uuid]
+           [:skip/reclist-id (ref :reclist) :uuid]
+           [:skip/item-id    (ref :item)    :uuid])
+
+   :ad (table
+         [:ad/id                     :uuid]
+         [:ad/user-id      (ref :user) :uuid]
+         [:ad/approve-state          [:enum :pending :approved :rejected]]
+         [:ad/updated-at             [:fn tick/zoned-date-time?]]
+         [:ad/balance                :int]
+         [:ad/recent-cost            :int]
+         [:ad/bid            ?       :int]
+         [:ad/budget         ?       :int]
+         [:ad/url            ?       [:string {:max 2000}]]
+         [:ad/title          ?       [:string {:max 75}]]
+         [:ad/description    ?       [:string {:max 250}]]
+         [:ad/image-url      ?       [:string {:max 2000}]]
+         [:ad/paused         ?       :boolean]
+         [:ad/payment-failed ?       :boolean]
+         [:ad/customer-id    ?       :string]
+         [:ad/session-id     ?       :string]
+         [:ad/payment-method ?       :string]
+         [:ad/card-details   ?       [:map {:closed true}
+                                      [:brand     :string]
+                                      [:last4     :string]
+                                      [:exp-year  :int]
+                                      [:exp-month :int]]])
+
+   :ad-click (table
+               [:ad-click/id                      :uuid]
+               [:ad-click/user-id       (ref :user) :uuid]
+               [:ad-click/ad-id         (ref :ad)   :uuid]
+               [:ad-click/created-at              [:fn tick/zoned-date-time?]]
+               [:ad-click/cost                    :int]
+               [:ad-click/source                  [:enum :web :email]])
+
+   :ad-credit (table
+                [:ad-credit/id                     :uuid]
+                [:ad-credit/ad-id         (ref :ad) :uuid]
+                [:ad-credit/source                 [:enum :charge :manual]]
+                [:ad-credit/amount                 :int]
+                [:ad-credit/created-at             [:fn tick/zoned-date-time?]]
+                [:ad-credit/charge-status ?        [:enum :pending :confirmed :failed]])
+
+   :mv-sub (table
+             [:mv-sub/id                     :uuid]
+             [:mv-sub/sub-id       (ref :sub) :uuid]
+             [:mv-sub/affinity-low     ?     :double]
+             [:mv-sub/affinity-high    ?     :double]
+             [:mv-sub/last-published   ?     [:fn tick/zoned-date-time?]]
+             [:mv-sub/unread           ?     :int]
+             [:mv-sub/read             ?     :int])
+
+   :mv-user (table
+              [:mv-user/id                        :uuid]
+              [:mv-user/user-id        (ref :user) :uuid]
+              [:mv-user/current-item-id (?ref :item) :uuid])
+
+   :deleted-user (table
+                   [:deleted-user/id                    :uuid]
+                   [:deleted-user/email-username-hash   :string])})
+
+;; ============================================================================
+;; Malli Registry and Options  
+;; ============================================================================
+
+(def malli-opts
+  {:registry (malr/composite-registry
+              (malli/default-schemas)
+              (malr/mutable-registry schema))})
+
+;; ============================================================================
+;; Schema Info Extraction
+;; ============================================================================
+
+(defn- table-id-key 
+  "Get the ID key for a table (e.g., :user -> :user/id)"
+  [table-key]
+  (keyword (name table-key) "id"))
+
+(defn table-ast? 
+  "Check if an AST represents a table (has an id column)."
+  [table-key ast]
+  (and (= :map (:type ast))
+       (contains? (:keys ast) (table-id-key table-key))))
+
+(defn deref-ast 
+  "Dereference a schema and get its AST."
+  [schema malli-opts]
+  (some-> (try (malli/deref-recursive schema malli-opts) (catch Exception _))
+          malli/ast))
+
+(defn table-asts 
+  "Get all table ASTs from a schema."
+  [table-key malli-opts]
+  (when-let [ast (deref-ast table-key malli-opts)]
+    (if (table-ast? table-key ast)
+      [ast]
+      (->> (tree-seq (constantly true) :children ast)
+           (filterv #(table-ast? table-key %))))))
+
+(defn- attr-union [m1 m2]
+  (let [shared-keys (into [] (filter #(contains? m2 %)) (keys m1))]
+    (when-some [conflicting-attr (first (filter #(not= (m1 %) (m2 %)) shared-keys))]
+      (throw (ex-info "An attribute has a conflicting definition"
+                      {:attr conflicting-attr
+                       :definition-1 (m1 conflicting-attr)
+                       :definition-2 (m2 conflicting-attr)})))
+    (merge m1 m2)))
+
+(defn schema-info 
+  "Extract schema info: map of table-key -> attrs map."
+  [malli-opts]
+  (into {}
+        (keep (fn [schema-k]
+                (let [attrs (->> (table-asts schema-k malli-opts)
+                                 (mapv :keys)
+                                 (reduce attr-union {}))]
+                  (when (not-empty attrs)
+                    [schema-k attrs]))))
+        (keys (malr/schemas (:registry malli-opts)))))
+
+;; ============================================================================
+;; Type Inference from Malli
+;; ============================================================================
+
+(defn- infer-sqlite-type
+  "Infer SQLite type from malli AST. Throws if type cannot be determined."
+  [attr-key ast]
+  (let [type-val (:type ast)]
+    (case type-val
+      :uuid "BLOB"
+      :string "TEXT"
+      :int "INT"
+      :double "REAL"
+      :boolean "INT"
+      :set "BLOB"
+      :vector "BLOB"
+      :map "BLOB"
+      :enum "INT"
+      :fn "INT"  ; Assume :fn types are timestamps (INT) unless it's LocalTime
+      (throw (ex-info (str "Cannot infer SQLite type for attribute " attr-key
+                           ". Please use a supported malli type: :uuid, :string, :int, :double, "
+                           ":boolean, :set, :vector, :map, :enum, or [:fn predicate]")
+                      {:attr attr-key :malli-type type-val})))))
+
+(defn- extract-enum-values
+  "Extract enum values from a malli AST, returning map of {0 :val1, 1 :val2, ...}"
+  [ast]
+  (when (= :enum (:type ast))
+    (into {} (map-indexed (fn [i v] [i v]) (:children ast)))))
+
+(defn- is-local-time-fn?
+  "Check if a :fn schema is for LocalTime."
+  [malli-opts attr-schema]
+  (try
+    (let [schema (malli/deref-recursive attr-schema malli-opts)
+          children (malli/children schema)]
+      (when (seq children)
+        (let [pred (first children)]
+          (and (fn? pred)
+               (pred (LocalTime/now))))))
+    (catch Exception _ false)))
+
+(defn- is-zdt-fn?
+  "Check if a :fn schema is for ZonedDateTime."
+  [malli-opts attr-schema]
+  (try
+    (let [schema (malli/deref-recursive attr-schema malli-opts)
+          children (malli/children schema)]
+      (when (seq children)
+        (let [pred (first children)]
+          (and (fn? pred)
+               (pred (tick/zoned-date-time))))))
+    (catch Exception _ false)))
+
+(defn- infer-coercion-type
+  "Infer the coercion type for an attribute from its malli AST."
+  [malli-opts attr-key ast attr-schema]
+  (let [type-val (:type ast)]
+    (case type-val
+      :uuid :uuid
+      :boolean :bool
+      :set :nippy
+      :vector :nippy
+      :map :nippy
+      :enum {:enum (extract-enum-values ast)}
+      :fn (cond
+            (is-local-time-fn? malli-opts attr-schema) :local-time
+            (is-zdt-fn? malli-opts attr-schema) :zdt
+            :else :zdt)  ; Default to zdt for :fn types
+      nil)))
 
 ;; ============================================================================
 ;; Type Coercion: SQLite -> Clojure
@@ -41,25 +400,17 @@
     (.putLong bb (.getLeastSignificantBits uuid))
     (.array bb)))
 
-(defn epoch-ms->instant
-  "Convert epoch milliseconds to an Instant."
-  [ms]
-  (when ms
-    (Instant/ofEpochMilli ms)))
-
 (defn epoch-ms->zdt
   "Convert epoch milliseconds to a ZonedDateTime in UTC."
   [ms]
   (when ms
-    (tick/in (epoch-ms->instant ms) "UTC")))
+    (tick/in (Instant/ofEpochMilli ms) "UTC")))
 
 (defn int->bool
   "Convert 0/1 integer to boolean."
   [n]
   (when (some? n)
-    (case n
-      0 false
-      1 true)))
+    (= n 1)))
 
 (defn str->local-time
   "Parse a string to LocalTime."
@@ -67,430 +418,28 @@
   (when s
     (LocalTime/parse s)))
 
-(defn thaw-blob
-  "Thaw a nippy-frozen blob."
+(defn fast-thaw
+  "Thaw a nippy-frozen blob using fast-thaw."
   [blob]
   (when blob
-    (nippy/thaw blob)))
+    (nippy/fast-thaw blob)))
 
 (defn make-enum-reader
   "Create an enum reader function from a db-value->clojure-value map."
-  [db->clj]
+  [enum-map]
   (fn [db-val]
     (when (some? db-val)
-      (or (get db->clj db-val)
+      (or (get enum-map db-val)
           (throw (ex-info "Unknown enum value"
                           {:value db-val
-                           :available-values db->clj}))))))
+                           :available-values enum-map}))))))
 
 ;; ============================================================================
-;; Schema Parsing
+;; Type Coercion: Clojure -> SQLite
 ;; ============================================================================
 
-(defn- parse-column-line
-  "Parse a single column definition line from a CREATE TABLE statement.
-   Returns a map with :name, :type, :nullable, :comment, :foreign-key."
-  [line table-name]
-  (let [line (str/trim line)
-        ;; Skip FOREIGN KEY and other non-column lines
-        non-column? (or (str/starts-with? line "FOREIGN KEY")
-                        (str/starts-with? line "PRIMARY KEY")
-                        (str/starts-with? line "UNIQUE")
-                        (str/starts-with? line "CHECK")
-                        (str/blank? line)
-                        (str/starts-with? line ")"))]
-    (when-not non-column?
-      (let [;; Parse column name and type
-            [_ name type-and-rest] (re-matches #"(\w+)\s+(\S+.*)" line)
-            ;; Extract comment if present
-            [_ rest-no-comment comment] (if-let [m (re-matches #"(.*?)\s*--\s*(.*)" type-and-rest)]
-                                          m
-                                          [nil type-and-rest nil])
-            ;; Parse type, modifiers, and CHECK constraint
-            type-str (first (str/split rest-no-comment #"\s+"))
-            nullable? (not (str/includes? rest-no-comment "NOT NULL"))
-            ;; Check for enum via CHECK constraint
-            check-match (re-find #"CHECK\s*\(\s*\w+\s+IN\s*\(([^)]+)\)" rest-no-comment)
-            enum-values (when check-match
-                          (->> (str/split (second check-match) #",")
-                               (mapv #(Integer/parseInt (str/trim %)))))]
-        (when name
-          {:column-name name
-           :column-type (keyword (str/lower-case type-str))
-           :nullable? nullable?
-           :comment comment
-           :enum-values enum-values
-           :table-name table-name})))))
-
-(defn- parse-table-statement
-  "Parse a CREATE TABLE statement and return table metadata."
-  [sql-text]
-  (let [;; Extract table name
-        [_ table-name] (re-find #"CREATE TABLE\s+(\w+)" sql-text)
-        ;; Extract column definitions between ( and )
-        [_ columns-text] (re-find #"CREATE TABLE\s+\w+\s*\((.*)\)\s*STRICT" sql-text)
-        ;; Split by comma (but be careful with CHECK constraints that contain commas)
-        lines (when columns-text
-                (-> columns-text
-                    (str/replace #"\n" " ")
-                    (str/split #",(?![^()]*\))")))]
-    (when table-name
-      {:table-name table-name
-       :columns (->> lines
-                     (keep #(parse-column-line % table-name))
-                     vec)})))
-
-(defn parse-schema
-  "Parse schema.sql and return a map of table-name -> column-info."
-  [schema-sql]
-  (let [;; Split by CREATE TABLE statements
-        statements (->> (str/split schema-sql #"(?=CREATE TABLE)")
-                        (filter #(str/includes? % "CREATE TABLE")))]
-    (into {}
-          (keep (fn [stmt]
-                  (when-let [{:keys [table-name columns]} (parse-table-statement stmt)]
-                    [(keyword table-name) columns])))
-          statements)))
-
-(defn load-schema
-  "Load and parse the schema from resources/schema.sql."
-  []
-  (parse-schema (slurp (io/resource "schema.sql"))))
-
-;; ============================================================================
-;; Column Coercion Configuration
-;; ============================================================================
-
-(defn- infer-coercion
-  "Infer the coercion function for a column based on its type and metadata."
-  [{:keys [column-name column-type comment enum-values table-name]}]
-  (let [;; Check if it's a uuid column (BLOB named 'id' or ends with '_id')
-        uuid-column? (and (= column-type :blob)
-                          (or (= column-name "id")
-                              (str/ends-with? column-name "_id")
-                              (str/ends-with? column-name "_key")))
-        ;; Check if it's a timestamp column (INT ending in _at)
-        timestamp-column? (and (= column-type :int)
-                               (str/ends-with? column-name "_at"))
-        ;; Check if it's a boolean column (INT that's not an enum or timestamp)
-        bool-column? (and (= column-type :int)
-                          (nil? enum-values)
-                          (not (str/ends-with? column-name "_at"))  ;; Not a timestamp
-                          ;; Known boolean columns
-                          (#{"from_the_sample" "use_original_links" "paywalled"
-                             "email_maybe_confirmation" "paused" "payment_failed"} column-name))
-        ;; Check for special handling via comments
-        nippy-column? (and (= column-type :blob)
-                           (some? comment)
-                           (or (str/includes? comment "[:set")
-                               (str/includes? comment "[:vector")
-                               (str/includes? comment "[:map")))
-        ;; Check for time type (send_digest_at stores LocalTime as TEXT)
-        local-time-column? (and (= column-type :text)
-                                (= column-name "send_digest_at"))]
-    (cond
-      uuid-column? :uuid
-      nippy-column? :nippy
-      timestamp-column? :zdt
-      bool-column? :bool
-      local-time-column? :local-time
-      enum-values [:enum column-name]
-      :else nil)))
-
-(defn- make-column-coercions
-  "Create coercion configuration for all columns in a table."
-  [columns]
-  (into {}
-        (keep (fn [{:keys [column-name] :as col}]
-                (when-let [coercion (infer-coercion col)]
-                  [column-name coercion])))
-        columns))
-
-;; ============================================================================
-;; SQLite to Clojure Attribute Mapping
-;; ============================================================================
-
-(def ^:private special-column-mappings
-  "Special cases where SQLite column names don't follow the standard conversion pattern.
-   Maps [table column] -> clojure-attribute"
-  {[:user "timezone"] :user/timezone*
-   [:mv_sub "n_read"] :mv.sub/read
-   [:sub "feed_id"] :sub.feed/feed
-   [:sub "email_from"] :sub.email/from
-   [:sub "email_unsubscribed_at"] :sub.email/unsubscribed-at
-   [:item "feed_id"] :item.feed/feed
-   [:item "feed_guid"] :item.feed/guid
-   [:item "email_sub_id"] :item.email/sub
-   [:item "email_raw_content_key"] :item.email/raw-content-key
-   [:item "email_list_unsubscribe"] :item.email/list-unsubscribe
-   [:item "email_list_unsubscribe_post"] :item.email/list-unsubscribe-post
-   [:item "email_reply_to"] :item.email/reply-to
-   [:item "email_maybe_confirmation"] :item.email/maybe-confirmation
-   [:item "direct_candidate_status"] :item.direct/candidate-status
-   [:digest_item "digest_id"] :digest-item/digest
-   [:digest_item "item_id"] :digest-item/item
-   [:digest_item "kind"] :digest-item/kind
-   [:ad "approve_state"] :ad/approve-state
-   [:ad "recent_cost"] :ad/recent-cost
-   [:ad "payment_failed"] :ad/payment-failed
-   [:ad "customer_id"] :ad/customer-id
-   [:ad "session_id"] :ad/session-id
-   [:ad "payment_method"] :ad/payment-method
-   [:ad "card_details"] :ad/card-details
-   [:ad "image_url"] :ad/image-url
-   [:ad_click "user_id"] :ad.click/user
-   [:ad_click "ad_id"] :ad.click/ad
-   [:ad_click "created_at"] :ad.click/created-at
-   [:ad_click "cost"] :ad.click/cost
-   [:ad_click "source"] :ad.click/source
-   [:ad_credit "ad_id"] :ad.credit/ad
-   [:ad_credit "source"] :ad.credit/source
-   [:ad_credit "amount"] :ad.credit/amount
-   [:ad_credit "created_at"] :ad.credit/created-at
-   [:ad_credit "charge_status"] :ad.credit/charge-status
-   [:mv_sub "sub_id"] :mv.sub/sub
-   [:mv_sub "affinity_low"] :mv.sub/affinity-low
-   [:mv_sub "affinity_high"] :mv.sub/affinity-high
-   [:mv_sub "last_published"] :mv.sub/last-published
-   [:mv_sub "unread"] :mv.sub/unread
-   [:mv_user "user_id"] :mv.user/user
-   [:mv_user "current_item_id"] :mv.user/current-item
-   [:deleted_user "email_username_hash"] :deleted-user/email-username-hash
-   [:bulk_send "sent_at"] :bulk-send/sent-at
-   [:bulk_send "payload_size"] :bulk-send/payload-size
-   [:bulk_send "mailersend_id"] :bulk-send/mailersend-id
-   [:bulk_send "digests"] :bulk-send/digests
-   [:reclist "user_id"] :reclist/user
-   [:reclist "created_at"] :reclist/created-at
-   [:reclist "clicked"] :reclist/clicked
-   [:skip "reclist_id"] :skip/reclist
-   [:skip "item_id"] :skip/item
-   [:user_item "user_id"] :user-item/user
-   [:user_item "item_id"] :user-item/item
-   [:user_item "viewed_at"] :user-item/viewed-at
-   [:user_item "skipped_at"] :user-item/skipped-at
-   [:user_item "bookmarked_at"] :user-item/bookmarked-at
-   [:user_item "favorited_at"] :user-item/favorited-at
-   [:user_item "disliked_at"] :user-item/disliked-at
-   [:user_item "reported_at"] :user-item/reported-at
-   [:user_item "report_reason"] :user-item/report-reason
-   [:digest "user_id"] :digest/user
-   [:digest "sent_at"] :digest/sent-at
-   [:digest "subject_id"] :digest/subject
-   [:digest "ad_id"] :digest/ad
-   [:digest "bulk_send_id"] :digest/bulk-send})
-
-(defn- sql-table->clj-namespace
-  "Convert SQLite table name to Clojure namespace prefix."
-  [table-name]
-  (-> (name table-name)
-      (str/replace "_" "-")))
-
-(defn- sql-column->clj-attr
-  "Convert SQLite column name to Clojure attribute keyword.
-   Uses special mappings when available, otherwise follows standard naming convention."
-  [table-name column-name]
-  (let [table-kw (if (keyword? table-name) table-name (keyword table-name))
-        col-str (if (keyword? column-name) (name column-name) column-name)]
-    (or (get special-column-mappings [table-kw col-str])
-        ;; Default conversion: table/column with underscores -> hyphens
-        (if (= col-str "id")
-          :xt/id
-          (keyword (sql-table->clj-namespace table-kw)
-                   (str/replace col-str "_" "-"))))))
-
-;; ============================================================================
-;; Reference (Foreign Key) Configuration  
-;; ============================================================================
-
-(def ^:private ref-columns
-  "Set of attributes that are references to other entities.
-   These should be wrapped as {:xt/id value} in resolver output."
-  #{:sub/user :sub.feed/feed :item.feed/feed :item.email/sub
-    :user-item/user :user-item/item
-    :digest/user :digest/subject :digest/ad :digest/bulk-send
-    :digest-item/digest :digest-item/item
-    :reclist/user
-    :skip/reclist :skip/item
-    :ad/user
-    :ad.click/user :ad.click/ad
-    :ad.credit/ad
-    :mv.sub/sub
-    :mv.user/user :mv.user/current-item
-    :redirect/item})
-
-(defn- ref?
-  "Check if an attribute is a reference to another entity."
-  [attr]
-  (contains? ref-columns attr))
-
-;; ============================================================================
-;; Enum Definitions by Column
-;; ============================================================================
-
-(def ^:private column-enums
-  "Map column names to their enum mappings (db-value -> clojure-value)."
-  {"plan" {0 :quarter, 1 :annual}
-   "moderation" {0 :approved, 1 :blocked}
-   "approve_state" {0 :pending, 1 :approved, 2 :rejected}
-   "source" {0 :web, 1 :email}  ; Used in ad_click and ad_credit
-   "charge_status" {0 :pending, 1 :confirmed, 2 :failed}
-   "kind" {0 :icymi, 1 :discover}
-   "record_type" {0 :feed, 1 :email, 2 :direct}
-   "direct_candidate_status" {0 :ingest-failed, 1 :blocked, 2 :approved}})
-
-;; ad_credit uses a different source enum than ad_click
-(def ^:private ad-credit-source-enum
-  {0 :charge, 1 :manual})
-
-;; ============================================================================
-;; Schema Metadata Cache
-;; ============================================================================
-
-(def ^:private schema-cache
-  "Cached schema metadata. Loaded lazily."
-  (delay (load-schema)))
-
-(defn get-schema
-  "Get the parsed schema (cached)."
-  []
-  @schema-cache)
-
-;; ============================================================================
-;; Row Coercion
-;; ============================================================================
-
-(defn- get-coercion-fn
-  "Get the coercion function for a column."
-  [coercion-type column-name table-name]
-  (case coercion-type
-    :uuid bytes->uuid
-    :zdt epoch-ms->zdt
-    :bool int->bool
-    :nippy thaw-blob
-    :local-time str->local-time
-    ;; Handle enum with special case for ad_credit source
-    (if (and (vector? coercion-type)
-             (= :enum (first coercion-type)))
-      (let [enum-map (if (and (= table-name :ad_credit)
-                              (= column-name "source"))
-                       ad-credit-source-enum
-                       (get column-enums column-name))]
-        (make-enum-reader enum-map))
-      identity)))
-
-(defn- coerce-row
-  "Coerce a single database row to Clojure values.
-   Takes the table name, column coercions map, and the raw row."
-  [table-name column-coercions row]
-  (reduce-kv
-   (fn [result col-kw value]
-     (let [col-str (name col-kw)
-           attr (sql-column->clj-attr table-name col-str)
-           coercion-type (get column-coercions col-str)
-           coerce-fn (when coercion-type
-                       (get-coercion-fn coercion-type col-str table-name))
-           coerced-value (if coerce-fn
-                           (coerce-fn value)
-                           value)]
-       (assoc result attr coerced-value)))
-   {}
-   row))
-
-;; ============================================================================
-;; Query Execution
-;; ============================================================================
-
-(defn- execute-query
-  "Execute a query and coerce results."
-  [conn table-name column-coercions sql-map]
-  (let [[sql-str & params] (sql/format sql-map)
-        ;; Use as-unqualified-maps to preserve original column names
-        raw-results (jdbc/execute! conn (into [sql-str] params)
-                                   {:builder-fn rs/as-unqualified-maps})]
-    (mapv #(coerce-row table-name column-coercions %) raw-results)))
-
-;; ============================================================================
-;; SQLite Pathom Resolvers
-;; ============================================================================
-
-(defn- table-columns->output
-  "Convert table columns to Pathom resolver output format."
-  [table-name columns]
-  (vec (for [{:keys [column-name]} columns
-             :let [attr (sql-column->clj-attr table-name column-name)]
-             :when (not= attr :xt/id)]
-         (if (ref? attr)
-           {attr [:xt/id]}
-           attr))))
-
-(defn- joinify
-  "Wrap reference values as {:xt/id value}."
-  [[k v]]
-  (if (ref? k)
-    [k (when v {:xt/id v})]
-    [k v]))
-
-(defn- joinify-map
-  "Apply joinify to all entries in a map."
-  [m]
-  (into {} (map joinify) m))
-
-(defn- expects
-  "Get the expected outputs from Pathom environment."
-  [env]
-  (-> env
-      ::pcp/node
-      ::pcp/expects
-      keys
-      vec))
-
-(defn sqlite-resolvers
-  "Create Pathom resolvers for SQLite tables.
-   
-   Unlike xtdb2-resolvers which tries to select only needed columns,
-   this always does SELECT * since SQLite is row-oriented and selecting
-   all columns is efficient.
-   
-   Each resolver:
-   - Takes {:xt/id uuid} as input
-   - Returns all columns for that table
-   - Coerces SQLite values back to Clojure types
-   - Wraps reference columns as {:xt/id value}"
-  ([]
-   (sqlite-resolvers (get-schema)))
-  ([schema]
-   (for [[table-kw columns] schema
-         :let [table-name (name table-kw)
-               column-coercions (make-column-coercions columns)
-               output (table-columns->output table-kw columns)
-               op-name (symbol "com.yakread.lib.sqlite"
-                               (str table-name "-sqlite-resolver"))]]
-     (pco/resolver op-name
-                   {::pco/input [:xt/id]
-                    ::pco/output output
-                    ::pco/batch? true}
-                   (fn [{:keys [biff/db] :as env} inputs]
-                     (let [ids (mapv :xt/id inputs)
-                           id-bytes (mapv uuid->bytes ids)
-                           sql-map {:select :*
-                                    :from (keyword table-name)
-                                    :where [:in :id id-bytes]}
-                           results (execute-query db (keyword table-name) column-coercions sql-map)
-                           id->result (into {} (map (juxt :xt/id identity)) results)]
-                       (mapv (fn [{:keys [xt/id]}]
-                               (-> (get id->result id {})
-                                   lib.core/some-vals
-                                   joinify-map
-                                   (assoc :xt/id id)))
-                             inputs)))))))
-
-;; ============================================================================
-;; Utility Functions for Writing
-;; ============================================================================
-
-(defn instant->epoch-ms
-  "Convert an Instant or ZonedDateTime to epoch milliseconds."
+(defn zdt->epoch-ms
+  "Convert a ZonedDateTime or Instant to epoch milliseconds."
   [x]
   (cond
     (instance? Instant x) (.toEpochMilli ^Instant x)
@@ -502,15 +451,278 @@
   [b]
   (if b 1 0))
 
-(defn coerce-value-for-write
-  "Coerce a Clojure value for SQLite storage based on its type."
+(defn local-time->str
+  "Convert LocalTime to string."
+  [lt]
+  (when lt
+    (str lt)))
+
+(defn fast-freeze
+  "Freeze a value using nippy fast-freeze."
   [v]
-  (cond
-    (uuid? v) (uuid->bytes v)
-    (instance? Instant v) (instant->epoch-ms v)
-    (instance? ZonedDateTime v) (instant->epoch-ms v)
-    (boolean? v) (bool->int v)
-    (set? v) (nippy/freeze v)
-    (map? v) (nippy/freeze v)
-    (vector? v) (nippy/freeze v)
-    :else v))
+  (when v
+    (nippy/fast-freeze v)))
+
+(defn make-enum-writer
+  "Create an enum writer from a clojure-value->db-value map."
+  [enum-map]
+  (let [reverse-map (into {} (map (fn [[k v]] [v k]) enum-map))]
+    (fn [clj-val]
+      (when (some? clj-val)
+        (or (get reverse-map clj-val)
+            (throw (ex-info "Unknown enum value for write"
+                            {:value clj-val
+                             :available-values reverse-map})))))))
+
+;; ============================================================================
+;; Coercion Map Building  
+;; ============================================================================
+
+(defn- get-coerce-read-fn
+  "Get the read coercion function for a coercion type."
+  [coerce-type]
+  (case coerce-type
+    :uuid bytes->uuid
+    :zdt epoch-ms->zdt
+    :bool int->bool
+    :nippy fast-thaw
+    :local-time str->local-time
+    (when (map? coerce-type)
+      (when-let [enum-map (:enum coerce-type)]
+        (make-enum-reader enum-map)))))
+
+(defn- get-coerce-write-fn
+  "Get the write coercion function for a coercion type."
+  [coerce-type]
+  (case coerce-type
+    :uuid uuid->bytes
+    :zdt zdt->epoch-ms
+    :bool bool->int
+    :nippy fast-freeze
+    :local-time local-time->str
+    (when (map? coerce-type)
+      (when-let [enum-map (:enum coerce-type)]
+        (make-enum-writer enum-map)))))
+
+(defn build-coercions
+  "Build coercion maps for a table's attributes.
+   Returns {:read {attr coerce-fn} :write {attr coerce-fn}}"
+  [table-key attrs malli-opts]
+  (let [id-key (table-id-key table-key)]
+    (reduce
+     (fn [acc [attr ast]]
+       (let [attr-schema (:value ast)
+             coerce-type (infer-coercion-type malli-opts attr ast attr-schema)]
+         (if coerce-type
+           (let [read-fn (get-coerce-read-fn coerce-type)
+                 write-fn (get-coerce-write-fn coerce-type)]
+             (cond-> acc
+               read-fn (assoc-in [:read attr] read-fn)
+               write-fn (assoc-in [:write attr] write-fn)))
+           acc)))
+     {:read {} :write {}}
+     attrs)))
+
+;; ============================================================================
+;; Custom Builder Function for Coercion
+;; ============================================================================
+
+(defn make-column-reader
+  "Create a custom column reader that applies coercions.
+   Coercions is a map of column-keyword -> coerce-fn."
+  [table-key coercions]
+  (let [id-key (table-id-key table-key)]
+    (fn column-reader [builder ^ResultSet rs ^Integer i]
+      (let [col-kw (nth (:cols builder) (dec i))
+            ;; Map :id to :table/id
+            attr (if (= col-kw :id)
+                   id-key
+                   (keyword (name table-key) (name col-kw)))
+            value (.getObject rs i)
+            coerce-fn (get coercions attr)
+            coerced-value (if (and coerce-fn (some? value))
+                            (coerce-fn value)
+                            value)]
+        (rs/read-column-by-index coerced-value (:rsmeta builder) i)))))
+
+;; ============================================================================
+;; SQLite DDL Generation
+;; ============================================================================
+
+(defn- attr->column-name
+  "Convert an attribute keyword to SQLite column name."
+  [table-key attr]
+  (let [id-key (table-id-key table-key)]
+    (if (= attr id-key)
+      "id"
+      (str/replace (name attr) "-" "_"))))
+
+(defn- generate-column-def
+  "Generate a single column definition."
+  [table-key malli-opts [attr ast]]
+  (let [col-name (attr->column-name table-key attr)
+        col-type (infer-sqlite-type attr ast)
+        optional? (get-in ast [:properties :optional])
+        id-key (table-id-key table-key)
+        is-primary? (= attr id-key)
+        ;; Handle enums
+        enum-map (extract-enum-values ast)
+        check-constraint (when enum-map
+                           (str " CHECK (" col-name " IN ("
+                                (str/join ", " (keys enum-map))
+                                "))"))
+        enum-comment (when enum-map
+                       (str " -- " (str/join ", " (map (fn [[k v]] (str (name v) " (" k ")"))
+                                                       (sort-by key enum-map)))))
+        ;; Special case: LocalTime stored as TEXT
+        col-type (if (and (= (:type ast) :fn)
+                          (is-local-time-fn? malli-opts (:value ast)))
+                   "TEXT"
+                   col-type)]
+    (str col-name " " col-type
+         (when is-primary? " PRIMARY KEY")
+         (when (and (not optional?) (not is-primary?)) " NOT NULL")
+         check-constraint
+         enum-comment)))
+
+(defn- generate-foreign-keys
+  "Generate FOREIGN KEY constraints for a table."
+  [table-key attrs]
+  (into []
+        (keep (fn [[attr ast]]
+                (when-let [ref-set (get-in ast [:properties :biff/ref])]
+                  (let [col-name (attr->column-name table-key attr)
+                        ref-table (first (if (set? ref-set) ref-set [ref-set]))]
+                    (str "FOREIGN KEY(" col-name ") REFERENCES " (name ref-table) "(id)")))))
+        attrs))
+
+(defn generate-create-table
+  "Generate a CREATE TABLE statement for a table."
+  [malli-opts table-key attrs]
+  (let [col-defs (mapv #(generate-column-def table-key malli-opts %) attrs)
+        fk-constraints (generate-foreign-keys table-key attrs)
+        all-lines (concat col-defs fk-constraints)]
+    (str "CREATE TABLE " (str/replace (name table-key) "-" "_") " (\n  "
+         (str/join ",\n  " all-lines)
+         "\n) STRICT;")))
+
+(defn generate-schema-sql
+  "Generate the complete schema.sql from malli schema."
+  ([]
+   (generate-schema-sql malli-opts))
+  ([malli-opts]
+   (let [info (schema-info malli-opts)
+         ;; Order tables to handle foreign key dependencies
+         table-order [:user :feed :sub :item :redirect :user-item :bulk-send :digest 
+                      :digest-item :reclist :skip :ad :ad-click :ad-credit 
+                      :mv-sub :mv-user :deleted-user]]
+     (str "-- Generated from malli schema\n"
+          "-- test:    `sqlite3def storage/sqlite/test.db --dry-run -f resources/schema.sql`\n"
+          "-- migrate: `sqlite3def storage/sqlite/test.db --apply -f resources/schema.sql`\n\n"
+          (str/join "\n\n"
+                    (for [table table-order
+                          :let [attrs (get info table)]
+                          :when attrs]
+                      (generate-create-table malli-opts table attrs)))))))
+
+;; ============================================================================
+;; SQLite Pathom Resolvers
+;; ============================================================================
+
+(def table-whitelist
+  "Tables that should have resolvers generated."
+  #{:feed :ad-credit :bulk-send :mv-sub :user-item :sub :digest-item
+    :item :mv-user :digest :reclist :ad-click :deleted-user :redirect :ad :user :skip})
+
+(defn- strip-id-suffix
+  "Remove -id suffix from an attribute name: :ad/user-id -> :ad/user"
+  [attr]
+  (let [ns (namespace attr)
+        n (name attr)]
+    (if (str/ends-with? n "-id")
+      (keyword ns (subs n 0 (- (count n) 3)))
+      attr)))
+
+(defn- ref-target
+  "Get the target table for a reference attribute."
+  [attrs attr]
+  (when-let [ref-set (get-in attrs [attr :properties :biff/ref])]
+    (first (if (set? ref-set) ref-set [ref-set]))))
+
+(defn sqlite-resolvers
+  "Create Pathom resolvers for SQLite tables from malli schema.
+   
+   For reference attributes ending in -id:
+   - Returns the raw ID as :table/ref-id
+   - Also returns a join without the -id suffix as {:ref-table/id uuid}
+   
+   Example: {:ad/user-id #uuid \"...\", :ad/user {:user/id #uuid \"...\"}}"
+  ([]
+   (sqlite-resolvers malli-opts))
+  ([malli-opts]
+   (for [[table-key attrs] (schema-info malli-opts)
+         :when (contains? table-whitelist table-key)
+         :let [id-key (table-id-key table-key)
+               coercions (build-coercions table-key attrs malli-opts)
+               read-coercions (:read coercions)
+               column-reader (make-column-reader table-key read-coercions)
+               
+               ;; Find reference attrs
+               ref-attrs (into {}
+                               (keep (fn [[attr _]]
+                                       (when-let [target (ref-target attrs attr)]
+                                         [attr target])))
+                               attrs)
+               
+               ;; Build output spec
+               output (vec (for [k (keys attrs)
+                                 :when (not= k id-key)
+                                 :let [is-ref? (contains? ref-attrs k)
+                                       target (get ref-attrs k)
+                                       target-id-key (when target (table-id-key target))
+                                       join-key (when is-ref? (strip-id-suffix k))]]
+                             (if is-ref?
+                               ;; Return both the raw -id and the join
+                               {join-key [target-id-key]}
+                               k)))
+               
+               ;; Add the raw -id keys to output
+               output (into output (for [k (keys ref-attrs)] k))
+               
+               op-name (symbol "com.yakread.lib.sqlite"
+                               (str (name table-key) "-resolver"))]]
+     (pco/resolver op-name
+                   {::pco/input [id-key]
+                    ::pco/output output
+                    ::pco/batch? true}
+                   (fn [{:keys [biff/db]} inputs]
+                     (let [ids (mapv id-key inputs)
+                           id-bytes (mapv uuid->bytes ids)
+                           sql-table (keyword (str/replace (name table-key) "-" "_"))
+                           sql-map {:select :*
+                                    :from sql-table
+                                    :where [:in :id id-bytes]}
+                           [sql-str & params] (sql/format sql-map)
+                           raw-results (jdbc/execute! db (into [sql-str] params)
+                                                      {:builder-fn (rs/builder-adapter
+                                                                    rs/as-unqualified-kebab-maps
+                                                                    column-reader)})
+                           ;; Post-process to add join keys
+                           process-row (fn [row]
+                                         (reduce
+                                          (fn [acc [ref-attr target]]
+                                            (let [target-id-key (table-id-key target)
+                                                  join-key (strip-id-suffix ref-attr)
+                                                  ref-val (get acc ref-attr)]
+                                              (assoc acc join-key (when ref-val
+                                                                    {target-id-key ref-val}))))
+                                          row
+                                          ref-attrs))
+                           results (mapv process-row raw-results)
+                           id->result (into {} (map (juxt id-key identity)) results)]
+                       (mapv (fn [input]
+                               (let [id (get input id-key)]
+                                 (-> (get id->result id {})
+                                     lib.core/some-vals
+                                     (assoc id-key id))))
+                             inputs)))))))
