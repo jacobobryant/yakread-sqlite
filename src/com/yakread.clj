@@ -33,7 +33,27 @@
    [taoensso.telemere.tools-logging :as tel.tl]
    [tick.core :as tick]
    [time-literals.read-write :as time-literals])
+  (:import
+   [com.zaxxer.hikari HikariConfig HikariDataSource])
   (:gen-class))
+
+(defn use-sqlite
+  "Biff component that starts a HikariCP connection pool for SQLite
+   and puts it in the :biff/conn key."
+  [{:biff.sqlite/keys [db-path]
+    :or {db-path "storage/sqlite/main.db"}
+    :as ctx}]
+  (let [datasource (HikariDataSource.
+                    (doto (HikariConfig.)
+                      (.setJdbcUrl (str "jdbc:sqlite:" db-path))
+                      (.setConnectionInitSql
+                       (str/join ";" ["PRAGMA journal_mode=WAL"
+                                      "PRAGMA busy_timeout = 5000"
+                                      "PRAGMA foreign_keys = ON"
+                                      "PRAGMA synchronous = NORMAL"]))))]
+    (-> ctx
+        (assoc :biff/conn datasource)
+        (update :biff/stop conj #(.close datasource)))))
 
 (def modules
   (concat modules/modules
@@ -158,10 +178,10 @@
 (def components
   [biff/use-aero-config
    use-error-reporting
-   biffx/use-xtdb2
+   use-sqlite
    ;lib.spark/use-spark
    biff/use-queues
-   biffx/use-xtdb2-listener
+   ;biffx/use-xtdb2-listener
    biff/use-jetty
    biff/use-chime
    biff/use-beholder
@@ -213,7 +233,7 @@
   (cld/default-init!)
   (time-literals/print-time-literals-clj!)
   (alter-var-root #'gen/*rnd* (constantly (java.util.Random. (inst-ms (java.time.Instant/now)))))
-  (let [{:keys [biff.nrepl/args biff.xtdb/node]} (start)]
+  (let [{:keys [biff.nrepl/args]} (start)]
     #_(future
         (biff/catchall-verbose
          (migrate.xtdb1/export node "storage/migrate-export")
