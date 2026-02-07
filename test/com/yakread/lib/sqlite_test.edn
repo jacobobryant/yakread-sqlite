@@ -1,0 +1,141 @@
+{:require
+ [[com.yakread.lib.test :as t]
+  [clojure.data.generators :as gen]
+  [com.yakread.lib.sqlite :refer :all]
+  [com.wsscode.pathom3.connect.operation :as pco]
+  [taoensso.nippy :as nippy]],
+ :tests
+ [{:doc "bytes->uuid and uuid->bytes roundtrip",
+   :eval
+   (let
+    [uuid
+     #uuid "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+     bytes
+     (uuid->bytes uuid)]
+    (bytes->uuid bytes)),
+   :result #uuid "f47ac10b-58cc-4372-a567-0e02b2c3d479"}
+  _
+  {:doc "epoch-ms->inst converts milliseconds to Instant",
+   :eval (str (epoch-ms->inst 1705320000000)),
+   :result "2024-01-15T12:00:00Z"}
+  _
+  {:doc "int->bool converts 0 to false",
+   :eval (int->bool 0),
+   :result false}
+  _
+  {:doc "int->bool converts 1 to true",
+   :eval (int->bool 1),
+   :result true}
+  _
+  {:doc "int->bool returns nil for nil",
+   :eval (int->bool nil),
+   :result nil}
+  _
+  {:doc "fast-thaw thaws nippy-frozen data",
+   :eval (fast-thaw (nippy/fast-freeze #{:wednesday :monday})),
+   :result #{:wednesday :monday}}
+  _
+  {:doc "fast-freeze and fast-thaw roundtrip",
+   :eval
+   (let
+    [data
+     {:brand "visa", :last4 "1234", :exp-year 2025, :exp-month 12}]
+    (= data (fast-thaw (fast-freeze data)))),
+   :result true}
+  _
+  {:doc "make-enum-reader creates reader that converts int to keyword",
+   :eval
+   (let
+    [reader (make-enum-reader {0 :quarter, 1 :annual})]
+    [(reader 0) (reader 1)]),
+   :result [:quarter :annual]}
+  _
+  {:doc "schema-info extracts tables from malli schema",
+   :eval (let [info (schema-info malli-opts)] (sort (keys info))),
+   :result
+   (:ad
+    :ad-click
+    :ad-credit
+    :bulk-send
+    :deleted-user
+    :digest
+    :digest-item
+    :feed
+    :mv-sub
+    :mv-user
+    :reclist
+    :redirect
+    :skip
+    :user
+    :user-item)}
+  _
+  {:doc "schema-info extracts attributes for user table",
+   :eval
+   (let
+    [info (schema-info malli-opts) user-attrs (get info :user)]
+    (sort (keys user-attrs))),
+   :result
+   (:user/cancel-at
+    :user/customer-id
+    :user/digest-days
+    :user/digest-last-sent
+    :user/email
+    :user/email-username
+    :user/from-the-sample
+    :user/id
+    :user/joined-at
+    :user/plan
+    :user/roles
+    :user/send-digest-at
+    :user/suppressed-at
+    :user/timezone
+    :user/use-original-links)}
+  _
+  {:doc "generate-schema-sql produces SQL DDL",
+   :eval
+   (let
+    [sql (generate-schema-sql)]
+    (clojure.string/starts-with?
+     sql
+     "-- Generated from malli schema")),
+   :result true}
+  _
+  {:doc "generate-schema-sql includes CREATE TABLE user",
+   :eval
+   (let
+    [sql (generate-schema-sql)]
+    (clojure.string/includes? sql "CREATE TABLE user")),
+   :result true}
+  _
+  {:doc "generate-schema-sql includes proper column types",
+   :eval
+   (let
+    [sql (generate-schema-sql)]
+    (and
+     (clojure.string/includes? sql "email TEXT NOT NULL")
+     (clojure.string/includes? sql "id BLOB PRIMARY KEY"))),
+   :result true}
+  _
+  {:doc "sqlite-resolvers returns resolvers for all tables",
+   :eval (let [resolvers (sqlite-resolvers)] (count resolvers)),
+   :result 15}
+  _
+  {:doc "sqlite-resolvers creates resolvers",
+   :eval (let [resolvers (sqlite-resolvers)] (> (count resolvers) 0)),
+   :result true}
+  _
+  {:doc "sqlite-resolvers resolver has batch? true",
+   :eval
+   (let
+    [resolvers
+     (sqlite-resolvers)
+     first-resolver
+     (first resolvers)
+     batch?
+     (->
+      first-resolver
+      :config
+      :com.wsscode.pathom3.connect.operation/batch?)]
+    batch?),
+   :result true}
+  _]}
