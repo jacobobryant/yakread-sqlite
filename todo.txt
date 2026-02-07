@@ -1,3 +1,13 @@
+sqlite migration
+- query helpers (honey sql, type coercion, lib.fx handler/snapshot/read transaction?)
+- tx helpers (honey sql, type coercion, malli validation?, wrap with transaction?, lib.fx handler, queue/lock?)
+- lib.*
+- model.*
+- work.*
+- ui-components.*
+- app.*
+- smtp.clj
+
 backlog
 - handle short-form RSS feeds
 - spam filtering
