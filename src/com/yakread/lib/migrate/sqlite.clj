@@ -33,7 +33,7 @@
   (def datasource
     (HikariDataSource.
      (doto (HikariConfig.)
-       (.setJdbcUrl "jdbc:sqlite:test.db")
+       (.setJdbcUrl "jdbc:sqlite:storage/sqlite/main.db")
        (.setConnectionInitSql (str/join ";" ["PRAGMA journal_mode=WAL"
                                              "PRAGMA busy_timeout = 5000"
                                              "PRAGMA foreign_keys = ON"

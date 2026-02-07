@@ -1,16 +1,16 @@
 (ns com.yakread.lib.sqlite
   "SQLite integration using malli schema as the source of truth.
-   
+
    This namespace provides:
    1. Malli schema as the source of truth (generates SQLite DDL)
    2. SQLite DDL generation from malli schema
    3. Pathom resolvers generated from malli schema (like xtdb2-resolvers)
-   
+
    Type inference:
    - SQLite types are inferred from malli types (no explicit :sqlite/type needed)
    - Coercion is inferred from malli types (no explicit :sqlite/coerce needed)
    - Enums are auto-mapped to integers (0, 1, 2, ...)
-   
+
    Note: next.jdbc automatically converts underscores to hyphens in column names,
    and honeysql converts hyphens to underscores."
   (:require
@@ -34,7 +34,7 @@
 ;; Schema Helpers
 ;; ============================================================================
 
-(defn table 
+(defn table
   "Define a table schema. Options map is optional."
   [& args]
   (let [[options map-args] (if (map? (first args))
@@ -42,151 +42,138 @@
                              [{} args])]
     (into [:map (merge {:closed true} options)] map-args)))
 
-(def ? 
+(def ?
   "Mark an attribute as optional."
   {:optional true})
 
-(defn biff-ref
+(defn r
   "Mark an attribute as a reference to another table."
-  [target] 
+  [target]
   {:biff/ref (if (coll? target) target #{target})})
 
-(defn ?biff-ref
+(defn ?r
   "Mark an optional attribute as a reference."
-  [target] 
-  (assoc (biff-ref target) :optional true))
-
-;; ============================================================================
-;; Schema Type Aliases (for commonly used types)
-;; ============================================================================
-
-(def text2000 
-  "Common string type for text fields with max 2000 characters."
-  [:string {:max 2000}])
-
-(def text5000 
-  "String type for longer text fields with max 5000 characters."
-  [:string {:max 5000}])
-
-(def day-enum 
-  "Enum for days of the week."
-  [:enum :sunday :monday :tuesday :wednesday :thursday :friday :saturday])
+  [target]
+  (assoc (r target) :optional true))
 
 ;; ============================================================================
 ;; SQLite Malli Schema
 ;; ============================================================================
-;; 
+;;
 ;; Schema design:
-;; - Each table has :table/id instead of :xt/id 
+;; - Each table has :table/id instead of :xt/id
 ;; - Reference attributes end with -id and have :biff/ref
 ;; - Types are standard malli types; SQLite type is inferred
 ;; - Enums automatically get integer mappings (0, 1, 2, ...)
 ;; - Use inst? for timestamps (stored as epoch ms INT in SQLite)
 
 (def schema
-  {:user (table
+  {::string [:string {:max 2000}]
+   ::day [:enum :sunday :monday :tuesday :wednesday :thursday :friday :saturday]
+
+   :user (table
            [:user/id                    :uuid]
-           [:user/email                 text2000]
+           [:user/email                 ::string]
            [:user/roles               ? [:set [:enum :admin]]]
            [:user/joined-at           ? inst?]
-           [:user/digest-days         ? [:set day-enum]]
+           [:user/digest-days         ? [:set ::day]]
            [:user/send-digest-at      ? :string]
-           [:user/timezone            ? text2000]
+           [:user/timezone            ? ::string]
            [:user/digest-last-sent    ? inst?]
            [:user/from-the-sample     ? :boolean]
            [:user/use-original-links  ? :boolean]
            [:user/suppressed-at       ? inst?]
-           [:user/email-username      ? text2000]
+           [:user/email-username      ? ::string]
            [:user/customer-id         ? :string]
            [:user/plan                ? [:enum :quarter :annual]]
            [:user/cancel-at           ? inst?])
 
    :feed (table
            [:feed/id                :uuid]
-           [:feed/url               text2000]
+           [:feed/url               ::string]
            [:feed/synced-at       ? inst?]
-           [:feed/title           ? text2000]
-           [:feed/description     ? text2000]
-           [:feed/image-url       ? text2000]
-           [:feed/etag            ? text2000]
-           [:feed/last-modified   ? text2000]
+           [:feed/title           ? ::string]
+           [:feed/description     ? ::string]
+           [:feed/image-url       ? ::string]
+           [:feed/etag            ? ::string]
+           [:feed/last-modified   ? ::string]
            [:feed/failed-syncs    ? :int]
            [:feed/moderation      ? [:enum :approved :blocked]])
 
    :sub (table
           [:sub/id                     :uuid]
-          [:sub/user-id      (biff-ref :user) :uuid]
+          [:sub/user-id      (r :user) :uuid]
           [:sub/created-at             inst?]
           [:sub/pinned-at    ?         inst?]
           [:sub/record-type            [:enum :feed :email]]
           ;; feed sub fields
-          [:sub/feed-id      ? (biff-ref :feed) :uuid]
+          [:sub/feed-id      (?r :feed) :uuid]
           ;; email sub fields
-          [:sub/email-from           ? text2000]
+          [:sub/email-from           ? ::string]
           [:sub/email-unsubscribed-at ? inst?])
 
    :item (table
            [:item/id                  :uuid]
            [:item/ingested-at         inst?]
-           [:item/title             ? text2000]
-           [:item/url               ? text2000]
-           [:item/redirect-urls     ? [:set text2000]]
-           [:item/content           ? text2000]
+           [:item/title             ? ::string]
+           [:item/url               ? ::string]
+           [:item/redirect-urls     ? [:set ::string]]
+           [:item/content           ? ::string]
            [:item/content-key       ? :uuid]
            [:item/published-at      ? inst?]
-           [:item/excerpt           ? text2000]
-           [:item/author-name       ? text2000]
-           [:item/author-url        ? text2000]
-           [:item/feed-url          ? text2000]
-           [:item/lang              ? text2000]
-           [:item/site-name         ? text2000]
-           [:item/byline            ? text2000]
+           [:item/excerpt           ? ::string]
+           [:item/author-name       ? ::string]
+           [:item/author-url        ? ::string]
+           [:item/feed-url          ? ::string]
+           [:item/lang              ? ::string]
+           [:item/site-name         ? ::string]
+           [:item/byline            ? ::string]
            [:item/length            ? :int]
-           [:item/image-url         ? text2000]
+           [:item/image-url         ? ::string]
            [:item/paywalled         ? :boolean]
            [:item/record-type         [:enum :feed :email :direct]]
            ;; feed item fields
-           [:item/feed-id           ? (biff-ref :feed) :uuid]
-           [:item/feed-guid         ? text2000]
-           ;; email item fields  
-           [:item/email-sub-id      ? (biff-ref :sub) :uuid]
+           [:item/feed-id           ? (r :feed) :uuid]
+           [:item/feed-guid         ? ::string]
+           ;; email item fields
+           [:item/email-sub-id      (?r :sub) :uuid]
            [:item/email-raw-content-key ? :uuid]
-           [:item/email-list-unsubscribe ? text5000]
-           [:item/email-list-unsubscribe-post ? text2000]
-           [:item/email-reply-to    ? text2000]
+           [:item/email-list-unsubscribe ? [:string {:max 5000}]]
+           [:item/email-list-unsubscribe-post ? ::string]
+           [:item/email-reply-to    ? ::string]
            [:item/email-maybe-confirmation ? :boolean]
            ;; direct item fields
            [:item/direct-candidate-status ? [:enum :ingest-failed :blocked :approved]])
 
    :redirect (table
                [:redirect/id       :uuid]
-               [:redirect/url      text2000]
-               [:redirect/item-id  (biff-ref :item) :uuid])
+               [:redirect/url      ::string]
+               [:redirect/item-id  (r :item) :uuid])
 
    :user-item (table
                 [:user-item/id                  :uuid]
-                [:user-item/user-id   (biff-ref :user) :uuid]
-                [:user-item/item-id   (biff-ref :item) :uuid]
+                [:user-item/user-id   (r :user) :uuid]
+                [:user-item/item-id   (r :item) :uuid]
                 [:user-item/viewed-at       ?   inst?]
                 [:user-item/skipped-at      ?   inst?]
                 [:user-item/bookmarked-at   ?   inst?]
                 [:user-item/favorited-at    ?   inst?]
                 [:user-item/disliked-at     ?   inst?]
                 [:user-item/reported-at     ?   inst?]
-                [:user-item/report-reason   ?   text2000])
+                [:user-item/report-reason   ?   ::string])
 
    :digest (table
              [:digest/id                        :uuid]
-             [:digest/user-id     (biff-ref :user)   :uuid]
+             [:digest/user-id     (r :user)   :uuid]
              [:digest/sent-at                   inst?]
-             [:digest/subject-id  (?biff-ref :item)  :uuid]
-             [:digest/ad-id       (?biff-ref :ad)    :uuid]
-             [:digest/bulk-send-id (?biff-ref :bulk-send) :uuid])
+             [:digest/subject-id  (?r :item)  :uuid]
+             [:digest/ad-id       (?r :ad)    :uuid]
+             [:digest/bulk-send-id (?r :bulk-send) :uuid])
 
    :digest-item (table
                   [:digest-item/id                  :uuid]
-                  [:digest-item/digest-id (biff-ref :digest) :uuid]
-                  [:digest-item/item-id   (biff-ref :item)   :uuid]
+                  [:digest-item/digest-id (r :digest) :uuid]
+                  [:digest-item/item-id   (r :item)   :uuid]
                   [:digest-item/kind      [:enum :icymi :discover]])
 
    :bulk-send (table
@@ -198,28 +185,28 @@
 
    :reclist (table
               [:reclist/id                   :uuid]
-              [:reclist/user-id    (biff-ref :user) :uuid]
+              [:reclist/user-id    (r :user) :uuid]
               [:reclist/created-at           inst?]
               [:reclist/clicked              [:set :uuid]])
 
    :skip (table
            [:skip/id                      :uuid]
-           [:skip/reclist-id (biff-ref :reclist) :uuid]
-           [:skip/item-id    (biff-ref :item)    :uuid])
+           [:skip/reclist-id (r :reclist) :uuid]
+           [:skip/item-id    (r :item)    :uuid])
 
    :ad (table
          [:ad/id                     :uuid]
-         [:ad/user-id      (biff-ref :user) :uuid]
+         [:ad/user-id      (r :user) :uuid]
          [:ad/approve-state          [:enum :pending :approved :rejected]]
          [:ad/updated-at             inst?]
          [:ad/balance                :int]
          [:ad/recent-cost            :int]
          [:ad/bid            ?       :int]
          [:ad/budget         ?       :int]
-         [:ad/url            ?       text2000]
+         [:ad/url            ?       ::string]
          [:ad/title          ?       [:string {:max 75}]]
          [:ad/description    ?       [:string {:max 250}]]
-         [:ad/image-url      ?       text2000]
+         [:ad/image-url      ?       ::string]
          [:ad/paused         ?       :boolean]
          [:ad/payment-failed ?       :boolean]
          [:ad/customer-id    ?       :string]
@@ -233,15 +220,15 @@
 
    :ad-click (table
                [:ad-click/id                      :uuid]
-               [:ad-click/user-id       (biff-ref :user) :uuid]
-               [:ad-click/ad-id         (biff-ref :ad)   :uuid]
+               [:ad-click/user-id       (r :user) :uuid]
+               [:ad-click/ad-id         (r :ad)   :uuid]
                [:ad-click/created-at              inst?]
                [:ad-click/cost                    :int]
                [:ad-click/source                  [:enum :web :email]])
 
    :ad-credit (table
                 [:ad-credit/id                     :uuid]
-                [:ad-credit/ad-id         (biff-ref :ad) :uuid]
+                [:ad-credit/ad-id         (r :ad) :uuid]
                 [:ad-credit/source                 [:enum :charge :manual]]
                 [:ad-credit/amount                 :int]
                 [:ad-credit/created-at             inst?]
@@ -249,7 +236,7 @@
 
    :mv-sub (table
              [:mv-sub/id                     :uuid]
-             [:mv-sub/sub-id       (biff-ref :sub) :uuid]
+             [:mv-sub/sub-id       (r :sub) :uuid]
              [:mv-sub/affinity-low     ?     :double]
              [:mv-sub/affinity-high    ?     :double]
              [:mv-sub/last-published   ?     inst?]
@@ -258,15 +245,15 @@
 
    :mv-user (table
               [:mv-user/id                        :uuid]
-              [:mv-user/user-id        (biff-ref :user) :uuid]
-              [:mv-user/current-item-id (?biff-ref :item) :uuid])
+              [:mv-user/user-id        (r :user) :uuid]
+              [:mv-user/current-item-id (?r :item) :uuid])
 
    :deleted-user (table
                    [:deleted-user/id                    :uuid]
                    [:deleted-user/email-username-hash   :string])})
 
 ;; ============================================================================
-;; Malli Registry and Options  
+;; Malli Registry and Options
 ;; ============================================================================
 
 (def malli-opts
@@ -278,24 +265,24 @@
 ;; Schema Info Extraction
 ;; ============================================================================
 
-(defn- table-id-key 
+(defn- table-id-key
   "Get the ID key for a table (e.g., :user -> :user/id)"
   [table-key]
   (keyword (name table-key) "id"))
 
-(defn table-ast? 
+(defn table-ast?
   "Check if an AST represents a table (has an id column)."
   [table-key ast]
   (and (= :map (:type ast))
        (contains? (:keys ast) (table-id-key table-key))))
 
-(defn deref-ast 
+(defn deref-ast
   "Dereference a schema and get its AST."
   [schema malli-opts]
   (some-> (try (malli/deref-recursive schema malli-opts) (catch Exception _))
           malli/ast))
 
-(defn table-asts 
+(defn table-asts
   "Get all table ASTs from a schema."
   [table-key malli-opts]
   (when-let [ast (deref-ast table-key malli-opts)]
@@ -313,7 +300,7 @@
                        :definition-2 (m2 conflicting-attr)})))
     (merge m1 m2)))
 
-(defn schema-info 
+(defn schema-info
   "Extract schema info: map of table-key -> attrs map."
   [malli-opts]
   (into {}
@@ -396,14 +383,6 @@
     (let [bb (ByteBuffer/wrap byte-array)]
       (UUID. (.getLong bb) (.getLong bb)))))
 
-(defn uuid->bytes
-  "Convert a UUID to a 16-byte array for SQLite BLOB storage."
-  [^UUID uuid]
-  (let [bb (ByteBuffer/allocate 16)]
-    (.putLong bb (.getMostSignificantBits uuid))
-    (.putLong bb (.getLeastSignificantBits uuid))
-    (.array bb)))
-
 (defn epoch-ms->inst
   "Convert epoch milliseconds to an Instant."
   [ms]
@@ -437,8 +416,16 @@
                            :available-values enum-map}))))))
 
 ;; ============================================================================
-;; Type Coercion: Clojure -> SQLite
+;; Coercion
 ;; ============================================================================
+
+(defn uuid->bytes
+  "Convert a UUID to a 16-byte array for SQLite BLOB storage."
+  [^UUID uuid]
+  (let [bb (ByteBuffer/allocate 16)]
+    (.putLong bb (.getMostSignificantBits uuid))
+    (.putLong bb (.getLeastSignificantBits uuid))
+    (.array bb)))
 
 (defn inst->epoch-ms
   "Convert an Instant to epoch milliseconds."
@@ -467,10 +454,6 @@
             (throw (ex-info "Unknown enum value for write"
                             {:value clj-val
                              :available-values reverse-map})))))))
-
-;; ============================================================================
-;; Coercion Map Building  
-;; ============================================================================
 
 (defn- get-coerce-read-fn
   "Get the read coercion function for a coercion type."
@@ -514,10 +497,6 @@
            acc)))
      {:read {} :write {}}
      attrs)))
-
-;; ============================================================================
-;; Custom Builder Function for Coercion
-;; ============================================================================
 
 (defn make-column-reader
   "Create a custom column reader that applies coercions.
@@ -600,8 +579,8 @@
   ([malli-opts]
    (let [info (schema-info malli-opts)
          ;; Order tables to handle foreign key dependencies
-         table-order [:user :feed :sub :item :redirect :user-item :bulk-send :digest 
-                      :digest-item :reclist :skip :ad :ad-click :ad-credit 
+         table-order [:user :feed :sub :item :redirect :user-item :bulk-send :digest
+                      :digest-item :reclist :skip :ad :ad-click :ad-credit
                       :mv-sub :mv-user :deleted-user]]
      (str "-- Generated from malli schema\n"
           "-- test:    `sqlite3def storage/sqlite/test.db --dry-run -f resources/schema.sql`\n"
@@ -638,29 +617,28 @@
 
 (defn sqlite-resolvers
   "Create Pathom resolvers for SQLite tables from malli schema.
-   
+
    For reference attributes ending in -id:
    - Returns the raw ID as :table/ref-id
    - Also returns a join without the -id suffix as {:ref-table/id uuid}
-   
+
    Example: {:ad/user-id #uuid \"...\", :ad/user {:user/id #uuid \"...\"}}"
   ([]
    (sqlite-resolvers malli-opts))
   ([malli-opts]
    (for [[table-key attrs] (schema-info malli-opts)
-         :when (contains? table-whitelist table-key)
          :let [id-key (table-id-key table-key)
                coercions (build-coercions table-key attrs malli-opts)
                read-coercions (:read coercions)
                column-reader (make-column-reader table-key read-coercions)
-               
+
                ;; Find reference attrs
                ref-attrs (into {}
                                (keep (fn [[attr _]]
                                        (when-let [target (ref-target attrs attr)]
                                          [attr target])))
                                attrs)
-               
+
                ;; Build output spec
                output (vec (for [k (keys attrs)
                                  :when (not= k id-key)
@@ -672,36 +650,35 @@
                                ;; Return both the raw -id and the join
                                {join-key [target-id-key]}
                                k)))
-               
+
                ;; Add the raw -id keys to output
-               output (into output (for [k (keys ref-attrs)] k))
-               
+               output (into output (keys ref-attrs))
+
                op-name (symbol "com.yakread.lib.sqlite"
                                (str (name table-key) "-resolver"))]]
      (pco/resolver op-name
                    {::pco/input [id-key]
                     ::pco/output output
                     ::pco/batch? true}
-                   (fn [{:keys [biff/db]} inputs]
+                   (fn [{:keys [biff/conn]} inputs]
                      (let [ids (mapv id-key inputs)
-                           id-bytes (mapv uuid->bytes ids)
-                           sql-table (keyword (str/replace (name table-key) "-" "_"))
+                           id-bytes (mapv uuid->bytes ids) ;; AI TODO don't assume the id key is a UUID
                            sql-map {:select :*
-                                    :from sql-table
+                                    :from table-key
                                     :where [:in :id id-bytes]}
-                           [sql-str & params] (sql/format sql-map)
-                           raw-results (jdbc/execute! db (into [sql-str] params)
+                           raw-results (jdbc/execute! conn
+                                                      (sql/format sql-map)
                                                       {:builder-fn (rs/builder-adapter
                                                                     rs/as-unqualified-kebab-maps
                                                                     column-reader)})
                            ;; Post-process to add join keys
                            process-row (fn [row]
                                          (reduce
-                                          (fn [acc [ref-attr target]]
+                                          (fn [row [ref-attr target]]
                                             (let [target-id-key (table-id-key target)
                                                   join-key (strip-id-suffix ref-attr)
-                                                  ref-val (get acc ref-attr)]
-                                              (assoc acc join-key (when ref-val
+                                                  ref-val (get row ref-attr)]
+                                              (assoc row join-key (when (some? ref-val)
                                                                     {target-id-key ref-val}))))
                                           row
                                           ref-attrs))
@@ -713,3 +690,10 @@
                                      lib.core/some-vals
                                      (assoc id-key id))))
                              inputs)))))))
+
+;; AI TODO make :biff/ref value be a scalar instead of a set
+
+;; AI TODO get rid of the `table` helper function; just do [:map ...] directly
+
+;; AI TODO instead of using the hardcoded `table-order` binding, try to infer the order the tables
+;; should be in.
