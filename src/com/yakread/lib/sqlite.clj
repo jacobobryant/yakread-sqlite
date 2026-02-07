@@ -15,6 +15,7 @@
    and honeysql converts hyphens to underscores."
   (:require
    [clojure.string :as str]
+   [com.stuartsierra.dependency :as dep]
    [com.wsscode.pathom3.connect.operation :as pco]
    [com.wsscode.pathom3.connect.planner :as-alias pcp]
    [com.yakread.lib.core :as lib.core]
@@ -34,14 +35,6 @@
 ;; Schema Helpers
 ;; ============================================================================
 
-(defn table
-  "Define a table schema. Options map is optional."
-  [& args]
-  (let [[options map-args] (if (map? (first args))
-                             [(first args) (rest args)]
-                             [{} args])]
-    (into [:map (merge {:closed true} options)] map-args)))
-
 (def ?
   "Mark an attribute as optional."
   {:optional true})
@@ -49,7 +42,7 @@
 (defn r
   "Mark an attribute as a reference to another table."
   [target]
-  {:biff/ref (if (coll? target) target #{target})})
+  {:biff/ref target})
 
 (defn ?r
   "Mark an optional attribute as a reference."
@@ -71,7 +64,7 @@
   {::string [:string {:max 2000}]
    ::day [:enum :sunday :monday :tuesday :wednesday :thursday :friday :saturday]
 
-   :user (table
+   :user [:map {:closed true}
            [:user/id                    :uuid]
            [:user/email                 ::string]
            [:user/roles               ? [:set [:enum :admin]]]
@@ -86,9 +79,9 @@
            [:user/email-username      ? ::string]
            [:user/customer-id         ? :string]
            [:user/plan                ? [:enum :quarter :annual]]
-           [:user/cancel-at           ? inst?])
+           [:user/cancel-at           ? inst?]]
 
-   :feed (table
+   :feed [:map {:closed true}
            [:feed/id                :uuid]
            [:feed/url               ::string]
            [:feed/synced-at       ? inst?]
@@ -98,9 +91,9 @@
            [:feed/etag            ? ::string]
            [:feed/last-modified   ? ::string]
            [:feed/failed-syncs    ? :int]
-           [:feed/moderation      ? [:enum :approved :blocked]])
+           [:feed/moderation      ? [:enum :approved :blocked]]]
 
-   :sub (table
+   :sub [:map {:closed true}
           [:sub/id                     :uuid]
           [:sub/user-id      (r :user) :uuid]
           [:sub/created-at             inst?]
@@ -110,9 +103,9 @@
           [:sub/feed-id      (?r :feed) :uuid]
           ;; email sub fields
           [:sub/email-from           ? ::string]
-          [:sub/email-unsubscribed-at ? inst?])
+          [:sub/email-unsubscribed-at ? inst?]]
 
-   :item (table
+   :item [:map {:closed true}
            [:item/id                  :uuid]
            [:item/ingested-at         inst?]
            [:item/title             ? ::string]
@@ -143,14 +136,14 @@
            [:item/email-reply-to    ? ::string]
            [:item/email-maybe-confirmation ? :boolean]
            ;; direct item fields
-           [:item/direct-candidate-status ? [:enum :ingest-failed :blocked :approved]])
+           [:item/direct-candidate-status ? [:enum :ingest-failed :blocked :approved]]]
 
-   :redirect (table
+   :redirect [:map {:closed true}
                [:redirect/id       :uuid]
                [:redirect/url      ::string]
-               [:redirect/item-id  (r :item) :uuid])
+               [:redirect/item-id  (r :item) :uuid]]
 
-   :user-item (table
+   :user-item [:map {:closed true}
                 [:user-item/id                  :uuid]
                 [:user-item/user-id   (r :user) :uuid]
                 [:user-item/item-id   (r :item) :uuid]
@@ -160,41 +153,41 @@
                 [:user-item/favorited-at    ?   inst?]
                 [:user-item/disliked-at     ?   inst?]
                 [:user-item/reported-at     ?   inst?]
-                [:user-item/report-reason   ?   ::string])
+                [:user-item/report-reason   ?   ::string]]
 
-   :digest (table
+   :digest [:map {:closed true}
              [:digest/id                        :uuid]
              [:digest/user-id     (r :user)   :uuid]
              [:digest/sent-at                   inst?]
              [:digest/subject-id  (?r :item)  :uuid]
              [:digest/ad-id       (?r :ad)    :uuid]
-             [:digest/bulk-send-id (?r :bulk-send) :uuid])
+             [:digest/bulk-send-id (?r :bulk-send) :uuid]]
 
-   :digest-item (table
+   :digest-item [:map {:closed true}
                   [:digest-item/id                  :uuid]
                   [:digest-item/digest-id (r :digest) :uuid]
                   [:digest-item/item-id   (r :item)   :uuid]
-                  [:digest-item/kind      [:enum :icymi :discover]])
+                  [:digest-item/kind      [:enum :icymi :discover]]]
 
-   :bulk-send (table
+   :bulk-send [:map {:closed true}
                 [:bulk-send/id              :uuid]
                 [:bulk-send/sent-at         inst?]
                 [:bulk-send/payload-size    :int]
                 [:bulk-send/mailersend-id   :string]
-                [:bulk-send/digests         [:vector :uuid]])
+                [:bulk-send/digests         [:vector :uuid]]]
 
-   :reclist (table
+   :reclist [:map {:closed true}
               [:reclist/id                   :uuid]
               [:reclist/user-id    (r :user) :uuid]
               [:reclist/created-at           inst?]
-              [:reclist/clicked              [:set :uuid]])
+              [:reclist/clicked              [:set :uuid]]]
 
-   :skip (table
+   :skip [:map {:closed true}
            [:skip/id                      :uuid]
            [:skip/reclist-id (r :reclist) :uuid]
-           [:skip/item-id    (r :item)    :uuid])
+           [:skip/item-id    (r :item)    :uuid]]
 
-   :ad (table
+   :ad [:map {:closed true}
          [:ad/id                     :uuid]
          [:ad/user-id      (r :user) :uuid]
          [:ad/approve-state          [:enum :pending :approved :rejected]]
@@ -216,41 +209,41 @@
                                       [:brand     :string]
                                       [:last4     :string]
                                       [:exp-year  :int]
-                                      [:exp-month :int]]])
+                                      [:exp-month :int]]]]
 
-   :ad-click (table
+   :ad-click [:map {:closed true}
                [:ad-click/id                      :uuid]
                [:ad-click/user-id       (r :user) :uuid]
                [:ad-click/ad-id         (r :ad)   :uuid]
                [:ad-click/created-at              inst?]
                [:ad-click/cost                    :int]
-               [:ad-click/source                  [:enum :web :email]])
+               [:ad-click/source                  [:enum :web :email]]]
 
-   :ad-credit (table
+   :ad-credit [:map {:closed true}
                 [:ad-credit/id                     :uuid]
                 [:ad-credit/ad-id         (r :ad) :uuid]
                 [:ad-credit/source                 [:enum :charge :manual]]
                 [:ad-credit/amount                 :int]
                 [:ad-credit/created-at             inst?]
-                [:ad-credit/charge-status ?        [:enum :pending :confirmed :failed]])
+                [:ad-credit/charge-status ?        [:enum :pending :confirmed :failed]]]
 
-   :mv-sub (table
+   :mv-sub [:map {:closed true}
              [:mv-sub/id                     :uuid]
              [:mv-sub/sub-id       (r :sub) :uuid]
              [:mv-sub/affinity-low     ?     :double]
              [:mv-sub/affinity-high    ?     :double]
              [:mv-sub/last-published   ?     inst?]
              [:mv-sub/unread           ?     :int]
-             [:mv-sub/read             ?     :int])
+             [:mv-sub/read             ?     :int]]
 
-   :mv-user (table
+   :mv-user [:map {:closed true}
               [:mv-user/id                        :uuid]
               [:mv-user/user-id        (r :user) :uuid]
-              [:mv-user/current-item-id (?r :item) :uuid])
+              [:mv-user/current-item-id (?r :item) :uuid]]
 
-   :deleted-user (table
+   :deleted-user [:map {:closed true}
                    [:deleted-user/id                    :uuid]
-                   [:deleted-user/email-username-hash   :string])})
+                   [:deleted-user/email-username-hash   :string]]})
 
 ;; ============================================================================
 ;; Malli Registry and Options
@@ -556,10 +549,9 @@
   [table-key attrs]
   (into []
         (keep (fn [[attr ast]]
-                (when-let [ref-set (get-in ast [:properties :biff/ref])]
-                  (let [col-name (attr->column-name table-key attr)
-                        ref-table (first (if (set? ref-set) ref-set [ref-set]))]
-                    (str "FOREIGN KEY(" col-name ") REFERENCES " (name ref-table) "(id)")))))
+                (when-let [ref-target (get-in ast [:properties :biff/ref])]
+                  (let [col-name (attr->column-name table-key attr)]
+                    (str "FOREIGN KEY(" col-name ") REFERENCES " (name ref-target) "(id)")))))
         attrs))
 
 (defn generate-create-table
@@ -572,16 +564,30 @@
          (str/join ",\n  " all-lines)
          "\n) STRICT;")))
 
+(defn- infer-table-order
+  "Infer table creation order from foreign key dependencies using topological sort."
+  [info]
+  (let [tables (keys info)
+        graph (reduce (fn [g table-key]
+                        (let [attrs (get info table-key)
+                              refs (->> (vals attrs)
+                                        (keep #(get-in % [:properties :biff/ref]))
+                                        (distinct))]
+                          (reduce (fn [g ref-table]
+                                    (dep/depend g table-key ref-table))
+                                  g
+                                  refs)))
+                      (dep/graph)
+                      tables)]
+    (filterv (set tables) (dep/topo-sort graph))))
+
 (defn generate-schema-sql
   "Generate the complete schema.sql from malli schema."
   ([]
    (generate-schema-sql malli-opts))
   ([malli-opts]
    (let [info (schema-info malli-opts)
-         ;; Order tables to handle foreign key dependencies
-         table-order [:user :feed :sub :item :redirect :user-item :bulk-send :digest
-                      :digest-item :reclist :skip :ad :ad-click :ad-credit
-                      :mv-sub :mv-user :deleted-user]]
+         table-order (infer-table-order info)]
      (str "-- Generated from malli schema\n"
           "-- test:    `sqlite3def storage/sqlite/test.db --dry-run -f resources/schema.sql`\n"
           "-- migrate: `sqlite3def storage/sqlite/test.db --apply -f resources/schema.sql`\n\n"
@@ -612,8 +618,7 @@
 (defn- ref-target
   "Get the target table for a reference attribute."
   [attrs attr]
-  (when-let [ref-set (get-in attrs [attr :properties :biff/ref])]
-    (first (if (set? ref-set) ref-set [ref-set]))))
+  (get-in attrs [attr :properties :biff/ref]))
 
 (defn sqlite-resolvers
   "Create Pathom resolvers for SQLite tables from malli schema.
@@ -662,10 +667,13 @@
                     ::pco/batch? true}
                    (fn [{:keys [biff/conn]} inputs]
                      (let [ids (mapv id-key inputs)
-                           id-bytes (mapv uuid->bytes ids) ;; AI TODO don't assume the id key is a UUID
+                           id-write-fn (get-in coercions [:write id-key])
+                           db-ids (if id-write-fn
+                                    (mapv id-write-fn ids)
+                                    ids)
                            sql-map {:select :*
                                     :from table-key
-                                    :where [:in :id id-bytes]}
+                                    :where [:in :id db-ids]}
                            raw-results (jdbc/execute! conn
                                                       (sql/format sql-map)
                                                       {:builder-fn (rs/builder-adapter
@@ -691,9 +699,3 @@
                                      (assoc id-key id))))
                              inputs)))))))
 
-;; AI TODO make :biff/ref value be a scalar instead of a set
-
-;; AI TODO get rid of the `table` helper function; just do [:map ...] directly
-
-;; AI TODO instead of using the hardcoded `table-order` binding, try to infer the order the tables
-;; should be in.
