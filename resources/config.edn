@@ -40,6 +40,8 @@
  :biff.xtdb2.storage/access-key #biff/env XTDB_STORAGE_ACCESS_KEY
  :biff.xtdb2.storage/secret-key #biff/secret XTDB_STORAGE_SECRET_KEY
 
+ :biff.sqlite/generate-schema #profile {:dev true}
+
  :mailersend/api-key  #profile {:prod #biff/secret MAILERSEND_API_KEY}
  :mailersend/from     #biff/env MAILERSEND_FROM
  :mailersend/reply-to #biff/env MAILERSEND_REPLY_TO

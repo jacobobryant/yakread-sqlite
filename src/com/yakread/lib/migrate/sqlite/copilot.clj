@@ -731,20 +731,12 @@
         :done
         (let [f (first remaining-files)
               file-index (parse-long (.getName f))
-              _ (log/info "Processing file" file-index)]
-          (try
-            (let [txes (read-nippy-file f)  ; Side effect: file I/O
-                  {:keys [txs state]} (compute-txs-for-file state txes now)]
-              ;; Side effect: database write
-              (jdbc/with-transaction [tx conn]
-                (execute-txs! tx txs))
-              (recur (rest remaining-files) state))
-            (catch Exception e
-              (throw (ex-info "Error processing nippy file"
-                              {:file (.getPath f)
-                               :file-index file-index
-                               :processed-files (- (count files) (count remaining-files))}
-                              e)))))))))
+              _ (log/info "Processing file" file-index)
+              txes (read-nippy-file f)  ; Side effect: file I/O
+              {:keys [txs state]} (compute-txs-for-file state txes now)]
+          (jdbc/with-transaction [tx conn]
+            (execute-txs! tx txs))
+          (recur (rest remaining-files) state))))))
 
 ;; ============================================================================
 ;; Pure functions for testing

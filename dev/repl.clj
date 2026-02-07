@@ -4,7 +4,8 @@
    [clojure.pprint :as pprint]
    [com.biffweb.experimental :as biffx]
    [com.yakread]
-   [tick.core :as tick]))
+   [tick.core :as tick]
+   [next.jdbc :as jdbc]))
 
 
 (defn node []
@@ -290,5 +291,7 @@
 
 
   (spit "benchmark-item-ids.edn" (pr-str item-ids))
+
+  (jdbc/execute! (conn) ["SELECT * FROM user limit 1"])
 
   )

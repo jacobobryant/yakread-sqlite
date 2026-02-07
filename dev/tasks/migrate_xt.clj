@@ -1,7 +1,7 @@
 (ns tasks.migrate-xt
   (:require [com.biffweb.config :as config]
             [xtdb.node :as xtn]
-            [com.biffweb.migrate.xtdb2 :as migrate]))
+            #_[com.biffweb.migrate.xtdb2 :as migrate]))
 
 (defn use-xtdb2 [{:keys [biff/secret]
                   :biff.xtdb2.storage/keys [bucket endpoint access-key]}]
