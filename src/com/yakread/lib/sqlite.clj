@@ -565,9 +565,10 @@
          "\n) STRICT;")))
 
 (defn- infer-table-order
-  "Infer table creation order from foreign key dependencies using topological sort."
+  "Infer table creation order from foreign key dependencies using topological sort.
+   Tables without dependencies are appended at the end."
   [info]
-  (let [tables (keys info)
+  (let [tables (set (keys info))
         graph (reduce (fn [g table-key]
                         (let [attrs (get info table-key)
                               refs (->> (vals attrs)
@@ -578,8 +579,11 @@
                                   g
                                   refs)))
                       (dep/graph)
-                      tables)]
-    (filterv (set tables) (dep/topo-sort graph))))
+                      tables)
+        sorted (dep/topo-sort graph)
+        sorted-set (set sorted)]
+    (into (filterv tables sorted)
+          (remove sorted-set tables))))
 
 (defn generate-schema-sql
   "Generate the complete schema.sql from malli schema."
