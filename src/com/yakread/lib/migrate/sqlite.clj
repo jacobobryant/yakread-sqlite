@@ -1,28 +1,18 @@
 (ns com.yakread.lib.migrate.sqlite
   (:require
    [clojure.string :as str]
-   [clojure.java.io :as io]
-   [clojure.set :as set]
-   [clojure.tools.logging :as log]
-   [clojure.walk :as walk]
-   [com.biffweb.experimental :as biffx]
-   [malli.core :as m]
-   [malli.error :as me]
-   [taoensso.nippy :as nippy]
-   [tick.core :as tick]
-   [xtdb.api :as xt]
-   [xtdb.node :as xtn]
-   [next.jdbc :as jdbc]
+   [com.yakread.lib.migrate.sqlite.copilot :as copilot]
    [honey.sql :as sql]
-   [next.jdbc.prepare :as p]
-   [next.jdbc.result-set :as rs]
+   [next.jdbc :as jdbc]
    [next.jdbc.date-time :as jdt]
-   [taoensso.nippy :as nippy])
+   [next.jdbc.result-set :as rs]
+   [taoensso.nippy :as nippy]
+   [taoensso.nippy :as nippy]
+   [taoensso.telemere.tools-logging :as tel.tl]
+   [tick.core :as tick])
   (:import
-   [java.util UUID]
    [com.zaxxer.hikari HikariConfig HikariDataSource]
-    
-   ))
+   [java.util UUID]))
 
 (comment
 
@@ -33,11 +23,24 @@
   (def datasource
     (HikariDataSource.
      (doto (HikariConfig.)
-       (.setJdbcUrl "jdbc:sqlite:test.db")
+       (.setJdbcUrl "jdbc:sqlite:storage/sqlite/main.db")
        (.setConnectionInitSql (str/join ";" ["PRAGMA journal_mode=WAL"
                                              "PRAGMA busy_timeout = 5000"
                                              "PRAGMA foreign_keys = ON"
                                              "PRAGMA synchronous = NORMAL"])))))
+
+  (tel.tl/tools-logging->telemere!)
+
+  (copilot/dry-run
+   {:dir "../yakread/storage/migrate-export/"})
+
+  (with-open [conn (.getConnection datasource)]
+    (println "starting")
+    (copilot/import-from-nippy-files!
+     {:conn conn
+      :dir "../yakread/storage/migrate-export/"}))
+
+  (inc 3)
 
   (defn uuid->bytes [uuid]
     (let [bb (java.nio.ByteBuffer/allocate 16)]
@@ -199,10 +202,10 @@
 
   (time
    (jdbc/execute! conn
-                 (sql/format {:select :* :from :users})
-                 {:builder-fn (rs/builder-adapter
-                               rs/as-kebab-maps
-                               default-column-by-index-fn)}))
+                  (sql/format {:select :* :from :users})
+                  {:builder-fn (rs/builder-adapter
+                                rs/as-kebab-maps
+                                default-column-by-index-fn)}))
 
   (time
    (dotimes [_ 50]
