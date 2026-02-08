@@ -5,12 +5,13 @@ Comprehensive Playwright e2e tests for the Yakread web application. These tests 
 
 ## Infrastructure Setup
 - [x] Restore XTDB2 component (undo SQLite migration changes in `com.yakread`)
-- [x] Save SQLite schema to `dev/sqlite_schema.clj`, restore XTDB2 schema
-- [x] Create test config (config.env with dev secrets)
 - [x] Set up Playwright (package.json, playwright.config.mjs)
 - [x] Create dummy content server (serves RSS feeds, blog posts on port 8888)
-- [x] Create test helpers (auth bypass, page utilities)
+- [x] Create test helpers (auth code via file, page utilities)
 - [x] Verify all tests parse correctly (80 tests in 10 files)
+- [x] Wire auth code into `send-console` (writes to `storage/test-auth-code.txt`)
+- [x] Add GitHub Actions workflow for Playwright tests
+- [x] Update copilot-setup-steps.yml with Node.js and Playwright
 
 ## Running Tests
 
@@ -33,11 +34,9 @@ npx playwright test --list # List all tests
 ```
 
 ### Auth Code Retrieval
-The tests need to get the verification code during sign-in. Two strategies are supported:
-1. **Dev endpoint**: GET `/dev/auth-code?email=...` returns the code
-2. **File-based**: Server writes code to `storage/test-auth-code.txt`
-
-You may need to add one of these mechanisms to the app for the tests to complete the sign-in flow.
+In dev mode (when MailerSend keys are not configured), `send-console` in
+`com.yakread.lib.email` writes the verification code to `storage/test-auth-code.txt`.
+The Playwright test helpers read this file to complete the sign-in flow.
 
 ## Test Categories & Status
 

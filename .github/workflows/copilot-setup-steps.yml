@@ -49,3 +49,14 @@ jobs:
 
       - name: Download dependencies
         run: clojure -P -M:run
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium

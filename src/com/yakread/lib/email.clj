@@ -1,6 +1,7 @@
 (ns com.yakread.lib.email
   (:require
    [clj-http.client :as http]
+   [clojure.java.io :as io]
    [clojure.tools.logging :as log]
    [com.yakread.lib.ui-email :as uie]
    [rum.core :as rum]))
@@ -146,7 +147,7 @@
       (log/error (:body result)))
     success))
 
-(defn- send-console [_ form-params]
+(defn- send-console [_ form-params opts]
   (println "TO:" (-> form-params :to first :email))
   (println "SUBJECT:" (:subject form-params))
   (println)
@@ -154,6 +155,10 @@
   (println)
   (println "To send emails instead of printing them to the console, add your"
            "API keys for MailerSend and Recaptcha to config.env.")
+  (when-some [code (:code opts)]
+    (let [dir (io/file "storage")]
+      (.mkdirs dir)
+      (spit (io/file dir "test-auth-code.txt") code)))
   true)
 
 (defn send-email [{:keys [biff/secret recaptcha/site-key] :as ctx} opts]
@@ -164,4 +169,4 @@
                        (secret :recaptcha/secret-key)
                        site-key])
       (send-mailersend ctx form-params)
-      (send-console ctx form-params))))
+      (send-console ctx form-params opts))))

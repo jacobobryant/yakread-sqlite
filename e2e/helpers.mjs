@@ -1,10 +1,9 @@
 /**
  * Test helpers and fixtures for Yakread e2e tests.
  *
- * Auth approach: We POST to /auth/send-code to trigger code generation,
- * then read the code from the test-code endpoint (a small server-side
- * addition for testing). If the test-code endpoint isn't available,
- * we fall back to reading from a file that the dev server writes to.
+ * Auth approach: We POST to /auth/send-code to trigger code generation.
+ * In dev mode (console email), the server writes the code to
+ * storage/test-auth-code.txt which the tests read.
  */
 import { test as base, expect } from '@playwright/test';
 import * as fs from 'node:fs';
@@ -15,27 +14,11 @@ const CODE_FILE = path.join(process.cwd(), 'storage', 'test-auth-code.txt');
 
 /**
  * Wait for and retrieve the verification code.
- * In dev mode, Biff logs the code. We have a few strategies:
- * 1. Read from a test endpoint /dev/auth-code
- * 2. Read from a file the server writes to
- * 3. Use a fixed code in test mode
+ * The Yakread dev server writes the code to storage/test-auth-code.txt
+ * when sending via console (i.e. when MailerSend keys are not configured).
  */
 async function getVerificationCode(page, email) {
-  // Strategy 1: Try the dev auth-code endpoint
-  try {
-    const response = await page.request.get('/dev/auth-code?email=' + encodeURIComponent(email));
-    if (response.ok()) {
-      const code = (await response.text()).trim();
-      if (code && code.length === 6) {
-        return code;
-      }
-    }
-  } catch (e) {
-    // Fall through to next strategy
-  }
-
-  // Strategy 2: Read from file
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 20; i++) {
     await page.waitForTimeout(500);
     try {
       if (fs.existsSync(CODE_FILE)) {
@@ -51,7 +34,7 @@ async function getVerificationCode(page, email) {
     }
   }
 
-  throw new Error('Could not retrieve verification code');
+  throw new Error('Could not retrieve verification code from ' + CODE_FILE);
 }
 
 /**
