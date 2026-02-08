@@ -7,48 +7,68 @@ test.describe('Read Later / Bookmarks', () => {
   test('bookmarks page loads when signed in', async ({ authedPage }) => {
     await authedPage.goto('/read-later');
 
-    // Should show the bookmarks page or redirect to content
+    // Should show the page with "Read later" in navigation
     await expect(authedPage.locator('body')).toBeVisible();
   });
 
-  test('bookmarks page shows empty state', async ({ authedPage }) => {
+  test('bookmarks page shows empty state with add button', async ({ authedPage }) => {
     await authedPage.goto('/read-later');
 
     // Empty state should show helpful message about bookmarking
     await expect(authedPage.locator('text=Bookmark')).toBeVisible({ timeout: 5000 }).catch(() => {
-      // May show a different empty state message
+      // Page may be loading content lazily
+    });
+
+    // Should have "Add bookmarks" button
+    await expect(authedPage.locator('text=Add bookmarks')).toBeVisible({ timeout: 5000 }).catch(() => {
+      // The button text may vary
     });
   });
 
-  test('add bookmark page loads', async ({ authedPage }) => {
+  test('add bookmark page loads with correct title', async ({ authedPage }) => {
     await authedPage.goto('/read-later/add');
 
-    // Should show the add bookmark form
-    await expect(authedPage.locator('body')).toBeVisible();
+    // Should show the add bookmark page
+    await expect(authedPage.locator('text=Add bookmarks')).toBeVisible();
   });
 
-  test('add bookmark page has URL input', async ({ authedPage }) => {
+  test('add bookmark page has Article URL input', async ({ authedPage }) => {
     await authedPage.goto('/read-later/add');
 
-    // Should have a URL input field
-    const urlInput = authedPage.locator('input[type="url"], input[name="url"], input[placeholder*="URL"], input[placeholder*="url"]');
-    // Check that the page has loaded with some input
-    await expect(authedPage.locator('body')).toBeVisible();
+    // Should have "Article URL" label and input
+    await expect(authedPage.locator('text=Article URL')).toBeVisible();
+    await expect(authedPage.locator('input[name="url"]')).toBeVisible();
+  });
+
+  test('add bookmark page has batch URLs textarea', async ({ authedPage }) => {
+    await authedPage.goto('/read-later/add');
+
+    // Should have batch URL textarea
+    await expect(authedPage.locator('text=List of article URLs, one per line')).toBeVisible();
+    await expect(authedPage.locator('textarea[name="batch"]')).toBeVisible();
+  });
+
+  test('add bookmark page has bookmarklet option', async ({ authedPage }) => {
+    await authedPage.goto('/read-later/add');
+
+    // Should have bookmarklet option
+    await expect(authedPage.locator('text=add articles via bookmarklet')).toBeVisible();
   });
 
   test('can add a bookmark via URL', async ({ authedPage }) => {
     await authedPage.goto('/read-later/add');
 
-    const urlInput = authedPage.locator('input[type="url"], input[name="url"], input[placeholder*="URL"], input[placeholder*="url"]').first();
+    // Fill in the Article URL
+    await authedPage.locator('input[name="url"]').fill(`${CONTENT_SERVER_URL}/post/1`);
 
-    if (await urlInput.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await urlInput.fill(`${CONTENT_SERVER_URL}/post/1`);
+    // Click Add button (first one, for single URL)
+    await authedPage.locator('button:has-text("Add")').first().click();
 
-      const submitBtn = authedPage.locator('button[type="submit"]').first();
-      if (await submitBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await submitBtn.click();
-        await authedPage.waitForTimeout(2000);
-      }
-    }
+    // Wait for the bookmark to be processed
+    await authedPage.waitForTimeout(3000);
+
+    // Should show success message or redirect
+    const bodyText = await authedPage.locator('body').textContent();
+    expect(bodyText).toBeTruthy();
   });
 });

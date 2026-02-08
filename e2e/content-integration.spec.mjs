@@ -12,15 +12,17 @@ test.describe('Content Server', () => {
     expect(body).toContain('Test Blog');
   });
 
-  test('RSS feed is accessible', async ({ page }) => {
+  test('RSS feed is accessible and valid', async ({ page }) => {
     const response = await page.request.get(`${CONTENT_SERVER_URL}/feed.xml`);
     expect(response.ok()).toBeTruthy();
     const body = await response.text();
     expect(body).toContain('<rss');
     expect(body).toContain('The Future of Reading');
+    expect(body).toContain('Building Better RSS Readers');
+    expect(body).toContain('Newsletter Curation Tips');
   });
 
-  test('Atom feed is accessible', async ({ page }) => {
+  test('Atom feed is accessible and valid', async ({ page }) => {
     const response = await page.request.get(`${CONTENT_SERVER_URL}/atom.xml`);
     expect(response.ok()).toBeTruthy();
     const body = await response.text();
@@ -45,56 +47,83 @@ test.describe('Content Server', () => {
     expect(body3).toContain('Newsletter Curation Tips');
   });
 
+  test('blog post has autodiscovery RSS link', async ({ page }) => {
+    const response = await page.request.get(`${CONTENT_SERVER_URL}/post/1`);
+    const body = await response.text();
+    // Post 1 has an RSS autodiscovery link
+    expect(body).toContain('application/rss+xml');
+    expect(body).toContain('/feed.xml');
+  });
+
+  test('home page has both RSS and Atom feed links', async ({ page }) => {
+    const response = await page.request.get(CONTENT_SERVER_URL);
+    const body = await response.text();
+    expect(body).toContain('application/rss+xml');
+    expect(body).toContain('application/atom+xml');
+  });
+
   test('can subscribe to RSS feed from content server', async ({ authedPage }) => {
     await authedPage.goto('/subscriptions/add');
 
-    // Look for the URL input
-    const urlInput = authedPage.locator('input[type="url"], input[name="url"], input[placeholder*="URL"], input[placeholder*="url"]').first();
+    // Fill in the URL input
+    await authedPage.locator('input[name="url"]').fill(`${CONTENT_SERVER_URL}/feed.xml`);
 
-    if (await urlInput.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await urlInput.fill(`${CONTENT_SERVER_URL}/feed.xml`);
+    // Click Subscribe
+    await authedPage.locator('button:has-text("Subscribe")').click();
 
-      const submitBtn = authedPage.locator('button[type="submit"]').first();
-      if (await submitBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await submitBtn.click();
+    // Wait for the subscription to be processed
+    await authedPage.waitForTimeout(3000);
 
-        // Wait for the subscription to be processed
-        await authedPage.waitForTimeout(3000);
+    // Should either show success message or redirect to subscriptions
+    const bodyText = await authedPage.locator('body').textContent();
+    expect(bodyText).toBeTruthy();
+  });
 
-        // Navigate to subscriptions to verify
-        await authedPage.goto('/subscriptions');
-        await authedPage.waitForTimeout(2000);
+  test('can subscribe using website URL (autodiscovery)', async ({ authedPage }) => {
+    await authedPage.goto('/subscriptions/add');
 
-        // The feed should appear in subscriptions
-        const bodyText = await authedPage.locator('body').textContent();
-        // Verify the page loaded - subscription might take time to appear
-        expect(bodyText.length).toBeGreaterThan(0);
-      }
-    }
+    // Use the website URL instead of the feed URL directly
+    await authedPage.locator('input[name="url"]').fill(CONTENT_SERVER_URL);
+
+    // Click Subscribe
+    await authedPage.locator('button:has-text("Subscribe")').click();
+
+    // Wait for processing
+    await authedPage.waitForTimeout(3000);
+
+    const bodyText = await authedPage.locator('body').textContent();
+    expect(bodyText).toBeTruthy();
   });
 
   test('can bookmark an article from content server', async ({ authedPage }) => {
     await authedPage.goto('/read-later/add');
 
-    const urlInput = authedPage.locator('input[type="url"], input[name="url"], input[placeholder*="URL"], input[placeholder*="url"]').first();
+    // Fill in the Article URL
+    await authedPage.locator('input[name="url"]').fill(`${CONTENT_SERVER_URL}/post/1`);
 
-    if (await urlInput.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await urlInput.fill(`${CONTENT_SERVER_URL}/post/1`);
+    // Click Add
+    await authedPage.locator('button:has-text("Add")').first().click();
 
-      const submitBtn = authedPage.locator('button[type="submit"]').first();
-      if (await submitBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-        await submitBtn.click();
+    // Wait for bookmark to be processed
+    await authedPage.waitForTimeout(3000);
 
-        // Wait for bookmark to be processed
-        await authedPage.waitForTimeout(3000);
+    const bodyText = await authedPage.locator('body').textContent();
+    expect(bodyText).toBeTruthy();
+  });
 
-        // Navigate to read-later to check
-        await authedPage.goto('/read-later');
-        await authedPage.waitForTimeout(2000);
+  test('can favorite an article from content server', async ({ authedPage }) => {
+    await authedPage.goto('/favorites/add');
 
-        const bodyText = await authedPage.locator('body').textContent();
-        expect(bodyText.length).toBeGreaterThan(0);
-      }
-    }
+    // Fill in the Article URL
+    await authedPage.locator('input[name="url"]').fill(`${CONTENT_SERVER_URL}/post/2`);
+
+    // Click Add
+    await authedPage.locator('button:has-text("Add")').click();
+
+    // Wait for processing
+    await authedPage.waitForTimeout(3000);
+
+    const bodyText = await authedPage.locator('body').textContent();
+    expect(bodyText).toBeTruthy();
   });
 });

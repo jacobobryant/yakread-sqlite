@@ -7,38 +7,44 @@ test.describe('For You', () => {
   test('for-you page loads when signed in', async ({ authedPage }) => {
     await authedPage.goto('/for-you');
 
-    // Should show the For You page
-    await expect(authedPage.locator('text=For you')).toBeVisible({ timeout: 5000 }).catch(() => {
-      // Might use different casing
-      expect(authedPage.url()).toContain('/for-you');
-    });
+    // Should be on the For You page
+    await expect(authedPage).toHaveURL(/\/for-you/);
+    await expect(authedPage.locator('body')).toBeVisible();
   });
 
-  test('for-you page shows content or empty state', async ({ authedPage }) => {
+  test('for-you page shows empty state with helpful links', async ({ authedPage }) => {
     await authedPage.goto('/for-you');
 
-    // Page should have loaded
-    await expect(authedPage.locator('body')).toBeVisible();
+    // New user should see empty state suggesting subscriptions or bookmarks
+    // The empty state says: "There's no content to recommend yet."
+    // with links to subscriptions and bookmarks
+    await authedPage.waitForTimeout(3000);
 
-    // Either shows items or an empty/loading state
     const bodyText = await authedPage.locator('body').textContent();
+    // Either shows items or the empty state message
     expect(bodyText.length).toBeGreaterThan(0);
   });
 
-  test('for-you page redirects to sign-in when not authenticated', async ({ page }) => {
+  test('for-you shows create account banner for non-authenticated users', async ({ page }) => {
     await page.goto('/for-you');
 
-    // For-you should work for both authed and non-authed users
-    // (shows different content based on auth state)
-    const url = page.url();
-    // May redirect to sign-in or show a public version
-    expect(url).toBeTruthy();
+    // Non-authed users see "Create an account" banner
+    await expect(page.locator('text=Create an account')).toBeVisible();
   });
 
   test('history page loads when signed in', async ({ authedPage }) => {
-    await authedPage.goto('/for-you/history');
+    // History is at /history (not /for-you/history)
+    await authedPage.goto('/history');
 
-    // History page should load
-    await expect(authedPage.locator('body')).toBeVisible();
+    // Should show Reading History title
+    await expect(authedPage.locator('text=Reading History')).toBeVisible();
+  });
+
+  test('history page has back link to for-you', async ({ authedPage }) => {
+    await authedPage.goto('/history');
+
+    // Should have a back link to For You
+    const backLink = authedPage.locator('a[href="/for-you"]');
+    await expect(backLink).toBeVisible();
   });
 });

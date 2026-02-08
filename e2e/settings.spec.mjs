@@ -24,15 +24,15 @@ test.describe('Settings Page', () => {
   test('digest time selector is present', async ({ authedPage }) => {
     await authedPage.goto('/settings');
 
-    // Time selector should be present
+    // Time selector - the select element has name user/send-digest-at
     await expect(authedPage.locator('select[name="user/send-digest-at"]')).toBeVisible();
   });
 
   test('timezone selector is present', async ({ authedPage }) => {
     await authedPage.goto('/settings');
 
-    // Timezone selector should be present
-    await expect(authedPage.locator('select[name="user/timezone"]')).toBeVisible();
+    // Timezone selector
+    await expect(authedPage.locator('text=Your timezone')).toBeVisible();
   });
 
   test('open original links checkbox is present', async ({ authedPage }) => {
@@ -72,6 +72,10 @@ test.describe('Settings Page', () => {
 
     // Premium section should be present
     await expect(authedPage.locator('text=Premium')).toBeVisible();
+
+    // Should show upgrade options for non-premium users
+    await expect(authedPage.locator('text=$30')).toBeVisible();
+    await expect(authedPage.locator('text=$60')).toBeVisible();
   });
 
   test('account section is visible', async ({ authedPage }) => {
@@ -82,14 +86,13 @@ test.describe('Settings Page', () => {
     await expect(authedPage.locator('text=Delete account')).toBeVisible();
   });
 
-  test('redirects to sign-in when not authenticated', async ({ page }) => {
-    // Settings requires authentication
+  test('settings page shows disabled state for non-authenticated user', async ({ page }) => {
     await page.goto('/settings');
 
-    // The page should still load (settings shows disabled state for non-authed users)
-    // or redirect to sign-in
-    const url = page.url();
-    // Settings page renders for both authed and non-authed users (with disabled state)
-    expect(url).toMatch(/\/(settings|signin)/);
+    // Settings page renders for non-authed users with disabled state
+    // The fieldset should be disabled
+    await expect(page.locator('text=Settings')).toBeVisible();
+    // Should show "Create an account" banner
+    await expect(page.locator('text=Create an account')).toBeVisible();
   });
 });

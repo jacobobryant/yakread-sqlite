@@ -26,6 +26,13 @@ test.describe('Authentication', () => {
     await expect(page.locator('text=Sign up')).toBeVisible();
   });
 
+  test('sign-in page shows Sign in button', async ({ page }) => {
+    await page.goto('/signin');
+
+    // Sign in button text
+    await expect(page.locator('button:has-text("Sign in")')).toBeVisible();
+  });
+
   test('can sign in with email and verification code', async ({ page }) => {
     await signIn(page, 'test@example.com');
 
@@ -44,20 +51,32 @@ test.describe('Authentication', () => {
     await expect(page.locator('text=Enter the 6-digit code')).toBeVisible();
   });
 
-  test('sign out works', async ({ authedPage }) => {
-    // Click on user menu to show sign-out button
-    const userButton = authedPage.locator('button:has-text("Sign out")');
-    // The sign-out button may be in a dropdown - first find and click the user trigger
-    const userDropdownTrigger = authedPage.locator('#user-dropdown').locator('..');
-    // Try clicking the user area to show the dropdown
-    await authedPage.locator('button:near(:text("Sign out"))').first().click({ timeout: 5000 }).catch(() => {});
+  test('verify-code page has resend option', async ({ page }) => {
+    await page.goto('/signin');
+    await page.fill('input[name="email"]', 'test@example.com');
+    await page.click('button[type="submit"]');
+    await page.waitForURL('**/verify-code**');
 
-    // Look for the sign-out form/button
-    const signOutButton = authedPage.locator('button:has-text("Sign out")');
-    if (await signOutButton.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await signOutButton.click();
-      // After sign out, should be redirected to home or sign-in
-      await authedPage.waitForURL(url => !url.toString().includes('/for-you'), { timeout: 5000 });
-    }
+    // Should have "Send another code" link
+    await expect(page.locator('text=Send another code')).toBeVisible();
+  });
+
+  test('verify-code page has home link', async ({ page }) => {
+    await page.goto('/signin');
+    await page.fill('input[name="email"]', 'test@example.com');
+    await page.click('button[type="submit"]');
+    await page.waitForURL('**/verify-code**');
+
+    // Should have a link to home
+    await expect(page.locator('a:has-text("Home")')).toBeVisible();
+  });
+
+  test('protected pages redirect to sign-in', async ({ page }) => {
+    // History page requires authentication
+    await page.goto('/history');
+    await page.waitForURL('**/signin**');
+    await expect(page).toHaveURL(/\/signin/);
+    // Should show "not-signed-in" error
+    await expect(page.locator('text=You must be signed in')).toBeVisible();
   });
 });
