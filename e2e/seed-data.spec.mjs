@@ -64,7 +64,7 @@ test.describe('Seed Data - Navigation', () => {
     await seededPage.locator('#sidebar button:has-text("Sign out")').click();
 
     // Should redirect away from authenticated pages
-    await seededPage.waitForTimeout(2000);
+    await seededPage.waitForURL(/\/(signin|$)/, { timeout: 10000 });
     const url = seededPage.url();
     expect(url).not.toContain('/for-you');
   });
