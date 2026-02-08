@@ -479,6 +479,115 @@
 
 
 ;; ============================================================================
+;; Query Helper
+;; ============================================================================
+
+(defn- all-coercions
+  "Build a map of {table-key {:read {...} :write {...}}} for all tables."
+  [malli-opts]
+  (into {}
+        (map (fn [[table-key attrs]]
+               [table-key (build-coercions attrs)]))
+        (schema-info malli-opts)))
+
+(def ^:private coercion-cache (atom nil))
+
+(defn- get-all-coercions [malli-opts]
+  (or @coercion-cache
+      (reset! coercion-cache (all-coercions malli-opts))))
+
+(defn q
+  "Execute a HoneySQL query against SQLite, applying type coercions.
+   table-key determines which coercions to use for result columns.
+   If table-key is nil, no coercions are applied."
+  [conn malli-opts table-key query-map]
+  (let [sql-vec (sql/format query-map)
+        coercions (when table-key
+                    (get-in (get-all-coercions malli-opts) [table-key :read]))
+        opts (if coercions
+               {:builder-fn (rs/builder-adapter
+                             rs/as-unqualified-kebab-maps
+                             (make-column-reader table-key coercions))}
+               {:builder-fn rs/as-unqualified-kebab-maps})]
+    (jdbc/execute! conn sql-vec opts)))
+
+(defn- coerce-write-vals
+  "Apply write coercions to a map of attribute values for a given table."
+  [malli-opts table-key m]
+  (let [write-coercions (get-in (get-all-coercions malli-opts) [table-key :write])]
+    (if write-coercions
+      (reduce-kv (fn [acc k v]
+                   (let [coerce-fn (get write-coercions k)]
+                     (assoc acc k (if (and coerce-fn (some? v))
+                                    (coerce-fn v)
+                                    v))))
+                 {}
+                 m)
+      m)))
+
+(defn- sql-col
+  "Convert a namespaced keyword to a SQL column keyword.
+   :user/email -> :email, :user/id -> :id"
+  [k]
+  (keyword (str/replace (name k) "-" "_")))
+
+(defn- map->sql-cols
+  "Convert a Clojure map with namespaced keys to SQL column names."
+  [m]
+  (into {}
+        (map (fn [[k v]]
+               [(sql-col k) v]))
+        m))
+
+;; ============================================================================
+;; Transaction Helper
+;; ============================================================================
+
+(defn submit-tx
+  "Submit a SQLite transaction. Supports:
+   - [:put table-key doc] - INSERT OR REPLACE
+   - [:delete table-key id] - DELETE by ID
+   - [:update table-key {:set {...} :where [...]}] - UPDATE"
+  [conn malli-opts tx]
+  (jdbc/with-transaction [tx-conn conn]
+    (doseq [op tx]
+      (cond
+        ;; [:put :table {:table/id ... :table/col ...}]
+        (and (vector? op) (= :put (first op)))
+        (let [[_ table-key doc] op
+              coerced (coerce-write-vals malli-opts table-key doc)
+              cols (map->sql-cols coerced)]
+          (jdbc/execute! tx-conn
+                         (sql/format {:insert-into table-key
+                                      :values [(map->sql-cols coerced)]}
+                                     {:dialect :ansi})))
+
+        ;; [:delete :table id-val]
+        (and (vector? op) (= :delete (first op)))
+        (let [[_ table-key id-val] op
+              id-key (table-id-key table-key)
+              write-coercions (get-in (get-all-coercions malli-opts) [table-key :write])
+              id-coerce (get write-coercions id-key)
+              coerced-id (if id-coerce (id-coerce id-val) id-val)]
+          (jdbc/execute! tx-conn
+                         (sql/format {:delete-from table-key
+                                      :where [:= :id coerced-id]})))
+
+        ;; {:update :table :set {...} :where [...]}
+        (map? op)
+        (let [{:keys [update set where]} op
+              table-key update
+              coerced-set (coerce-write-vals malli-opts table-key set)
+              sql-set (map->sql-cols coerced-set)]
+          (jdbc/execute! tx-conn
+                         (sql/format {:update table-key
+                                      :set sql-set
+                                      :where where})))
+
+        :else
+        (throw (ex-info "Unknown tx op" {:op op}))))))
+
+;; ============================================================================
 ;; Other stuff
 ;; ============================================================================
 
