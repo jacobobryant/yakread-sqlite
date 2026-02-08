@@ -97,4 +97,53 @@ test.describe('Subscriptions', () => {
     const newsletterSection = authedPage.getByRole('heading', { name: 'Newsletters' });
     await expect(newsletterSection).toBeVisible();
   });
+
+  test('can click into a subscription to view its items', async ({ seededPage }) => {
+    await seededPage.goto('/subscriptions');
+
+    // Wait for lazy-loaded subscription cards
+    await seededPage.waitForTimeout(3000);
+
+    // Click the first subscription link
+    const subLink = seededPage.locator('a:has-text("Example Tech Blog")');
+    await expect(subLink).toBeVisible({ timeout: 10000 });
+    await subLink.click();
+
+    // Should navigate to the subscription view page
+    await seededPage.waitForURL('**/subscription/**', { timeout: 10000 });
+
+    // The subscription view page should show the feed's items
+    await seededPage.waitForTimeout(3000);
+    const bodyText = await seededPage.locator('body').textContent();
+    expect(bodyText).toBeTruthy();
+  });
+
+  test('can unsubscribe from a feed subscription', async ({ seededPage }) => {
+    await seededPage.goto('/subscriptions');
+
+    // Wait for lazy-loaded subscription cards
+    await seededPage.waitForTimeout(3000);
+
+    // The seeded user has "Daily News Digest" subscription
+    await expect(seededPage.locator('text=Daily News Digest')).toBeVisible({ timeout: 10000 });
+
+    // Find the overflow menu button near "Daily News Digest" and click it
+    const newsCard = seededPage.locator('.relative:has-text("Daily News Digest")');
+    const menuButton = newsCard.locator('button').first();
+    await menuButton.click();
+
+    // Click "Unsubscribe" in the overflow menu
+    const unsubButton = seededPage.locator('button:has-text("Unsubscribe")');
+    await expect(unsubButton).toBeVisible({ timeout: 5000 });
+
+    // Accept the confirmation dialog
+    seededPage.on('dialog', dialog => dialog.accept());
+    await unsubButton.click();
+
+    // Wait for the unsubscribe action to complete
+    await seededPage.waitForTimeout(3000);
+
+    // After unsubscribing, "Daily News Digest" should no longer appear
+    await expect(seededPage.locator('text=Daily News Digest')).not.toBeVisible({ timeout: 10000 });
+  });
 });

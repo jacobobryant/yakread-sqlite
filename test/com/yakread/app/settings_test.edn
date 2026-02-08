@@ -1,0 +1,62 @@
+{:require
+ [[com.yakread.lib.test :as t] [com.yakread.app.settings :refer :all]],
+ :tests
+ [{:doc "save-settings writes digest days and timezone to user",
+   :eval
+   (t/test-route
+    save-settings
+    :post
+    {:session {:uid "user1"},
+     :biff.form/params
+     {:user/digest-days #{:wednesday :friday :monday},
+      :user/send-digest-at 8,
+      :user/timezone* "America/New_York",
+      :user/use-original-links true}}),
+   :result
+   {:biff.fx/tx
+    [[:patch-docs
+      :user
+      {:xt/id "user1",
+       :user/use-original-links true,
+       :user/digest-days #{:wednesday :friday :monday},
+       :user/send-digest-at 8,
+       :user/timezone* "America/New_York"}]],
+    :status 303,
+    :headers {"location" ["/settings" nil]}}}
+  _
+  {:doc "save-settings defaults use-original-links to false",
+   :eval
+   (t/test-route
+    save-settings
+    :post
+    {:session {:uid "user1"},
+     :biff.form/params
+     {:user/digest-days #{:tuesday},
+      :user/send-digest-at 14,
+      :user/timezone* "America/Denver"}}),
+   :result
+   {:biff.fx/tx
+    [[:patch-docs
+      :user
+      {:xt/id "user1",
+       :user/use-original-links false,
+       :user/digest-days #{:tuesday},
+       :user/send-digest-at 14,
+       :user/timezone* "America/Denver"}]],
+    :status 303,
+    :headers {"location" ["/settings" nil]}}}
+  _
+  {:doc "set-timezone writes timezone to user",
+   :eval
+   (t/test-route
+    set-timezone
+    :post
+    {:session {:uid "user1"},
+     :biff.form/params {:user/timezone* "Europe/London"}}),
+   :result
+   {:biff.fx/tx
+    [[:patch-docs
+      :user
+      {:xt/id "user1", :user/timezone* "Europe/London"}]],
+    :status 204}}
+  _]}
