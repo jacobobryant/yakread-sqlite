@@ -11,6 +11,7 @@ import * as path from 'node:path';
 
 const CONTENT_SERVER_URL = 'http://localhost:8888';
 const CODE_FILE = path.join(process.cwd(), 'storage', 'test-auth-code.txt');
+const SEED_EMAIL = 'seed@example.com';
 
 /**
  * Wait for and retrieve the verification code.
@@ -70,13 +71,22 @@ async function signIn(page, email = 'test@example.com') {
  */
 export const test = base.extend({
   /**
-   * Provides a signed-in page.
+   * Provides a signed-in page (fresh user, not in seed data).
    * Usage: test('my test', async ({ authedPage }) => { ... })
    */
   authedPage: async ({ page }, use) => {
     await signIn(page);
     await use(page);
   },
+  /**
+   * Provides a signed-in page as the seed data user (seed@example.com).
+   * This user has subscriptions, bookmarks, favorites, and items.
+   * Usage: test('my test', async ({ seededPage }) => { ... })
+   */
+  seededPage: async ({ page }, use) => {
+    await signIn(page, SEED_EMAIL);
+    await use(page);
+  },
 });
 
-export { expect, signIn, getVerificationCode, CONTENT_SERVER_URL };
+export { expect, signIn, getVerificationCode, CONTENT_SERVER_URL, SEED_EMAIL };

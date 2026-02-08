@@ -41,7 +41,7 @@ jobs:
             ${{ runner.os }}-clojure-
 
       - name: Download Clojure dependencies
-        run: clojure -P -M:run
+        run: clojure -P -M:dev-server
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -67,15 +67,7 @@ jobs:
 
       - name: Start Yakread server
         run: |
-          clojure -J"--add-opens=java.base/java.nio=ALL-UNNAMED" \
-            -J"-Dio.netty.tryReflectionSetAccessible=true" \
-            -J"-Djdk.attach.allowAttachSelf" \
-            -J"--add-exports=java.base/sun.nio.ch=ALL-UNNAMED" \
-            -J"--add-exports=java.base/sun.security.action=ALL-UNNAMED" \
-            -J"-XX:-OmitStackTraceInFastThrow" \
-            -J"-XX:+CrashOnOutOfMemoryError" \
-            -J"-Dbiff.env.BIFF_PROFILE=dev" \
-            -M -m com.yakread -- nrepl --port 7888 &
+          clojure -M:dev-server -- nrepl --port 7888 &
           echo $! > /tmp/yakread.pid
           # Wait for server to be ready
           for i in $(seq 1 60); do
@@ -85,6 +77,18 @@ jobs:
             fi
             echo "Waiting for server... ($i/60)"
             sleep 5
+          done
+
+      - name: Seed test data
+        run: |
+          # Use nREPL to insert seed data
+          for i in $(seq 1 30); do
+            if echo "(do (require '[seed]) (seed/seed! @com.yakread/system))" | clojure -Sdeps '{:deps {nrepl/nrepl {:mvn/version "1.0.0"}}}' -M -m nrepl.cmdline --connect --host localhost --port 7888 2>&1 | grep -q "Seed data inserted"; then
+              echo "Seed data inserted"
+              break
+            fi
+            echo "Retrying seed data... ($i/30)"
+            sleep 2
           done
 
       - name: Run Playwright tests
