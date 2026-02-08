@@ -179,6 +179,8 @@
   [biff/use-aero-config
    use-error-reporting
    biffx/use-xtdb2
+   ;; lib.spark/use-spark requires populated data and Pathom resolvers for :xt/id;
+   ;; uncomment once seed data and resolvers are fully set up.
    ;lib.spark/use-spark
    biff/use-queues
    ;biffx/use-xtdb2-listener

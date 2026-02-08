@@ -27,7 +27,7 @@ test.describe('Favorites', () => {
     await authedPage.goto('/favorites/add');
 
     // Should show the add favorites page
-    await expect(authedPage.locator('text=Add favorites')).toBeVisible();
+    await expect(authedPage.getByRole('heading', { name: 'Add favorites', exact: true })).toBeVisible();
   });
 
   test('add favorite page has Article URL input', async ({ authedPage }) => {
@@ -51,8 +51,8 @@ test.describe('Favorites', () => {
     // Fill in the Article URL
     await authedPage.locator('input[name="url"]').fill(`${CONTENT_SERVER_URL}/post/2`);
 
-    // Click Add button
-    await authedPage.locator('button:has-text("Add")').click();
+    // Click Add button (use submit button specifically)
+    await authedPage.locator('button[type="submit"]:has-text("Add")').click();
 
     // Wait for the favorite to be processed
     await authedPage.waitForTimeout(3000);

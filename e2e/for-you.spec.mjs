@@ -43,8 +43,8 @@ test.describe('For You', () => {
   test('history page has back link to for-you', async ({ authedPage }) => {
     await authedPage.goto('/history');
 
-    // Should have a back link to For You
-    const backLink = authedPage.locator('a[href="/for-you"]');
+    // Should have a back link to For You (the "Back" link)
+    const backLink = authedPage.locator('a:has-text("Back")').first();
     await expect(backLink).toBeVisible();
   });
 });

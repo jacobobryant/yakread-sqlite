@@ -8,7 +8,7 @@ test.describe('Settings Page', () => {
     await authedPage.goto('/settings');
 
     // Page should have Settings heading
-    await expect(authedPage.locator('text=Settings')).toBeVisible();
+    await expect(authedPage.getByRole('heading', { name: 'Settings' })).toBeVisible();
   });
 
   test('digest day checkboxes are present', async ({ authedPage }) => {
@@ -24,8 +24,8 @@ test.describe('Settings Page', () => {
   test('digest time selector is present', async ({ authedPage }) => {
     await authedPage.goto('/settings');
 
-    // Time selector - the select element has name user/send-digest-at
-    await expect(authedPage.locator('select[name="user/send-digest-at"]')).toBeVisible();
+    // Time selector - the select element has name :user/send-digest-at (with colon prefix)
+    await expect(authedPage.locator('select[name="\\:user/send-digest-at"]')).toBeVisible();
   });
 
   test('timezone selector is present', async ({ authedPage }) => {
@@ -71,7 +71,7 @@ test.describe('Settings Page', () => {
     await authedPage.goto('/settings');
 
     // Premium section should be present
-    await expect(authedPage.locator('text=Premium')).toBeVisible();
+    await expect(authedPage.getByRole('heading', { name: 'Premium' })).toBeVisible();
 
     // Should show upgrade options for non-premium users
     await expect(authedPage.locator('text=$30')).toBeVisible();
@@ -91,7 +91,7 @@ test.describe('Settings Page', () => {
 
     // Settings page renders for non-authed users with disabled state
     // The fieldset should be disabled
-    await expect(page.locator('text=Settings')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Settings' })).toBeVisible();
     // Should show "Create an account" banner
     await expect(page.locator('text=Create an account')).toBeVisible();
   });
