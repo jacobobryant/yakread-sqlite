@@ -280,4 +280,4 @@
                    [:deleted-user/email-username-hash :string])})
 
 (def module
-  {})
+  {:schema schema})

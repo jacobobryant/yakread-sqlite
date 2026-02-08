@@ -1,4 +1,5 @@
-(ns com.yakread.model.schema)
+(ns dev.sqlite-schema
+  "Temporary home for the new SQLite schema while we run e2e tests against XTDB2.")
 
 (def ?
   "Mark an attribute as optional."
@@ -200,4 +201,4 @@
                   [:deleted-user/email-username-hash   :string]]})
 
 (def module
-  {})
+  {:schema schema})
