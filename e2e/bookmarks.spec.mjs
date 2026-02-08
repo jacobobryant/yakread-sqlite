@@ -36,7 +36,7 @@ test.describe('Read Later / Bookmarks', () => {
     await authedPage.goto('/read-later/add');
 
     // Should have "Article URL" label and input
-    await expect(authedPage.locator('text=Article URL')).toBeVisible();
+    await expect(authedPage.getByRole('textbox', { name: 'Article URL', exact: true })).toBeVisible();
     await expect(authedPage.locator('input[name="url"]')).toBeVisible();
   });
 
@@ -52,7 +52,7 @@ test.describe('Read Later / Bookmarks', () => {
     await authedPage.goto('/read-later/add');
 
     // Should have bookmarklet option
-    await expect(authedPage.locator('text=add articles via bookmarklet')).toBeVisible();
+    await expect(authedPage.locator('button:has-text("add articles via bookmarklet")')).toBeVisible();
   });
 
   test('can add a bookmark via URL', async ({ authedPage }) => {

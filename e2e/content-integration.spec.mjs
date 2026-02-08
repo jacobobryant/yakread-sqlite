@@ -68,8 +68,8 @@ test.describe('Content Server', () => {
     // Fill in the URL input
     await authedPage.locator('input[name="url"]').fill(`${CONTENT_SERVER_URL}/feed.xml`);
 
-    // Click Subscribe
-    await authedPage.locator('button:has-text("Subscribe")').click();
+    // Click Subscribe (use the submit button specifically)
+    await authedPage.locator('button[type="submit"]:has-text("Subscribe")').click();
 
     // Wait for the subscription to be processed
     await authedPage.waitForTimeout(3000);
@@ -85,8 +85,8 @@ test.describe('Content Server', () => {
     // Use the website URL instead of the feed URL directly
     await authedPage.locator('input[name="url"]').fill(CONTENT_SERVER_URL);
 
-    // Click Subscribe
-    await authedPage.locator('button:has-text("Subscribe")').click();
+    // Click Subscribe (use the submit button specifically)
+    await authedPage.locator('button[type="submit"]:has-text("Subscribe")').click();
 
     // Wait for processing
     await authedPage.waitForTimeout(3000);
@@ -117,8 +117,8 @@ test.describe('Content Server', () => {
     // Fill in the Article URL
     await authedPage.locator('input[name="url"]').fill(`${CONTENT_SERVER_URL}/post/2`);
 
-    // Click Add
-    await authedPage.locator('button:has-text("Add")').click();
+    // Click Add (use the submit button specifically)
+    await authedPage.locator('button[type="submit"]:has-text("Add")').click();
 
     // Wait for processing
     await authedPage.waitForTimeout(3000);

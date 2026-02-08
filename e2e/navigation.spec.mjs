@@ -56,42 +56,38 @@ test.describe('Navigation', () => {
     // Navigate to for-you
     await authedPage.goto('/for-you');
 
-    // The For You link should have active styling (bg-neut-800)
+    // The For You link should have active styling (bg-neut-800 without hover: prefix)
     const forYouLink = authedPage.locator('#sidebar a:has-text("For you")');
     const classes = await forYouLink.getAttribute('class');
+    // Active link has 'bg-neut-800 text-white', inactive links have 'hover:bg-neut-800'
     expect(classes).toContain('bg-neut-800');
+    expect(classes).not.toContain('hover:bg-neut-800');
 
-    // Other links should not have active styling
+    // Other links should have hover:bg-neut-800 (inactive styling)
     const subsLink = authedPage.locator('#sidebar a:has-text("Subscriptions")');
     const subsClasses = await subsLink.getAttribute('class');
-    expect(subsClasses).not.toContain('bg-neut-800');
+    expect(subsClasses).toContain('hover:bg-neut-800');
   });
 
   test('sidebar shows user email when signed in', async ({ authedPage }) => {
     await authedPage.goto('/for-you');
 
     // The sidebar should show the user's email
-    await expect(authedPage.locator('#sidebar text=test@example.com')).toBeVisible();
+    await expect(authedPage.locator('#sidebar button:has-text("test@example.com")')).toBeVisible();
   });
 
   test('user dropdown contains sign out option', async ({ authedPage }) => {
     await authedPage.goto('/for-you');
 
-    // Click the user email/dropdown trigger to show the dropdown
-    await authedPage.locator('#sidebar button:has-text("test@example.com")').click();
-
-    // The sign-out button should now be visible
-    await expect(authedPage.locator('#user-dropdown button:has-text("Sign out")')).toBeVisible();
+    // The sign-out button should be visible in the sidebar
+    await expect(authedPage.locator('#sidebar button:has-text("Sign out")')).toBeVisible();
   });
 
   test('sign out redirects to home', async ({ authedPage }) => {
     await authedPage.goto('/for-you');
 
-    // Open user dropdown
-    await authedPage.locator('#sidebar button:has-text("test@example.com")').click();
-
     // Click sign out
-    await authedPage.locator('#user-dropdown button:has-text("Sign out")').click();
+    await authedPage.locator('#sidebar button:has-text("Sign out")').click();
 
     // Should redirect away from authenticated pages
     await authedPage.waitForTimeout(2000);
