@@ -26,13 +26,22 @@
 (def zero-uuid #uuid "00000000-0000-0000-0000-000000000000")
 
 (defn- create-test-datasource
-  "Create an in-memory SQLite datasource with schema."
+  "Create an in-memory SQLite datasource with schema using a connection pool
+   so tables persist across operations."
   []
-  (let [ds (jdbc/get-datasource {:dbtype "sqlite" :dbname ":memory:"})
-        schema-sql (lib.sqlite/generate-schema-sql main/malli-opts)]
-    (doseq [stmt (str/split schema-sql #";\s*\n")]
-      (when (not-empty (str/trim stmt))
-        (jdbc/execute! ds [(str/trim stmt)])))
+  (let [;; Use a unique in-memory database with shared cache so all connections see the same data
+        db-name (str "test_" (System/nanoTime))
+        ds (jdbc/get-datasource {:dbtype "sqlite"
+                                 :dbname (str "file:" db-name "?mode=memory&cache=shared")})
+        ;; Get a connection and keep it alive to prevent the in-memory DB from being destroyed
+        keeper-conn (jdbc/get-connection ds {})
+        schema-sql (lib.sqlite/generate-schema-sql main/malli-opts)
+        stmts (->> (str/split schema-sql #"(?<=STRICT);")
+                   (map str/trim)
+                   (remove empty?))]
+    (doseq [stmt stmts]
+      (jdbc/execute! keeper-conn [(str stmt ";")]))
+    ;; Return the datasource (keeper-conn keeps the DB alive)
     ds))
 
 (defn- insert-record!

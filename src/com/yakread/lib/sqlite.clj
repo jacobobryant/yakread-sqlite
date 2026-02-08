@@ -198,10 +198,13 @@
     (.array bb)))
 
 (defn- inst->epoch-ms
-  "Convert an Instant to epoch milliseconds."
+  "Convert an Instant or ZonedDateTime to epoch milliseconds."
   [x]
   (when x
-    (.toEpochMilli ^Instant x)))
+    (cond
+      (instance? Instant x) (.toEpochMilli ^Instant x)
+      (instance? java.time.ZonedDateTime x) (.toEpochMilli (.toInstant ^java.time.ZonedDateTime x))
+      :else (.toEpochMilli ^Instant x))))
 
 (defn- bool->int
   "Convert a boolean to 0 or 1 for SQLite."
@@ -554,8 +557,7 @@
           cols (map->sql-cols coerced)]
       (jdbc/execute! tx-conn
                      (sql/format {:insert-into [table-key]
-                                  :values [cols]}
-                                 {:dialect :ansi})))
+                                  :values [cols]})))
 
     ;; [:put-docs table-key doc1 doc2 ...] - INSERT OR REPLACE multiple docs
     (and (vector? op) (= :put-docs (first op)))
@@ -565,8 +567,7 @@
               cols (map->sql-cols coerced)]
           (jdbc/execute! tx-conn
                          (sql/format {:insert-into [table-key]
-                                      :values [cols]}
-                                     {:dialect :ansi})))))
+                                      :values [cols]})))))
 
     ;; [:patch-docs table-key doc] - UPDATE existing doc with provided fields
     (and (vector? op) (= :patch-docs (first op)))
