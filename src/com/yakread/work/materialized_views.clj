@@ -1,7 +1,6 @@
 (ns com.yakread.work.materialized-views
   (:require
    [com.yakread.lib.sqlite :as lib.sqlite]
-   [com.yakread :as main]
    [clojure.data.generators :as gen]
    [com.biffweb.experimental :as biffx]
    [com.wsscode.pathom3.connect.operation :as pco :refer [?]]
@@ -35,13 +34,13 @@
                         :mv-sub/affinity-high affinity-high*}]]})))
 
   :current-item
-  (fn [{:biff/keys [conn job]}]
+  (fn [{:biff/keys [conn malli-opts job]}]
     (let [{:user-item/keys [user-id item-id viewed-at]} job
 
           {current-item :item-id
            current-item-viewed-at :viewed-at}
           (first
-           (lib.sqlite/q conn main/malli-opts nil
+           (lib.sqlite/q conn malli-opts nil
                     {:select [:user_item.item_id :user_item.viewed_at]
                      :from :mv-user
                      :join [:user-item [:= :user_item.item_id :mv_user.current_item_id]]
@@ -65,7 +64,7 @@
 
 (fx/defmachine on-tx
   :start
-  (fn [{:keys [biff/conn record]}]
+  (fn [{:keys [biff/conn biff/malli-opts record]}]
     {:biff.fx/queue
      {:jobs
       (for [job
@@ -74,7 +73,7 @@
                (:user-item/user-id record)
                (concat
                 (when-some [sub-id (-> (lib.sqlite/q
-                                        conn main/malli-opts nil
+                                        conn malli-opts nil
                                         {:select [[[:coalesce :item.email_sub_id :sub.id]
                                                    :sub_id]]
                                          :from :item
@@ -91,7 +90,7 @@
 
                (:skip/item-id record)
                (when-some [sub-id (-> (lib.sqlite/q
-                                       conn main/malli-opts nil
+                                       conn malli-opts nil
                                        {:select [[[:coalesce :item.email_sub_id :sub.id]
                                                   :sub_id]]
                                         :from :reclist
