@@ -101,10 +101,7 @@ test.describe('Subscriptions', () => {
   test('can click into a subscription to view its items', async ({ seededPage }) => {
     await seededPage.goto('/subscriptions');
 
-    // Wait for lazy-loaded subscription cards
-    await seededPage.waitForTimeout(3000);
-
-    // Click the first subscription link
+    // Click the first subscription link (lazy-loaded)
     const subLink = seededPage.locator('a:has-text("Example Tech Blog")');
     await expect(subLink).toBeVisible({ timeout: 10000 });
     await subLink.click();
@@ -112,19 +109,14 @@ test.describe('Subscriptions', () => {
     // Should navigate to the subscription view page
     await seededPage.waitForURL('**/subscription/**', { timeout: 10000 });
 
-    // The subscription view page should show the feed's items
-    await seededPage.waitForTimeout(3000);
-    const bodyText = await seededPage.locator('body').textContent();
-    expect(bodyText).toBeTruthy();
+    // The subscription view page should load
+    await expect(seededPage.locator('body')).toBeVisible();
   });
 
   test('can unsubscribe from a feed subscription', async ({ seededPage }) => {
     await seededPage.goto('/subscriptions');
 
-    // Wait for lazy-loaded subscription cards
-    await seededPage.waitForTimeout(3000);
-
-    // The seeded user has "Daily News Digest" subscription
+    // The seeded user has "Daily News Digest" subscription (lazy-loaded)
     await expect(seededPage.locator('text=Daily News Digest')).toBeVisible({ timeout: 10000 });
 
     // Find the overflow menu button near "Daily News Digest" and click it
@@ -139,9 +131,6 @@ test.describe('Subscriptions', () => {
     // Accept the confirmation dialog
     seededPage.on('dialog', dialog => dialog.accept());
     await unsubButton.click();
-
-    // Wait for the unsubscribe action to complete
-    await seededPage.waitForTimeout(3000);
 
     // After unsubscribing, "Daily News Digest" should no longer appear
     await expect(seededPage.locator('text=Daily News Digest')).not.toBeVisible({ timeout: 10000 });

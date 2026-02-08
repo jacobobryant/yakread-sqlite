@@ -111,10 +111,7 @@ test.describe('Seed Data - Subscriptions Content', () => {
   test('subscriptions page shows seeded feed titles', async ({ seededPage }) => {
     await seededPage.goto('/subscriptions');
 
-    // Wait for lazy-loaded content
-    await seededPage.waitForTimeout(3000);
-
-    // The seeded user has two feed subscriptions
+    // The seeded user has two feed subscriptions (lazy-loaded)
     await expect(seededPage.locator('text=Example Tech Blog')).toBeVisible({ timeout: 10000 });
     await expect(seededPage.locator('text=Daily News Digest')).toBeVisible({ timeout: 10000 });
   });
@@ -122,10 +119,7 @@ test.describe('Seed Data - Subscriptions Content', () => {
   test('subscriptions page shows unread counts and feed type', async ({ seededPage }) => {
     await seededPage.goto('/subscriptions');
 
-    // Wait for lazy-loaded content
-    await seededPage.waitForTimeout(3000);
-
-    // Each subscription card shows "unread posts" and "rss" label
+    // Each subscription card shows "unread posts" and "rss" label (lazy-loaded)
     await expect(seededPage.locator('text=unread posts').first()).toBeVisible({ timeout: 10000 });
     await expect(seededPage.locator('text=rss').first()).toBeVisible({ timeout: 10000 });
   });
@@ -135,10 +129,7 @@ test.describe('Seed Data - Bookmarks Content', () => {
   test('read-later page shows seeded bookmark', async ({ seededPage }) => {
     await seededPage.goto('/read-later');
 
-    // Wait for lazy-loaded content
-    await seededPage.waitForTimeout(3000);
-
-    // The seeded user has a bookmarked item
+    // The seeded user has a bookmarked item (lazy-loaded)
     await expect(seededPage.locator('text=XTDB Deep Dive')).toBeVisible({ timeout: 10000 });
   });
 });
@@ -147,10 +138,7 @@ test.describe('Seed Data - Favorites Content', () => {
   test('favorites page shows seeded favorite', async ({ seededPage }) => {
     await seededPage.goto('/favorites');
 
-    // Wait for lazy-loaded content
-    await seededPage.waitForTimeout(3000);
-
-    // The seeded user has a favorited item
+    // The seeded user has a favorited item (lazy-loaded)
     await expect(seededPage.locator('text=Functional Programming Patterns')).toBeVisible({ timeout: 10000 });
   });
 });

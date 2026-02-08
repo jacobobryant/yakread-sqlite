@@ -97,7 +97,7 @@ test.describe('Settings Page', () => {
     await authedPage.locator('button:has-text("Save")').click();
 
     // Wait for redirect back to settings
-    await authedPage.waitForURL('**/settings**');
+    await authedPage.waitForURL('**/settings**', { timeout: 10000 });
 
     // Reload the page to verify persistence
     await authedPage.reload();
