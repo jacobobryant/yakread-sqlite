@@ -25,3 +25,6 @@ export/
 linux-install.sh
 .biff-migrate-state
 .biff-migrate-state-tx-ops
+test-results/
+playwright-report/
+package-lock.json

@@ -1,0 +1,13 @@
+{
+  "name": "yakread-sqlite",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test:e2e": "npx playwright test",
+    "test:e2e:list": "npx playwright test --list",
+    "test:content-server": "node e2e/dummy-content-server.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
+}

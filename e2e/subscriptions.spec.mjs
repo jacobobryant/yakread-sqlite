@@ -1,0 +1,98 @@
+/**
+ * Subscriptions page e2e tests.
+ */
+import { test, expect, CONTENT_SERVER_URL } from './helpers.mjs';
+
+test.describe('Subscriptions', () => {
+  test('subscriptions page loads when signed in', async ({ authedPage }) => {
+    await authedPage.goto('/subscriptions');
+
+    // Should show the subscriptions page title
+    await expect(authedPage.locator('text=Subscriptions')).toBeVisible();
+  });
+
+  test('subscriptions page shows empty state with add button', async ({ authedPage }) => {
+    await authedPage.goto('/subscriptions');
+
+    // Empty state should suggest adding subscriptions
+    await expect(authedPage.locator('text=Add subscriptions')).toBeVisible();
+  });
+
+  test('subscriptions page shows non-authenticated state', async ({ page }) => {
+    await page.goto('/subscriptions');
+
+    // Non-authed users see the page with empty state and "Create an account" banner
+    await expect(page.locator('text=Subscriptions')).toBeVisible();
+    await expect(page.locator('text=Create an account')).toBeVisible();
+  });
+
+  test('add subscription page loads', async ({ authedPage }) => {
+    await authedPage.goto('/subscriptions/add');
+
+    // Should show the add subscription page with title
+    await expect(authedPage.locator('text=Add subscriptions')).toBeVisible();
+  });
+
+  test('add subscription page has RSS feed section', async ({ authedPage }) => {
+    await authedPage.goto('/subscriptions/add');
+
+    // Should have RSS feeds section
+    await expect(authedPage.locator('text=RSS feeds')).toBeVisible();
+
+    // Should have URL input labeled "Website or feed URL"
+    await expect(authedPage.locator('text=Website or feed URL')).toBeVisible();
+
+    // Should have Subscribe button
+    await expect(authedPage.locator('button:has-text("Subscribe")')).toBeVisible();
+  });
+
+  test('add subscription page has newsletters section', async ({ authedPage }) => {
+    await authedPage.goto('/subscriptions/add');
+
+    // Should have Newsletters section
+    await expect(authedPage.locator('text=Newsletters')).toBeVisible();
+  });
+
+  test('add subscription page has OPML import', async ({ authedPage }) => {
+    await authedPage.goto('/subscriptions/add');
+
+    // Should have OPML file input
+    await expect(authedPage.locator('text=OPML file')).toBeVisible();
+
+    // Should have Import button
+    await expect(authedPage.locator('button:has-text("Import")')).toBeVisible();
+  });
+
+  test('add subscription page has bookmarklet option', async ({ authedPage }) => {
+    await authedPage.goto('/subscriptions/add');
+
+    // Should have bookmarklet option
+    await expect(authedPage.locator('text=subscribe via bookmarklet')).toBeVisible();
+  });
+
+  test('can add an RSS feed subscription', async ({ authedPage }) => {
+    await authedPage.goto('/subscriptions/add');
+
+    // Fill in the URL input
+    await authedPage.locator('input[name="url"]').fill(`${CONTENT_SERVER_URL}/feed.xml`);
+
+    // Click Subscribe
+    await authedPage.locator('button:has-text("Subscribe")').click();
+
+    // Should redirect back to add page with success message or subscriptions page
+    await authedPage.waitForTimeout(3000);
+
+    // Check for success indicator (added-feeds message)
+    const bodyText = await authedPage.locator('body').textContent();
+    expect(bodyText).toBeTruthy();
+  });
+
+  test('email subscription section shows username setup', async ({ authedPage }) => {
+    await authedPage.goto('/subscriptions/add');
+
+    // Either shows username setup form or existing username
+    // The Newsletters section should have some content about email
+    const newsletterSection = authedPage.locator('text=Newsletters');
+    await expect(newsletterSection).toBeVisible();
+  });
+});

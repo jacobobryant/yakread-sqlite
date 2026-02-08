@@ -178,7 +178,7 @@
 (def components
   [biff/use-aero-config
    use-error-reporting
-   use-sqlite
+   biffx/use-xtdb2
    ;lib.spark/use-spark
    biff/use-queues
    ;biffx/use-xtdb2-listener
