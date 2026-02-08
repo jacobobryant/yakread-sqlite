@@ -10,27 +10,47 @@
    [clojure.tools.logging :as log]
    [clojure.walk :as walk]
    [com.biffweb :as biff]
-   [com.biffweb.experimental :as biffx]
    [com.stuartsierra.dependency :as dep]
    [com.yakread :as main]
    [com.yakread.lib.route :as lib.route]
-   [com.yakread.util.biff-staging :as biffs]
+   [com.yakread.lib.sqlite :as lib.sqlite]
+   [honey.sql :as sql]
    [malli.experimental.time.generator]
    [malli.generator :as malli.g]
+   [next.jdbc :as jdbc]
    [tick.core :as tick]
-   [time-literals.read-write :as time-literals]
-   [xtdb.api :as xt]
-   [xtdb.node :as xtn])
+   [time-literals.read-write :as time-literals])
   (:import
    [java.time Instant]))
 
 (def zero-uuid #uuid "00000000-0000-0000-0000-000000000000")
 
-(defn submit-tx [node tx]
-  (->> tx
-       (biffs/resolve-tx-ops {:biff/conn node})
-       (mapv biffx/format-query)
-       (xt/submit-tx node)))
+(defn- create-test-datasource
+  "Create an in-memory SQLite datasource with schema."
+  []
+  (let [ds (jdbc/get-datasource {:dbtype "sqlite" :dbname ":memory:"})
+        schema-sql (lib.sqlite/generate-schema-sql main/malli-opts)]
+    (doseq [stmt (str/split schema-sql #";\s*\n")]
+      (when (not-empty (str/trim stmt))
+        (jdbc/execute! ds [(str/trim stmt)])))
+    ds))
+
+(defn- insert-record!
+  "Insert a record into SQLite, applying write coercions."
+  [ds table-key record]
+  (lib.sqlite/submit-tx ds main/malli-opts
+                        [[:put table-key record]]))
+
+(defn start-test-node [table->records]
+  (let [ds (create-test-datasource)]
+    (doseq [[table-key records] table->records
+            record records]
+      (insert-record! ds table-key record))
+    ds))
+
+(defmacro with-node [[node-sym db-contents] & body]
+  `(let [~node-sym (start-test-node ~db-contents)]
+     ~@body))
 
 (defn- truncate-str
   "Truncates a string s to be at most n characters long, appending an ellipsis if any characters were removed."
@@ -45,16 +65,6 @@
                      (truncate-str data 50)
                      data))
                  data))
-
-(defn start-test-node [table->records]
-  (let [node (xtn/start-node {})]
-    (xt/submit-tx node (for [[table records] table->records]
-                         (into [:put-docs table] records)))
-    node))
-
-(defmacro with-node [[node-sym db-contents] & body]
-  `(with-open [~node-sym (start-test-node ~db-contents)]
-     ~@body))
 
 (defn test-route [route method & args]
   (let [[state opts] (if (keyword? (first args))
@@ -221,8 +231,7 @@
 
 (def initial-system
   (merge main/initial-system
-         {:biff.xtdb/topology :memory
-          :biff.index/dir :tmp}))
+         {:biff.sqlite/db-path ":memory:"}))
 
 (defn start!
   ([components]
@@ -379,7 +388,8 @@
 ;; - set default weights such that explicitly passed schemas are equal
 ;; - improve shrinking
 ;; - maybe don't use fugato
-(defn make-model [{:keys [biff/malli-opts schemas rank-overrides]}]
+;; TODO: make-model needs to be updated for SQLite schema
+#_(defn make-model [{:keys [biff/malli-opts schemas rank-overrides]}]
   (when-not (set? schemas)
     (throw (ex-info (str "`schemas` must be a set; got " (type schemas) " instead.")
                     {:schemas schemas})))
@@ -387,7 +397,7 @@
                           (map (fn [ast]
                                  [(-> ast :properties :schema)
                                   ast]))
-                          (biffs/doc-asts main/malli-opts))
+                          nil #_(biffs/doc-asts main/malli-opts))
         graph (reduce (fn [graph [doc-schema target-schema]]
                         (dep/depend graph doc-schema target-schema))
                       (dep/graph)

@@ -8,7 +8,7 @@
    [com.biffweb :as biff]
    [com.wsscode.pathom3.interface.eql :as p.eql]
    [com.yakread.lib.s3 :as lib.s3]
-   [com.yakread.util.biff-staging :as biffs]))
+   [com.yakread.lib.sqlite :as lib.sqlite]))
 
 (defn- truncate-str
   "Truncates a string s to be at most n characters long, appending an ellipsis if any characters were removed."
@@ -215,7 +215,8 @@
                     ;; to a particular provider. For sending digests we need mailersend-specific
                     ;; features, so we use :biff.pipe/http there instead.
                     (send-email ctx input))
-   :biff.fx/tx biffs/submit-tx
+   :biff.fx/tx (fn [{:keys [biff/conn biff/malli-opts]} tx]
+                    (lib.sqlite/submit-tx conn malli-opts tx))
    :biff.fx/pathom (fn [ctx input]
                      (let [{:keys [entity query]} (if (map? input)
                                                     input

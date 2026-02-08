@@ -16,6 +16,7 @@
    [com.yakread.lib.middleware :as lib.mid]
    [com.yakread.lib.pathom :as lib.pathom]
    [com.yakread.lib.route :as lib.route :refer [href]]
+   [com.yakread.lib.sqlite :as lib.sqlite]
    [com.yakread.lib.smtp :as lib.smtp]
    [com.yakread.lib.spark :as lib.spark]
    [com.yakread.lib.ui :as ui]
@@ -115,7 +116,7 @@
           (str "Schema for " k " is invalid: " (pr-str (ex-data ex)))))
 
 (def pathom-env (pci/register (->> (mapcat :resolvers modules)
-                                   (concat (biffs/xtdb2-resolvers malli-opts))
+                                   (concat (lib.sqlite/sqlite-resolvers malli-opts))
                                    (mapv lib.pathom/wrap-debug))))
 
 (defn merge-context [{:keys [yakread/model

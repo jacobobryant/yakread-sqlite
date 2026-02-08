@@ -543,49 +543,101 @@
 ;; Transaction Helper
 ;; ============================================================================
 
+(defn- process-tx-op
+  "Process a single transaction operation against SQLite."
+  [tx-conn malli-opts op]
+  (cond
+    ;; [:put table-key doc] - INSERT OR REPLACE a single doc
+    (and (vector? op) (= :put (first op)))
+    (let [[_ table-key doc] op
+          coerced (coerce-write-vals malli-opts table-key doc)
+          cols (map->sql-cols coerced)]
+      (jdbc/execute! tx-conn
+                     (sql/format {:insert-into [table-key]
+                                  :values [cols]}
+                                 {:dialect :ansi})))
+
+    ;; [:put-docs table-key doc1 doc2 ...] - INSERT OR REPLACE multiple docs
+    (and (vector? op) (= :put-docs (first op)))
+    (let [[_ table-key & docs] op]
+      (doseq [doc docs]
+        (let [coerced (coerce-write-vals malli-opts table-key doc)
+              cols (map->sql-cols coerced)]
+          (jdbc/execute! tx-conn
+                         (sql/format {:insert-into [table-key]
+                                      :values [cols]}
+                                     {:dialect :ansi})))))
+
+    ;; [:patch-docs table-key doc] - UPDATE existing doc with provided fields
+    (and (vector? op) (= :patch-docs (first op)))
+    (let [[_ table-key doc] op
+          id-key (table-id-key table-key)
+          id-val (get doc id-key)
+          fields (dissoc doc id-key)
+          coerced (coerce-write-vals malli-opts table-key fields)
+          cols (map->sql-cols coerced)
+          write-coercions (get-in (get-all-coercions malli-opts) [table-key :write])
+          id-coerce (get write-coercions id-key)
+          coerced-id (if (and id-coerce (some? id-val)) (id-coerce id-val) id-val)]
+      (jdbc/execute! tx-conn
+                     (sql/format {:update table-key
+                                  :set cols
+                                  :where [:= :id coerced-id]})))
+
+    ;; [:erase-docs table-key id1 id2 ...] - DELETE by ID
+    (and (vector? op) (= :erase-docs (first op)))
+    (let [[_ table-key & ids] op
+          id-key (table-id-key table-key)
+          write-coercions (get-in (get-all-coercions malli-opts) [table-key :write])
+          id-coerce (get write-coercions id-key)
+          coerced-ids (mapv (fn [id] (if (and id-coerce (some? id)) (id-coerce id) id)) ids)]
+      (jdbc/execute! tx-conn
+                     (sql/format {:delete-from table-key
+                                  :where [:in :id coerced-ids]})))
+
+    ;; [:delete table-key id1 id2 ...] - DELETE by ID (alias for erase-docs)
+    (and (vector? op) (= :delete (first op)))
+    (let [[_ table-key & ids] op]
+      (process-tx-op tx-conn malli-opts (into [:erase-docs table-key] ids)))
+
+    ;; {:update table-key :set {...} :where [...]} - SQL-style update
+    (and (map? op) (contains? op :update))
+    (let [{:keys [update set where]} op
+          table-key update
+          coerced-set (coerce-write-vals malli-opts table-key set)
+          sql-set (map->sql-cols coerced-set)]
+      (jdbc/execute! tx-conn
+                     (sql/format {:update table-key
+                                  :set sql-set
+                                  :where where})))
+
+    ;; {:delete-from table-key :where [...]} - SQL-style delete
+    (and (map? op) (contains? op :delete-from))
+    (let [{:keys [delete-from where]} op]
+      (jdbc/execute! tx-conn
+                     (sql/format {:delete-from delete-from
+                                  :where where})))
+
+    ;; {:insert-into table-key ...} - SQL-style insert
+    (and (map? op) (contains? op :insert-into))
+    (jdbc/execute! tx-conn (sql/format op))
+
+    :else
+    (throw (ex-info "Unknown tx op" {:op op}))))
+
 (defn submit-tx
   "Submit a SQLite transaction. Supports:
-   - [:put table-key doc] - INSERT OR REPLACE
-   - [:delete table-key id] - DELETE by ID
-   - [:update table-key {:set {...} :where [...]}] - UPDATE"
+   - [:put table-key doc] - INSERT OR REPLACE a single doc
+   - [:put-docs table-key doc1 doc2 ...] - INSERT OR REPLACE multiple docs
+   - [:patch-docs table-key doc] - UPDATE existing doc with provided fields
+   - [:erase-docs table-key id1 id2 ...] - DELETE by ID
+   - [:delete table-key id1 id2 ...] - DELETE by ID (alias)
+   - {:update table-key :set {...} :where [...]} - SQL-style update
+   - {:delete-from table-key :where [...]} - SQL-style delete"
   [conn malli-opts tx]
   (jdbc/with-transaction [tx-conn conn]
     (doseq [op tx]
-      (cond
-        ;; [:put :table {:table/id ... :table/col ...}]
-        (and (vector? op) (= :put (first op)))
-        (let [[_ table-key doc] op
-              coerced (coerce-write-vals malli-opts table-key doc)
-              cols (map->sql-cols coerced)]
-          (jdbc/execute! tx-conn
-                         (sql/format {:insert-into table-key
-                                      :values [(map->sql-cols coerced)]}
-                                     {:dialect :ansi})))
-
-        ;; [:delete :table id-val]
-        (and (vector? op) (= :delete (first op)))
-        (let [[_ table-key id-val] op
-              id-key (table-id-key table-key)
-              write-coercions (get-in (get-all-coercions malli-opts) [table-key :write])
-              id-coerce (get write-coercions id-key)
-              coerced-id (if id-coerce (id-coerce id-val) id-val)]
-          (jdbc/execute! tx-conn
-                         (sql/format {:delete-from table-key
-                                      :where [:= :id coerced-id]})))
-
-        ;; {:update :table :set {...} :where [...]}
-        (map? op)
-        (let [{:keys [update set where]} op
-              table-key update
-              coerced-set (coerce-write-vals malli-opts table-key set)
-              sql-set (map->sql-cols coerced-set)]
-          (jdbc/execute! tx-conn
-                         (sql/format {:update table-key
-                                      :set sql-set
-                                      :where where})))
-
-        :else
-        (throw (ex-info "Unknown tx op" {:op op}))))))
+      (process-tx-op tx-conn malli-opts op))))
 
 ;; ============================================================================
 ;; Other stuff

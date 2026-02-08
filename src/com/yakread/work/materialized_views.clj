@@ -1,10 +1,11 @@
 (ns com.yakread.work.materialized-views
   (:require
-   [com.yakread.util.biff-staging :as biffs]
+   [com.yakread.lib.sqlite :as lib.sqlite]
+   [com.yakread :as main]
+   [clojure.data.generators :as gen]
    [com.biffweb.experimental :as biffx]
    [com.wsscode.pathom3.connect.operation :as pco :refer [?]]
    [com.yakread.lib.fx :as fx]
-   [xtdb.api :as-alias xt]
    [tick.core :as tick]))
 
 (fx/defmachine update-views
@@ -18,49 +19,49 @@
                       :query [:sub/id
                               :sub/affinity-low*
                               :sub/affinity-high*
-                              {(? :sub/mv) [(? :mv.sub/affinity-low)
-                                            (? :mv.sub/affinity-high)]}]}
+                              {(? :sub/mv) [(? :mv-sub/affinity-low)
+                                            (? :mv-sub/affinity-high)]}]}
      :biff.fx/next :sub-affinity-update})
 
   :sub-affinity-update
   (fn [{:keys [biff.fx/pathom]}]
     (let [{:sub/keys [id affinity-low* affinity-high* mv]} pathom]
       (when (not= [affinity-low* affinity-high*]
-                  [(:mv.sub/affinity-low mv) (:mv.sub/affinity-high mv)])
-        {:biff.fx/tx [[:biff/upsert :mv-sub [:mv.sub/sub]
-                       {:xt/id (biffs/gen-uuid id)
-                        :mv.sub/sub id
-                        :mv.sub/affinity-low  affinity-low*
-                        :mv.sub/affinity-high affinity-high*}]]})))
+                  [(:mv-sub/affinity-low mv) (:mv-sub/affinity-high mv)])
+        {:biff.fx/tx [[:put-docs :mv-sub
+                       {:mv-sub/id (biffx/prefix-uuid id (gen/uuid))
+                        :mv-sub/sub-id id
+                        :mv-sub/affinity-low  affinity-low*
+                        :mv-sub/affinity-high affinity-high*}]]})))
 
   :current-item
   (fn [{:biff/keys [conn job]}]
-    (let [{:user-item/keys [user item viewed-at]} job
+    (let [{:user-item/keys [user-id item-id viewed-at]} job
 
-          {current-item :user-item/item
-           current-item-viewed-at :user-item/viewed-at}
+          {current-item :item-id
+           current-item-viewed-at :viewed-at}
           (first
-           (biffx/q conn
-                    {:select [:user-item/item :user-item/viewed-at]
+           (lib.sqlite/q conn main/malli-opts nil
+                    {:select [:user_item.item_id :user_item.viewed_at]
                      :from :mv-user
-                     :join [:user-item [:= :user-item/item :mv.user/current-item]]
-                     :where [:= :mv.user/user user]}))
+                     :join [:user-item [:= :user_item.item_id :mv_user.current_item_id]]
+                     :where [:= :mv_user.user_id user-id]}))
 
           new-current-item (cond
                              (and viewed-at
                                   (or (not current-item-viewed-at)
                                       (tick/<= current-item-viewed-at viewed-at)))
-                             item
+                             item-id
 
                              (and (not viewed-at)
-                                  (= item current-item))
+                                  (= item-id current-item))
                              ::remove)]
       (when new-current-item
-        {:biff.fx/tx [{:biff/upsert :mv-user [:mv.user/user]
-                       {:xt/id (biffs/gen-uuid user)
-                        :mv.user/user user
-                        :mv.user/current-item (when (not= new-current-item ::remove)
-                                                new-current-item)}}]}))))
+        {:biff.fx/tx [[:put-docs :mv-user
+                       {:mv-user/id (biffx/prefix-uuid user-id (gen/uuid))
+                        :mv-user/user-id user-id
+                        :mv-user/current-item-id (when (not= new-current-item ::remove)
+                                                   new-current-item)}]]}))))
 
 (fx/defmachine on-tx
   :start
@@ -70,39 +71,39 @@
       (for [job
             (distinct
              (cond
-               (:user-item/user record)
+               (:user-item/user-id record)
                (concat
-                (when-some [sub-id (-> (biffx/q
-                                        conn
-                                        {:select [[[:coalesce :item.email/sub :sub._id]
-                                                   :sub/id]]
+                (when-some [sub-id (-> (lib.sqlite/q
+                                        conn main/malli-opts nil
+                                        {:select [[[:coalesce :item.email_sub_id :sub.id]
+                                                   :sub_id]]
                                          :from :item
-                                         :where [:= :item._id (:user-item/item record)]
+                                         :where [:= :item.id (:user-item/item-id record)]
                                          :left-join [:sub [:and
-                                                           [:is-not :item.feed/feed nil]
-                                                           [:= :sub.feed/feed :item.feed/feed]
-                                                           [:= :sub/user (:user-item/user record)]]]
+                                                           [:is-not :item.feed_id nil]
+                                                           [:= :sub.feed_id :item.feed_id]
+                                                           [:= :sub.user_id (:user-item/user-id record)]]]
                                          :limit 1})
                                        first
-                                       :sub/id)]
+                                       :sub-id)]
                   [{:view :sub-affinity :sub/id sub-id}])
                 [(merge record {:view :current-item})])
 
-               (:skip/item record)
-               (when-some [sub-id (-> (biffx/q
-                                       conn
-                                       {:select [[[:coalesce :item.email/sub :sub._id]
-                                                  :sub/id]]
+               (:skip/item-id record)
+               (when-some [sub-id (-> (lib.sqlite/q
+                                       conn main/malli-opts nil
+                                       {:select [[[:coalesce :item.email_sub_id :sub.id]
+                                                  :sub_id]]
                                         :from :reclist
-                                        :where [:= :reclist._id (:skip/reclist record)]
-                                        :join [:item [:= :item._id (:skip/item record)]]
+                                        :where [:= :reclist.id (:skip/reclist-id record)]
+                                        :join [:item [:= :item.id (:skip/item-id record)]]
                                         :left-join [:sub [:and
-                                                          [:is-not :item.feed/feed nil]
-                                                          [:= :sub.feed/feed :item.feed/feed]
-                                                          [:= :sub/user :reclist/user]]]
+                                                          [:is-not :item.feed_id nil]
+                                                          [:= :sub.feed_id :item.feed_id]
+                                                          [:= :sub.user_id :reclist.user_id]]]
                                         :limit 1})
                                       first
-                                      :sub/id)]
+                                      :sub-id)]
                  [{:view :sub-affinity :sub/id sub-id}])))]
         [:work.materialized-views/update job])}}))
 
