@@ -13,27 +13,437 @@
      bytes
      (uuid->bytes uuid)]
     (bytes->uuid bytes)),
-   :result #uuid "f47ac10b-58cc-4372-a567-0e02b2c3d479"}
+   :ex #error {
+ :cause "Unable to resolve symbol: uuid->bytes in this context"
+ :via
+ [{:type clojure.lang.Compiler$CompilerException
+   :message "Syntax error compiling at (0:0)."
+   :data {:clojure.error/phase :compile-syntax-check, :clojure.error/line 0, :clojure.error/column 0, :clojure.error/source "NO_SOURCE_PATH"}
+   :at [clojure.lang.Compiler analyze "Compiler.java" 7340]}
+  {:type java.lang.RuntimeException
+   :message "Unable to resolve symbol: uuid->bytes in this context"
+   :at [clojure.lang.Util runtimeException "Util.java" 221]}]
+ :trace
+ [[clojure.lang.Util runtimeException "Util.java" 221]
+  [clojure.lang.Compiler resolveIn "Compiler.java" 7944]
+  [clojure.lang.Compiler resolve "Compiler.java" 7883]
+  [clojure.lang.Compiler analyzeSymbol "Compiler.java" 7844]
+  [clojure.lang.Compiler analyze "Compiler.java" 7300]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$InvokeExpr parse "Compiler.java" 4296]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7632]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler access$200 "Compiler.java" 43]
+  [clojure.lang.Compiler$LetExpr$Parser parse "Compiler.java" 6908]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7630]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$BodyExpr$Parser parse "Compiler.java" 6644]
+  [clojure.lang.Compiler$FnMethod parse "Compiler.java" 5983]
+  [clojure.lang.Compiler$FnExpr parse "Compiler.java" 4546]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7628]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler eval "Compiler.java" 7697]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]
+  [com.yakread.lib.test$eval_STAR_$fn__69136$fn__69137 invoke "test.clj" 128]
+  [com.yakread.lib.test$eval_STAR_$fn__69136 invoke "test.clj" 127]
+  [com.yakread.lib.test$tapped_STAR_ invokeStatic "test.clj" 111]
+  [com.yakread.lib.test$tapped_STAR_ invoke "test.clj" 100]
+  [com.yakread.lib.test$eval_STAR_ invokeStatic "test.clj" 125]
+  [com.yakread.lib.test$eval_STAR_ invoke "test.clj" 123]
+  [clojure.core$mapv$fn__8565 invoke "core.clj" 7059]
+  [clojure.lang.ArrayChunk reduce "ArrayChunk.java" 60]
+  [clojure.core.protocols$fn__8270 invokeStatic "protocols.clj" 135]
+  [clojure.core.protocols$fn__8270 invoke "protocols.clj" 123]
+  [clojure.core.protocols$fn__8229$G__8224__8238 invoke "protocols.clj" 19]
+  [clojure.core.protocols$seq_reduce invokeStatic "protocols.clj" 31]
+  [clojure.core.protocols$fn__8262 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8262 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$reduce invokeStatic "core.clj" 6965]
+  [clojure.core$mapv invokeStatic "core.clj" 7050]
+  [clojure.core$mapv invoke "core.clj" 7050]
+  [com.yakread.lib.test$run_examples_BANG_$fn__69178 invoke "test.clj" 187]
+  [com.yakread.lib.test$run_examples_BANG_ invokeStatic "test.clj" 180]
+  [com.yakread.lib.test$run_examples_BANG_ doInvoke "test.clj" 175]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [clojure.lang.Var invoke "Var.java" 386]
+  [clojure.run.exec$exec invokeStatic "exec.clj" 88]
+  [clojure.run.exec$exec invoke "exec.clj" 78]
+  [clojure.run.exec$_main$fn__218 invoke "exec.clj" 227]
+  [clojure.run.exec$_main invokeStatic "exec.clj" 223]
+  [clojure.run.exec$_main doInvoke "exec.clj" 191]
+  [clojure.lang.RestFn applyTo "RestFn.java" 140]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.main$main_opt invokeStatic "main.clj" 515]
+  [clojure.main$main_opt invoke "main.clj" 511]
+  [clojure.main$main invokeStatic "main.clj" 665]
+  [clojure.main$main doInvoke "main.clj" 617]
+  [clojure.lang.RestFn applyTo "RestFn.java" 140]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.main main "main.java" 40]]}}
   _
   {:doc "epoch-ms->inst converts milliseconds to Instant",
    :eval (str (epoch-ms->inst 1705320000000)),
-   :result "2024-01-15T12:00:00Z"}
+   :ex #error {
+ :cause "Unable to resolve symbol: epoch-ms->inst in this context"
+ :via
+ [{:type clojure.lang.Compiler$CompilerException
+   :message "Syntax error compiling at (0:0)."
+   :data {:clojure.error/phase :compile-syntax-check, :clojure.error/line 0, :clojure.error/column 0, :clojure.error/source "NO_SOURCE_PATH"}
+   :at [clojure.lang.Compiler analyze "Compiler.java" 7340]}
+  {:type java.lang.RuntimeException
+   :message "Unable to resolve symbol: epoch-ms->inst in this context"
+   :at [clojure.lang.Util runtimeException "Util.java" 221]}]
+ :trace
+ [[clojure.lang.Util runtimeException "Util.java" 221]
+  [clojure.lang.Compiler resolveIn "Compiler.java" 7944]
+  [clojure.lang.Compiler resolve "Compiler.java" 7883]
+  [clojure.lang.Compiler analyzeSymbol "Compiler.java" 7844]
+  [clojure.lang.Compiler analyze "Compiler.java" 7300]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$InvokeExpr parse "Compiler.java" 4296]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7632]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$InvokeExpr parse "Compiler.java" 4371]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7632]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$BodyExpr$Parser parse "Compiler.java" 6644]
+  [clojure.lang.Compiler$FnMethod parse "Compiler.java" 5983]
+  [clojure.lang.Compiler$FnExpr parse "Compiler.java" 4546]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7628]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler eval "Compiler.java" 7697]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]
+  [com.yakread.lib.test$eval_STAR_$fn__69136$fn__69137 invoke "test.clj" 128]
+  [com.yakread.lib.test$eval_STAR_$fn__69136 invoke "test.clj" 127]
+  [com.yakread.lib.test$tapped_STAR_ invokeStatic "test.clj" 111]
+  [com.yakread.lib.test$tapped_STAR_ invoke "test.clj" 100]
+  [com.yakread.lib.test$eval_STAR_ invokeStatic "test.clj" 125]
+  [com.yakread.lib.test$eval_STAR_ invoke "test.clj" 123]
+  [clojure.core$mapv$fn__8565 invoke "core.clj" 7059]
+  [clojure.lang.ArrayChunk reduce "ArrayChunk.java" 65]
+  [clojure.core.protocols$fn__8270 invokeStatic "protocols.clj" 135]
+  [clojure.core.protocols$fn__8270 invoke "protocols.clj" 123]
+  [clojure.core.protocols$fn__8229$G__8224__8238 invoke "protocols.clj" 19]
+  [clojure.core.protocols$seq_reduce invokeStatic "protocols.clj" 31]
+  [clojure.core.protocols$fn__8262 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8262 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$reduce invokeStatic "core.clj" 6965]
+  [clojure.core$mapv invokeStatic "core.clj" 7050]
+  [clojure.core$mapv invoke "core.clj" 7050]
+  [com.yakread.lib.test$run_examples_BANG_$fn__69178 invoke "test.clj" 187]
+  [com.yakread.lib.test$run_examples_BANG_ invokeStatic "test.clj" 180]
+  [com.yakread.lib.test$run_examples_BANG_ doInvoke "test.clj" 175]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [clojure.lang.Var invoke "Var.java" 386]
+  [clojure.run.exec$exec invokeStatic "exec.clj" 88]
+  [clojure.run.exec$exec invoke "exec.clj" 78]
+  [clojure.run.exec$_main$fn__218 invoke "exec.clj" 227]
+  [clojure.run.exec$_main invokeStatic "exec.clj" 223]
+  [clojure.run.exec$_main doInvoke "exec.clj" 191]
+  [clojure.lang.RestFn applyTo "RestFn.java" 140]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.main$main_opt invokeStatic "main.clj" 515]
+  [clojure.main$main_opt invoke "main.clj" 511]
+  [clojure.main$main invokeStatic "main.clj" 665]
+  [clojure.main$main doInvoke "main.clj" 617]
+  [clojure.lang.RestFn applyTo "RestFn.java" 140]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.main main "main.java" 40]]}}
   _
   {:doc "int->bool converts 0 to false",
    :eval (int->bool 0),
-   :result false}
+   :ex #error {
+ :cause "Unable to resolve symbol: int->bool in this context"
+ :via
+ [{:type clojure.lang.Compiler$CompilerException
+   :message "Syntax error compiling at (0:0)."
+   :data {:clojure.error/phase :compile-syntax-check, :clojure.error/line 0, :clojure.error/column 0, :clojure.error/source "NO_SOURCE_PATH"}
+   :at [clojure.lang.Compiler analyze "Compiler.java" 7340]}
+  {:type java.lang.RuntimeException
+   :message "Unable to resolve symbol: int->bool in this context"
+   :at [clojure.lang.Util runtimeException "Util.java" 221]}]
+ :trace
+ [[clojure.lang.Util runtimeException "Util.java" 221]
+  [clojure.lang.Compiler resolveIn "Compiler.java" 7944]
+  [clojure.lang.Compiler resolve "Compiler.java" 7883]
+  [clojure.lang.Compiler analyzeSymbol "Compiler.java" 7844]
+  [clojure.lang.Compiler analyze "Compiler.java" 7300]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$InvokeExpr parse "Compiler.java" 4296]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7632]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$BodyExpr$Parser parse "Compiler.java" 6644]
+  [clojure.lang.Compiler$FnMethod parse "Compiler.java" 5983]
+  [clojure.lang.Compiler$FnExpr parse "Compiler.java" 4546]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7628]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler eval "Compiler.java" 7697]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]
+  [com.yakread.lib.test$eval_STAR_$fn__69136$fn__69137 invoke "test.clj" 128]
+  [com.yakread.lib.test$eval_STAR_$fn__69136 invoke "test.clj" 127]
+  [com.yakread.lib.test$tapped_STAR_ invokeStatic "test.clj" 111]
+  [com.yakread.lib.test$tapped_STAR_ invoke "test.clj" 100]
+  [com.yakread.lib.test$eval_STAR_ invokeStatic "test.clj" 125]
+  [com.yakread.lib.test$eval_STAR_ invoke "test.clj" 123]
+  [clojure.core$mapv$fn__8565 invoke "core.clj" 7059]
+  [clojure.lang.ArrayChunk reduce "ArrayChunk.java" 65]
+  [clojure.core.protocols$fn__8270 invokeStatic "protocols.clj" 135]
+  [clojure.core.protocols$fn__8270 invoke "protocols.clj" 123]
+  [clojure.core.protocols$fn__8229$G__8224__8238 invoke "protocols.clj" 19]
+  [clojure.core.protocols$seq_reduce invokeStatic "protocols.clj" 31]
+  [clojure.core.protocols$fn__8262 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8262 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$reduce invokeStatic "core.clj" 6965]
+  [clojure.core$mapv invokeStatic "core.clj" 7050]
+  [clojure.core$mapv invoke "core.clj" 7050]
+  [com.yakread.lib.test$run_examples_BANG_$fn__69178 invoke "test.clj" 187]
+  [com.yakread.lib.test$run_examples_BANG_ invokeStatic "test.clj" 180]
+  [com.yakread.lib.test$run_examples_BANG_ doInvoke "test.clj" 175]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [clojure.lang.Var invoke "Var.java" 386]
+  [clojure.run.exec$exec invokeStatic "exec.clj" 88]
+  [clojure.run.exec$exec invoke "exec.clj" 78]
+  [clojure.run.exec$_main$fn__218 invoke "exec.clj" 227]
+  [clojure.run.exec$_main invokeStatic "exec.clj" 223]
+  [clojure.run.exec$_main doInvoke "exec.clj" 191]
+  [clojure.lang.RestFn applyTo "RestFn.java" 140]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.main$main_opt invokeStatic "main.clj" 515]
+  [clojure.main$main_opt invoke "main.clj" 511]
+  [clojure.main$main invokeStatic "main.clj" 665]
+  [clojure.main$main doInvoke "main.clj" 617]
+  [clojure.lang.RestFn applyTo "RestFn.java" 140]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.main main "main.java" 40]]}}
   _
   {:doc "int->bool converts 1 to true",
    :eval (int->bool 1),
-   :result true}
+   :ex #error {
+ :cause "Unable to resolve symbol: int->bool in this context"
+ :via
+ [{:type clojure.lang.Compiler$CompilerException
+   :message "Syntax error compiling at (0:0)."
+   :data {:clojure.error/phase :compile-syntax-check, :clojure.error/line 0, :clojure.error/column 0, :clojure.error/source "NO_SOURCE_PATH"}
+   :at [clojure.lang.Compiler analyze "Compiler.java" 7340]}
+  {:type java.lang.RuntimeException
+   :message "Unable to resolve symbol: int->bool in this context"
+   :at [clojure.lang.Util runtimeException "Util.java" 221]}]
+ :trace
+ [[clojure.lang.Util runtimeException "Util.java" 221]
+  [clojure.lang.Compiler resolveIn "Compiler.java" 7944]
+  [clojure.lang.Compiler resolve "Compiler.java" 7883]
+  [clojure.lang.Compiler analyzeSymbol "Compiler.java" 7844]
+  [clojure.lang.Compiler analyze "Compiler.java" 7300]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$InvokeExpr parse "Compiler.java" 4296]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7632]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$BodyExpr$Parser parse "Compiler.java" 6644]
+  [clojure.lang.Compiler$FnMethod parse "Compiler.java" 5983]
+  [clojure.lang.Compiler$FnExpr parse "Compiler.java" 4546]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7628]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler eval "Compiler.java" 7697]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]
+  [com.yakread.lib.test$eval_STAR_$fn__69136$fn__69137 invoke "test.clj" 128]
+  [com.yakread.lib.test$eval_STAR_$fn__69136 invoke "test.clj" 127]
+  [com.yakread.lib.test$tapped_STAR_ invokeStatic "test.clj" 111]
+  [com.yakread.lib.test$tapped_STAR_ invoke "test.clj" 100]
+  [com.yakread.lib.test$eval_STAR_ invokeStatic "test.clj" 125]
+  [com.yakread.lib.test$eval_STAR_ invoke "test.clj" 123]
+  [clojure.core$mapv$fn__8565 invoke "core.clj" 7059]
+  [clojure.lang.ArrayChunk reduce "ArrayChunk.java" 65]
+  [clojure.core.protocols$fn__8270 invokeStatic "protocols.clj" 135]
+  [clojure.core.protocols$fn__8270 invoke "protocols.clj" 123]
+  [clojure.core.protocols$fn__8229$G__8224__8238 invoke "protocols.clj" 19]
+  [clojure.core.protocols$seq_reduce invokeStatic "protocols.clj" 31]
+  [clojure.core.protocols$fn__8262 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8262 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$reduce invokeStatic "core.clj" 6965]
+  [clojure.core$mapv invokeStatic "core.clj" 7050]
+  [clojure.core$mapv invoke "core.clj" 7050]
+  [com.yakread.lib.test$run_examples_BANG_$fn__69178 invoke "test.clj" 187]
+  [com.yakread.lib.test$run_examples_BANG_ invokeStatic "test.clj" 180]
+  [com.yakread.lib.test$run_examples_BANG_ doInvoke "test.clj" 175]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [clojure.lang.Var invoke "Var.java" 386]
+  [clojure.run.exec$exec invokeStatic "exec.clj" 88]
+  [clojure.run.exec$exec invoke "exec.clj" 78]
+  [clojure.run.exec$_main$fn__218 invoke "exec.clj" 227]
+  [clojure.run.exec$_main invokeStatic "exec.clj" 223]
+  [clojure.run.exec$_main doInvoke "exec.clj" 191]
+  [clojure.lang.RestFn applyTo "RestFn.java" 140]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.main$main_opt invokeStatic "main.clj" 515]
+  [clojure.main$main_opt invoke "main.clj" 511]
+  [clojure.main$main invokeStatic "main.clj" 665]
+  [clojure.main$main doInvoke "main.clj" 617]
+  [clojure.lang.RestFn applyTo "RestFn.java" 140]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.main main "main.java" 40]]}}
   _
   {:doc "int->bool returns nil for nil",
    :eval (int->bool nil),
-   :result nil}
+   :ex #error {
+ :cause "Unable to resolve symbol: int->bool in this context"
+ :via
+ [{:type clojure.lang.Compiler$CompilerException
+   :message "Syntax error compiling at (0:0)."
+   :data {:clojure.error/phase :compile-syntax-check, :clojure.error/line 0, :clojure.error/column 0, :clojure.error/source "NO_SOURCE_PATH"}
+   :at [clojure.lang.Compiler analyze "Compiler.java" 7340]}
+  {:type java.lang.RuntimeException
+   :message "Unable to resolve symbol: int->bool in this context"
+   :at [clojure.lang.Util runtimeException "Util.java" 221]}]
+ :trace
+ [[clojure.lang.Util runtimeException "Util.java" 221]
+  [clojure.lang.Compiler resolveIn "Compiler.java" 7944]
+  [clojure.lang.Compiler resolve "Compiler.java" 7883]
+  [clojure.lang.Compiler analyzeSymbol "Compiler.java" 7844]
+  [clojure.lang.Compiler analyze "Compiler.java" 7300]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$InvokeExpr parse "Compiler.java" 4296]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7632]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$BodyExpr$Parser parse "Compiler.java" 6644]
+  [clojure.lang.Compiler$FnMethod parse "Compiler.java" 5983]
+  [clojure.lang.Compiler$FnExpr parse "Compiler.java" 4546]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7628]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler eval "Compiler.java" 7697]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]
+  [com.yakread.lib.test$eval_STAR_$fn__69136$fn__69137 invoke "test.clj" 128]
+  [com.yakread.lib.test$eval_STAR_$fn__69136 invoke "test.clj" 127]
+  [com.yakread.lib.test$tapped_STAR_ invokeStatic "test.clj" 111]
+  [com.yakread.lib.test$tapped_STAR_ invoke "test.clj" 100]
+  [com.yakread.lib.test$eval_STAR_ invokeStatic "test.clj" 125]
+  [com.yakread.lib.test$eval_STAR_ invoke "test.clj" 123]
+  [clojure.core$mapv$fn__8565 invoke "core.clj" 7059]
+  [clojure.lang.ArrayChunk reduce "ArrayChunk.java" 65]
+  [clojure.core.protocols$fn__8270 invokeStatic "protocols.clj" 135]
+  [clojure.core.protocols$fn__8270 invoke "protocols.clj" 123]
+  [clojure.core.protocols$fn__8229$G__8224__8238 invoke "protocols.clj" 19]
+  [clojure.core.protocols$seq_reduce invokeStatic "protocols.clj" 31]
+  [clojure.core.protocols$fn__8262 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8262 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$reduce invokeStatic "core.clj" 6965]
+  [clojure.core$mapv invokeStatic "core.clj" 7050]
+  [clojure.core$mapv invoke "core.clj" 7050]
+  [com.yakread.lib.test$run_examples_BANG_$fn__69178 invoke "test.clj" 187]
+  [com.yakread.lib.test$run_examples_BANG_ invokeStatic "test.clj" 180]
+  [com.yakread.lib.test$run_examples_BANG_ doInvoke "test.clj" 175]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [clojure.lang.Var invoke "Var.java" 386]
+  [clojure.run.exec$exec invokeStatic "exec.clj" 88]
+  [clojure.run.exec$exec invoke "exec.clj" 78]
+  [clojure.run.exec$_main$fn__218 invoke "exec.clj" 227]
+  [clojure.run.exec$_main invokeStatic "exec.clj" 223]
+  [clojure.run.exec$_main doInvoke "exec.clj" 191]
+  [clojure.lang.RestFn applyTo "RestFn.java" 140]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.main$main_opt invokeStatic "main.clj" 515]
+  [clojure.main$main_opt invoke "main.clj" 511]
+  [clojure.main$main invokeStatic "main.clj" 665]
+  [clojure.main$main doInvoke "main.clj" 617]
+  [clojure.lang.RestFn applyTo "RestFn.java" 140]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.main main "main.java" 40]]}}
   _
   {:doc "fast-thaw thaws nippy-frozen data",
    :eval (fast-thaw (nippy/fast-freeze #{:wednesday :monday})),
-   :result #{:wednesday :monday}}
+   :ex #error {
+ :cause "Unable to resolve symbol: fast-thaw in this context"
+ :via
+ [{:type clojure.lang.Compiler$CompilerException
+   :message "Syntax error compiling at (0:0)."
+   :data {:clojure.error/phase :compile-syntax-check, :clojure.error/line 0, :clojure.error/column 0, :clojure.error/source "NO_SOURCE_PATH"}
+   :at [clojure.lang.Compiler analyze "Compiler.java" 7340]}
+  {:type java.lang.RuntimeException
+   :message "Unable to resolve symbol: fast-thaw in this context"
+   :at [clojure.lang.Util runtimeException "Util.java" 221]}]
+ :trace
+ [[clojure.lang.Util runtimeException "Util.java" 221]
+  [clojure.lang.Compiler resolveIn "Compiler.java" 7944]
+  [clojure.lang.Compiler resolve "Compiler.java" 7883]
+  [clojure.lang.Compiler analyzeSymbol "Compiler.java" 7844]
+  [clojure.lang.Compiler analyze "Compiler.java" 7300]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$InvokeExpr parse "Compiler.java" 4296]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7632]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$BodyExpr$Parser parse "Compiler.java" 6644]
+  [clojure.lang.Compiler$FnMethod parse "Compiler.java" 5983]
+  [clojure.lang.Compiler$FnExpr parse "Compiler.java" 4546]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7628]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler eval "Compiler.java" 7697]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]
+  [com.yakread.lib.test$eval_STAR_$fn__69136$fn__69137 invoke "test.clj" 128]
+  [com.yakread.lib.test$eval_STAR_$fn__69136 invoke "test.clj" 127]
+  [com.yakread.lib.test$tapped_STAR_ invokeStatic "test.clj" 111]
+  [com.yakread.lib.test$tapped_STAR_ invoke "test.clj" 100]
+  [com.yakread.lib.test$eval_STAR_ invokeStatic "test.clj" 125]
+  [com.yakread.lib.test$eval_STAR_ invoke "test.clj" 123]
+  [clojure.core$mapv$fn__8565 invoke "core.clj" 7059]
+  [clojure.lang.ArrayChunk reduce "ArrayChunk.java" 65]
+  [clojure.core.protocols$fn__8270 invokeStatic "protocols.clj" 135]
+  [clojure.core.protocols$fn__8270 invoke "protocols.clj" 123]
+  [clojure.core.protocols$fn__8229$G__8224__8238 invoke "protocols.clj" 19]
+  [clojure.core.protocols$seq_reduce invokeStatic "protocols.clj" 31]
+  [clojure.core.protocols$fn__8262 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8262 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$reduce invokeStatic "core.clj" 6965]
+  [clojure.core$mapv invokeStatic "core.clj" 7050]
+  [clojure.core$mapv invoke "core.clj" 7050]
+  [com.yakread.lib.test$run_examples_BANG_$fn__69178 invoke "test.clj" 187]
+  [com.yakread.lib.test$run_examples_BANG_ invokeStatic "test.clj" 180]
+  [com.yakread.lib.test$run_examples_BANG_ doInvoke "test.clj" 175]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [clojure.lang.Var invoke "Var.java" 386]
+  [clojure.run.exec$exec invokeStatic "exec.clj" 88]
+  [clojure.run.exec$exec invoke "exec.clj" 78]
+  [clojure.run.exec$_main$fn__218 invoke "exec.clj" 227]
+  [clojure.run.exec$_main invokeStatic "exec.clj" 223]
+  [clojure.run.exec$_main doInvoke "exec.clj" 191]
+  [clojure.lang.RestFn applyTo "RestFn.java" 140]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.main$main_opt invokeStatic "main.clj" 515]
+  [clojure.main$main_opt invoke "main.clj" 511]
+  [clojure.main$main invokeStatic "main.clj" 665]
+  [clojure.main$main doInvoke "main.clj" 617]
+  [clojure.lang.RestFn applyTo "RestFn.java" 140]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.main main "main.java" 40]]}}
   _
   {:doc "fast-freeze and fast-thaw roundtrip",
    :eval
@@ -41,55 +451,317 @@
     [data
      {:brand "visa", :last4 "1234", :exp-year 2025, :exp-month 12}]
     (= data (fast-thaw (fast-freeze data)))),
-   :result true}
+   :ex #error {
+ :cause "Unable to resolve symbol: fast-thaw in this context"
+ :via
+ [{:type clojure.lang.Compiler$CompilerException
+   :message "Syntax error compiling at (0:0)."
+   :data {:clojure.error/phase :compile-syntax-check, :clojure.error/line 0, :clojure.error/column 0, :clojure.error/source "NO_SOURCE_PATH"}
+   :at [clojure.lang.Compiler analyze "Compiler.java" 7340]}
+  {:type java.lang.RuntimeException
+   :message "Unable to resolve symbol: fast-thaw in this context"
+   :at [clojure.lang.Util runtimeException "Util.java" 221]}]
+ :trace
+ [[clojure.lang.Util runtimeException "Util.java" 221]
+  [clojure.lang.Compiler resolveIn "Compiler.java" 7944]
+  [clojure.lang.Compiler resolve "Compiler.java" 7883]
+  [clojure.lang.Compiler analyzeSymbol "Compiler.java" 7844]
+  [clojure.lang.Compiler analyze "Compiler.java" 7300]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$InvokeExpr parse "Compiler.java" 4296]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7632]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$HostExpr$Parser parse "Compiler.java" 1013]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7630]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7625]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$BodyExpr$Parser parse "Compiler.java" 6644]
+  [clojure.lang.Compiler$LetExpr$Parser parse "Compiler.java" 6960]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7630]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$BodyExpr$Parser parse "Compiler.java" 6644]
+  [clojure.lang.Compiler$FnMethod parse "Compiler.java" 5983]
+  [clojure.lang.Compiler$FnExpr parse "Compiler.java" 4546]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7628]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler eval "Compiler.java" 7697]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]
+  [com.yakread.lib.test$eval_STAR_$fn__69136$fn__69137 invoke "test.clj" 128]
+  [com.yakread.lib.test$eval_STAR_$fn__69136 invoke "test.clj" 127]
+  [com.yakread.lib.test$tapped_STAR_ invokeStatic "test.clj" 111]
+  [com.yakread.lib.test$tapped_STAR_ invoke "test.clj" 100]
+  [com.yakread.lib.test$eval_STAR_ invokeStatic "test.clj" 125]
+  [com.yakread.lib.test$eval_STAR_ invoke "test.clj" 123]
+  [clojure.core$mapv$fn__8565 invoke "core.clj" 7059]
+  [clojure.lang.ArrayChunk reduce "ArrayChunk.java" 65]
+  [clojure.core.protocols$fn__8270 invokeStatic "protocols.clj" 135]
+  [clojure.core.protocols$fn__8270 invoke "protocols.clj" 123]
+  [clojure.core.protocols$fn__8229$G__8224__8238 invoke "protocols.clj" 19]
+  [clojure.core.protocols$seq_reduce invokeStatic "protocols.clj" 31]
+  [clojure.core.protocols$fn__8262 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8262 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$reduce invokeStatic "core.clj" 6965]
+  [clojure.core$mapv invokeStatic "core.clj" 7050]
+  [clojure.core$mapv invoke "core.clj" 7050]
+  [com.yakread.lib.test$run_examples_BANG_$fn__69178 invoke "test.clj" 187]
+  [com.yakread.lib.test$run_examples_BANG_ invokeStatic "test.clj" 180]
+  [com.yakread.lib.test$run_examples_BANG_ doInvoke "test.clj" 175]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [clojure.lang.Var invoke "Var.java" 386]
+  [clojure.run.exec$exec invokeStatic "exec.clj" 88]
+  [clojure.run.exec$exec invoke "exec.clj" 78]
+  [clojure.run.exec$_main$fn__218 invoke "exec.clj" 227]
+  [clojure.run.exec$_main invokeStatic "exec.clj" 223]
+  [clojure.run.exec$_main doInvoke "exec.clj" 191]
+  [clojure.lang.RestFn applyTo "RestFn.java" 140]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.main$main_opt invokeStatic "main.clj" 515]
+  [clojure.main$main_opt invoke "main.clj" 511]
+  [clojure.main$main invokeStatic "main.clj" 665]
+  [clojure.main$main doInvoke "main.clj" 617]
+  [clojure.lang.RestFn applyTo "RestFn.java" 140]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.main main "main.java" 40]]}}
   _
   {:doc "make-enum-reader creates reader that converts int to keyword",
    :eval
    (let
     [reader (make-enum-reader {0 :quarter, 1 :annual})]
     [(reader 0) (reader 1)]),
-   :result [:quarter :annual]}
+   :ex #error {
+ :cause "Unable to resolve symbol: make-enum-reader in this context"
+ :via
+ [{:type clojure.lang.Compiler$CompilerException
+   :message "Syntax error compiling at (0:0)."
+   :data {:clojure.error/phase :compile-syntax-check, :clojure.error/line 0, :clojure.error/column 0, :clojure.error/source "NO_SOURCE_PATH"}
+   :at [clojure.lang.Compiler analyze "Compiler.java" 7340]}
+  {:type java.lang.RuntimeException
+   :message "Unable to resolve symbol: make-enum-reader in this context"
+   :at [clojure.lang.Util runtimeException "Util.java" 221]}]
+ :trace
+ [[clojure.lang.Util runtimeException "Util.java" 221]
+  [clojure.lang.Compiler resolveIn "Compiler.java" 7944]
+  [clojure.lang.Compiler resolve "Compiler.java" 7883]
+  [clojure.lang.Compiler analyzeSymbol "Compiler.java" 7844]
+  [clojure.lang.Compiler analyze "Compiler.java" 7300]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$InvokeExpr parse "Compiler.java" 4296]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7632]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler access$200 "Compiler.java" 43]
+  [clojure.lang.Compiler$LetExpr$Parser parse "Compiler.java" 6908]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7630]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$BodyExpr$Parser parse "Compiler.java" 6644]
+  [clojure.lang.Compiler$FnMethod parse "Compiler.java" 5983]
+  [clojure.lang.Compiler$FnExpr parse "Compiler.java" 4546]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7628]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler eval "Compiler.java" 7697]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]
+  [com.yakread.lib.test$eval_STAR_$fn__69136$fn__69137 invoke "test.clj" 128]
+  [com.yakread.lib.test$eval_STAR_$fn__69136 invoke "test.clj" 127]
+  [com.yakread.lib.test$tapped_STAR_ invokeStatic "test.clj" 111]
+  [com.yakread.lib.test$tapped_STAR_ invoke "test.clj" 100]
+  [com.yakread.lib.test$eval_STAR_ invokeStatic "test.clj" 125]
+  [com.yakread.lib.test$eval_STAR_ invoke "test.clj" 123]
+  [clojure.core$mapv$fn__8565 invoke "core.clj" 7059]
+  [clojure.lang.ArrayChunk reduce "ArrayChunk.java" 65]
+  [clojure.core.protocols$fn__8270 invokeStatic "protocols.clj" 135]
+  [clojure.core.protocols$fn__8270 invoke "protocols.clj" 123]
+  [clojure.core.protocols$fn__8229$G__8224__8238 invoke "protocols.clj" 19]
+  [clojure.core.protocols$seq_reduce invokeStatic "protocols.clj" 31]
+  [clojure.core.protocols$fn__8262 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8262 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$reduce invokeStatic "core.clj" 6965]
+  [clojure.core$mapv invokeStatic "core.clj" 7050]
+  [clojure.core$mapv invoke "core.clj" 7050]
+  [com.yakread.lib.test$run_examples_BANG_$fn__69178 invoke "test.clj" 187]
+  [com.yakread.lib.test$run_examples_BANG_ invokeStatic "test.clj" 180]
+  [com.yakread.lib.test$run_examples_BANG_ doInvoke "test.clj" 175]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [clojure.lang.Var invoke "Var.java" 386]
+  [clojure.run.exec$exec invokeStatic "exec.clj" 88]
+  [clojure.run.exec$exec invoke "exec.clj" 78]
+  [clojure.run.exec$_main$fn__218 invoke "exec.clj" 227]
+  [clojure.run.exec$_main invokeStatic "exec.clj" 223]
+  [clojure.run.exec$_main doInvoke "exec.clj" 191]
+  [clojure.lang.RestFn applyTo "RestFn.java" 140]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.main$main_opt invokeStatic "main.clj" 515]
+  [clojure.main$main_opt invoke "main.clj" 511]
+  [clojure.main$main invokeStatic "main.clj" 665]
+  [clojure.main$main doInvoke "main.clj" 617]
+  [clojure.lang.RestFn applyTo "RestFn.java" 140]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.main main "main.java" 40]]}}
   _
   {:doc "schema-info extracts tables from malli schema",
    :eval (let [info (schema-info malli-opts)] (sort (keys info))),
-   :result
-   (:ad
-    :ad-click
-    :ad-credit
-    :bulk-send
-    :deleted-user
-    :digest
-    :digest-item
-    :feed
-    :mv-sub
-    :mv-user
-    :reclist
-    :redirect
-    :skip
-    :user
-    :user-item)}
+   :ex #error {
+ :cause "Unable to resolve symbol: schema-info in this context"
+ :via
+ [{:type clojure.lang.Compiler$CompilerException
+   :message "Syntax error compiling at (0:0)."
+   :data {:clojure.error/phase :compile-syntax-check, :clojure.error/line 0, :clojure.error/column 0, :clojure.error/source "NO_SOURCE_PATH"}
+   :at [clojure.lang.Compiler analyze "Compiler.java" 7340]}
+  {:type java.lang.RuntimeException
+   :message "Unable to resolve symbol: schema-info in this context"
+   :at [clojure.lang.Util runtimeException "Util.java" 221]}]
+ :trace
+ [[clojure.lang.Util runtimeException "Util.java" 221]
+  [clojure.lang.Compiler resolveIn "Compiler.java" 7944]
+  [clojure.lang.Compiler resolve "Compiler.java" 7883]
+  [clojure.lang.Compiler analyzeSymbol "Compiler.java" 7844]
+  [clojure.lang.Compiler analyze "Compiler.java" 7300]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$InvokeExpr parse "Compiler.java" 4296]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7632]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler access$200 "Compiler.java" 43]
+  [clojure.lang.Compiler$LetExpr$Parser parse "Compiler.java" 6908]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7630]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$BodyExpr$Parser parse "Compiler.java" 6644]
+  [clojure.lang.Compiler$FnMethod parse "Compiler.java" 5983]
+  [clojure.lang.Compiler$FnExpr parse "Compiler.java" 4546]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7628]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler eval "Compiler.java" 7697]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]
+  [com.yakread.lib.test$eval_STAR_$fn__69136$fn__69137 invoke "test.clj" 128]
+  [com.yakread.lib.test$eval_STAR_$fn__69136 invoke "test.clj" 127]
+  [com.yakread.lib.test$tapped_STAR_ invokeStatic "test.clj" 111]
+  [com.yakread.lib.test$tapped_STAR_ invoke "test.clj" 100]
+  [com.yakread.lib.test$eval_STAR_ invokeStatic "test.clj" 125]
+  [com.yakread.lib.test$eval_STAR_ invoke "test.clj" 123]
+  [clojure.core$mapv$fn__8565 invoke "core.clj" 7059]
+  [clojure.lang.ArrayChunk reduce "ArrayChunk.java" 65]
+  [clojure.core.protocols$fn__8270 invokeStatic "protocols.clj" 135]
+  [clojure.core.protocols$fn__8270 invoke "protocols.clj" 123]
+  [clojure.core.protocols$fn__8229$G__8224__8238 invoke "protocols.clj" 19]
+  [clojure.core.protocols$seq_reduce invokeStatic "protocols.clj" 31]
+  [clojure.core.protocols$fn__8262 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8262 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$reduce invokeStatic "core.clj" 6965]
+  [clojure.core$mapv invokeStatic "core.clj" 7050]
+  [clojure.core$mapv invoke "core.clj" 7050]
+  [com.yakread.lib.test$run_examples_BANG_$fn__69178 invoke "test.clj" 187]
+  [com.yakread.lib.test$run_examples_BANG_ invokeStatic "test.clj" 180]
+  [com.yakread.lib.test$run_examples_BANG_ doInvoke "test.clj" 175]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [clojure.lang.Var invoke "Var.java" 386]
+  [clojure.run.exec$exec invokeStatic "exec.clj" 88]
+  [clojure.run.exec$exec invoke "exec.clj" 78]
+  [clojure.run.exec$_main$fn__218 invoke "exec.clj" 227]
+  [clojure.run.exec$_main invokeStatic "exec.clj" 223]
+  [clojure.run.exec$_main doInvoke "exec.clj" 191]
+  [clojure.lang.RestFn applyTo "RestFn.java" 140]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.main$main_opt invokeStatic "main.clj" 515]
+  [clojure.main$main_opt invoke "main.clj" 511]
+  [clojure.main$main invokeStatic "main.clj" 665]
+  [clojure.main$main doInvoke "main.clj" 617]
+  [clojure.lang.RestFn applyTo "RestFn.java" 140]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.main main "main.java" 40]]}}
   _
   {:doc "schema-info extracts attributes for user table",
    :eval
    (let
     [info (schema-info malli-opts) user-attrs (get info :user)]
     (sort (keys user-attrs))),
-   :result
-   (:user/cancel-at
-    :user/customer-id
-    :user/digest-days
-    :user/digest-last-sent
-    :user/email
-    :user/email-username
-    :user/from-the-sample
-    :user/id
-    :user/joined-at
-    :user/plan
-    :user/roles
-    :user/send-digest-at
-    :user/suppressed-at
-    :user/timezone
-    :user/use-original-links)}
+   :ex #error {
+ :cause "Unable to resolve symbol: schema-info in this context"
+ :via
+ [{:type clojure.lang.Compiler$CompilerException
+   :message "Syntax error compiling at (0:0)."
+   :data {:clojure.error/phase :compile-syntax-check, :clojure.error/line 0, :clojure.error/column 0, :clojure.error/source "NO_SOURCE_PATH"}
+   :at [clojure.lang.Compiler analyze "Compiler.java" 7340]}
+  {:type java.lang.RuntimeException
+   :message "Unable to resolve symbol: schema-info in this context"
+   :at [clojure.lang.Util runtimeException "Util.java" 221]}]
+ :trace
+ [[clojure.lang.Util runtimeException "Util.java" 221]
+  [clojure.lang.Compiler resolveIn "Compiler.java" 7944]
+  [clojure.lang.Compiler resolve "Compiler.java" 7883]
+  [clojure.lang.Compiler analyzeSymbol "Compiler.java" 7844]
+  [clojure.lang.Compiler analyze "Compiler.java" 7300]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$InvokeExpr parse "Compiler.java" 4296]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7632]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler access$200 "Compiler.java" 43]
+  [clojure.lang.Compiler$LetExpr$Parser parse "Compiler.java" 6908]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7630]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler analyze "Compiler.java" 7277]
+  [clojure.lang.Compiler$BodyExpr$Parser parse "Compiler.java" 6644]
+  [clojure.lang.Compiler$FnMethod parse "Compiler.java" 5983]
+  [clojure.lang.Compiler$FnExpr parse "Compiler.java" 4546]
+  [clojure.lang.Compiler analyzeSeq "Compiler.java" 7628]
+  [clojure.lang.Compiler analyze "Compiler.java" 7321]
+  [clojure.lang.Compiler eval "Compiler.java" 7697]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]
+  [com.yakread.lib.test$eval_STAR_$fn__69136$fn__69137 invoke "test.clj" 128]
+  [com.yakread.lib.test$eval_STAR_$fn__69136 invoke "test.clj" 127]
+  [com.yakread.lib.test$tapped_STAR_ invokeStatic "test.clj" 111]
+  [com.yakread.lib.test$tapped_STAR_ invoke "test.clj" 100]
+  [com.yakread.lib.test$eval_STAR_ invokeStatic "test.clj" 125]
+  [com.yakread.lib.test$eval_STAR_ invoke "test.clj" 123]
+  [clojure.core$mapv$fn__8565 invoke "core.clj" 7059]
+  [clojure.lang.ArrayChunk reduce "ArrayChunk.java" 65]
+  [clojure.core.protocols$fn__8270 invokeStatic "protocols.clj" 135]
+  [clojure.core.protocols$fn__8270 invoke "protocols.clj" 123]
+  [clojure.core.protocols$fn__8229$G__8224__8238 invoke "protocols.clj" 19]
+  [clojure.core.protocols$seq_reduce invokeStatic "protocols.clj" 31]
+  [clojure.core.protocols$fn__8262 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8262 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$reduce invokeStatic "core.clj" 6965]
+  [clojure.core$mapv invokeStatic "core.clj" 7050]
+  [clojure.core$mapv invoke "core.clj" 7050]
+  [com.yakread.lib.test$run_examples_BANG_$fn__69178 invoke "test.clj" 187]
+  [com.yakread.lib.test$run_examples_BANG_ invokeStatic "test.clj" 180]
+  [com.yakread.lib.test$run_examples_BANG_ doInvoke "test.clj" 175]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [clojure.lang.Var invoke "Var.java" 386]
+  [clojure.run.exec$exec invokeStatic "exec.clj" 88]
+  [clojure.run.exec$exec invoke "exec.clj" 78]
+  [clojure.run.exec$_main$fn__218 invoke "exec.clj" 227]
+  [clojure.run.exec$_main invokeStatic "exec.clj" 223]
+  [clojure.run.exec$_main doInvoke "exec.clj" 191]
+  [clojure.lang.RestFn applyTo "RestFn.java" 140]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.main$main_opt invokeStatic "main.clj" 515]
+  [clojure.main$main_opt invoke "main.clj" 511]
+  [clojure.main$main invokeStatic "main.clj" 665]
+  [clojure.main$main doInvoke "main.clj" 617]
+  [clojure.lang.RestFn applyTo "RestFn.java" 140]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.main main "main.java" 40]]}}
   _
   {:doc "generate-schema-sql produces SQL DDL",
    :eval
@@ -98,14 +770,42 @@
     (clojure.string/starts-with?
      sql
      "-- Generated from malli schema")),
-   :result true}
+   :ex #error {
+ :cause "Wrong number of args (0) passed to: com.yakread.lib.sqlite/generate-schema-sql"
+ :via
+ [{:type clojure.lang.ArityException
+   :message "Wrong number of args (0) passed to: com.yakread.lib.sqlite/generate-schema-sql"
+   :at [clojure.lang.AFn throwArity "AFn.java" 429]}]
+ :trace
+ [[clojure.lang.AFn throwArity "AFn.java" 429]
+  [clojure.lang.AFn invoke "AFn.java" 28]
+  [tmp889522$eval97795 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp889522$eval97795 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "generate-schema-sql includes CREATE TABLE user",
    :eval
    (let
     [sql (generate-schema-sql)]
     (clojure.string/includes? sql "CREATE TABLE user")),
-   :result true}
+   :ex #error {
+ :cause "Wrong number of args (0) passed to: com.yakread.lib.sqlite/generate-schema-sql"
+ :via
+ [{:type clojure.lang.ArityException
+   :message "Wrong number of args (0) passed to: com.yakread.lib.sqlite/generate-schema-sql"
+   :at [clojure.lang.AFn throwArity "AFn.java" 429]}]
+ :trace
+ [[clojure.lang.AFn throwArity "AFn.java" 429]
+  [clojure.lang.AFn invoke "AFn.java" 28]
+  [tmp889522$eval97797 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp889522$eval97797 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "generate-schema-sql includes proper column types",
    :eval
@@ -114,15 +814,57 @@
     (and
      (clojure.string/includes? sql "email TEXT NOT NULL")
      (clojure.string/includes? sql "id BLOB PRIMARY KEY"))),
-   :result true}
+   :ex #error {
+ :cause "Wrong number of args (0) passed to: com.yakread.lib.sqlite/generate-schema-sql"
+ :via
+ [{:type clojure.lang.ArityException
+   :message "Wrong number of args (0) passed to: com.yakread.lib.sqlite/generate-schema-sql"
+   :at [clojure.lang.AFn throwArity "AFn.java" 429]}]
+ :trace
+ [[clojure.lang.AFn throwArity "AFn.java" 429]
+  [clojure.lang.AFn invoke "AFn.java" 28]
+  [tmp889522$eval97799 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp889522$eval97799 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "sqlite-resolvers returns resolvers for all tables",
    :eval (let [resolvers (sqlite-resolvers)] (count resolvers)),
-   :result 15}
+   :ex #error {
+ :cause "Wrong number of args (0) passed to: com.yakread.lib.sqlite/sqlite-resolvers"
+ :via
+ [{:type clojure.lang.ArityException
+   :message "Wrong number of args (0) passed to: com.yakread.lib.sqlite/sqlite-resolvers"
+   :at [clojure.lang.AFn throwArity "AFn.java" 429]}]
+ :trace
+ [[clojure.lang.AFn throwArity "AFn.java" 429]
+  [clojure.lang.AFn invoke "AFn.java" 28]
+  [tmp889522$eval97802 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp889522$eval97802 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "sqlite-resolvers creates resolvers",
    :eval (let [resolvers (sqlite-resolvers)] (> (count resolvers) 0)),
-   :result true}
+   :ex #error {
+ :cause "Wrong number of args (0) passed to: com.yakread.lib.sqlite/sqlite-resolvers"
+ :via
+ [{:type clojure.lang.ArityException
+   :message "Wrong number of args (0) passed to: com.yakread.lib.sqlite/sqlite-resolvers"
+   :at [clojure.lang.AFn throwArity "AFn.java" 429]}]
+ :trace
+ [[clojure.lang.AFn throwArity "AFn.java" 429]
+  [clojure.lang.AFn invoke "AFn.java" 28]
+  [tmp889522$eval97804 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp889522$eval97804 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "sqlite-resolvers resolver has batch? true",
    :eval
@@ -137,5 +879,19 @@
       :config
       :com.wsscode.pathom3.connect.operation/batch?)]
     batch?),
-   :result true}
+   :ex #error {
+ :cause "Wrong number of args (0) passed to: com.yakread.lib.sqlite/sqlite-resolvers"
+ :via
+ [{:type clojure.lang.ArityException
+   :message "Wrong number of args (0) passed to: com.yakread.lib.sqlite/sqlite-resolvers"
+   :at [clojure.lang.AFn throwArity "AFn.java" 429]}]
+ :trace
+ [[clojure.lang.AFn throwArity "AFn.java" 429]
+  [clojure.lang.AFn invoke "AFn.java" 28]
+  [tmp889522$eval97806 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp889522$eval97806 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _]}

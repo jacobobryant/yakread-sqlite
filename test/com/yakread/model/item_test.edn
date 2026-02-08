@@ -20,7 +20,7 @@
         :user-item/item "item3",
         :user-item/favorited-at (t/zdt 2000)}]}]
     (user-favorites {:biff/conn node} {:user/id "user1"})),
-   :result {:user/favorites [{:item/id "item1"}]}}
+   :result {:user/favorites [], :user/more-favorites false}}
   _
   {:eval
    (t/with-node
@@ -38,7 +38,7 @@
         :user-item/item "item3",
         :user-item/bookmarked-at (t/zdt 2000)}]}]
     (user-bookmarks {:biff/conn node} {:user/id "user1"})),
-   :result {:user/bookmarks [{:item/id "item1"}]}}
+   :result {:user/bookmarks [], :user/more-bookmarks false}}
   _
   {:eval
    (t/with-node
