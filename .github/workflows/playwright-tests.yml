@@ -59,19 +59,27 @@ jobs:
           printf '%s\n' \
             'DOMAIN=localhost' \
             'NREPL_PORT=7888' \
-            'COOKIE_SECRET=aaaaaaaaaaaaaaaa' \
-            'JWT_SECRET=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' \
+            'COOKIE_SECRET=YWFhYWFhYWFhYWFhYWFhYQ==' \
+            'JWT_SECRET=YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=' \
             "ADMIN_IDS='#{}'" \
             'XTDB_TOPOLOGY=standalone' \
             > config.env
 
       - name: Start Yakread server
         run: |
-          clj -M:run -m com.yakread &
+          clojure -J"--add-opens=java.base/java.nio=ALL-UNNAMED" \
+            -J"-Dio.netty.tryReflectionSetAccessible=true" \
+            -J"-Djdk.attach.allowAttachSelf" \
+            -J"--add-exports=java.base/sun.nio.ch=ALL-UNNAMED" \
+            -J"--add-exports=java.base/sun.security.action=ALL-UNNAMED" \
+            -J"-XX:-OmitStackTraceInFastThrow" \
+            -J"-XX:+CrashOnOutOfMemoryError" \
+            -J"-Dbiff.env.BIFF_PROFILE=dev" \
+            -M -m com.yakread -- nrepl --port 7888 &
           echo $! > /tmp/yakread.pid
           # Wait for server to be ready
           for i in $(seq 1 60); do
-            if curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/ | grep -q "200\|303"; then
+            if curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/signin | grep -q "200"; then
               echo "Server is ready"
               break
             fi
