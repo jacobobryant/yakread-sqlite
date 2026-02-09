@@ -291,42 +291,25 @@
              :where [:is-not :user-item/favorited-at nil]
              :order-by [[:item/n-likes :desc]]})})
 
-;; Pathom3 needs :xt/id to be registered in index-oir so nested subqueries
-;; (e.g. for entities in ::all-ads) can be planned. This resolver makes
-;; :xt/id a known output attribute. In practice the value is already present
-;; in the entity data provided by the parent resolver.
-(def ^:private xt-id-provider
-  (pco/resolver `xt-id-provider
-                {::pco/input [(? :xt/id)]
-                 ::pco/output [:xt/id]}
-                (fn [_ input]
-                  (log/info "xt-id-provider called with input:" (pr-str input))
-                  (select-keys input [:xt/id]))))
-
-(def ^:private spark-resolvers [item-candidates
-                                ads
-                                ad-ratings
-                                dedupe-item-id
-                                item-ratings
-                                spark-model
-                                get-candidates
-                                item-candidate-ids
-                                all-liked-items
-                                xt-id-provider])
+(def ^:private pathom-env (pci/register [item-candidates
+                                         ads
+                                         ad-ratings
+                                         dedupe-item-id
+                                         item-ratings
+                                         spark-model
+                                         get-candidates
+                                         item-candidate-ids
+                                         all-liked-items]))
 
 (defn new-model [ctx]
   (log/info "updating model")
-  (let [malli-opts (:biff/malli-opts ctx)
-        xtdb2-resolvers (when malli-opts
-                          (biffs/xtdb2-resolvers malli-opts))
-        pathom-env (pci/register (into spark-resolvers xtdb2-resolvers))]
-    (merge {:yakread.model/item-candidate-ids #{}
-            :yakread.model/get-candidates (constantly {})}
-           (p.eql/process (merge ctx pathom-env {:biff/now (tick/zoned-date-time)})
-                          {}
-                          [(? :yakread.model/item-candidate-ids)
-                           (? :yakread.model/get-candidates)
-                           {:yakread.model/all-liked-items [:item/id :item/n-likes]}]))))
+  (merge {:yakread.model/item-candidate-ids #{}
+          :yakread.model/get-candidates (constantly {})}
+         (p.eql/process (merge ctx pathom-env {:biff/now (tick/zoned-date-time)})
+                        {}
+                        [(? :yakread.model/item-candidate-ids)
+                         (? :yakread.model/get-candidates)
+                         {:yakread.model/all-liked-items [:item/id :item/n-likes]}])))
 
 (defn use-spark [ctx]
   (let [spark (doto (JavaSparkContext. "local[*]" "yakread")
