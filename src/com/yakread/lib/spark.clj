@@ -31,20 +31,22 @@
 (defresolver ads [{:biff/keys [conn now]} _]
   {::pco/output [{::all-ads [:xt/id]}
                  {::ad-candidates [:xt/id]}]}
-  (let [all-ads (biffx/q conn
-                         {:select [:ad._id
-                                   :ad/approve-state
-                                   :ad/paused
-                                   :ad/payment-failed
-                                   :ad/payment-method
-                                   :ad/budget
-                                   [[:coalesce [:sum :ad.click/cost] 0] :ad/recent-cost]]
-                          :from :ad
-                          :left-join [:ad-click [:and
-                                                 [:= :ad.click/ad :ad._id]
-                                                 [:<
-                                                  (tick/<< now (tick/of-days 7))
-                                                  :ad.click/created-at]]]})]
+  (let [all-ads (into []
+                      (remove (comp nil? :xt/id))
+                      (biffx/q conn
+                               {:select [:ad._id
+                                         :ad/approve-state
+                                         :ad/paused
+                                         :ad/payment-failed
+                                         :ad/payment-method
+                                         :ad/budget
+                                         [[:coalesce [:sum :ad.click/cost] 0] :ad/recent-cost]]
+                                :from :ad
+                                :left-join [:ad-click [:and
+                                                       [:= :ad.click/ad :ad._id]
+                                                       [:<
+                                                        (tick/<< now (tick/of-days 7))
+                                                        :ad.click/created-at]]]}))]
     {::all-ads all-ads
      ::ad-candidates (filterv lib.ads/active? all-ads)}))
 
@@ -70,6 +72,7 @@
                  :from :ad
                  :join [:ad-click [:= :ad._id :ad.click/ad]]}]}
        (biffx/q conn)
+       (remove (comp nil? :ad-id))
        (full-outer-join (juxt :ad-id :user-id))))
 
 (defresolver ad-ratings [{:keys [biff/conn]} {::keys [all-ads]}]
@@ -284,12 +287,14 @@
   {::pco/output [{:yakread.model/all-liked-items
                   [:item/id :item/n-likes]}]}
   {:yakread.model/all-liked-items
-   (biffx/q conn
-            {:select [[:user-item/item :item/id]
-                      [[:count :xt/id] :item/n-likes]]
-             :from :user-item
-             :where [:is-not :user-item/favorited-at nil]
-             :order-by [[:item/n-likes :desc]]})})
+   (into []
+         (remove (comp nil? :item/id))
+         (biffx/q conn
+                  {:select [[:user-item/item :item/id]
+                            [[:count :xt/id] :item/n-likes]]
+                   :from :user-item
+                   :where [:is-not :user-item/favorited-at nil]
+                   :order-by [[:item/n-likes :desc]]}))})
 
 (def ^:private pathom-env (pci/register [item-candidates
                                          ads
