@@ -86,6 +86,27 @@ test.describe('Settings Page', () => {
     await expect(authedPage.locator('text=Delete account')).toBeVisible();
   });
 
+  test('saved settings persist after page reload', async ({ authedPage }) => {
+    await authedPage.goto('/settings');
+
+    // Toggle Tuesday on
+    const tuesdayCheckbox = authedPage.locator('input[value="tuesday"]');
+    await tuesdayCheckbox.check();
+
+    // Click save
+    await authedPage.locator('button:has-text("Save")').click();
+
+    // Wait for redirect back to settings
+    await authedPage.waitForURL('**/settings**', { timeout: 10000 });
+
+    // Reload the page to verify persistence
+    await authedPage.reload();
+    await authedPage.waitForLoadState('networkidle');
+
+    // Tuesday should still be checked after reload
+    await expect(authedPage.locator('input[value="tuesday"]')).toBeChecked();
+  });
+
   test('settings page shows disabled state for non-authenticated user', async ({ page }) => {
     await page.goto('/settings');
 

@@ -25,6 +25,8 @@
 (def item-id-fav   #uuid "00000000-5eed-0000-0000-000000000041")
 (def ui-id-bm      #uuid "00000000-5eed-0000-0000-000000000050")
 (def ui-id-fav     #uuid "00000000-5eed-0000-0000-000000000051")
+(def mv-sub-id-1   #uuid "00000000-5eed-0000-0000-000000000060")
+(def mv-sub-id-2   #uuid "00000000-5eed-0000-0000-000000000061")
 
 (defn days-ago-zdt [n]
   (tick/in (tick/instant (tick/<< (tick/instant) (tick/new-duration n :days))) "UTC"))
@@ -113,7 +115,7 @@
       {:xt/id                  (biffx/prefix-uuid seed-user-id ui-id-bm)
        :user-item/user         seed-user-id
        :user-item/item         (biffx/prefix-uuid "0000" item-id-bm)
-       :user-item/bookmarked-at now}]
+       :user-item/bookmarked-at (days-ago-zdt 1)}]
 
      ;; Favorited item (direct type)
      [:put-docs :item
@@ -130,7 +132,19 @@
       {:xt/id                  (biffx/prefix-uuid seed-user-id ui-id-fav)
        :user-item/user         seed-user-id
        :user-item/item         (biffx/prefix-uuid "0000" item-id-fav)
-       :user-item/favorited-at now}]]))
+       :user-item/favorited-at (days-ago-zdt 1)}]
+
+     ;; Materialized view records for subscriptions
+     [:put-docs :mv-sub
+      {:xt/id             (biffx/prefix-uuid (biffx/prefix-uuid seed-user-id sub-id-1) mv-sub-id-1)
+       :mv.sub/sub        (biffx/prefix-uuid seed-user-id sub-id-1)
+       :mv.sub/affinity-low  0.5
+       :mv.sub/affinity-high 0.5}]
+     [:put-docs :mv-sub
+      {:xt/id             (biffx/prefix-uuid (biffx/prefix-uuid seed-user-id sub-id-2) mv-sub-id-2)
+       :mv.sub/sub        (biffx/prefix-uuid seed-user-id sub-id-2)
+       :mv.sub/affinity-low  0.5
+       :mv.sub/affinity-high 0.5}]]))
 
 (defn seed! [{:keys [biff/node] :as ctx}]
   (println "Inserting seed data for e2e tests...")

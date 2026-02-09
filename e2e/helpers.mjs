@@ -89,4 +89,53 @@ export const test = base.extend({
   },
 });
 
-export { expect, signIn, getVerificationCode, CONTENT_SERVER_URL, SEED_EMAIL };
+/**
+ * Navigate to a page and wait for its lazy-loaded content (via HTMX
+ * hx-trigger="intersect once") to be fetched and swapped in.
+ *
+ * If HTMX fires normally the helper just waits for the content response.
+ * If the response doesn't arrive within a short window, the helper
+ * manually triggers the hx-get request so that tests don't depend on
+ * IntersectionObserver timing in headless CI environments.
+ */
+async function gotoWithContent(page, pagePath, contentPath) {
+  // Start listening for the content response BEFORE navigating
+  const contentPromise = page.waitForResponse(
+    resp => resp.url().includes(contentPath) && resp.status() === 200,
+    { timeout: 15000 }
+  ).catch(() => null);
+
+  await page.goto(pagePath);
+
+  // Give HTMX a moment to fire the intersect trigger naturally
+  const resp = await Promise.race([
+    contentPromise,
+    page.waitForTimeout(3000).then(() => null),
+  ]);
+
+  if (!resp) {
+    // HTMX didn't fire – manually trigger the lazy-load request
+    await page.evaluate(async (cp) => {
+      const el = document.querySelector(`[hx-get="${cp}"]`) ||
+                 document.querySelector(`[hx-get*="${cp}"]`);
+      if (el && window.htmx) {
+        htmx.trigger(el, 'intersect');
+      } else {
+        // Fallback: fetch the content and swap it in ourselves
+        const res = await fetch(cp);
+        const html = await res.text();
+        const content = document.querySelector('#content');
+        if (content) {
+          content.innerHTML = html;
+          // Re-initialize HTMX on the new content if available
+          if (window.htmx) htmx.process(content);
+        }
+      }
+    }, contentPath);
+
+    // Wait for the content to actually appear in the DOM
+    await page.waitForTimeout(1000);
+  }
+}
+
+export { expect, signIn, getVerificationCode, gotoWithContent, CONTENT_SERVER_URL, SEED_EMAIL };
