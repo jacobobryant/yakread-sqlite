@@ -7,15 +7,22 @@
    [clojure.java.io :as io]
    [clojure.tools.logging :as log]
    [clojure.tools.namespace.find :as ns-find]
+   [clojure.walk :as walk]
    [com.biffweb :as biff]
    [com.biffweb.experimental :as biffx]
    [com.wsscode.pathom3.connect.operation :as pco]
    [com.wsscode.pathom3.connect.planner :as-alias pcp]
    [com.wsscode.pathom3.connect.runner :as-alias pcr]
    [com.yakread.lib.core :as lib.core]
+   [honey.sql :as sql]
    [malli.core :as malli]
-   [malli.registry :as malr] ;;[xtdb.api :as xt]
-))
+   [malli.registry :as malr]
+   [next.jdbc :as jdbc]
+   [taoensso.nippy :as nippy])
+  (:import
+   [java.nio ByteBuffer]
+   [java.time Instant ZonedDateTime]
+   [java.util UUID]))
 
 (defn doc-asts [{:keys [registry] :as malli-opts}]
   (for [schema-k (keys (malr/schemas (:registry malli-opts)))
@@ -231,13 +238,22 @@
                                                       on)
                                          :limit 1})]
     (if existing-id
-      [{:update table
-        :set (dissoc new-record :xt/id)
-        :where [:= :xt/id existing-id]}]
+      (let [xt-update {:update table
+                       :set (dissoc new-record :xt/id)
+                       :where [:= :xt/id existing-id]}
+            sqlite-set (-> (dissoc new-record :xt/id)
+                           (rename-doc-keys table)
+                           coerce-sqlite-doc)
+            sqlite-update {:update (sqlite-table table)
+                           :set sqlite-set
+                           :where [:= :id (coerce-sqlite-value existing-id)]}]
+        [{:xt xt-update
+          :sqlite sqlite-update}])
       [[:put-docs table (into {}
                               (filter (comp some? val))
                               (merge {:xt/id (gen/uuid)} new-record on))]
-       (biffx/assert-unique table on)])))
+       {:xt (biffx/assert-unique table on)
+        :sqlite nil}])))
 
 (defmulti biff-tx-op (fn [ctx op]
                        (when (and (vector? op)
@@ -252,11 +268,13 @@
   [_ [_ query results]]
   (if (empty? results)
     ;; we need a special case because the second assert doesn't work when results are empty.
-    [{:assert [:not-exists query]}]
-    [{:assert [:=
-               {:select [[[:nest_many query]]]}
-               {:select [[[:array (for [record results]
-                                    [:lift record])]]]}]}]))
+    [{:xt {:assert [:not-exists query]}
+      :sqlite nil}]
+    [{:xt {:assert [:=
+                    {:select [[[:nest_many query]]]}
+                    {:select [[[:array (for [record results]
+                                         [:lift record])]]]}]}
+      :sqlite nil}]))
 
 (defmethod biff-tx-op :biff/upsert
   [{:keys [biff/conn]} [_ table on & records]]
@@ -289,17 +307,29 @@
                                                       (dissoc record :biff/on-insert :biff/on-update))
                                                 (:biff/on-update record)
                                                 {:xt/id id}))))
-                               records)]
+                               records)
+        sqlite-on (mapv #(rename-key % table) on)]
     (vec (concat
           [[:biff/assert-query query results]]
 
           (when (not-empty new-records)
             [(into [:put-docs table] new-records)])
 
-          (for [record existing-records]
-            {:update table
-             :set (apply dissoc record :xt/id on)
-             :where [:= :xt/id (:xt/id record)]})))))
+          (for [record existing-records
+                :let [xt-update {:update table
+                                 :set (apply dissoc record :xt/id on)
+                                 :where [:= :xt/id (:xt/id record)]}
+                      strip-lifts (fn [m]
+                                    (into {} (map (fn [[k v]] [k (strip-lift v)])) m))
+                      sqlite-set (-> (apply dissoc record :xt/id on)
+                                     strip-lifts
+                                     (rename-doc-keys table)
+                                     (coerce-sqlite-set table))
+                      sqlite-update {:update (sqlite-table table)
+                                     :set sqlite-set
+                                     :where [:= :id (coerce-sqlite-value (:xt/id record))]}]]
+            {:xt xt-update
+             :sqlite sqlite-update})))))
 
 (defn resolve-tx-ops [ctx tx]
   (into []
@@ -309,13 +339,327 @@
                       (not= expanded [tx-op]) (resolve-tx-ops ctx)))))
         tx))
 
+;; ============================================================================
+;; XTDB-to-SQLite key mapping for dual-write
+;; ============================================================================
+
+(def xt->sqlite-key
+  "Mapping from XTDB attribute keys to SQLite attribute keys.
+   Only includes keys that differ between the two schemas."
+  {;; user table - :xt/id -> :user/id handled by table-specific logic
+   :user/timezone* :user/timezone
+   :user/send-digest-at :user/send-digest-at
+
+   ;; sub table
+   :sub/user       :sub/user-id
+   :sub.feed/feed  :sub/feed-id
+   :sub.email/from :sub/email-from
+   :sub.email/unsubscribed-at :sub/email-unsubscribed-at
+
+   ;; item table
+   :item.feed/feed            :item/feed-id
+   :item.feed/guid            :item/feed-guid
+   :item.email/sub            :item/email-sub-id
+   :item.email/raw-content-key :item/email-raw-content-key
+   :item.email/list-unsubscribe :item/email-list-unsubscribe
+   :item.email/list-unsubscribe-post :item/email-list-unsubscribe-post
+   :item.email/reply-to       :item/email-reply-to
+   :item.email/maybe-confirmation :item/email-maybe-confirmation
+   :item.direct/candidate-status :item/direct-candidate-status
+   :item/doc-type             :item/record-type
+
+   ;; redirect table
+   :redirect/item  :redirect/item-id
+
+   ;; user-item table
+   :user-item/user :user-item/user-id
+   :user-item/item :user-item/item-id
+
+   ;; digest table
+   :digest/user      :digest/user-id
+   :digest/subject   :digest/subject-id
+   :digest/ad        :digest/ad-id
+   :digest/bulk-send :digest/bulk-send-id
+
+   ;; digest-item table
+   :digest-item/digest :digest-item/digest-id
+   :digest-item/item   :digest-item/item-id
+
+   ;; reclist table
+   :reclist/user :reclist/user-id
+
+   ;; skip table
+   :skip/reclist :skip/reclist-id
+   :skip/item    :skip/item-id
+
+   ;; ad table
+   :ad/user :ad/user-id
+
+   ;; ad-click table (xtdb uses ad.click namespace)
+   :ad.click/user       :ad-click/user-id
+   :ad.click/ad         :ad-click/ad-id
+   :ad.click/created-at :ad-click/created-at
+   :ad.click/cost       :ad-click/cost
+   :ad.click/source     :ad-click/source
+
+   ;; ad-credit table (xtdb uses ad.credit namespace)
+   :ad.credit/ad            :ad-credit/ad-id
+   :ad.credit/source        :ad-credit/source
+   :ad.credit/amount        :ad-credit/amount
+   :ad.credit/created-at    :ad-credit/created-at
+   :ad.credit/charge-status :ad-credit/charge-status
+
+   ;; mv-sub table (xtdb uses mv.sub namespace)
+   :mv.sub/sub            :mv-sub/sub-id
+   :mv.sub/affinity-low   :mv-sub/affinity-low
+   :mv.sub/affinity-high  :mv-sub/affinity-high
+   :mv.sub/last-published :mv-sub/last-published
+   :mv.sub/unread         :mv-sub/unread
+   :mv.sub/read           :mv-sub/n-read
+
+   ;; mv-user table (xtdb uses mv.user namespace)
+   :mv.user/user         :mv-user/user-id
+   :mv.user/current-item :mv-user/current-item-id})
+
+(def xt->sqlite-table
+  "Mapping from XTDB table names to SQLite table names.
+   Only includes tables that differ."
+  {:ad.click  :ad-click
+   :ad.credit :ad-credit
+   :mv.sub    :mv-sub
+   :mv.user   :mv-user})
+
+(defn- sqlite-table [xt-table]
+  (get xt->sqlite-table xt-table xt-table))
+
+(defn- sqlite-id-key [table]
+  (keyword (name table) "id"))
+
+(defn- rename-key [k table]
+  (cond
+    (= k :xt/id)
+    (sqlite-id-key (sqlite-table table))
+
+    (contains? xt->sqlite-key k)
+    (get xt->sqlite-key k)
+
+    :else k))
+
+;; ============================================================================
+;; Value coercion for SQLite writes
+;; ============================================================================
+
+(defn- uuid->bytes [^UUID uuid]
+  (let [bb (ByteBuffer/allocate 16)]
+    (.putLong bb (.getMostSignificantBits uuid))
+    (.putLong bb (.getLeastSignificantBits uuid))
+    (.array bb)))
+
+(defn coerce-sqlite-value*
+  "Coerce a Clojure value for SQLite storage. Public version."
+  [v]
+  (cond
+    (uuid? v) (uuid->bytes v)
+    (instance? Instant v) (.toEpochMilli ^Instant v)
+    (instance? ZonedDateTime v) (.toEpochMilli (.toInstant ^ZonedDateTime v))
+    (boolean? v) (if v 1 0)
+    (keyword? v) v ;; enums handled separately by the schema-aware coercion
+    (set? v) (nippy/fast-freeze v)
+    (map? v) (nippy/fast-freeze v)
+    (vector? v) (nippy/fast-freeze v)
+    :else v))
+
+(defn- coerce-sqlite-value [v] (coerce-sqlite-value* v))
+
+(defn- sql-expression?
+  "Check if a value is a SQL expression vector (like [:- :col val])."
+  [v]
+  (and (vector? v)
+       (keyword? (first v))
+       (not= :lift (first v))))
+
+(defn- coerce-sqlite-set-value
+  "Coerce a value for a SQLite :set clause. Handles both plain values
+   and SQL expression vectors."
+  [v table]
+  (if (sql-expression? v)
+    ;; SQL expression - rename column refs and coerce literal values
+    (mapv (fn [x]
+            (cond
+              (and (keyword? x) (qualified-keyword? x))
+              (let [renamed (rename-key x table)]
+                ;; Use unqualified name for SQLite column reference
+                (keyword (name renamed)))
+              :else
+              (coerce-sqlite-value x)))
+          v)
+    (coerce-sqlite-value v)))
+
+(defn- coerce-sqlite-doc
+  "Coerce all values in a document map for SQLite storage."
+  [doc]
+  (into {}
+        (map (fn [[k v]]
+               [k (if (some? v)
+                    (coerce-sqlite-value v)
+                    v)]))
+        doc))
+
+(defn- coerce-sqlite-set
+  "Coerce all values in a :set map for SQLite storage, handling SQL expressions."
+  [set-map table]
+  (into {}
+        (map (fn [[k v]]
+               [k (if (some? v)
+                    (coerce-sqlite-set-value v table)
+                    v)]))
+        set-map))
+
+(defn- rename-doc-keys
+  "Rename keys in a document from XTDB to SQLite naming."
+  [doc table]
+  (into {}
+        (map (fn [[k v]]
+               [(rename-key k table) v]))
+        doc))
+
+;; ============================================================================
+;; XTQL to SQLite HoneySQL translation
+;; ============================================================================
+
+(defn- xtql-op? [tx-op]
+  (and (vector? tx-op)
+       (#{:put-docs :patch-docs :delete-docs :erase-docs} (first tx-op))))
+
+(defn- dual-write-op? [tx-op]
+  (and (map? tx-op)
+       (contains? tx-op :xt)))
+
+(defn- xtql->sqlite-honeysql
+  "Translate an XTQL operation into a SQLite HoneySQL operation.
+   Returns a vector of HoneySQL operations (may be empty or multiple)."
+  [tx-op]
+  (let [[op table-or-opts & args] tx-op
+        table (if (keyword? table-or-opts) table-or-opts (:into table-or-opts))
+        sqlite-tbl (sqlite-table table)]
+    (case op
+      :put-docs
+      (let [docs args]
+        (when (seq docs)
+          (let [rows (mapv (fn [doc]
+                             (coerce-sqlite-doc (rename-doc-keys doc table)))
+                           docs)]
+            [{:insert-into sqlite-tbl
+              :values rows
+              :on-conflict {:do-update-set (vec (keys (first rows)))}}])))
+
+      :patch-docs
+      (let [docs args]
+        (mapv (fn [doc]
+                (let [renamed (rename-doc-keys doc table)
+                      coerced (coerce-sqlite-doc renamed)
+                      id-key (sqlite-id-key sqlite-tbl)
+                      id-val (get coerced id-key)]
+                  {:update sqlite-tbl
+                   :set (dissoc coerced id-key)
+                   :where [:= :id id-val]}))
+              docs))
+
+      (:delete-docs :erase-docs)
+      (let [ids args]
+        (when (seq ids)
+          [{:delete-from sqlite-tbl
+            :where [:in :id (mapv coerce-sqlite-value ids)]}]))
+
+      ;; Unknown op - skip for sqlite
+      [])))
+
+(defn- submit-sqlite-tx!
+  "Submit a vector of HoneySQL operations to SQLite."
+  [conn ops]
+  (when (and conn (seq ops))
+    (jdbc/with-transaction [tx conn]
+      (doseq [op ops]
+        (let [formatted (if (vector? op)
+                          op
+                          (sql/format op))]
+          (jdbc/execute! tx formatted))))))
+
 (defn submit-tx [ctx tx]
-  (biffx/submit-tx ctx (resolve-tx-ops ctx tx)))
+  (let [resolved (resolve-tx-ops ctx tx)
+        _ (doseq [op resolved]
+            (assert (or (xtql-op? op) (dual-write-op? op))
+                    (str "Transaction element must be either an XTQL operation "
+                         "(:put-docs/:patch-docs/:delete-docs/:erase-docs) or a "
+                         "{:xt ... :sqlite ...} map. Got: " (pr-str op))))
+        xt-tx (into []
+                    (mapcat (fn [op]
+                              (if (xtql-op? op)
+                                [op]
+                                (let [xt-val (:xt op)]
+                                  (when xt-val [xt-val])))))
+                    resolved)
+        sqlite-tx (into []
+                        (mapcat (fn [op]
+                                  (if (xtql-op? op)
+                                    (xtql->sqlite-honeysql op)
+                                    (let [sqlite-val (:sqlite op)]
+                                      (when sqlite-val [sqlite-val])))))
+                        resolved)]
+    (biffx/submit-tx ctx xt-tx)
+    (submit-sqlite-tx! (:biff/conn* ctx) sqlite-tx)))
 
 (defn bundle [& {:as k->query}]
   {:select (mapv (fn [[k query]]
                    [[:nest_many query] k])
                  k->query)})
+
+(defn- coerce-where-clause
+  "Recursively walk a where clause, renaming keys and coercing values for SQLite."
+  [where table]
+  (walk/postwalk
+   (fn [x]
+     (cond
+       (= x :xt/id) :id
+       (and (keyword? x) (contains? xt->sqlite-key x)) (get xt->sqlite-key x)
+       (uuid? x) (uuid->bytes x)
+       (instance? Instant x) (.toEpochMilli ^Instant x)
+       (instance? ZonedDateTime x) (.toEpochMilli (.toInstant ^ZonedDateTime x))
+       :else x))
+   where))
+
+(defn- strip-lift
+  "Remove :lift wrappers from values. In XTDB, [:lift v] is used to wrap
+   literal values in HoneySQL. For SQLite, we just use the raw value."
+  [v]
+  (if (and (vector? v) (= :lift (first v)))
+    (second v)
+    v))
+
+(defn dual-write
+  "Wrap a HoneySQL operation map (e.g. {:update ...} or {:delete-from ...})
+   in a {:xt ... :sqlite ...} map, automatically translating keys and values
+   for the SQLite side.
+
+   Supports :update and :delete-from operations."
+  [{:keys [update delete-from set where] :as xt-op}]
+  (let [table (or update delete-from)
+        sqlite-tbl (sqlite-table table)
+        strip-lifts (fn [m]
+                      (into {} (map (fn [[k v]] [k (strip-lift v)])) m))]
+    {:xt xt-op
+     :sqlite (cond
+               update
+               {:update sqlite-tbl
+                :set (coerce-sqlite-set (rename-doc-keys (strip-lifts (or set {})) table) table)
+                :where (coerce-where-clause where table)}
+
+               delete-from
+               {:delete-from sqlite-tbl
+                :where (coerce-where-clause where table)}
+
+               :else
+               xt-op)}))
 
 (defn gen-uuid
   ([]

@@ -7,7 +7,8 @@
    [com.yakread.lib.icons :as lib.icons]
    [com.yakread.lib.middleware :as lib.mid]
    [com.yakread.lib.route :as lib.route :refer [href]]
-   [com.yakread.lib.ui :as ui])
+   [com.yakread.lib.ui :as ui]
+   [com.yakread.util.biff-staging :as biffs])
   (:import
    [java.time ZonedDateTime]))
 
@@ -54,9 +55,10 @@
                      (for [{:keys [xt/id] :ad.credit/keys [amount ad]} succeeded
                            :let [{ad-id :xt/id} ad]]
                        [[:patch-docs :ad-credit {:xt/id id :ad.credit/charge-status :confirmed}]
-                        {:update :ad
-                         :set {:ad/balance [:- :ad/balance amount]}
-                         :where [:= :xt/id ad-id]}])
+                        (biffs/dual-write
+                         {:update :ad
+                          :set {:ad/balance [:- :ad/balance amount]}
+                          :where [:= :xt/id ad-id]})])
 
                      ;; record failed payment
                      (for [{:keys [xt/id] :ad.credit/keys [ad]} failed

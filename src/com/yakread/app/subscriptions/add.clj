@@ -49,7 +49,8 @@
                  {:biff.fx/tx [[:patch-docs :user
                                 {:xt/id (:uid session)
                                  :user/email-username username}]
-                               (biffx/assert-unique :user {:user/email-username username})]}))))))
+                               {:xt (biffx/assert-unique :user {:user/email-username username})
+                                :sqlite nil}]}))))))
 
 (defn- subscribe-feeds-tx [{:keys [biff/conn biff/now session]} feed-urls]
   (let [user-id (:uid session)
@@ -85,20 +86,22 @@
     {:feed-ids (vals url->feed)
      :tx (concat
           (when (not-empty new-feed-docs)
-            [{:assert [:not-exists
-                       {:select [:inline 1]
-                        :from :feed
-                        :where [:in :feed/url (mapv :feed/url new-feed-docs)]
-                        :limit [:inline 1]}]}
+            [{:xt {:assert [:not-exists
+                            {:select [:inline 1]
+                             :from :feed
+                             :where [:in :feed/url (mapv :feed/url new-feed-docs)]
+                             :limit [:inline 1]}]}
+              :sqlite nil}
              (into [:put-docs :feed] new-feed-docs)])
           (when (not-empty new-sub-docs)
-            [{:assert [:not-exists
-                       {:select [:inline 1]
-                        :from :sub
-                        :where [:and
-                                [:= :sub/user user-id]
-                                [:in :sub.feed/feed (mapv :sub.feed/feed new-sub-docs)]]
-                        :limit [:inline 1]}]}
+            [{:xt {:assert [:not-exists
+                            {:select [:inline 1]
+                             :from :sub
+                             :where [:and
+                                     [:= :sub/user user-id]
+                                     [:in :sub.feed/feed (mapv :sub.feed/feed new-sub-docs)]]
+                             :limit [:inline 1]}]}
+              :sqlite nil}
              (into [:put-docs :sub] new-sub-docs)]))}))
 
 (defn- sync-rss-jobs [feed-ids priority]
