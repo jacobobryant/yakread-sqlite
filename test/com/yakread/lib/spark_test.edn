@@ -17,6 +17,15 @@
    {:com.yakread.lib.spark/item-candidates
     [{:xt/id "item2", :item/url "url2"}]}}
   _
+  {:doc "ads - empty database",
+   :eval
+   (t/with-node
+    [node {}]
+    (ads {:biff/conn node, :biff/now (t/zdt 2000)} {})),
+   :result
+   {:com.yakread.lib.spark/all-ads [],
+    :com.yakread.lib.spark/ad-candidates []}}
+  _
   {:doc "ads",
    :eval
    (t/with-node
@@ -61,6 +70,15 @@
       :ad/payment-method "some-payment-method",
       :ad/budget 2000,
       :ad/recent-cost 0}]}}
+  _
+  {:doc "ad-ratings - empty database",
+   :eval
+   (t/with-node
+    [node {}]
+    {:input (ad-interaction-info node),
+     :ratings (ad-ratings {:biff/conn node} {})}),
+   :result
+   {:input [], :ratings {:com.yakread.lib.spark/ad-ratings []}}}
   _
   {:doc "ad-ratings",
    :eval
@@ -188,6 +206,11 @@
       :rating/value 0.3,
       :rating/created-at
       #time/zoned-date-time "2002-01-01T00:00Z[UTC]"}]}}
+  _
+  {:doc "all-liked-items - empty database",
+   :eval
+   (t/with-node [node {}] (all-liked-items {:biff/conn node} {})),
+   :result {:yakread.model/all-liked-items []}}
   _
   {:doc "all-liked-items",
    :eval
