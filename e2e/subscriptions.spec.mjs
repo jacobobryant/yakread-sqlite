@@ -1,7 +1,7 @@
 /**
  * Subscriptions page e2e tests.
  */
-import { test, expect, CONTENT_SERVER_URL } from './helpers.mjs';
+import { test, expect, CONTENT_SERVER_URL, gotoWithContent } from './helpers.mjs';
 
 test.describe('Subscriptions', () => {
   test('subscriptions page loads when signed in', async ({ authedPage }) => {
@@ -99,7 +99,7 @@ test.describe('Subscriptions', () => {
   });
 
   test('can click into a subscription to view its items', async ({ seededPage }) => {
-    await seededPage.goto('/subscriptions');
+    await gotoWithContent(seededPage, '/subscriptions', '/subscriptions/content');
 
     // Click the first subscription link (lazy-loaded)
     const subLink = seededPage.locator('a:has-text("Example Tech Blog")');
@@ -114,7 +114,7 @@ test.describe('Subscriptions', () => {
   });
 
   test('can unsubscribe from a feed subscription', async ({ seededPage }) => {
-    await seededPage.goto('/subscriptions');
+    await gotoWithContent(seededPage, '/subscriptions', '/subscriptions/content');
 
     // The seeded user has "Daily News Digest" subscription (lazy-loaded)
     await expect(seededPage.locator('text=Daily News Digest')).toBeVisible({ timeout: 10000 });
