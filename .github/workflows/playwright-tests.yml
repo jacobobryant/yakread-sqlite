@@ -51,11 +51,17 @@ jobs:
       - name: Install npm dependencies
         run: npm install
 
+      - name: Install cloud function dependencies
+        run: cd cloud-fns/packages/yakread/readability && npm install
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
       - name: Download vendored JS dependencies
         run: ./download-vendor-deps.sh
+
+      - name: Install and start MinIO
+        run: ./setup-minio.sh
 
       - name: Create config.env
         run: |
@@ -66,6 +72,16 @@ jobs:
             'JWT_SECRET=YWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWE=' \
             "ADMIN_IDS='#{}'" \
             'XTDB_TOPOLOGY=standalone' \
+            'S3_DEFAULT_ORIGIN=http://localhost:9000' \
+            'S3_DEFAULT_ACCESS_KEY=minioadmin' \
+            'S3_DEFAULT_SECRET_KEY=minioadmin' \
+            'S3_CONTENT_BUCKET=yakread-content' \
+            'S3_EMAILS_BUCKET=yakread-emails' \
+            'S3_IMAGES_BUCKET=yakread-images' \
+            'S3_IMAGES_EDGE=http://localhost:9000/yakread-images' \
+            'S3_EXPORT_BUCKET=yakread-export' \
+            'S3_EXPORT_EDGE=http://localhost:9000/yakread-export' \
+            'CLOUD_FN_LOCAL=true' \
             > config.env
 
       - name: Start Yakread server

@@ -58,8 +58,14 @@ jobs:
       - name: Install npm dependencies
         run: npm install
 
+      - name: Install cloud function dependencies
+        run: cd cloud-fns/packages/yakread/readability && npm install
+
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
       - name: Download vendored JS dependencies
         run: ./download-vendor-deps.sh
+
+      - name: Install and start MinIO
+        run: ./setup-minio.sh

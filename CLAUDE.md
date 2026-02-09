@@ -201,3 +201,10 @@ Ensure you're passing both `conn` and the query map:
 ```clojure
 (biffx/q conn {:select ...})  ; Correct
 ```
+
+## CI Workflows
+
+When editing GitHub Actions workflows, keep common logic deduplicated by
+extracting shared steps into shell scripts (e.g. `setup-minio.sh`). Both
+`copilot-setup-steps.yml` and `playwright-tests.yml` should call the same
+script rather than duplicating inline `run:` blocks.

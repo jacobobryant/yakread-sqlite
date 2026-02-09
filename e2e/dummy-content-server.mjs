@@ -63,6 +63,34 @@ const blogPost3 = `<!DOCTYPE html>
 </body>
 </html>`;
 
+// Long blog post that exceeds the 1000-character S3 storage threshold
+const blogPostLong = `<!DOCTYPE html>
+<html>
+<head>
+  <title>The Complete Guide to Digital Reading in 2025</title>
+  <meta property="og:title" content="The Complete Guide to Digital Reading in 2025" />
+  <meta property="og:description" content="A comprehensive guide covering every aspect of digital reading, from e-readers to read-it-later apps." />
+</head>
+<body>
+  <article>
+    <h1>The Complete Guide to Digital Reading in 2025</h1>
+    <p>By Sarah Mitchell</p>
+    <p>Published: 2025-03-01</p>
+    <p>The landscape of digital reading has undergone a dramatic transformation over the past decade. What once started as simple e-book readers has evolved into a rich ecosystem of tools, platforms, and services designed to enhance the way we consume written content. In this comprehensive guide, we will explore every aspect of digital reading in 2025, from the hardware and software that powers it to the strategies and workflows that make it effective.</p>
+    <h2>The Evolution of E-Readers</h2>
+    <p>E-readers have come a long way since the first Kindle launched in 2007. Modern devices feature high-resolution E Ink displays with adjustable warm lighting, waterproof designs, and weeks-long battery life. The latest generation includes note-taking capabilities with stylus support, making them suitable for both reading and annotating. Companies like Kobo, reMarkable, and Boox have pushed the boundaries of what e-paper devices can do, offering open ecosystems that support multiple file formats and even Android apps.</p>
+    <h2>Read-It-Later Applications</h2>
+    <p>Services like Pocket, Instapaper, and Omnivore have made it possible to save articles for later reading. These tools strip away ads and distracting elements, presenting content in a clean, reader-friendly format. Many of them offer offline access, text-to-speech, and highlighting features. The rise of read-it-later apps reflects a growing desire among readers to be more intentional about their content consumption, moving away from the endless scroll of social media feeds toward curated collections of long-form content.</p>
+    <h2>RSS: The Enduring Standard</h2>
+    <p>Despite repeated predictions of its demise, RSS (Really Simple Syndication) continues to be one of the most reliable ways to follow content from websites you care about. RSS gives readers control over their information diet, free from algorithmic curation. Modern RSS readers like Feedly, Inoreader, and Miniflux provide sophisticated filtering, categorization, and integration features that make managing hundreds of feeds practical. The protocol's simplicity and openness ensure its continued relevance in an era of walled gardens and platform lock-in.</p>
+    <h2>Newsletter Management</h2>
+    <p>The newsletter boom of the 2020s brought millions of new email publications to reader inboxes. Managing this flood of content requires deliberate strategies: dedicated email addresses, aggressive filtering, and tools that aggregate newsletters into readable digests. Services like Kill the Newsletter convert email subscriptions into RSS feeds, bridging the gap between two popular content delivery mechanisms. The key is treating newsletters as a curated collection rather than an obligation to read everything that arrives.</p>
+    <h2>Building Your Reading Workflow</h2>
+    <p>The most effective digital readers develop personal workflows that match their habits and goals. This might involve using an RSS reader for discovery, a read-it-later app for processing, and an e-reader for focused reading sessions. The best workflows minimize friction between discovering content and actually reading it, while maintaining a system for capturing highlights and notes for future reference. Whatever tools you choose, the goal should be the same: spending less time managing your reading and more time actually reading.</p>
+  </article>
+</body>
+</html>`;
+
 const rssFeed = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
@@ -135,6 +163,7 @@ const routes = {
   '/post/1': { body: blogPost1, contentType: 'text/html' },
   '/post/2': { body: blogPost2, contentType: 'text/html' },
   '/post/3': { body: blogPost3, contentType: 'text/html' },
+  '/post/long': { body: blogPostLong, contentType: 'text/html' },
   '/post/atom-1': { body: '<html><body><h1>Atom Feed Post</h1><p>Content here.</p></body></html>', contentType: 'text/html' },
 };
 
