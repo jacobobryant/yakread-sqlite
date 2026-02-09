@@ -108,34 +108,37 @@ test.describe('Seed Data - Pages Load', () => {
 });
 
 test.describe('Seed Data - Subscriptions Content', () => {
-  test('subscriptions content shows seeded feed titles', async ({ seededPage }) => {
-    // Navigate directly to the content route (HTMX vendor JS isn't available in CI)
-    await seededPage.goto('/subscriptions/content');
+  test('subscriptions page shows seeded feed titles', async ({ seededPage }) => {
+    await seededPage.goto('/subscriptions');
 
+    // The seeded user has two feed subscriptions (lazy-loaded)
     await expect(seededPage.locator('text=Example Tech Blog')).toBeVisible({ timeout: 10000 });
     await expect(seededPage.locator('text=Daily News Digest')).toBeVisible({ timeout: 10000 });
   });
 
-  test('subscriptions content shows unread counts and feed type', async ({ seededPage }) => {
-    await seededPage.goto('/subscriptions/content');
+  test('subscriptions page shows unread counts and feed type', async ({ seededPage }) => {
+    await seededPage.goto('/subscriptions');
 
+    // Each subscription card shows "unread posts" and "rss" label (lazy-loaded)
     await expect(seededPage.locator('text=unread posts').first()).toBeVisible({ timeout: 10000 });
     await expect(seededPage.locator('text=rss').first()).toBeVisible({ timeout: 10000 });
   });
 });
 
 test.describe('Seed Data - Bookmarks Content', () => {
-  test('read-later content shows seeded bookmark', async ({ seededPage }) => {
-    await seededPage.goto('/read-later/content');
+  test('read-later page shows seeded bookmark', async ({ seededPage }) => {
+    await seededPage.goto('/read-later');
 
+    // The seeded user has a bookmarked item (lazy-loaded)
     await expect(seededPage.locator('text=XTDB Deep Dive')).toBeVisible({ timeout: 10000 });
   });
 });
 
 test.describe('Seed Data - Favorites Content', () => {
-  test('favorites content shows seeded favorite', async ({ seededPage }) => {
-    await seededPage.goto('/favorites/content');
+  test('favorites page shows seeded favorite', async ({ seededPage }) => {
+    await seededPage.goto('/favorites');
 
+    // The seeded user has a favorited item (lazy-loaded)
     await expect(seededPage.locator('text=Functional Programming Patterns')).toBeVisible({ timeout: 10000 });
   });
 });
