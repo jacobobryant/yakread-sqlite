@@ -152,8 +152,10 @@
         :sub.email/from "alice@example.com",
         :sub/created-at
         #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}]
-      ["ASSERT ? >= (SELECT COUNT(*) FROM sub WHERE (\"sub$user\" = ?) AND (\"sub$email$from\" = ?))"
-       1
-       #uuid "00000000-0000-0000-0000-000000000000"
-       "alice@example.com"])}]}
+      {:xt
+       ["ASSERT ? >= (SELECT COUNT(*) FROM sub WHERE (\"sub$user\" = ?) AND (\"sub$email$from\" = ?))"
+        1
+        #uuid "00000000-0000-0000-0000-000000000000"
+        "alice@example.com"],
+       :sqlite nil})}]}
   _]}

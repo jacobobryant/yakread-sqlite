@@ -228,117 +228,6 @@
   [_ _ value]
   (edn/read-string value))
 
-(defn upsert [conn table on new-record]
-  (let [[{existing-id :xt/id}] (biffx/q conn
-                                        {:select :xt/id
-                                         :from table
-                                         :where (into [:and]
-                                                      (map (fn [[k v]]
-                                                             [:= k v]))
-                                                      on)
-                                         :limit 1})]
-    (if existing-id
-      (let [xt-update {:update table
-                       :set (dissoc new-record :xt/id)
-                       :where [:= :xt/id existing-id]}
-            sqlite-set (-> (dissoc new-record :xt/id)
-                           (rename-doc-keys table)
-                           coerce-sqlite-doc)
-            sqlite-update {:update (sqlite-table table)
-                           :set sqlite-set
-                           :where [:= :id (coerce-sqlite-value existing-id)]}]
-        [{:xt xt-update
-          :sqlite sqlite-update}])
-      [[:put-docs table (into {}
-                              (filter (comp some? val))
-                              (merge {:xt/id (gen/uuid)} new-record on))]
-       {:xt (biffx/assert-unique table on)
-        :sqlite nil}])))
-
-(defmulti biff-tx-op (fn [ctx op]
-                       (when (and (vector? op)
-                                  (qualified-keyword? (first op)))
-                         (first op))))
-
-(defmethod biff-tx-op :default
-  [_ op]
-  [op])
-
-(defmethod biff-tx-op :biff/assert-query
-  [_ [_ query results]]
-  (if (empty? results)
-    ;; we need a special case because the second assert doesn't work when results are empty.
-    [{:xt {:assert [:not-exists query]}
-      :sqlite nil}]
-    [{:xt {:assert [:=
-                    {:select [[[:nest_many query]]]}
-                    {:select [[[:array (for [record results]
-                                         [:lift record])]]]}]}
-      :sqlite nil}]))
-
-(defmethod biff-tx-op :biff/upsert
-  [{:keys [biff/conn]} [_ table on & records]]
-  (let [query {:select (conj on :xt/id)
-               :from table
-               :where [:in
-                       [:array on]
-                       (for [record records]
-                         [:array (mapv record on)])]}
-        results (biffx/q conn query)
-        on-fn (apply juxt on)
-        on->id (into {} (map (juxt on-fn :xt/id)) results)
-        new-records (into []
-                          (keep (fn [record]
-                                  (when-not (contains? on->id (on-fn record))
-                                    (into {}
-                                          (filter (comp some? val))
-                                          (merge {:xt/id (gen/uuid)}
-                                                 (dissoc record :biff/on-insert :biff/on-update)
-                                                 (:biff/on-insert record))))))
-                          records)
-        existing-records (into []
-                               (keep (fn [record]
-                                       (when-some [id (on->id (on-fn record))]
-                                         (merge (into {}
-                                                      (map (fn [[k v]]
-                                                             (if (keyword? v)
-                                                               [k [:lift v]]
-                                                               [k v])))
-                                                      (dissoc record :biff/on-insert :biff/on-update))
-                                                (:biff/on-update record)
-                                                {:xt/id id}))))
-                               records)
-        sqlite-on (mapv #(rename-key % table) on)]
-    (vec (concat
-          [[:biff/assert-query query results]]
-
-          (when (not-empty new-records)
-            [(into [:put-docs table] new-records)])
-
-          (for [record existing-records
-                :let [xt-update {:update table
-                                 :set (apply dissoc record :xt/id on)
-                                 :where [:= :xt/id (:xt/id record)]}
-                      strip-lifts (fn [m]
-                                    (into {} (map (fn [[k v]] [k (strip-lift v)])) m))
-                      sqlite-set (-> (apply dissoc record :xt/id on)
-                                     strip-lifts
-                                     (rename-doc-keys table)
-                                     (coerce-sqlite-set table))
-                      sqlite-update {:update (sqlite-table table)
-                                     :set sqlite-set
-                                     :where [:= :id (coerce-sqlite-value (:xt/id record))]}]]
-            {:xt xt-update
-             :sqlite sqlite-update})))))
-
-(defn resolve-tx-ops [ctx tx]
-  (into []
-        (mapcat (fn [tx-op]
-                  (let [expanded (biff-tx-op ctx tx-op)]
-                    (cond->> expanded
-                      (not= expanded [tx-op]) (resolve-tx-ops ctx)))))
-        tx))
-
 ;; ============================================================================
 ;; XTDB-to-SQLite key mapping for dual-write
 ;; ============================================================================
@@ -523,6 +412,125 @@
                [(rename-key k table) v]))
         doc))
 
+(defn- strip-lift
+  "Remove :lift wrappers from values. In XTDB, [:lift v] is used to wrap
+   literal values in HoneySQL. For SQLite, we just use the raw value."
+  [v]
+  (if (and (vector? v) (= :lift (first v)))
+    (second v)
+    v))
+
+(defn upsert [conn table on new-record]
+  (let [[{existing-id :xt/id}] (biffx/q conn
+                                        {:select :xt/id
+                                         :from table
+                                         :where (into [:and]
+                                                      (map (fn [[k v]]
+                                                             [:= k v]))
+                                                      on)
+                                         :limit 1})]
+    (if existing-id
+      (let [xt-update {:update table
+                       :set (dissoc new-record :xt/id)
+                       :where [:= :xt/id existing-id]}
+            sqlite-set (-> (dissoc new-record :xt/id)
+                           (rename-doc-keys table)
+                           coerce-sqlite-doc)
+            sqlite-update {:update (sqlite-table table)
+                           :set sqlite-set
+                           :where [:= :id (coerce-sqlite-value existing-id)]}]
+        [{:xt xt-update
+          :sqlite sqlite-update}])
+      [[:put-docs table (into {}
+                              (filter (comp some? val))
+                              (merge {:xt/id (gen/uuid)} new-record on))]
+       {:xt (biffx/assert-unique table on)
+        :sqlite nil}])))
+
+(defmulti biff-tx-op (fn [ctx op]
+                       (when (and (vector? op)
+                                  (qualified-keyword? (first op)))
+                         (first op))))
+
+(defmethod biff-tx-op :default
+  [_ op]
+  [op])
+
+(defmethod biff-tx-op :biff/assert-query
+  [_ [_ query results]]
+  (if (empty? results)
+    ;; we need a special case because the second assert doesn't work when results are empty.
+    [{:xt {:assert [:not-exists query]}
+      :sqlite nil}]
+    [{:xt {:assert [:=
+                    {:select [[[:nest_many query]]]}
+                    {:select [[[:array (for [record results]
+                                         [:lift record])]]]}]}
+      :sqlite nil}]))
+
+(defmethod biff-tx-op :biff/upsert
+  [{:keys [biff/conn]} [_ table on & records]]
+  (let [query {:select (conj on :xt/id)
+               :from table
+               :where [:in
+                       [:array on]
+                       (for [record records]
+                         [:array (mapv record on)])]}
+        results (biffx/q conn query)
+        on-fn (apply juxt on)
+        on->id (into {} (map (juxt on-fn :xt/id)) results)
+        new-records (into []
+                          (keep (fn [record]
+                                  (when-not (contains? on->id (on-fn record))
+                                    (into {}
+                                          (filter (comp some? val))
+                                          (merge {:xt/id (gen/uuid)}
+                                                 (dissoc record :biff/on-insert :biff/on-update)
+                                                 (:biff/on-insert record))))))
+                          records)
+        existing-records (into []
+                               (keep (fn [record]
+                                       (when-some [id (on->id (on-fn record))]
+                                         (merge (into {}
+                                                      (map (fn [[k v]]
+                                                             (if (keyword? v)
+                                                               [k [:lift v]]
+                                                               [k v])))
+                                                      (dissoc record :biff/on-insert :biff/on-update))
+                                                (:biff/on-update record)
+                                                {:xt/id id}))))
+                               records)
+        sqlite-on (mapv #(rename-key % table) on)]
+    (vec (concat
+          [[:biff/assert-query query results]]
+
+          (when (not-empty new-records)
+            [(into [:put-docs table] new-records)])
+
+          (for [record existing-records
+                :let [xt-update {:update table
+                                 :set (apply dissoc record :xt/id on)
+                                 :where [:= :xt/id (:xt/id record)]}
+                      strip-lifts (fn [m]
+                                    (into {} (map (fn [[k v]] [k (strip-lift v)])) m))
+                      sqlite-set (-> (apply dissoc record :xt/id on)
+                                     strip-lifts
+                                     (rename-doc-keys table)
+                                     (coerce-sqlite-set table))
+                      sqlite-update {:update (sqlite-table table)
+                                     :set sqlite-set
+                                     :where [:= :id (coerce-sqlite-value (:xt/id record))]}]]
+            {:xt xt-update
+             :sqlite sqlite-update})))))
+
+(defn resolve-tx-ops [ctx tx]
+  (into []
+        (mapcat (fn [tx-op]
+                  (let [expanded (biff-tx-op ctx tx-op)]
+                    (cond->> expanded
+                      (not= expanded [tx-op]) (resolve-tx-ops ctx)))))
+        tx))
+
 ;; ============================================================================
 ;; XTQL to SQLite HoneySQL translation
 ;; ============================================================================
@@ -548,10 +556,16 @@
         (when (seq docs)
           (let [rows (mapv (fn [doc]
                              (coerce-sqlite-doc (rename-doc-keys doc table)))
-                           docs)]
+                           docs)
+                all-keys (vec (keys (first rows)))
+                id-key (sqlite-id-key sqlite-tbl)
+                non-id-keys (into [] (comp (remove #{id-key})
+                                           (map #(keyword (name %))))
+                                  all-keys)]
             [{:insert-into sqlite-tbl
               :values rows
-              :on-conflict {:do-update-set (vec (keys (first rows)))}}])))
+              :on-conflict :id
+              :do-update-set {:fields non-id-keys}}])))
 
       :patch-docs
       (let [docs args]
@@ -627,14 +641,6 @@
        (instance? ZonedDateTime x) (.toEpochMilli (.toInstant ^ZonedDateTime x))
        :else x))
    where))
-
-(defn- strip-lift
-  "Remove :lift wrappers from values. In XTDB, [:lift v] is used to wrap
-   literal values in HoneySQL. For SQLite, we just use the raw value."
-  [v]
-  (if (and (vector? v) (= :lift (first v)))
-    (second v)
-    v))
 
 (defn dual-write
   "Wrap a HoneySQL operation map (e.g. {:update ...} or {:delete-from ...})
