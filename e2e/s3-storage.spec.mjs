@@ -13,21 +13,23 @@ test.describe('S3 Bookmark Storage', () => {
     await authedPage.locator('input[name="url"]').fill(`${CONTENT_SERVER_URL}/post/long`);
     await authedPage.locator('button:has-text("Add")').first().click();
 
-    // Wait for the bookmark to be processed (HTTP fetch + readability + S3 upload)
-    await authedPage.waitForTimeout(8000);
+    // Wait for the bookmark to be processed by polling the read-later page
+    let bookmarkVisible = false;
+    for (let i = 0; i < 15; i++) {
+      await authedPage.waitForTimeout(2000);
+      await gotoWithContent(authedPage, '/read-later', '/read-later/content');
+      const title = authedPage.locator('text=The Complete Guide to Digital Reading in 2025');
+      if (await title.isVisible().catch(() => false)) {
+        bookmarkVisible = true;
+        break;
+      }
+    }
+    expect(bookmarkVisible).toBeTruthy();
 
-    // Step 2: Navigate to the read-later page and verify the article appears
-    await gotoWithContent(authedPage, '/read-later', '/read-later/content');
-
-    // The long post title should appear in the read-later list
-    await expect(
-      authedPage.locator('text=The Complete Guide to Digital Reading in 2025')
-    ).toBeVisible({ timeout: 15000 });
-
-    // Step 3: Click on the article card to open it
+    // Step 2: Click on the article card to open it
     await authedPage.locator('a:has-text("The Complete Guide to Digital Reading in 2025")').click();
 
-    // Step 4: Verify the article content is displayed (fetched from S3/MinIO)
+    // Step 3: Verify the article content is displayed (fetched from S3/MinIO)
     await expect(
       authedPage.locator('text=The Evolution of E-Readers')
     ).toBeVisible({ timeout: 15000 });

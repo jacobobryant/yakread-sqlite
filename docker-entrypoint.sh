@@ -10,21 +10,28 @@ if [ "$BIFF_PROFILE" != "prod" ]; then
   minio server /tmp/minio-data --address :9000 &
 
   # Wait for MinIO to be ready
+  MINIO_READY=false
   for i in $(seq 1 30); do
-    if curl -s -o /dev/null -w "%{http_code}" http://localhost:9000/minio/health/live 2>/dev/null | grep -q "200"; then
+    if curl -s -o /dev/null -w "%{http_code}" http://localhost:9000/minio/health/live | grep -q "200"; then
       echo "MinIO is ready"
+      MINIO_READY=true
       break
     fi
     echo "Waiting for MinIO... ($i/30)"
     sleep 1
   done
 
+  if [ "$MINIO_READY" != "true" ]; then
+    echo "ERROR: MinIO failed to start within 30 seconds"
+    exit 1
+  fi
+
   # Create buckets
-  mc alias set local http://localhost:9000 "${MINIO_ROOT_USER:-minioadmin}" "${MINIO_ROOT_PASSWORD:-minioadmin}" 2>/dev/null
-  mc mb --ignore-existing local/yakread-content 2>/dev/null
-  mc mb --ignore-existing local/yakread-emails 2>/dev/null
-  mc mb --ignore-existing local/yakread-images 2>/dev/null
-  mc mb --ignore-existing local/yakread-export 2>/dev/null
+  mc alias set local http://localhost:9000 "${MINIO_ROOT_USER:-minioadmin}" "${MINIO_ROOT_PASSWORD:-minioadmin}"
+  mc mb --ignore-existing local/yakread-content
+  mc mb --ignore-existing local/yakread-emails
+  mc mb --ignore-existing local/yakread-images
+  mc mb --ignore-existing local/yakread-export
   echo "MinIO buckets created"
 
   # Set S3 env vars if not already set
