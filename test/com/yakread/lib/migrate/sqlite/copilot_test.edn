@@ -5,530 +5,676 @@
   [taoensso.nippy :as nippy]
   [tick.core :as tick]],
  :tests
- [{:doc "uuid->bytes and bytes->uuid roundtrip"
+ [{:doc "uuid->bytes and bytes->uuid roundtrip",
    :eval
-   (let [uuid #uuid "f47ac10b-58cc-4372-a567-0e02b2c3d479"
-         bytes (uuid->bytes uuid)]
-     (bytes->uuid bytes)),
+   (let
+    [uuid
+     #uuid "f47ac10b-58cc-4372-a567-0e02b2c3d479"
+     bytes
+     (uuid->bytes uuid)]
+    (bytes->uuid bytes)),
    :result #uuid "f47ac10b-58cc-4372-a567-0e02b2c3d479"}
   _
-  {:doc "instant->epoch-ms converts Instant"
-   :eval (instant->epoch-ms (java.time.Instant/parse "2024-01-15T12:00:00Z")),
+  {:doc "instant->epoch-ms converts Instant",
+   :eval
+   (instant->epoch-ms
+    (java.time.Instant/parse "2024-01-15T12:00:00Z")),
    :result 1705320000000}
   _
-  {:doc "instant->epoch-ms converts ZonedDateTime"
-   :eval (instant->epoch-ms (tick/in (tick/instant "2024-01-15T12:00:00Z") "UTC")),
+  {:doc "instant->epoch-ms converts ZonedDateTime",
+   :eval
+   (instant->epoch-ms
+    (tick/in (tick/instant "2024-01-15T12:00:00Z") "UTC")),
    :result 1705320000000}
   _
-  {:doc "bool->int converts true"
-   :eval (bool->int true),
-   :result 1}
+  {:doc "bool->int converts true", :eval (bool->int true), :result 1}
   _
-  {:doc "bool->int converts false"
-   :eval (bool->int false),
-   :result 0}
+  {:doc "bool->int converts false", :eval (bool->int false), :result 0}
   _
-  {:doc "convert-doc returns nil for unknown document"
+  {:doc "convert-doc returns nil for unknown document",
    :eval (convert-doc {:unknown/attr "value"}),
    :result nil}
   _
-  {:doc "convert-doc converts user document"
+  {:doc "convert-doc converts user document",
    :eval
-   (let [{:keys [table row]}
-         (convert-doc
-          {:xt/id #uuid "00010000-0000-0000-0000-000000000001"
-           :user/email "test@example.com"
-           :user/roles #{:admin}
-           :user/joined-at (java.time.Instant/parse "2024-01-15T12:00:00Z")
-           :user/digest-days #{:monday :wednesday}
-           :user/timezone* "America/New_York"
-           :user/from-the-sample true
-           :user/plan :annual})]
-     {:table table
-      :email (:email row)
-      :roles (nippy/thaw (:roles row))
-      :joined_at (:joined_at row)
-      :digest_days (nippy/thaw (:digest_days row))
-      :timezone (:timezone row)
-      :from_the_sample (:from_the_sample row)
-      :plan (:plan row)}),
+   (let
+    [{:keys [table row]}
+     (convert-doc
+      {:xt/id #uuid "00010000-0000-0000-0000-000000000001",
+       :user/email "test@example.com",
+       :user/roles #{:admin},
+       :user/joined-at
+       (java.time.Instant/parse "2024-01-15T12:00:00Z"),
+       :user/digest-days #{:wednesday :monday},
+       :user/timezone* "America/New_York",
+       :user/from-the-sample true,
+       :user/plan :annual})]
+    {:table table,
+     :email (:email row),
+     :roles (nippy/thaw (:roles row)),
+     :joined_at (:joined_at row),
+     :digest_days (nippy/thaw (:digest_days row)),
+     :timezone (:timezone row),
+     :from_the_sample (:from_the_sample row),
+     :plan (:plan row)}),
    :result
    {:table :user,
     :email "test@example.com",
     :roles #{:admin},
     :joined_at 1705320000000,
-    :digest_days #{:monday :wednesday},
+    :digest_days #{:wednesday :monday},
     :timezone "America/New_York",
     :from_the_sample 1,
     :plan 1}}
   _
-  {:doc "convert-doc converts feed document"
+  {:doc "convert-doc converts feed document",
    :eval
-   (let [{:keys [table row]}
-         (convert-doc
-          {:xt/id #uuid "00020000-0000-0000-0000-000000000002"
-           :feed/url "https://example.com/feed.xml"
-           :feed/title "Example Feed"
-           :feed/moderation :approved})]
-     {:table table
-      :url (:url row)
-      :title (:title row)
-      :moderation (:moderation row)}),
-   :result {:table :feed, :url "https://example.com/feed.xml", :title "Example Feed", :moderation 0}}
+   (let
+    [{:keys [table row]}
+     (convert-doc
+      {:xt/id #uuid "00020000-0000-0000-0000-000000000002",
+       :feed/url "https://example.com/feed.xml",
+       :feed/title "Example Feed",
+       :feed/moderation :approved})]
+    {:table table,
+     :url (:url row),
+     :title (:title row),
+     :moderation (:moderation row)}),
+   :result
+   {:table :feed,
+    :url "https://example.com/feed.xml",
+    :title "Example Feed",
+    :moderation 0}}
   _
-  {:doc "convert-doc converts feed sub document"
+  {:doc "convert-doc converts feed sub document",
    :eval
-   (let [{:keys [table row]}
-         (convert-doc
-          {:xt/id #uuid "00030000-0000-0000-0000-000000000003"
-           :sub/user #uuid "00010000-0000-0000-0000-000000000001"
-           :sub/created-at (java.time.Instant/parse "2024-01-15T12:00:00Z")
-           :sub.feed/feed #uuid "00020000-0000-0000-0000-000000000002"})]
-     {:table table
-      :record_type (:record_type row)
-      :created_at (:created_at row)}),
+   (let
+    [{:keys [table row]}
+     (convert-doc
+      {:xt/id #uuid "00030000-0000-0000-0000-000000000003",
+       :sub/user #uuid "00010000-0000-0000-0000-000000000001",
+       :sub/created-at
+       (java.time.Instant/parse "2024-01-15T12:00:00Z"),
+       :sub.feed/feed #uuid "00020000-0000-0000-0000-000000000002"})]
+    {:table table,
+     :record_type (:record_type row),
+     :created_at (:created_at row)}),
    :result {:table :sub, :record_type 0, :created_at 1705320000000}}
   _
-  {:doc "convert-doc converts email sub document"
+  {:doc "convert-doc converts email sub document",
    :eval
-   (let [{:keys [table row]}
-         (convert-doc
-          {:xt/id #uuid "00040000-0000-0000-0000-000000000004"
-           :sub/user #uuid "00010000-0000-0000-0000-000000000001"
-           :sub/created-at (java.time.Instant/parse "2024-01-15T12:00:00Z")
-           :sub.email/from "newsletter@example.com"})]
-     {:table table
-      :record_type (:record_type row)
-      :email_from (:email_from row)}),
-   :result {:table :sub, :record_type 1, :email_from "newsletter@example.com"}}
+   (let
+    [{:keys [table row]}
+     (convert-doc
+      {:xt/id #uuid "00040000-0000-0000-0000-000000000004",
+       :sub/user #uuid "00010000-0000-0000-0000-000000000001",
+       :sub/created-at
+       (java.time.Instant/parse "2024-01-15T12:00:00Z"),
+       :sub.email/from "newsletter@example.com"})]
+    {:table table,
+     :record_type (:record_type row),
+     :email_from (:email_from row)}),
+   :result
+   {:table :sub, :record_type 1, :email_from "newsletter@example.com"}}
   _
-  {:doc "convert-doc converts feed item document"
+  {:doc "convert-doc converts feed item document",
    :eval
-   (let [{:keys [table row]}
-         (convert-doc
-          {:xt/id #uuid "00050000-0000-0000-0000-000000000005"
-           :item/ingested-at (java.time.Instant/parse "2024-01-15T12:00:00Z")
-           :item/title "Test Article"
-           :item/url "https://example.com/article"
-           :item.feed/feed #uuid "00020000-0000-0000-0000-000000000002"
-           :item.feed/guid "abc123"})]
-     {:table table
-      :record_type (:record_type row)
-      :title (:title row)
-      :feed_guid (:feed_guid row)}),
-   :result {:table :item, :record_type 0, :title "Test Article", :feed_guid "abc123"}}
+   (let
+    [{:keys [table row]}
+     (convert-doc
+      {:xt/id #uuid "00050000-0000-0000-0000-000000000005",
+       :item/ingested-at
+       (java.time.Instant/parse "2024-01-15T12:00:00Z"),
+       :item/title "Test Article",
+       :item/url "https://example.com/article",
+       :item.feed/feed #uuid "00020000-0000-0000-0000-000000000002",
+       :item.feed/guid "abc123"})]
+    {:table table,
+     :record_type (:record_type row),
+     :title (:title row),
+     :feed_guid (:feed_guid row)}),
+   :result
+   {:table :item,
+    :record_type 0,
+    :title "Test Article",
+    :feed_guid "abc123"}}
   _
-  {:doc "convert-doc converts email item document"
+  {:doc "convert-doc converts email item document",
    :eval
-   (let [{:keys [table row]}
-         (convert-doc
-          {:xt/id #uuid "00060000-0000-0000-0000-000000000006"
-           :item/ingested-at (java.time.Instant/parse "2024-01-15T12:00:00Z")
-           :item/title "Newsletter Issue"
-           :item.email/sub #uuid "00040000-0000-0000-0000-000000000004"
-           :item.email/raw-content-key #uuid "00070000-0000-0000-0000-000000000007"})]
-     {:table table
-      :record_type (:record_type row)}),
+   (let
+    [{:keys [table row]}
+     (convert-doc
+      {:xt/id #uuid "00060000-0000-0000-0000-000000000006",
+       :item/ingested-at
+       (java.time.Instant/parse "2024-01-15T12:00:00Z"),
+       :item/title "Newsletter Issue",
+       :item.email/sub #uuid "00040000-0000-0000-0000-000000000004",
+       :item.email/raw-content-key
+       #uuid "00070000-0000-0000-0000-000000000007"})]
+    {:table table, :record_type (:record_type row)}),
    :result {:table :item, :record_type 1}}
   _
-  {:doc "convert-doc converts direct item document"
+  {:doc "convert-doc converts direct item document",
    :eval
-   (let [{:keys [table row]}
-         (convert-doc
-          {:xt/id #uuid "00080000-0000-0000-0000-000000000008"
-           :item/ingested-at (java.time.Instant/parse "2024-01-15T12:00:00Z")
-           :item/title "Bookmarked Article"
-           :item/doc-type :item/direct
-           :item.direct/candidate-status :approved})]
-     {:table table
-      :record_type (:record_type row)
-      :direct_candidate_status (:direct_candidate_status row)}),
+   (let
+    [{:keys [table row]}
+     (convert-doc
+      {:xt/id #uuid "00080000-0000-0000-0000-000000000008",
+       :item/ingested-at
+       (java.time.Instant/parse "2024-01-15T12:00:00Z"),
+       :item/title "Bookmarked Article",
+       :item/doc-type :item/direct,
+       :item.direct/candidate-status :approved})]
+    {:table table,
+     :record_type (:record_type row),
+     :direct_candidate_status (:direct_candidate_status row)}),
    :result {:table :item, :record_type 2, :direct_candidate_status 2}}
   _
-  {:doc "convert-doc converts user-item document"
+  {:doc "convert-doc converts user-item document",
    :eval
-   (let [{:keys [table row]}
-         (convert-doc
-          {:xt/id #uuid "00090000-0000-0000-0000-000000000009"
-           :user-item/user #uuid "00010000-0000-0000-0000-000000000001"
-           :user-item/item #uuid "00050000-0000-0000-0000-000000000005"
-           :user-item/viewed-at (java.time.Instant/parse "2024-01-15T12:00:00Z")
-           :user-item/favorited-at (java.time.Instant/parse "2024-01-15T13:00:00Z")})]
-     {:table table
-      :viewed_at (:viewed_at row)
-      :favorited_at (:favorited_at row)}),
-   :result {:table :user_item, :viewed_at 1705320000000, :favorited_at 1705323600000}}
+   (let
+    [{:keys [table row]}
+     (convert-doc
+      {:xt/id #uuid "00090000-0000-0000-0000-000000000009",
+       :user-item/user #uuid "00010000-0000-0000-0000-000000000001",
+       :user-item/item #uuid "00050000-0000-0000-0000-000000000005",
+       :user-item/viewed-at
+       (java.time.Instant/parse "2024-01-15T12:00:00Z"),
+       :user-item/favorited-at
+       (java.time.Instant/parse "2024-01-15T13:00:00Z")})]
+    {:table table,
+     :viewed_at (:viewed_at row),
+     :favorited_at (:favorited_at row)}),
+   :result
+   {:table :user_item,
+    :viewed_at 1705320000000,
+    :favorited_at 1705323600000}}
   _
-  {:doc "convert-doc converts digest document"
+  {:doc "convert-doc converts digest document",
    :eval
-   (let [{:keys [table row]}
-         (convert-doc
-          {:xt/id #uuid "000a0000-0000-0000-0000-00000000000a"
-           :digest/user #uuid "00010000-0000-0000-0000-000000000001"
-           :digest/sent-at (java.time.Instant/parse "2024-01-15T12:00:00Z")
-           :digest/subject #uuid "00050000-0000-0000-0000-000000000005"})]
-     {:table table
-      :sent_at (:sent_at row)}),
+   (let
+    [{:keys [table row]}
+     (convert-doc
+      {:xt/id #uuid "000a0000-0000-0000-0000-00000000000a",
+       :digest/user #uuid "00010000-0000-0000-0000-000000000001",
+       :digest/sent-at
+       (java.time.Instant/parse "2024-01-15T12:00:00Z"),
+       :digest/subject #uuid "00050000-0000-0000-0000-000000000005"})]
+    {:table table, :sent_at (:sent_at row)}),
    :result {:table :digest, :sent_at 1705320000000}}
   _
-  {:doc "extract-digest-items extracts icymi and discover items"
+  {:doc "extract-digest-items extracts icymi and discover items",
    :eval
-   (let [items (extract-digest-items
-                {:xt/id #uuid "000a0000-0000-0000-0000-00000000000a"
-                 :digest/icymi [#uuid "00050000-0000-0000-0000-000000000005"]
-                 :digest/discover [#uuid "00060000-0000-0000-0000-000000000006"]})]
-     {:count (count items)
-      :tables (set (map :table items))
-      :kinds (set (map #(get-in % [:row :kind]) items))}),
+   (let
+    [items
+     (extract-digest-items
+      {:xt/id #uuid "000a0000-0000-0000-0000-00000000000a",
+       :digest/icymi [#uuid "00050000-0000-0000-0000-000000000005"],
+       :digest/discover
+       [#uuid "00060000-0000-0000-0000-000000000006"]})]
+    {:count (count items),
+     :tables (set (map :table items)),
+     :kinds (set (map (fn [x] (get-in x [:row :kind])) items))}),
    :result {:count 2, :tables #{:digest_item}, :kinds #{0 1}}}
   _
-  {:doc "convert-doc converts ad document"
+  {:doc "convert-doc converts ad document",
    :eval
-   (let [{:keys [table row]}
-         (convert-doc
-          {:xt/id #uuid "000b0000-0000-0000-0000-00000000000b"
-           :ad/user #uuid "00010000-0000-0000-0000-000000000001"
-           :ad/approve-state :approved
-           :ad/updated-at (java.time.Instant/parse "2024-01-15T12:00:00Z")
-           :ad/balance 5000
-           :ad/recent-cost 100
-           :ad/title "Test Ad"
-           :ad/paused false})]
-     {:table table
-      :approve_state (:approve_state row)
-      :balance (:balance row)
-      :title (:title row)
-      :paused (:paused row)}),
-   :result {:table :ad, :approve_state 1, :balance 5000, :title "Test Ad", :paused 0}}
+   (let
+    [{:keys [table row]}
+     (convert-doc
+      {:xt/id #uuid "000b0000-0000-0000-0000-00000000000b",
+       :ad/user #uuid "00010000-0000-0000-0000-000000000001",
+       :ad/approve-state :approved,
+       :ad/updated-at (java.time.Instant/parse "2024-01-15T12:00:00Z"),
+       :ad/balance 5000,
+       :ad/recent-cost 100,
+       :ad/title "Test Ad",
+       :ad/paused false})]
+    {:table table,
+     :approve_state (:approve_state row),
+     :balance (:balance row),
+     :title (:title row),
+     :paused (:paused row)}),
+   :result
+   {:table :ad,
+    :approve_state 1,
+    :balance 5000,
+    :title "Test Ad",
+    :paused 0}}
   _
-  {:doc "convert-doc converts ad-click document"
+  {:doc "convert-doc converts ad-click document",
    :eval
-   (let [{:keys [table row]}
-         (convert-doc
-          {:xt/id #uuid "000c0000-0000-0000-0000-00000000000c"
-           :ad.click/user #uuid "00010000-0000-0000-0000-000000000001"
-           :ad.click/ad #uuid "000b0000-0000-0000-0000-00000000000b"
-           :ad.click/created-at (java.time.Instant/parse "2024-01-15T12:00:00Z")
-           :ad.click/cost 50
-           :ad.click/source :web})]
-     {:table table
-      :cost (:cost row)
-      :source (:source row)}),
+   (let
+    [{:keys [table row]}
+     (convert-doc
+      {:xt/id #uuid "000c0000-0000-0000-0000-00000000000c",
+       :ad.click/user #uuid "00010000-0000-0000-0000-000000000001",
+       :ad.click/ad #uuid "000b0000-0000-0000-0000-00000000000b",
+       :ad.click/created-at
+       (java.time.Instant/parse "2024-01-15T12:00:00Z"),
+       :ad.click/cost 50,
+       :ad.click/source :web})]
+    {:table table, :cost (:cost row), :source (:source row)}),
    :result {:table :ad_click, :cost 50, :source 0}}
   _
-  {:doc "convert-doc converts reclist document with old skip schema"
+  {:doc "convert-doc converts reclist document with old skip schema",
    :eval
-   (let [{:keys [table row]}
-         (convert-doc
-          {:xt/id #uuid "000d0000-0000-0000-0000-00000000000d"
-           :skip/user #uuid "00010000-0000-0000-0000-000000000001"
-           :skip/timeline-created-at (java.time.Instant/parse "2024-01-15T12:00:00Z")
-           :skip/clicked #{#uuid "00050000-0000-0000-0000-000000000005"}})]
-     {:table table
-      :clicked (nippy/thaw (:clicked row))}),
-   :result {:table :reclist, :clicked #{#uuid "00050000-0000-0000-0000-000000000005"}}}
+   (let
+    [{:keys [table row]}
+     (convert-doc
+      {:xt/id #uuid "000d0000-0000-0000-0000-00000000000d",
+       :skip/user #uuid "00010000-0000-0000-0000-000000000001",
+       :skip/timeline-created-at
+       (java.time.Instant/parse "2024-01-15T12:00:00Z"),
+       :skip/clicked #{#uuid "00050000-0000-0000-0000-000000000005"}})]
+    {:table table, :clicked (nippy/thaw (:clicked row))}),
+   :ex #error {
+ :cause "Cannot read the array length because \"ba\" is null"
+ :via
+ [{:type java.lang.NullPointerException
+   :message "Cannot read the array length because \"ba\" is null"
+   :at [taoensso.nippy$eval50230$try_parse_header__50231 invoke "nippy.clj" 1783]}]
+ :trace
+ [[taoensso.nippy$eval50230$try_parse_header__50231 invoke "nippy.clj" 1783]
+  [taoensso.nippy$thaw$fn__50241 invoke "nippy.clj" 1907]
+  [taoensso.nippy$call_with_bindings invokeStatic "nippy.clj" 1279]
+  [taoensso.nippy$call_with_bindings invoke "nippy.clj" 1275]
+  [taoensso.nippy$thaw invokeStatic "nippy.clj" 1857]
+  [taoensso.nippy$thaw invoke "nippy.clj" 1833]
+  [taoensso.nippy$thaw invokeStatic "nippy.clj" 1846]
+  [taoensso.nippy$thaw invoke "nippy.clj" 1833]
+  [tmp355702$eval98538 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp355702$eval98538 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
-  {:doc "extract-skip-items extracts skip items from old schema"
+  {:doc "extract-skip-items extracts skip items from old schema",
    :eval
-   (let [items (extract-skip-items
-                {:xt/id #uuid "000d0000-0000-0000-0000-00000000000d"
-                 :skip/items [#uuid "00050000-0000-0000-0000-000000000005"
-                              #uuid "00060000-0000-0000-0000-000000000006"]})]
-     {:count (count items)
-      :tables (set (map :table items))}),
+   (let
+    [items
+     (extract-skip-items
+      {:xt/id #uuid "000d0000-0000-0000-0000-00000000000d",
+       :skip/items
+       [#uuid "00050000-0000-0000-0000-000000000005"
+        #uuid "00060000-0000-0000-0000-000000000006"]})]
+    {:count (count items), :tables (set (map :table items))}),
    :result {:count 2, :tables #{:skip}}}
   _
-  {:doc "convert-docs processes multiple documents"
+  {:doc "convert-docs processes multiple documents",
    :eval
-   (let [docs [{:xt/id #uuid "00010000-0000-0000-0000-000000000001"
-                :user/email "test@example.com"}
-               {:xt/id #uuid "00020000-0000-0000-0000-000000000002"
-                :feed/url "https://example.com/feed.xml"}
-               {:unknown/attr "value"}]
-         rows (convert-docs docs)]
-     {:count (count rows)
-      :tables (set (map :table rows))}),
-   :result {:count 2, :tables #{:user :feed}}}
+   (let
+    [docs
+     [{:xt/id #uuid "00010000-0000-0000-0000-000000000001",
+       :user/email "test@example.com"}
+      {:xt/id #uuid "00020000-0000-0000-0000-000000000002",
+       :feed/url "https://example.com/feed.xml"}
+      {:unknown/attr "value"}]
+     rows
+     (convert-docs docs)]
+    {:count (count rows), :tables (set (map :table rows))}),
+   :result {:count 2, :tables #{:feed :user}}}
   _
-  {:doc "convert-doc converts mv-sub document"
+  {:doc "convert-doc converts mv-sub document",
    :eval
-   (let [{:keys [table row]}
-         (convert-doc
-          {:xt/id #uuid "000e0000-0000-0000-0000-00000000000e"
-           :mv.sub/sub #uuid "00030000-0000-0000-0000-000000000003"
-           :mv.sub/affinity-low 0.2
-           :mv.sub/affinity-high 0.8
-           :mv.sub/unread 5
-           :mv.sub/read 10})]
-     {:table table
-      :affinity_low (:affinity_low row)
-      :affinity_high (:affinity_high row)
-      :unread (:unread row)
-      :n_read (:n_read row)}),
-   :result {:table :mv_sub, :affinity_low 0.2, :affinity_high 0.8, :unread 5, :n_read 10}}
+   (let
+    [{:keys [table row]}
+     (convert-doc
+      {:xt/id #uuid "000e0000-0000-0000-0000-00000000000e",
+       :mv.sub/sub #uuid "00030000-0000-0000-0000-000000000003",
+       :mv.sub/affinity-low 0.2,
+       :mv.sub/affinity-high 0.8,
+       :mv.sub/unread 5,
+       :mv.sub/read 10})]
+    {:table table,
+     :affinity_low (:affinity_low row),
+     :affinity_high (:affinity_high row),
+     :unread (:unread row),
+     :n_read (:n_read row)}),
+   :result
+   {:table :mv_sub,
+    :affinity_low 0.2,
+    :affinity_high 0.8,
+    :unread 5,
+    :n_read 10}}
   _
-  {:doc "convert-doc converts mv-user document"
+  {:doc "convert-doc converts mv-user document",
    :eval
-   (let [{:keys [table row]}
-         (convert-doc
-          {:xt/id #uuid "000f0000-0000-0000-0000-00000000000f"
-           :mv.user/user #uuid "00010000-0000-0000-0000-000000000001"
-           :mv.user/current-item #uuid "00050000-0000-0000-0000-000000000005"})]
-     {:table table}),
+   (let
+    [{:keys [table row]}
+     (convert-doc
+      {:xt/id #uuid "000f0000-0000-0000-0000-00000000000f",
+       :mv.user/user #uuid "00010000-0000-0000-0000-000000000001",
+       :mv.user/current-item
+       #uuid "00050000-0000-0000-0000-000000000005"})]
+    {:table table}),
    :result {:table :mv_user}}
   _
-  {:doc "convert-doc converts deleted-user document"
+  {:doc "convert-doc converts deleted-user document",
    :eval
-   (let [{:keys [table row]}
-         (convert-doc
-          {:xt/id #uuid "00100000-0000-0000-0000-000000000010"
-           :deleted-user/email-username-hash "abc123hash"})]
-     {:table table
-      :email_username_hash (:email_username_hash row)}),
+   (let
+    [{:keys [table row]}
+     (convert-doc
+      {:xt/id #uuid "00100000-0000-0000-0000-000000000010",
+       :deleted-user/email-username-hash "abc123hash"})]
+    {:table table, :email_username_hash (:email_username_hash row)}),
    :result {:table :deleted_user, :email_username_hash "abc123hash"}}
   _
-  {:doc "extract-docs-from-txes extracts documents from XTDB v1 transactions"
+  {:doc
+   "extract-docs-from-txes extracts documents from XTDB v1 transactions",
    :eval
-   (let [txes [{:xtdb.api/tx-time (java.time.Instant/parse "2024-01-15T12:00:00Z")
-                :xtdb.api/tx-ops
-                [[:xtdb.api/put
-                  {:xt/id #uuid "00010000-0000-0000-0000-000000000001"
-                   :user/email "test@example.com"}]
-                 [:xtdb.api/put
-                  {:xt/id #uuid "00020000-0000-0000-0000-000000000002"
-                   :feed/url "https://example.com/feed.xml"}]
-                 [:xtdb.api/delete #uuid "00030000-0000-0000-0000-000000000003"]]}]
-         docs (extract-docs-from-txes txes)]
-     {:count (count docs)
-      :ids (set (map :xt/id docs))}),
-   :result {:count 2,
-            :ids #{#uuid "00010000-0000-0000-0000-000000000001"
-                   #uuid "00020000-0000-0000-0000-000000000002"}}}
+   (let
+    [txes
+     [{:xtdb.api/tx-time
+       (java.time.Instant/parse "2024-01-15T12:00:00Z"),
+       :xtdb.api/tx-ops
+       [[:xtdb.api/put
+         {:xt/id #uuid "00010000-0000-0000-0000-000000000001",
+          :user/email "test@example.com"}]
+        [:xtdb.api/put
+         {:xt/id #uuid "00020000-0000-0000-0000-000000000002",
+          :feed/url "https://example.com/feed.xml"}]
+        [:xtdb.api/delete
+         #uuid "00030000-0000-0000-0000-000000000003"]]}]
+     docs
+     (extract-docs-from-txes txes)]
+    {:count (count docs), :ids (set (map :xt/id docs))}),
+   :result
+   {:count 2,
+    :ids
+    #{#uuid "00010000-0000-0000-0000-000000000001"
+      #uuid "00020000-0000-0000-0000-000000000002"}}}
   _
-  {:doc "valid-now? returns true when no valid time specified"
-   :eval (valid-now? nil nil (java.time.Instant/parse "2024-01-15T12:00:00Z")),
+  {:doc "valid-now? returns true when no valid time specified",
+   :eval
+   (valid-now?
+    nil
+    nil
+    (java.time.Instant/parse "2024-01-15T12:00:00Z")),
    :result true}
   _
-  {:doc "valid-now? returns true when valid-from is in the past"
-   :eval (valid-now? (java.time.Instant/parse "2024-01-01T00:00:00Z")
-                     nil
-                     (java.time.Instant/parse "2024-01-15T12:00:00Z")),
+  {:doc "valid-now? returns true when valid-from is in the past",
+   :eval
+   (valid-now?
+    (java.time.Instant/parse "2024-01-01T00:00:00Z")
+    nil
+    (java.time.Instant/parse "2024-01-15T12:00:00Z")),
    :result true}
   _
-  {:doc "valid-now? returns false when valid-from is in the future"
-   :eval (valid-now? (java.time.Instant/parse "2024-02-01T00:00:00Z")
-                     nil
-                     (java.time.Instant/parse "2024-01-15T12:00:00Z")),
+  {:doc "valid-now? returns false when valid-from is in the future",
+   :eval
+   (valid-now?
+    (java.time.Instant/parse "2024-02-01T00:00:00Z")
+    nil
+    (java.time.Instant/parse "2024-01-15T12:00:00Z")),
    :result false}
   _
-  {:doc "valid-now? returns false when valid-to is in the past"
-   :eval (valid-now? nil
-                     (java.time.Instant/parse "2024-01-01T00:00:00Z")
-                     (java.time.Instant/parse "2024-01-15T12:00:00Z")),
+  {:doc "valid-now? returns false when valid-to is in the past",
+   :eval
+   (valid-now?
+    nil
+    (java.time.Instant/parse "2024-01-01T00:00:00Z")
+    (java.time.Instant/parse "2024-01-15T12:00:00Z")),
    :result false}
   _
-  {:doc "valid-now? returns true when now is within valid range"
-   :eval (valid-now? (java.time.Instant/parse "2024-01-01T00:00:00Z")
-                     (java.time.Instant/parse "2024-02-01T00:00:00Z")
-                     (java.time.Instant/parse "2024-01-15T12:00:00Z")),
+  {:doc "valid-now? returns true when now is within valid range",
+   :eval
+   (valid-now?
+    (java.time.Instant/parse "2024-01-01T00:00:00Z")
+    (java.time.Instant/parse "2024-02-01T00:00:00Z")
+    (java.time.Instant/parse "2024-01-15T12:00:00Z")),
    :result true}
   _
-  {:doc "normalize-tx extracts both put and delete operations"
+  {:doc "normalize-tx extracts both put and delete operations",
    :eval
-   (let [tx {:xtdb.api/tx-time (java.time.Instant/parse "2024-01-15T12:00:00Z")
-             :xtdb.api/tx-ops
-             [[:xtdb.api/put {:xt/id #uuid "00010000-0000-0000-0000-000000000001"
-                             :user/email "test@example.com"}]
-              [:xtdb.api/delete #uuid "00020000-0000-0000-0000-000000000002"]]}
-         now (java.time.Instant/parse "2024-01-15T12:00:00Z")
-         ops (normalize-tx tx now)]
-     {:count (count ops)
-      :op-types (set (map :op ops))}),
+   (let
+    [tx
+     {:xtdb.api/tx-time
+      (java.time.Instant/parse "2024-01-15T12:00:00Z"),
+      :xtdb.api/tx-ops
+      [[:xtdb.api/put
+        {:xt/id #uuid "00010000-0000-0000-0000-000000000001",
+         :user/email "test@example.com"}]
+       [:xtdb.api/delete
+        #uuid "00020000-0000-0000-0000-000000000002"]]}
+     now
+     (java.time.Instant/parse "2024-01-15T12:00:00Z")
+     ops
+     (normalize-tx tx now)]
+    {:count (count ops), :op-types (set (map :op ops))}),
    :result {:count 2, :op-types #{:xtdb.api/put :xtdb.api/delete}}}
   _
-  {:doc "normalize-tx filters out operations with future valid-from"
+  {:doc "normalize-tx filters out operations with future valid-from",
    :eval
-   (let [tx {:xtdb.api/tx-time (java.time.Instant/parse "2024-01-15T12:00:00Z")
-             :xtdb.api/tx-ops
-             [[:xtdb.api/put {:xt/id #uuid "00010000-0000-0000-0000-000000000001"
-                             :user/email "test@example.com"}
-               (java.time.Instant/parse "2024-02-01T00:00:00Z")]]} ; valid-from in future
-         now (java.time.Instant/parse "2024-01-15T12:00:00Z")
-         ops (normalize-tx tx now)]
-     (count ops)),
+   (let
+    [tx
+     {:xtdb.api/tx-time
+      (java.time.Instant/parse "2024-01-15T12:00:00Z"),
+      :xtdb.api/tx-ops
+      [[:xtdb.api/put
+        {:xt/id #uuid "00010000-0000-0000-0000-000000000001",
+         :user/email "test@example.com"}
+        (java.time.Instant/parse "2024-02-01T00:00:00Z")]]}
+     now
+     (java.time.Instant/parse "2024-01-15T12:00:00Z")
+     ops
+     (normalize-tx tx now)]
+    (count ops)),
    :result 0}
   _
-  {:doc "normalize-tx filters out operations with past valid-to"
+  {:doc "normalize-tx filters out operations with past valid-to",
    :eval
-   (let [tx {:xtdb.api/tx-time (java.time.Instant/parse "2024-01-15T12:00:00Z")
-             :xtdb.api/tx-ops
-             [[:xtdb.api/put {:xt/id #uuid "00010000-0000-0000-0000-000000000001"
-                             :user/email "test@example.com"}
-               nil ; valid-from
-               (java.time.Instant/parse "2024-01-01T00:00:00Z")]]} ; valid-to in past
-         now (java.time.Instant/parse "2024-01-15T12:00:00Z")
-         ops (normalize-tx tx now)]
-     (count ops)),
+   (let
+    [tx
+     {:xtdb.api/tx-time
+      (java.time.Instant/parse "2024-01-15T12:00:00Z"),
+      :xtdb.api/tx-ops
+      [[:xtdb.api/put
+        {:xt/id #uuid "00010000-0000-0000-0000-000000000001",
+         :user/email "test@example.com"}
+        nil
+        (java.time.Instant/parse "2024-01-01T00:00:00Z")]]}
+     now
+     (java.time.Instant/parse "2024-01-15T12:00:00Z")
+     ops
+     (normalize-tx tx now)]
+    (count ops)),
    :result 0}
   _
-  {:doc "extract-digest-item-ids generates deterministic IDs"
+  {:doc "extract-digest-item-ids generates deterministic IDs",
    :eval
-   (let [doc {:xt/id #uuid "000a0000-0000-0000-0000-000000000001"
-              :digest/icymi [#uuid "00050000-0000-0000-0000-000000000001"]
-              :digest/discover [#uuid "00050000-0000-0000-0000-000000000002"]}
-         ids (extract-digest-item-ids doc)]
-     (count ids)),
+   (let
+    [doc
+     {:xt/id #uuid "000a0000-0000-0000-0000-000000000001",
+      :digest/icymi [#uuid "00050000-0000-0000-0000-000000000001"],
+      :digest/discover [#uuid "00050000-0000-0000-0000-000000000002"]}
+     ids
+     (extract-digest-item-ids doc)]
+    (count ids)),
    :result 2}
   _
-  {:doc "extract-skip-item-ids generates deterministic IDs"
+  {:doc "extract-skip-item-ids generates deterministic IDs",
    :eval
-   (let [doc {:xt/id #uuid "000d0000-0000-0000-0000-000000000001"
-              :skip/items [#uuid "00050000-0000-0000-0000-000000000001"
-                           #uuid "00050000-0000-0000-0000-000000000002"]}
-         ids (extract-skip-item-ids doc)]
-     (count ids)),
+   (let
+    [doc
+     {:xt/id #uuid "000d0000-0000-0000-0000-000000000001",
+      :skip/items
+      [#uuid "00050000-0000-0000-0000-000000000001"
+       #uuid "00050000-0000-0000-0000-000000000002"]}
+     ids
+     (extract-skip-item-ids doc)]
+    (count ids)),
    :result 2}
   _
-  {:doc "handle-put-op returns SQLite transactions and new state"
+  {:doc "handle-put-op returns SQLite transactions and new state",
    :eval
-   (let [state empty-state
-         doc {:xt/id #uuid "00010000-0000-0000-0000-000000000001"
-              :user/email "test@example.com"}
-         result (handle-put-op state {:doc doc :id (:xt/id doc) :op :xtdb.api/put})]
-     {:has-txs (some? (:txs result))
-      :has-state (some? (:state result))
-      :has-xtdb1-op (some? (:xtdb1-op result))
-      :tx-count (count (:txs result))
-      :first-tx-type (:type (first (:txs result)))}),
-   :result {:has-txs true
-            :has-state true
-            :has-xtdb1-op true
-            :tx-count 1
-            :first-tx-type :upsert}}
+   (let
+    [state
+     empty-state
+     doc
+     {:xt/id #uuid "00010000-0000-0000-0000-000000000001",
+      :user/email "test@example.com"}
+     result
+     (handle-put-op
+      state
+      {:doc doc, :id (:xt/id doc), :op :xtdb.api/put})]
+    {:has-txs (some? (:txs result)),
+     :has-state (some? (:state result)),
+     :has-xtdb1-op (some? (:xtdb1-op result)),
+     :tx-count (count (:txs result)),
+     :first-tx-type (:type (first (:txs result)))}),
+   :result
+   {:has-txs true,
+    :has-state true,
+    :has-xtdb1-op true,
+    :tx-count 1,
+    :first-tx-type :upsert}}
   _
-  {:doc "handle-put-op handles digest with component entities"
+  {:doc "handle-put-op handles digest with component entities",
    :eval
-   (let [state empty-state
-         doc {:xt/id #uuid "000a0000-0000-0000-0000-000000000001"
-              :digest/user #uuid "00010000-0000-0000-0000-000000000001"
-              :digest/sent-at (java.time.Instant/parse "2024-01-15T12:00:00Z")
-              :digest/icymi [#uuid "00050000-0000-0000-0000-000000000001"]
-              :digest/discover [#uuid "00050000-0000-0000-0000-000000000002"]}
-         result (handle-put-op state {:doc doc :id (:xt/id doc) :op :xtdb.api/put})
-         txs (:txs result)]
-     {:tx-count (count txs)
-      :tables (set (map :table txs))}),
-   :result {:tx-count 3
-            :tables #{:digest :digest_item}}}
+   (let
+    [state
+     empty-state
+     doc
+     {:xt/id #uuid "000a0000-0000-0000-0000-000000000001",
+      :digest/user #uuid "00010000-0000-0000-0000-000000000001",
+      :digest/sent-at (java.time.Instant/parse "2024-01-15T12:00:00Z"),
+      :digest/icymi [#uuid "00050000-0000-0000-0000-000000000001"],
+      :digest/discover [#uuid "00050000-0000-0000-0000-000000000002"]}
+     result
+     (handle-put-op
+      state
+      {:doc doc, :id (:xt/id doc), :op :xtdb.api/put})
+     txs
+     (:txs result)]
+    {:tx-count (count txs), :tables (set (map :table txs))}),
+   :result {:tx-count 3, :tables #{:digest_item :digest}}}
   _
-  {:doc "handle-delete-op returns nil for unknown document"
+  {:doc "handle-delete-op returns nil for unknown document",
    :eval
-   (handle-delete-op empty-state {:id #uuid "00010000-0000-0000-0000-000000000001" :op :xtdb.api/delete}),
+   (handle-delete-op
+    empty-state
+    {:id #uuid "00010000-0000-0000-0000-000000000001",
+     :op :xtdb.api/delete}),
    :result nil}
   _
-  {:doc "handle-delete-op returns transactions for known document"
+  {:doc "handle-delete-op returns transactions for known document",
    :eval
-   (let [;; First add a document to state
-         doc {:xt/id #uuid "00010000-0000-0000-0000-000000000001"
-              :user/email "test@example.com"}
-         put-result (handle-put-op empty-state {:doc doc :id (:xt/id doc) :op :xtdb.api/put})
-         state-after-put (:state put-result)
-         ;; Then delete it
-         delete-result (handle-delete-op state-after-put {:id (:xt/id doc) :op :xtdb.api/delete})]
-     {:has-txs (some? (:txs delete-result))
-      :tx-count (count (:txs delete-result))
-      :first-tx-type (:type (first (:txs delete-result)))}),
-   :result {:has-txs true
-            :tx-count 1
-            :first-tx-type :delete}}
+   (let
+    [doc
+     {:xt/id #uuid "00010000-0000-0000-0000-000000000001",
+      :user/email "test@example.com"}
+     put-result
+     (handle-put-op
+      empty-state
+      {:doc doc, :id (:xt/id doc), :op :xtdb.api/put})
+     state-after-put
+     (:state put-result)
+     delete-result
+     (handle-delete-op
+      state-after-put
+      {:id (:xt/id doc), :op :xtdb.api/delete})]
+    {:has-txs (some? (:txs delete-result)),
+     :tx-count (count (:txs delete-result)),
+     :first-tx-type (:type (first (:txs delete-result)))}),
+   :result {:has-txs true, :tx-count 1, :first-tx-type :delete}}
   _
-  {:doc "process-ops returns results for each operation"
+  {:doc "process-ops returns results for each operation",
    :eval
-   (let [ops [{:op :xtdb.api/put
-               :doc {:xt/id #uuid "00010000-0000-0000-0000-000000000001"
-                     :user/email "test@example.com"}
-               :id #uuid "00010000-0000-0000-0000-000000000001"}
-              {:op :xtdb.api/put
-               :doc {:xt/id #uuid "00020000-0000-0000-0000-000000000001"
-                     :feed/url "https://example.com/feed.xml"}
-               :id #uuid "00020000-0000-0000-0000-000000000001"}]
-         results (process-ops empty-state ops)]
-     {:result-count (count results)
-      :all-have-txs (every? :txs results)
-      :all-have-state (every? :state results)}),
-   :result {:result-count 2
-            :all-have-txs true
-            :all-have-state true}}
+   (let
+    [ops
+     [{:op :xtdb.api/put,
+       :doc
+       {:xt/id #uuid "00010000-0000-0000-0000-000000000001",
+        :user/email "test@example.com"},
+       :id #uuid "00010000-0000-0000-0000-000000000001"}
+      {:op :xtdb.api/put,
+       :doc
+       {:xt/id #uuid "00020000-0000-0000-0000-000000000001",
+        :feed/url "https://example.com/feed.xml"},
+       :id #uuid "00020000-0000-0000-0000-000000000001"}]
+     results
+     (process-ops empty-state ops)]
+    {:result-count (count results),
+     :all-have-txs (every? :txs results),
+     :all-have-state (every? :state results)}),
+   :result {:result-count 2, :all-have-txs true, :all-have-state true}}
   _
-  {:doc "compute-txs-for-file returns all transactions"
+  {:doc "compute-txs-for-file returns all transactions",
    :eval
-   (let [txes [{:xtdb.api/tx-time (java.time.Instant/parse "2024-01-15T12:00:00Z")
-                :xtdb.api/tx-ops
-                [[:xtdb.api/put {:xt/id #uuid "00010000-0000-0000-0000-000000000001"
-                                 :user/email "test@example.com"}]
-                 [:xtdb.api/put {:xt/id #uuid "00020000-0000-0000-0000-000000000001"
-                                 :feed/url "https://example.com/feed.xml"}]]}]
-         now (java.time.Instant/parse "2024-01-15T12:00:00Z")
-         result (compute-txs-for-file empty-state txes now)]
-     {:has-txs (some? (:txs result))
-      :has-state (some? (:state result))
-      :has-tx-results (some? (:tx-results result))
-      :tx-count (count (:txs result))}),
-   :result {:has-txs true
-            :has-state true
-            :has-tx-results true
-            :tx-count 2}}
+   (let
+    [txes
+     [{:xtdb.api/tx-time
+       (java.time.Instant/parse "2024-01-15T12:00:00Z"),
+       :xtdb.api/tx-ops
+       [[:xtdb.api/put
+         {:xt/id #uuid "00010000-0000-0000-0000-000000000001",
+          :user/email "test@example.com"}]
+        [:xtdb.api/put
+         {:xt/id #uuid "00020000-0000-0000-0000-000000000001",
+          :feed/url "https://example.com/feed.xml"}]]}]
+     now
+     (java.time.Instant/parse "2024-01-15T12:00:00Z")
+     result
+     (compute-txs-for-file empty-state txes now)]
+    {:has-txs (some? (:txs result)),
+     :has-state (some? (:state result)),
+     :has-tx-results (some? (:tx-results result)),
+     :tx-count (count (:txs result))}),
+   :result
+   {:has-txs true, :has-state true, :has-tx-results true, :tx-count 2}}
   _
-  {:doc "make-upsert-tx creates upsert transaction"
+  {:doc "make-upsert-tx creates upsert transaction",
    :eval
-   (let [tx (make-upsert-tx :user {:id (uuid->bytes #uuid "00010000-0000-0000-0000-000000000001")
-                                    :email "test@example.com"
-                                    :nil-value nil})]
-     {:type (:type tx)
-      :table (:table tx)
-      :row-keys (set (keys (:row tx)))}),
-   :result {:type :upsert
-            :table :user
-            :row-keys #{:id :email}}}
+   (let
+    [tx
+     (make-upsert-tx
+      :user
+      {:id (uuid->bytes #uuid "00010000-0000-0000-0000-000000000001"),
+       :email "test@example.com",
+       :nil-value nil})]
+    {:type (:type tx),
+     :table (:table tx),
+     :row-keys (set (keys (:row tx)))}),
+   :result {:type :upsert, :table :user, :row-keys #{:email :id}}}
   _
-  {:doc "make-delete-tx creates delete transaction"
+  {:doc "make-delete-tx creates delete transaction",
    :eval
-   (let [tx (make-delete-tx :user (uuid->bytes #uuid "00010000-0000-0000-0000-000000000001"))]
-     {:type (:type tx)
-      :table (:table tx)
-      :has-id (some? (:id tx))}),
-   :result {:type :delete
-            :table :user
-            :has-id true}}
+   (let
+    [tx
+     (make-delete-tx
+      :user
+      (uuid->bytes #uuid "00010000-0000-0000-0000-000000000001"))]
+    {:type (:type tx), :table (:table tx), :has-id (some? (:id tx))}),
+   :result {:type :delete, :table :user, :has-id true}}
   _
-  {:doc "sample-n returns all items when n >= count"
+  {:doc "sample-n returns all items when n >= count",
    :eval
-   (let [items [1 2 3]
-         sampled (sample-n 5 items)]
-     {:count (count sampled)
-      :all-present (= (set sampled) #{1 2 3})}),
-   :result {:count 3
-            :all-present true}}
+   (let
+    [items [1 2 3] sampled (sample-n 5 items)]
+    {:count (count sampled), :all-present (= (set sampled) #{1 3 2})}),
+   :result {:count 3, :all-present true}}
   _
-  {:doc "sample-n returns n items when n < count"
+  {:doc "sample-n returns n items when n < count",
    :eval
-   (let [items [1 2 3 4 5]
-         sampled (sample-n 3 items)]
-     {:count (count sampled)
-      :all-from-original (every? (set items) sampled)}),
-   :result {:count 3
-            :all-from-original true}}
+   (let
+    [items [1 2 3 4 5] sampled (sample-n 3 items)]
+    {:count (count sampled),
+     :all-from-original (every? (set items) sampled)}),
+   :result {:count 3, :all-from-original true}}
   _
-  {:doc "group-txs-by-table groups transactions correctly"
+  {:doc "group-txs-by-table groups transactions correctly",
    :eval
-   (let [txs [{:type :upsert :table :user :row {:id 1}}
-              {:type :upsert :table :feed :row {:id 2}}
-              {:type :upsert :table :user :row {:id 3}}]
-         grouped (group-txs-by-table txs)]
-     {:tables (set (keys grouped))
-      :user-count (count (get grouped :user))
-      :feed-count (count (get grouped :feed))}),
-   :result {:tables #{:user :feed}
-            :user-count 2
-            :feed-count 1}}
+   (let
+    [txs
+     [{:type :upsert, :table :user, :row {:id 1}}
+      {:type :upsert, :table :feed, :row {:id 2}}
+      {:type :upsert, :table :user, :row {:id 3}}]
+     grouped
+     (group-txs-by-table txs)]
+    {:tables (set (keys grouped)),
+     :user-count (count (get grouped :user)),
+     :feed-count (count (get grouped :feed))}),
+   :result {:tables #{:feed :user}, :user-count 2, :feed-count 1}}
   _]}

@@ -29,6 +29,11 @@
 (defn submit-tx [node tx]
   (->> tx
        (biffs/resolve-tx-ops {:biff/conn node})
+       (mapcat (fn [op]
+                 (if (and (map? op) (contains? op :xt))
+                   (when-let [xt-val (:xt op)]
+                     [xt-val])
+                   [op])))
        (mapv biffx/format-query)
        (xt/submit-tx node)))
 

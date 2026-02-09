@@ -24,12 +24,21 @@
       {:user/ad {:ad/id "ad1", :ad/payment-method "xyz"}}}}),
    :result
    [{:biff.fx/tx
-     [{:update :ad,
-       :set
-       {:ad/payment-method nil,
-        :ad/card-details nil,
-        :ad/updated-at #time/zoned-date-time "2000-01-01T00:00Z[UTC]"},
-       :where [:= :xt/id "ad1"]}]}
+     [{:xt
+       {:update :ad,
+        :set
+        {:ad/payment-method nil,
+         :ad/card-details nil,
+         :ad/updated-at
+         #time/zoned-date-time "2000-01-01T00:00Z[UTC]"},
+        :where [:= :xt/id "ad1"]},
+       :sqlite
+       {:update :ad,
+        :set
+        {:ad/payment-method nil,
+         :ad/card-details nil,
+         :ad/updated-at 946684800000},
+        :where [:= :id "ad1"]}}]}
     {:biff.fx/http
      {:method :post,
       :url "https://api.stripe.com/v1/payment_methods/xyz/detach",
@@ -77,13 +86,22 @@
      :ad/id "ad2"}),
    :result
    {:biff.fx/tx
-    [{:update :ad,
-      :set
-      {:ad/session-id nil,
-       :ad/payment-method nil,
-       :ad/card-details [:lift nil],
-       :ad/updated-at #time/zoned-date-time "2000-01-01T00:00Z[UTC]"},
-      :where [:= :xt/id "ad2"]}],
+    [{:xt
+      {:update :ad,
+       :set
+       {:ad/session-id nil,
+        :ad/payment-method nil,
+        :ad/card-details [:lift nil],
+        :ad/updated-at #time/zoned-date-time "2000-01-01T00:00Z[UTC]"},
+       :where [:= :xt/id "ad2"]},
+      :sqlite
+      {:update :ad,
+       :set
+       {:ad/session-id nil,
+        :ad/payment-method nil,
+        :ad/card-details nil,
+        :ad/updated-at 946684800000},
+       :where [:= :id "ad2"]}}],
     :biff.fx/next :redirect}}
   _
   {:doc "add-payment-method :post existing customer",

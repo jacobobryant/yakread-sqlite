@@ -15,18 +15,18 @@ be wrapped — so those methods need to be updated.
 
 ### Call-site files needing updates (HoneySQL maps in `:biff.fx/tx`)
 
-- [ ] `src/com/yakread/ui_components/item/read.clj` — 3 `{:update ...}` maps
-- [ ] `src/com/yakread/app/for_you.clj` — `[:delete :skip ...]` HoneySQL 
-- [ ] `src/com/yakread/app/advertise.clj` — 2 `{:update :ad ...}` maps
-- [ ] `src/com/yakread/app/settings.clj` — `{:update :user ...}` maps
-- [ ] `src/com/yakread/app/subscriptions.clj` — `{:delete-from ...}`, `{:update ...}` maps
-- [ ] `src/com/yakread/app/subscriptions/add.clj` — `{:assert ...}` maps
-- [ ] `src/com/yakread/app/subscriptions/view.clj` — `{:update :sub ...}` map
-- [ ] `src/com/yakread/app/admin/advertise.clj` — `{:update :ad ...}` maps
+- [x] `src/com/yakread/ui_components/item/read.clj` — 3 `{:update ...}` maps
+- [x] `src/com/yakread/app/for_you.clj` — `[:delete :skip ...]` HoneySQL 
+- [x] `src/com/yakread/app/advertise.clj` — 2 `{:update :ad ...}` maps
+- [x] `src/com/yakread/app/settings.clj` — `{:update :user ...}` maps
+- [x] `src/com/yakread/app/subscriptions.clj` — `{:delete-from ...}`, `{:update ...}` maps
+- [x] `src/com/yakread/app/subscriptions/add.clj` — `{:assert ...}` maps
+- [x] `src/com/yakread/app/subscriptions/view.clj` — `{:update :sub ...}` map
+- [x] `src/com/yakread/app/admin/advertise.clj` — `{:update :ad ...}` maps
 
 ### Internal expansion code needing updates
 
-- [ ] `src/com/yakread/util/biff_staging.clj` — `biff-tx-op :biff/upsert` produces `{:update ...}` maps and `[:biff/assert-query ...]` which itself produces `{:assert ...}` maps. The `upsert` function also produces `{:update ...}`.
+- [x] `src/com/yakread/util/biff_staging.clj` — `biff-tx-op :biff/upsert` produces `{:update ...}` maps and `[:biff/assert-query ...]` which itself produces `{:assert ...}` maps. The `upsert` function also produces `{:update ...}`.
 
 ### Files with only XTQL operations (no changes needed at call sites)
 
@@ -41,9 +41,15 @@ be wrapped — so those methods need to be updated.
 
 ### Infrastructure changes
 
-- [ ] Add `:biff/malli-opts*` to `initial-system` (com.yakread) using sqlite schema
-- [ ] Update `lib.sqlite/use-sqlite` to use `:biff/malli-opts*` and put pool under `:biff/conn*`
-- [ ] Add `lib.sqlite/use-sqlite` to components after `use-xtdb2`
-- [ ] Update `submit-tx` in `biff_staging.clj` for dual-write
-- [ ] Build xtdb→sqlite key mapping
-- [ ] Implement xtql→honeysql translation for sqlite side
+- [x] Add `:biff/malli-opts*` to `initial-system` (com.yakread) using sqlite schema
+- [x] Update `lib.sqlite/use-sqlite` to use `:biff/malli-opts*` and put pool under `:biff/conn*`
+- [x] Add `lib.sqlite/use-sqlite` to components after `use-xtdb2`
+- [x] Update `submit-tx` in `biff_staging.clj` for dual-write
+- [x] Build xtdb→sqlite key mapping
+- [x] Implement xtql→honeysql translation for sqlite side
+
+### Test fixes
+
+- [x] Fix `copilot_test.edn` — `#(` anonymous function syntax not valid in EDN, replaced with `(fn [x] ...)`
+- [x] Fix `test.clj` `submit-tx` helper — extract `:xt` value from dual-write ops before submitting to xtdb
+- [x] All Clojure snapshot tests pass (test snapshots updated to reflect dual-write format)

@@ -13,7 +13,9 @@
    :result
    {:status 204,
     :headers {"HX-Location" ["/subscriptions" nil]},
-    :biff.fx/tx [{:delete-from :sub, :where [:= :xt/id "sub1"]}]}}
+    :biff.fx/tx
+    [{:xt {:delete-from :sub, :where [:= :xt/id "sub1"]},
+      :sqlite {:delete-from :sub, :where [:= :id "sub1"]}}]}}
   _
   {:doc "unsubscribe email subscription with one-click URL",
    :eval
@@ -105,9 +107,14 @@
       [{:sub/id "sub1"} {:sub/id "sub2"}]}}),
    :result
    {:biff.fx/tx
-    [{:update :sub,
-      :set {:sub.email/unsubscribed-at nil},
-      :where [:in :xt/id ["sub1" "sub2"]]}],
+    [{:xt
+      {:update :sub,
+       :set {:sub.email/unsubscribed-at nil},
+       :where [:in :xt/id ["sub1" "sub2"]]},
+      :sqlite
+      {:update :sub,
+       :set {:sub/email-unsubscribed-at nil},
+       :where [:in :id ["sub1" "sub2"]]}}],
     :status 204,
     :headers {"HX-Redirect" ["/subscriptions/unsubscribed" nil]}}}
   _]}
