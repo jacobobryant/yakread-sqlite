@@ -50,7 +50,9 @@
             :xt/id reclist-id}]]
 
          (when (not-empty delete-skips)
-           [(into [:delete :skip] delete-skips)])
+           [{:xt (into [:delete :skip] delete-skips)
+             :sqlite {:delete-from :skip
+                      :where [:in :id (mapv biffs/coerce-sqlite-value* delete-skips)]}}])
 
          (when (not-empty create-skips-for)
            [(into [:biff/upsert :skip [:skip/reclist :skip/item]]

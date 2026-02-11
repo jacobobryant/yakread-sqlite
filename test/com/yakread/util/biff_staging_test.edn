@@ -13,17 +13,21 @@
      {:select :xt/id, :from :stuff}
      [{:xt/id 1, :x 1}]]),
    :result
-   [{:assert
-     [:=
-      {:select [[[:nest_many {:select :xt/id, :from :stuff}]]]}
-      {:select [[[:array ([:lift {:xt/id 1, :x 1}])]]]}]}]}
+   [{:xt
+     {:assert
+      [:=
+       {:select [[[:nest_many {:select :xt/id, :from :stuff}]]]}
+       {:select [[[:array ([:lift {:xt/id 1, :x 1}])]]]}]},
+     :sqlite nil}]}
   _
   {:doc ":biff/assert-query expansion empty results",
    :eval
    (biff-tx-op
     {}
     [:biff/assert-query {:select :xt/id, :from :stuff} []]),
-   :result [{:assert [:not-exists {:select :xt/id, :from :stuff}]}]}
+   :result
+   [{:xt {:assert [:not-exists {:select :xt/id, :from :stuff}]},
+     :sqlite nil}]}
   _
   {:doc ":biff/assert-query execution",
    :eval
@@ -78,7 +82,8 @@
       :x 3,
       :y 3,
       :z 3}]
-    {:update :stuff, :set {:z 1}, :where [:= :xt/id "stuff1"]}]}
+    {:xt {:update :stuff, :set {:z 1}, :where [:= :xt/id "stuff1"]},
+     :sqlite {:update :stuff, :set {:z 1}, :where [:= :id "stuff1"]}}]}
   _
   {:doc ":biff/upsert :on-insert / :on-delete",
    :eval
@@ -106,7 +111,10 @@
       :where [:in [:array [:x :y]] ([:array [1 1]] [:array [2 2]])]}
      [{:x 1, :y 1, :xt/id "stuff1"}]]
     [:put-docs :stuff {:xt/id "stuff2-new-id", :x 2, :y 2, :z 1}]
-    {:update :stuff,
-     :set {:z [:+ :z 1]},
-     :where [:= :xt/id "stuff1"]}]}
+    {:xt
+     {:update :stuff,
+      :set {:z [:+ :z 1]},
+      :where [:= :xt/id "stuff1"]},
+     :sqlite
+     {:update :stuff, :set {:z [:+ :z 1]}, :where [:= :id "stuff1"]}}]}
   _]}

@@ -485,8 +485,8 @@
 
 (defn use-sqlite
   "Biff component that starts a HikariCP connection pool for SQLite
-   and puts it in the :biff/conn key."
-  [{:biff/keys [malli-opts]
+   and puts it in the :biff/conn* key."
+  [{:biff/keys [malli-opts*]
     :biff.sqlite/keys [db-path schema-path indexes-path generate-schema]
     :or {db-path "storage/sqlite/main.db"
          schema-path "resources/schema.sql"
@@ -498,7 +498,7 @@
     (io/make-parents path))
   (when generate-schema
     (spit schema-path (str "-- Auto-generated; do not edit.\n\n"
-                           (generate-schema-sql malli-opts)
+                           (generate-schema-sql malli-opts*)
                            "\n\n"
                            (slurp indexes-path))))
   (print (proc/exec "sqlite3def" db-path "--apply" "-f" schema-path))
@@ -511,5 +511,5 @@
                                       "PRAGMA foreign_keys = ON"
                                       "PRAGMA synchronous = NORMAL"]))))]
     (-> ctx
-        (assoc :biff/conn datasource)
+        (assoc :biff/conn* datasource)
         (update :biff/stop conj #(.close datasource)))))

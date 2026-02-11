@@ -12,6 +12,8 @@
    [com.wsscode.pathom3.connect.planner :as pcp]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.email :as lib.email]
+   [com.yakread.lib.sqlite :as lib.sqlite]
+   [com.yakread.model.schema :as sqlite-schema]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.middleware :as lib.mid]
    [com.yakread.lib.pathom :as lib.pathom]
@@ -103,6 +105,13 @@
                     (malli.u/schemas)
                     (keep :schema modules))})
 
+(def malli-opts*
+  {:registry (malr/composite-registry
+              (malli/default-schemas)
+              (malli.t/schemas)
+              (malli.u/schemas)
+              sqlite-schema/schema)})
+
 ;; TODO pull into a lib function
 (doseq [schema-map (keep :schema modules)
         k (keys schema-map)
@@ -179,6 +188,7 @@
   [biff/use-aero-config
    use-error-reporting
    biffx/use-xtdb2
+   lib.sqlite/use-sqlite
    lib.spark/use-spark
    biff/use-queues
    ;biffx/use-xtdb2-listener
@@ -192,6 +202,7 @@
                      :biff/after-refresh `start
                      :biff/handler #'handler
                      :biff/malli-opts (lib.core/->DerefMap #'malli-opts)
+                     :biff/malli-opts* (lib.core/->DerefMap #'malli-opts*)
                      :biff/router router
                      :biff/send-email #'lib.email/send-email
                      :biff.beholder/on-save #'on-save

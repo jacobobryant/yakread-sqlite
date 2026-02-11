@@ -9,6 +9,7 @@
    [com.yakread.lib.route :as lib.route :refer [href]]
    [com.yakread.lib.ui :as ui]
    [com.yakread.routes :as routes]
+   [com.yakread.util.biff-staging :as biffs]
    [xtdb.api :as-alias xt]))
 
 (fx/defroute-pathom unsubscribe
@@ -28,7 +29,7 @@
       (case doc-type
         :sub/feed
         (merge base
-               {:biff.fx/tx [{:delete-from :sub :where [:= :xt/id id]}]})
+               {:biff.fx/tx [(biffs/dual-write {:delete-from :sub :where [:= :xt/id id]})]})
 
         :sub/email
         (let [{:item.email/keys [list-unsubscribe list-unsubscribe-post]} latest-item
@@ -58,9 +59,10 @@
   :post
   (fn [{:keys [biff/now]} {{:sub/keys [id pinned-at doc-type]}
           :params/sub}]
-    {:biff.fx/tx [{:update :sub
-                   :set {:sub/pinned-at (when-not pinned-at now)}
-                   :where [:= :xt/id id]}]
+    {:biff.fx/tx [(biffs/dual-write
+                   {:update :sub
+                    :set {:sub/pinned-at (when-not pinned-at now)}
+                    :where [:= :xt/id id]})]
      :biff.fx/render {:route-sym `page-content-route
                       :request-method :get}
      :biff.fx/next :return})
@@ -76,9 +78,10 @@
 
   :post
   (fn [_ {:keys [params.checked/subscriptions]}]
-    {:biff.fx/tx [{:update :sub
-                   :set {:sub.email/unsubscribed-at nil}
-                   :where [:in :xt/id (mapv :sub/id subscriptions)]}]
+    {:biff.fx/tx [(biffs/dual-write
+                   {:update :sub
+                    :set {:sub.email/unsubscribed-at nil}
+                    :where [:in :xt/id (mapv :sub/id subscriptions)]})]
      :status 204
      :headers {"HX-Redirect" (href `unsubs-page)}}))
 

@@ -10,6 +10,7 @@
    [com.yakread.lib.middleware :as lib.mid]
    [com.yakread.lib.route :as lib.route :refer [href]]
    [com.yakread.lib.ui :as ui]
+   [com.yakread.util.biff-staging :as biffs]
    [tick.core :as tick])
   (:import
    [java.time LocalTime ZoneId]
@@ -72,12 +73,13 @@
                                       {:select :xt/id
                                        :from :user
                                        :where [:= :user/customer-id customer]})]
-      {:biff.fx/tx [{:update :user
+      {:biff.fx/tx [(biffs/dual-write
+                    {:update :user
                      :set {:user/plan [:lift plan]
                            :user/cancel-at (when cancel_at
                                              (tick/in (tick/instant (* cancel_at 1000))
                                                       "UTC"))}
-                     :where [:= :xt/id user-id]}]
+                     :where [:= :xt/id user-id]})]
        :status 204}))
 
   :delete-plan
@@ -87,10 +89,11 @@
                                       {:select :xt/id
                                        :from :user
                                        :where [:= :user/customer-id customer]})]
-      {:biff.fx/tx [{:update :user
-                     :set {:user/plan nil
-                           :user/cancel-at nil}
-                     :where [:= :xt/id user-id]}]
+      {:biff.fx/tx [(biffs/dual-write
+                      {:update :user
+                       :set {:user/plan nil
+                             :user/cancel-at nil}
+                       :where [:= :xt/id user-id]})]
        :status 204})))
 
 (fx/defroute-pathom manage-premium

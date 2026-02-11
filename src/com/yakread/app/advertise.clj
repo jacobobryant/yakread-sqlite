@@ -42,11 +42,12 @@
 
   :post
   (fn [{:biff/keys [secret now]} {{{:ad/keys [id payment-method]} :user/ad} :session/user}]
-    [{:biff.fx/tx [{:update :ad
-                    :set {:ad/payment-method nil
-                          :ad/card-details nil
-                          :ad/updated-at now}
-                    :where [:= :xt/id id]}]}
+    [{:biff.fx/tx [(biffs/dual-write
+                    {:update :ad
+                     :set {:ad/payment-method nil
+                           :ad/card-details nil
+                           :ad/updated-at now}
+                     :where [:= :xt/id id]})]}
      {:biff.fx/http {:method :post
                      :url (str "https://api.stripe.com/v1/payment_methods/" payment-method "/detach")
                      :basic-auth [(secret :stripe/api-key)]}}
@@ -76,17 +77,18 @@
   :save-payment-method
   (fn [{:keys [biff.fx/http biff/now] ad-id :ad/id}]
     (let [pm (get-in http [:body :setup_intent :payment_method])]
-      {:biff.fx/tx [{:update :ad
-                     :set {:ad/session-id nil
-                           :ad/payment-method (:id pm)
-                           :ad/card-details [:lift
-                                             (-> (:card pm)
-                                                 (select-keys [:brand :last4 :exp_year :exp_month])
-                                                 (set/rename-keys {:exp_year :exp-year
-                                                                   :exp_month :exp-month})
-                                                 not-empty)]
-                           :ad/updated-at now}
-                     :where [:= :xt/id ad-id]}]
+      {:biff.fx/tx [(biffs/dual-write
+                     {:update :ad
+                      :set {:ad/session-id nil
+                            :ad/payment-method (:id pm)
+                            :ad/card-details [:lift
+                                              (-> (:card pm)
+                                                  (select-keys [:brand :last4 :exp_year :exp_month])
+                                                  (set/rename-keys {:exp_year :exp-year
+                                                                    :exp_month :exp-month})
+                                                  not-empty)]
+                            :ad/updated-at now}
+                      :where [:= :xt/id ad-id]})]
        :biff.fx/next :redirect}))
 
   :redirect

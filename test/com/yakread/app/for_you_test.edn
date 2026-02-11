@@ -85,7 +85,8 @@
          #uuid "00030000-0000-0000-0000-000000000003"
          #uuid "00040000-0000-0000-0000-000000000004"},
        :xt/id #uuid "00000000-0000-0000-0000-000000000000"}]
-     [:delete :skip "skip2"]
+     {:xt [:delete :skip "skip2"],
+      :sqlite {:delete-from :skip, :where [:in :id ["skip2"]]}}
      [:biff/upsert
       :user-item
       [:user-item/user :user-item/item]

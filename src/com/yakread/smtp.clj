@@ -130,4 +130,5 @@
                             :sub/user user-id
                             :sub.email/from from
                             :sub/created-at now}]
-                          (biffx/assert-unique :sub {:sub/user user-id :sub.email/from from})]))}]))))
+                          {:xt (biffx/assert-unique :sub {:sub/user user-id :sub.email/from from})
+                           :sqlite nil}]))}]))))
