@@ -52,58 +52,91 @@
    :result [:quarter :annual]}
   _
   {:doc "schema-info extracts tables from malli schema",
-   :eval (let [info (schema-info main/malli-opts)] (sort (keys info))),
-   :result ()}
+   :eval
+   (let [info (schema-info main/malli-opts*)] (sort (keys info))),
+   :result
+   (:ad
+    :ad-click
+    :ad-credit
+    :bulk-send
+    :deleted-user
+    :digest
+    :digest-item
+    :feed
+    :item
+    :mv-sub
+    :mv-user
+    :reclist
+    :redirect
+    :skip
+    :sub
+    :user
+    :user-item)}
   _
   {:doc "schema-info extracts attributes for user table",
    :eval
    (let
-    [info (schema-info main/malli-opts) user-attrs (get info :user)]
+    [info (schema-info main/malli-opts*) user-attrs (get info :user)]
     (sort (keys user-attrs))),
-   :result ()}
+   :result
+   (:user/cancel-at
+    :user/customer-id
+    :user/digest-days
+    :user/digest-last-sent
+    :user/email
+    :user/email-username
+    :user/from-the-sample
+    :user/id
+    :user/joined-at
+    :user/plan
+    :user/roles
+    :user/send-digest-at
+    :user/suppressed-at
+    :user/timezone
+    :user/use-original-links)}
   _
   {:doc "generate-schema-sql produces SQL DDL",
    :eval
    (let
-    [sql (generate-schema-sql main/malli-opts)]
+    [sql (generate-schema-sql main/malli-opts*)]
     (clojure.string/starts-with? sql "CREATE TABLE")),
-   :result false}
+   :result true}
   _
   {:doc "generate-schema-sql includes CREATE TABLE user",
    :eval
    (let
-    [sql (generate-schema-sql main/malli-opts)]
+    [sql (generate-schema-sql main/malli-opts*)]
     (clojure.string/includes? sql "CREATE TABLE user")),
-   :result false}
+   :result true}
   _
   {:doc "generate-schema-sql includes proper column types",
    :eval
    (let
-    [sql (generate-schema-sql main/malli-opts)]
+    [sql (generate-schema-sql main/malli-opts*)]
     (and
      (clojure.string/includes? sql "email TEXT NOT NULL")
      (clojure.string/includes? sql "id BLOB PRIMARY KEY"))),
-   :result false}
+   :result true}
   _
   {:doc "sqlite-resolvers returns resolvers for all tables",
    :eval
    (let
-    [resolvers (sqlite-resolvers main/malli-opts)]
+    [resolvers (sqlite-resolvers main/malli-opts*)]
     (count resolvers)),
-   :result 0}
+   :result 17}
   _
   {:doc "sqlite-resolvers creates resolvers",
    :eval
    (let
-    [resolvers (sqlite-resolvers main/malli-opts)]
+    [resolvers (sqlite-resolvers main/malli-opts*)]
     (> (count resolvers) 0)),
-   :result false}
+   :result true}
   _
   {:doc "sqlite-resolvers resolver has batch? true",
    :eval
    (let
     [resolvers
-     (sqlite-resolvers main/malli-opts)
+     (sqlite-resolvers main/malli-opts*)
      first-resolver
      (first resolvers)
      batch?
@@ -112,5 +145,5 @@
       :config
       :com.wsscode.pathom3.connect.operation/batch?)]
     batch?),
-   :result nil}
+   :result true}
   _]}
