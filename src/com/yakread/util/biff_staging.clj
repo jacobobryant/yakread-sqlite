@@ -5,6 +5,7 @@
    [clojure.data.generators :as gen]
    [clojure.edn :as edn]
    [clojure.java.io :as io]
+   [clojure.string :as str]
    [clojure.tools.logging :as log]
    [clojure.tools.namespace.find :as ns-find]
    [clojure.walk :as walk]
@@ -18,6 +19,7 @@
    [malli.core :as malli]
    [malli.registry :as malr]
    [next.jdbc :as jdbc]
+   [next.jdbc.result-set :as rs]
    [taoensso.nippy :as nippy])
   (:import
    [java.nio ByteBuffer]
@@ -321,6 +323,11 @@
 (defn- sqlite-table [xt-table]
   (get xt->sqlite-table xt-table xt-table))
 
+(defn sqlite-table*
+  "Public version of sqlite-table for use in test helpers."
+  [xt-table]
+  (sqlite-table xt-table))
+
 (defn- sqlite-id-key [table]
   (keyword (name table) "id"))
 
@@ -333,6 +340,11 @@
     (get xt->sqlite-key k)
 
     :else k))
+
+(defn rename-key*
+  "Public version of rename-key for use in test helpers."
+  [k table]
+  (rename-key k table))
 
 ;; ============================================================================
 ;; Value coercion for SQLite writes
@@ -677,3 +689,146 @@
    (gen/uuid))
   ([prefix]
    (biffx/prefix-uuid prefix (gen/uuid))))
+
+;; ============================================================================
+;; SQLite query function (XTDB-compatible interface)
+;; ============================================================================
+
+(def sqlite->xt-key
+  "Reverse mapping from SQLite attribute keys to XTDB attribute keys."
+  (into {} (map (fn [[k v]] [v k])) xt->sqlite-key))
+
+(defn- bytes->uuid [^bytes byte-array]
+  (when byte-array
+    (let [bb (ByteBuffer/wrap byte-array)]
+      (UUID. (.getLong bb) (.getLong bb)))))
+
+(defn- epoch-ms->inst [ms]
+  (when ms
+    (Instant/ofEpochMilli ms)))
+
+(defn- infer-table-from-query
+  "Infer the XTDB table name from a HoneySQL query map."
+  [query]
+  (cond
+    (keyword? (:from query)) (:from query)
+    (vector? (:from query)) (first (:from query))
+    :else nil))
+
+(defn- rename-select-key
+  "Rename a key in a select clause from XTDB to SQLite format.
+   Handles: bare keywords, aliased pairs, aggregates."
+  [k table]
+  (cond
+    (= k :*) :*
+    (= k :xt/id) :id
+    (keyword? k) (let [renamed (rename-key k table)]
+                   (keyword (name renamed)))
+    :else k))
+
+(defn- translate-select
+  "Translate select clause from XTDB to SQLite format."
+  [select table]
+  (cond
+    ;; :select :xt/id -> :select :id
+    (keyword? select) (rename-select-key select table)
+    ;; :select 1 -> :select 1
+    (number? select) select
+    ;; :select [:col1 :col2] -> :select [:col1 :col2]
+    (vector? select) (mapv (fn [item]
+                             (cond
+                               (keyword? item) (rename-select-key item table)
+                               (vector? item) (translate-select item table)
+                               :else item))
+                           select)
+    :else select))
+
+(defn- translate-query
+  "Translate an XTDB-style HoneySQL query to SQLite format.
+   Renames tables, columns, and coerces values."
+  [query]
+  (let [table (infer-table-from-query query)
+        sqlite-tbl (when table (sqlite-table table))]
+    (-> query
+        (cond-> table (assoc :from sqlite-tbl))
+        (cond-> (:select query) (update :select translate-select table))
+        (cond-> (:where query) (update :where #(coerce-where-clause % table)))
+        (cond-> (:order-by query)
+          (update :order-by
+                  (fn [obs]
+                    (mapv (fn [ob]
+                            (if (vector? ob)
+                              (let [[k dir] ob]
+                                [(rename-select-key k table) dir])
+                              (rename-select-key ob table)))
+                          obs))))
+        (cond-> (:join query)
+          (update :join (fn [joins]
+                          (mapv (fn [j]
+                                  (cond
+                                    (keyword? j) (sqlite-table j)
+                                    (vector? j) (coerce-where-clause j table)
+                                    :else j))
+                                joins))))
+        (cond-> (:left-join query)
+          (update :left-join (fn [joins]
+                               (mapv (fn [j]
+                                       (cond
+                                         (keyword? j) (sqlite-table j)
+                                         (vector? j) (coerce-where-clause j table)
+                                         :else j))
+                                     joins))))
+        (cond-> (:group-by query)
+          (update :group-by (fn [gbs]
+                              (mapv #(rename-select-key % table) gbs))))
+        ;; Handle union/union-all by recursively translating subqueries
+        (cond-> (:union query)
+          (update :union (fn [qs] (mapv translate-query qs))))
+        (cond-> (:union-all query)
+          (update :union-all (fn [qs] (mapv translate-query qs)))))))
+
+(defn- result-key->xt-key
+  "Convert a SQLite result column key back to an XTDB key."
+  [k table]
+  (let [;; SQLite results come back as :column_name, need to convert to :table/column-name
+        sqlite-key (keyword (name (sqlite-table table))
+                            (str/replace (name k) "_" "-"))
+        id-key (sqlite-id-key (sqlite-table table))]
+    (cond
+      ;; :id -> :xt/id
+      (= k :id) :xt/id
+      (= sqlite-key id-key) :xt/id
+      ;; Check reverse mapping
+      (contains? sqlite->xt-key sqlite-key) (get sqlite->xt-key sqlite-key)
+      ;; Default: use the sqlite-qualified key
+      :else sqlite-key)))
+
+(defn- coerce-result-value
+  "Coerce a SQLite result value back to XTDB-compatible format.
+   Only coerces UUIDs (byte arrays -> UUID objects)."
+  [v]
+  (cond
+    (instance? (Class/forName "[B") v) (bytes->uuid v)
+    :else v))
+
+(defn- coerce-result-row
+  "Coerce a single result row from SQLite format back to XTDB format."
+  [row table]
+  (when row
+    (into {}
+          (map (fn [[k v]]
+                 [(result-key->xt-key k table)
+                  (coerce-result-value v)]))
+          row)))
+
+(defn q
+  "Query SQLite using an XTDB-style HoneySQL query.
+   Translates the query to SQLite format, runs it, and converts results
+   back to XTDB-compatible format."
+  [conn query]
+  (let [table (infer-table-from-query query)
+        sqlite-query (translate-query query)
+        formatted (sql/format sqlite-query)
+        results (jdbc/execute! conn formatted
+                               {:builder-fn rs/as-unqualified-kebab-maps})]
+    (mapv #(coerce-result-row % table) results)))

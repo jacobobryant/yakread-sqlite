@@ -14,9 +14,12 @@
    [com.stuartsierra.dependency :as dep]
    [com.yakread :as main]
    [com.yakread.lib.route :as lib.route]
+   [com.yakread.lib.sqlite :as sqlite]
    [com.yakread.util.biff-staging :as biffs]
+   [honey.sql :as sql]
    [malli.experimental.time.generator]
    [malli.generator :as malli.g]
+   [next.jdbc :as jdbc]
    [tick.core :as tick]
    [time-literals.read-write :as time-literals]
    [xtdb.api :as xt]
@@ -59,6 +62,44 @@
 
 (defmacro with-node [[node-sym db-contents] & body]
   `(with-open [~node-sym (start-test-node ~db-contents)]
+     ~@body))
+
+(defn- xt-record->sqlite-row
+  "Convert a single XTDB-format record to a SQLite row.
+   Renames keys (e.g., :xt/id -> :id) and coerces values."
+  [table record]
+  (into {}
+        (map (fn [[k v]]
+               (let [sqlite-k (cond
+                                (= k :xt/id) :id
+                                :else (keyword (name (biffs/rename-key* k table))))
+                     sqlite-v (biffs/coerce-sqlite-value* v)]
+                 [sqlite-k sqlite-v])))
+        record))
+
+(defn start-test-sqlite
+  "Create an in-memory SQLite database, create tables, and insert test data.
+   table->records is a map of table-keyword -> vector of XTDB-format records.
+   Returns a JDBC DataSource (closeable)."
+  [table->records]
+  (let [ds (jdbc/get-datasource {:dbtype "sqlite" :dbname ":memory:"})
+        schema-sql (sqlite/generate-schema-sql main/malli-opts*)]
+    ;; Create tables - execute each statement separately
+    (doseq [stmt (str/split schema-sql #";\s*")
+            :when (not (str/blank? stmt))]
+      (jdbc/execute! ds [(str stmt ";")]))
+    ;; Insert data
+    (doseq [[table records] table->records
+            :when (seq records)
+            :let [sqlite-tbl (biffs/sqlite-table* table)
+                  rows (mapv #(xt-record->sqlite-row table %) records)]]
+      (doseq [row rows]
+        (let [sql-map {:insert-into sqlite-tbl :values [row]}]
+          (jdbc/execute! ds (sql/format sql-map)))))
+    ds))
+
+(defmacro with-sqlite [[conn-sym db-contents] & body]
+  `(let [~conn-sym (start-test-sqlite ~db-contents)]
      ~@body))
 
 (defn test-route [route method & args]
