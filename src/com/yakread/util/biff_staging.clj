@@ -27,6 +27,8 @@
    [java.time Instant ZonedDateTime]
    [java.util UUID]))
 
+(declare q)
+
 (defn doc-asts [{:keys [registry] :as malli-opts}]
   (for [schema-k (keys (malr/schemas (:registry malli-opts)))
         :let [schema (try (malli/deref-recursive schema-k malli-opts) (catch Exception _))]
@@ -445,22 +447,24 @@
     v))
 
 (defn upsert [conn table on new-record]
-  (let [[{existing-id :xt/id}] (biffx/q conn
-                                        {:select :xt/id
-                                         :from table
-                                         :where (into [:and]
-                                                      (map (fn [[k v]]
-                                                             [:= k v]))
-                                                      on)
-                                         :limit 1})]
+  (let [[{existing-id :xt/id}] (q conn
+                                  {:select :xt/id
+                                   :from table
+                                   :where (into [:and]
+                                                (map (fn [[k v]]
+                                                       [:= k v]))
+                                                on)
+                                   :limit 1})]
     (if existing-id
-      (let [xt-update {:update table
+      (let [sqlite-tbl (sqlite-table table)
+            write-fns (sqlite/write-coercions @(requiring-resolve 'com.yakread/malli-opts*) sqlite-tbl)
+            xt-update {:update table
                        :set (dissoc new-record :xt/id)
                        :where [:= :xt/id existing-id]}
             sqlite-set (-> (dissoc new-record :xt/id)
                            (rename-doc-keys table)
-                           coerce-sqlite-doc)
-            sqlite-update {:update (sqlite-table table)
+                           (coerce-sqlite-doc write-fns))
+            sqlite-update {:update sqlite-tbl
                            :set sqlite-set
                            :where [:= :id (coerce-sqlite-value existing-id)]}]
         [{:xt xt-update
