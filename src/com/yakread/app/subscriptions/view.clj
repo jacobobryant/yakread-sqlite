@@ -1,6 +1,5 @@
 (ns com.yakread.app.subscriptions.view
   (:require
-   [com.biffweb.experimental :as biffx]
    [com.wsscode.pathom3.connect.operation :refer [?]]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.middleware :as lib.middle]
@@ -14,9 +13,9 @@
    {:params/item [:xt/id]}]
 
   :post
-  (fn [{:biff/keys [conn now]} {:keys [session/user params/item]}]
+  (fn [{:biff/keys [conn* now]} {:keys [session/user params/item]}]
     (merge {:status 204}
-           (when (empty? (biffx/q conn
+           (when (empty? (biffs/q conn*
                                      {:select :xt/id
                                       :from :user-item
                                       :where [:and

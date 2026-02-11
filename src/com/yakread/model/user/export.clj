@@ -1,7 +1,7 @@
 (ns com.yakread.model.user.export 
   (:require
    [clojure.data.csv :as csv]
-   [com.biffweb.experimental :as biffx]
+   [com.yakread.util.biff-staging :as biffs]
    [com.wsscode.pathom3.connect.operation :as pco :refer [defresolver]]
    [rum.core :as rum]))
 
@@ -15,10 +15,10 @@
            (for [url urls]
              [:<> "    " [:outline {:type "rss" :xmlUrl url}] "\n"])]])))
 
-(defresolver feed-subs [{:keys [biff/conn]} {:keys [user/id]}]
+(defresolver feed-subs [{:keys [biff/conn*]} {:keys [user/id]}]
   {::pco/input [:user/id]}
   {:user.export/feed-subs
-   (->> (biffx/q conn
+   (->> (biffs/q conn*
                  {:select :feed/url
                   :from :sub
                   :join [:feed [:= :sub.feed/feed :feed._id]]
@@ -42,9 +42,9 @@
    op-name
    {::pco/input [:user/id]
     ::pco/output [output-key]}
-   (fn [{:keys [biff/conn]} {:keys [user/id]}]
+   (fn [{:keys [biff/conn*]} {:keys [user/id]}]
      {output-key
-      (let [rows (->> (biffx/q conn
+      (let [rows (->> (biffs/q conn*
                                {:select [query-key
                                          :user-item/viewed-at
                                          (nest-one :user-item/item

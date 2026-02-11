@@ -2,7 +2,7 @@
   (:require
    [clojure.string :as str]
    [com.biffweb :as biff :refer [q]]
-   [com.biffweb.experimental :as biffx]
+   [com.yakread.util.biff-staging :as biffs]
    [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.s3 :as lib.s3]
@@ -15,7 +15,7 @@
    (com.vdurmont.emoji EmojiParser)
    (org.jsoup Jsoup)))
 
-(defresolver user-favorites [{:keys [biff/conn biff/now params]} {:keys [user/id]}]
+(defresolver user-favorites [{:keys [biff/conn* biff/now params]} {:keys [user/id]}]
   #::pco{:output [{:user/favorites [:item/id
                                     {:item/user-item [:xt/id]}]}
                   :user/more-favorites]}
@@ -28,7 +28,7 @@
                       (map (fn [{:keys [xt/id user-item/item]}]
                              {:item/id item
                               :item/user-item {:xt/id id}}))
-                      (biffx/q conn
+                      (biffs/q conn*
                                {:select [:xt/id :user-item/item]
                                 :from :user-item
                                 :where [:and
@@ -40,7 +40,7 @@
     {:user/favorites results
      :user/more-favorites (= page-size (count results))}))
 
-(defresolver user-bookmarks [{:keys [biff/conn biff/now params]} {:keys [user/id]}]
+(defresolver user-bookmarks [{:keys [biff/conn* biff/now params]} {:keys [user/id]}]
   #::pco{:output [{:user/bookmarks [:item/id
                                     {:item/user-item [:xt/id]}]}
                   :user/more-bookmarks]}
@@ -53,7 +53,7 @@
                       (map (fn [{:keys [xt/id user-item/item]}]
                              {:item/id item
                               :item/user-item {:xt/id id}}))
-                      (biffx/q conn
+                      (biffs/q conn*
                                {:select [:xt/id :user-item/item]
                                 :from :user-item
                                 :where [:and
@@ -70,11 +70,11 @@
          :output [{:user/unread-bookmarks [:item/id]}]}
   {:user/unread-bookmarks (filterv :item/unread bookmarks)})
 
-(defresolver n-skipped [{:keys [biff/conn session]} items]
+(defresolver n-skipped [{:keys [biff/conn* session]} items]
   #::pco{:input [:xt/id]
          :output [:item/n-skipped]
          :batch? true}
-  (let [results (biffx/q conn
+  (let [results (biffs/q conn*
                          {:select [[:skip/item :xt/id]
                                    [[:count :skip._id] :item/n-skipped]]
                           :from :skip
@@ -89,7 +89,7 @@
                               {:xt/id id
                                :item/n-skipped 0}))))
 
-(defresolver user-item [{:keys [biff/conn session]} items]
+(defresolver user-item [{:keys [biff/conn* session]} items]
   #::pco{:input [:xt/id]
          :output [{:item/user-item [:xt/id]}]
          :batch? true}
@@ -98,13 +98,13 @@
                       (keep (fn [{:keys [xt/id user-item/item]}]
                              (when (item-ids item)
                                {:xt/id item :item/user-item {:xt/id id}})))
-                      (biffx/q conn
+                      (biffs/q conn*
                                {:select [:xt/id :user-item/item]
                                 :from :user-item
                                 :where [:= :user-item/user (:uid session)]}))]
     (lib.core/restore-order items :xt/id results)))
 
-(defresolver image-from-feed [{:keys [biff/conn]} items]
+(defresolver image-from-feed [{:keys [biff/conn*]} items]
   #::pco{:input [(? :item/feed-url)
                  {(? :item.feed/feed) [:feed/image-url]}]
          :output [:item/image-url]
@@ -113,7 +113,7 @@
         url->image (into {}
                          (map (juxt :feed/url :feed/image-url))
                          (when (not-empty feed-urls)
-                           (biffx/q conn
+                           (biffs/q conn*
                                     {:select [:feed/url :feed/image-url]
                                      :from :feed
                                      :where [:in :feed/url feed-urls]})))]
@@ -132,7 +132,7 @@
                                        (? :user-item/reported-at)]}]}
   {:item/unread (not (lib.user-item/read? user-item))})
 
-(defresolver history-items [{:keys [biff/conn] :as ctx}
+(defresolver history-items [{:keys [biff/conn*] :as ctx}
                             {:keys [session/user
                                     params/paginate-after]}]
   #::pco{:input [{:session/user [:xt/id]}
@@ -141,7 +141,7 @@
                                         {:item/user-item [:xt/id]}]}]}
   (let [{:keys [batch-size] :or {batch-size 100}} (pco/params ctx)]
     {:user/history-items
-     (->> (biffx/q conn
+     (->> (biffs/q conn*
                    {:select [:xt/id
                              :user-item/item
                              :user-item/viewed-at
@@ -190,7 +190,7 @@
    ::pco/output [{:item/sub [:xt/id]}]}
   {:item/sub sub})
 
-(defresolver feed-sub [{:keys [biff/conn session]} inputs]
+(defresolver feed-sub [{:keys [biff/conn* session]} inputs]
   {::pco/input [{:item.feed/feed [:xt/id]}]
    ::pco/output [{:item/sub [:xt/id]}]
    ::pco/batch? true}
@@ -198,7 +198,7 @@
         feed->sub (into {}
                         (map (juxt :sub.feed/feed :xt/id))
                         (when (not-empty feed-ids)
-                          (biffx/q conn
+                          (biffs/q conn*
                                    {:select [:xt/id :sub.feed/feed]
                                     :from :sub
                                     :where [:and
@@ -288,11 +288,11 @@
 (defresolver clean-title [{:keys [item/title]}]
   {:item/clean-title (str/trim (EmojiParser/removeAllEmojis title))})
 
-(defresolver digest-sends [{:keys [biff/conn session]} items]
+(defresolver digest-sends [{:keys [biff/conn* session]} items]
   {::pco/input [:xt/id]
    ::pco/output [:item/n-digest-sends]
    ::pco/batch? true}
-  (let [results (biffx/q conn
+  (let [results (biffs/q conn*
                          {:union
                           [{:select [[:digest/ad :xt/id]
                                      [[:count :xt/id]

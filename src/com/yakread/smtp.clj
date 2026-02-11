@@ -33,10 +33,10 @@
 
 (fx/defmachine deliver*
   :start
-  (fn [{:keys [biff/conn yakread/domain biff.smtp/message]}]
+  (fn [{:keys [biff/conn* yakread/domain biff.smtp/message]}]
     (let [result (and (or (not domain) (= domain (:domain message)))
                       (not-empty
-                       (biffx/q conn
+                       (biffs/q conn*
                                 {:select 1
                                  :from :user
                                  :where [:=
@@ -54,7 +54,7 @@
          ::url (infer-post-url (:headers message) html)})))
 
   :end
-  (fn [{:keys [biff.smtp/message biff/conn biff/now ::url]
+  (fn [{:keys [biff.smtp/message biff/conn* biff/now ::url]
         {:keys [html]} :com.yakread.fx/js}]
     (if-not html
       (do
@@ -80,7 +80,7 @@
 
             [{user-id :user/id
               sub-id :sub/id}]
-            (biffx/q conn
+            (biffs/q conn*
                      {:select [[:user._id :user/id]
                                [:sub._id :sub/id]]
                       :from :user

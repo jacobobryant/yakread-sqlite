@@ -2,7 +2,6 @@
   (:require
    [clojure.set :as set]
    [clojure.string :as str]
-   [com.biffweb.experimental :as biffx]
    [com.yakread.lib.content :as lib.content]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.route :refer [hx-redirect]]
@@ -11,10 +10,10 @@
 
 (defn add-item-machine* [{:keys [get-url on-error on-success]}]
   {:start
-   (fn [{:biff/keys [conn base-url] :as ctx}]
+   (fn [{:biff/keys [conn* base-url] :as ctx}]
      (let [url (str/trim (get-url ctx))]
        (if-some [item (first
-                       (biffx/q conn
+                       (biffs/q conn*
                                 {:select [:item._id :item/url]
                                  :from :item
                                  :left-join [:redirect [:= :redirect/item :item._id]]
@@ -102,10 +101,10 @@
         (comp :url :params)
 
         :on-success
-        (fn [{:keys [session biff/conn biff/now]} {:item/keys [id]}]
+        (fn [{:keys [session biff/conn* biff/now]} {:item/keys [id]}]
           (merge {:biff.fx/tx
                   ;; TODO switch to :biff/upsert
-                  (biffs/upsert conn
+                  (biffs/upsert conn*
                                 :user-item
                                 {:user-item/user (:uid session)
                                  :user-item/item id}

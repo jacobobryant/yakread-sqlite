@@ -1,7 +1,7 @@
 (ns com.yakread.model.ad
   (:require
    [clojure.string :as str]
-   [com.biffweb.experimental :as biffx]
+   [com.yakread.util.biff-staging :as biffs]
    [com.wsscode.misc.coll :as wss-coll]
    [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
    [com.yakread.lib.content :as lib.content]
@@ -21,9 +21,9 @@
 (defresolver xt-id [{:keys [ad/id]}]
   {:xt/id id})
 
-(defresolver user-ad [{:keys [biff/conn]} {:keys [xt/id]}]
+(defresolver user-ad [{:keys [biff/conn*]} {:keys [xt/id]}]
   {::pco/output [{:user/ad [:xt/id]}]}
-  (when-some [ad (first (biffx/q conn
+  (when-some [ad (first (biffs/q conn*
                                  {:select :xt/id
                                   :from :ad
                                   :where [:= :ad/user id]}))]
@@ -76,9 +76,9 @@
                  (= approve-state :pending) :pending)
      :ad/incomplete-fields incomplete-fields}))
 
-(defresolver n-clicks [{:keys [biff/conn]} {:keys [ad/id]}]
+(defresolver n-clicks [{:keys [biff/conn*]} {:keys [ad/id]}]
   {:ad/n-clicks
-   (-> (biffx/q conn
+   (-> (biffs/q conn*
                 {:select [[[:count [:distinct :ad.click/user]] :cnt]]
                  :from :ad-click
                  :where [:= :ad.click/ad id]})
@@ -88,22 +88,22 @@
 (defresolver host [{:keys [ad/url-with-protocol]}]
   {:ad/host (some-> url-with-protocol uri/uri :host str/trim not-empty)})
 
-(defresolver last-clicked [{:keys [biff/conn]} ads]
+(defresolver last-clicked [{:keys [biff/conn*]} ads]
   {::pco/input [:xt/id]
    ::pco/output [:ad/last-clicked]
    ::pco/batch? true}
-  (->> (biffx/q conn
+  (->> (biffs/q conn*
                 {:select [[:ad.click/ad :xt/id]
                           [[:max :ad.click/created-at] :ad/last-clicked]]
                  :from :ad-click
                  :where [:in :ad.click/ad (mapv :xt/id ads)]})
        (wss-coll/restore-order ads :xt/id)))
 
-(defresolver amount-pending [{:keys [biff/conn]} ads]
+(defresolver amount-pending [{:keys [biff/conn*]} ads]
   {::pco/input [:xt/id]
    ::pco/output [:ad/amount-pending]
    ::pco/batch? true}
-  (->> (biffx/q conn
+  (->> (biffs/q conn*
                 {:select [[:ad.credit/ad :xt/id]
                           [[:sum :ad.credit/amount] :ad/amount-pending]]
                  :from :ad-credit
@@ -174,9 +174,9 @@
   (when (= charge-status :pending)
     (get-stripe-status (assoc ctx :biff.fx/pathom credit))))
 
-(defresolver pending-charge [{:keys [biff/conn]} {:keys [xt/id]}]
+(defresolver pending-charge [{:keys [biff/conn*]} {:keys [xt/id]}]
   {::pco/output [{:ad/pending-charge [:xt/id]}]}
-  (when-some [credit (first (biffx/q conn
+  (when-some [credit (first (biffs/q conn*
                                      {:select :xt/id
                                       :from :ad-credit
                                       :where [:and
@@ -184,10 +184,10 @@
                                               [:= :ad.credit/charge-status [:lift :pending]]]}))]
     {:ad/pending-charge credit}))
 
-(defresolver pending-charges [{:keys [biff/conn]} _]
+(defresolver pending-charges [{:keys [biff/conn*]} _]
   {::pco/output [{:admin/pending-charges [:xt/id]}]}
   {:admin/pending-charges
-   (biffx/q conn
+   (biffs/q conn*
             {:select :xt/id
              :from :ad-credit
              :where [:= :ad.credit/charge-status [:lift :pending]]})})

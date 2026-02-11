@@ -2,7 +2,6 @@
   (:require
    [clojure.tools.logging :as log]
    [com.biffweb :refer [q]]
-   [com.biffweb.experimental :as biffx]
    [com.wsscode.pathom3.connect.indexes :as pci]
    [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
    [com.wsscode.pathom3.interface.eql :as p.eql]
@@ -18,22 +17,22 @@
 (defn- median [xs]
   (first (take (/ (count xs) 2) xs)))
 
-(defresolver item-candidates [{:keys [biff/conn]} _]
+(defresolver item-candidates [{:keys [biff/conn*]} _]
   {::pco/output [{::item-candidates [:xt/id
                                      :item/url]}]}
   {::item-candidates
-   (biffx/q conn
+   (biffs/q conn*
             {:select [:xt/id :item/url]
              :from :item
              :where [:= :item.direct/candidate-status [:lift :approved]]})})
 
 
-(defresolver ads [{:biff/keys [conn now]} _]
+(defresolver ads [{:biff/keys [conn* now]} _]
   {::pco/output [{::all-ads [:xt/id]}
                  {::ad-candidates [:xt/id]}]}
   (let [all-ads (into []
                       (remove (comp nil? :xt/id))
-                      (biffx/q conn
+                      (biffs/q conn*
                                {:select [:ad._id
                                          :ad/approve-state
                                          :ad/paused
@@ -55,7 +54,7 @@
        vals
        (mapv #(apply merge %))))
 
-(defn ad-interaction-info [conn]
+(defn ad-interaction-info [conn*]
   (->> {:union [{:select [[:ad._id :ad-id]
                           [:reclist/user :user-id]
                           [[:count :skip._id] :n-skips]
@@ -71,11 +70,11 @@
                           [[:max :ad.click/created-at] :last-clicked]]
                  :from :ad
                  :join [:ad-click [:= :ad._id :ad.click/ad]]}]}
-       (biffx/q conn)
+       (biffs/q conn*)
        (remove (comp nil? :ad-id))
        (full-outer-join (juxt :ad-id :user-id))))
 
-(defresolver ad-ratings [{:keys [biff/conn]} {::keys [all-ads]}]
+(defresolver ad-ratings [{:keys [biff/conn*]} {::keys [all-ads]}]
   {::pco/input [{::all-ads [:xt/id]}]
    ::pco/output [{::ad-ratings [:rating/candidate
                                 :rating/user
@@ -83,7 +82,7 @@
                                 :rating/created-at]}]}
   {::ad-ratings (vec
                  (for [{:keys [ad-id user-id n-skips last-skipped last-clicked]}
-                       (ad-interaction-info conn)]
+                       (ad-interaction-info conn*)]
                    {:rating/candidate ad-id
                     :rating/user user-id
                     :rating/value (if last-clicked
@@ -91,7 +90,7 @@
                                     (max 0 (- 0.5 (* 0.1 n-skips))))
                     :rating/created-at (or last-clicked last-skipped)}))})
 
-(defresolver dedupe-item-id [{:keys [biff/conn]} {::keys [item-candidates]}]
+(defresolver dedupe-item-id [{:keys [biff/conn*]} {::keys [item-candidates]}]
   {::pco/input [{::item-candidates [:xt/id
                                     :item/url]}]
    ::pco/output [::dedupe-item-id]}
@@ -99,7 +98,7 @@
         item-id->url (into {}
                            (map (juxt :xt/id :item/url))
                            (when candidate-urls
-                             (biffx/q conn
+                             (biffs/q conn*
                                       {:select [:xt/id :item/url]
                                        :from :item
                                        :where [:in :item/url candidate-urls]})))
@@ -108,7 +107,7 @@
                                      item-candidates)]
     {::dedupe-item-id (update-vals item-id->url url->item-candidate-id)}))
 
-(defresolver item-ratings [{:keys [biff/conn]} {::keys [item-candidates dedupe-item-id]}]
+(defresolver item-ratings [{:keys [biff/conn*]} {::keys [item-candidates dedupe-item-id]}]
   {::pco/input [{::item-candidates [:xt/id
                                     :item/url]}
                 ::dedupe-item-id]
@@ -120,7 +119,7 @@
         all-item-ids (when candidate-urls
                        (not-empty
                         (mapv :xt/id
-                              (biffx/q conn
+                              (biffs/q conn*
                                        {:select :xt/id
                                         :from :item
                                         :where [:in :item/url candidate-urls]}))))
@@ -130,7 +129,7 @@
                       (update usit :user-item/item dedupe-item-id))
         usit-key (juxt :user-item/user :user-item/item)
         item-usits (->> (when all-item-ids
-                          (biffx/q conn
+                          (biffs/q conn*
                                    {:select [:user-item/user
                                              :user-item/item
                                              :user-item/favorited-at
@@ -150,7 +149,7 @@
                         (tick/zoned-date-time? a) (tick/max a b)
                         :else b))
         skip-usits (->> (when all-item-ids
-                          (biffx/q conn
+                          (biffs/q conn*
                                    {:select [[:reclist/user :user-item/user]
                                              [:skip/item :user-item/item]
                                              [[:count :skip._id] :user-item/skips]
@@ -283,13 +282,13 @@
 (defresolver item-candidate-ids [{::keys [item-candidates]}]
   {:yakread.model/item-candidate-ids (into #{} (map :xt/id) item-candidates)})
 
-(defresolver all-liked-items [{:keys [biff/conn]} _]
+(defresolver all-liked-items [{:keys [biff/conn*]} _]
   {::pco/output [{:yakread.model/all-liked-items
                   [:item/id :item/n-likes]}]}
   {:yakread.model/all-liked-items
    (into []
          (remove (comp nil? :item/id))
-         (biffx/q conn
+         (biffs/q conn*
                   {:select [[:user-item/item :item/id]
                             [[:count :xt/id] :item/n-likes]]
                    :from :user-item

@@ -1,7 +1,6 @@
 (ns com.yakread.work.materialized-views
   (:require
    [com.yakread.util.biff-staging :as biffs]
-   [com.biffweb.experimental :as biffx]
    [com.wsscode.pathom3.connect.operation :as pco :refer [?]]
    [com.yakread.lib.fx :as fx]
    [xtdb.api :as-alias xt]
@@ -34,13 +33,13 @@
                         :mv.sub/affinity-high affinity-high*}]]})))
 
   :current-item
-  (fn [{:biff/keys [conn job]}]
+  (fn [{:biff/keys [conn* job]}]
     (let [{:user-item/keys [user item viewed-at]} job
 
           {current-item :user-item/item
            current-item-viewed-at :user-item/viewed-at}
           (first
-           (biffx/q conn
+           (biffs/q conn*
                     {:select [:user-item/item :user-item/viewed-at]
                      :from :mv-user
                      :join [:user-item [:= :user-item/item :mv.user/current-item]]
@@ -64,7 +63,7 @@
 
 (fx/defmachine on-tx
   :start
-  (fn [{:keys [biff/conn record]}]
+  (fn [{:keys [biff/conn* record]}]
     {:biff.fx/queue
      {:jobs
       (for [job
@@ -72,8 +71,8 @@
              (cond
                (:user-item/user record)
                (concat
-                (when-some [sub-id (-> (biffx/q
-                                        conn
+                (when-some [sub-id (-> (biffs/q
+                                        conn*
                                         {:select [[[:coalesce :item.email/sub :sub._id]
                                                    :sub/id]]
                                          :from :item
@@ -89,8 +88,8 @@
                 [(merge record {:view :current-item})])
 
                (:skip/item record)
-               (when-some [sub-id (-> (biffx/q
-                                       conn
+               (when-some [sub-id (-> (biffs/q
+                                       conn*
                                        {:select [[[:coalesce :item.email/sub :sub._id]
                                                   :sub/id]]
                                         :from :reclist

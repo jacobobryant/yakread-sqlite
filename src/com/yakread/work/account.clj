@@ -2,7 +2,6 @@
   (:require
    [clojure.java.io :as io]
    [clojure.tools.logging :as log]
-   [com.biffweb.experimental :as biffx]
    [com.yakread.util.biff-staging :as biffs]
    [com.wsscode.pathom3.connect.operation :refer [?]]
    [com.yakread.lib.core :as lib.core]
@@ -101,7 +100,7 @@
         :biff.fx/next :delete-email-batch}]))
 
   :delete-email-batch
-  (fn [{:keys [biff/conn biff/job session ::email-ids]}]
+  (fn [{:keys [biff/conn* biff/job session ::email-ids]}]
     (let [{:keys [user/id]} job
           email-ids (or email-ids
                         (->> {:select :item._id
@@ -110,10 +109,10 @@
                                       [:= :sub/user (:uid session)]
                                       [:is-not :sub.email/from nil]]
                               :join [:item [:= :item.email/sub :sub._id]]}
-                             (biffx/q conn)
+                             (biffs/q conn*)
                              (mapv :xt/id)))
           batch (when (not-empty email-ids)
-                  (biffx/q conn
+                  (biffs/q conn*
                            {:select [:xt/id :item/content-key :item.email/raw-content-key]
                             :from :item
                             :where [:in :xt/id (take 500 email-ids)]}))

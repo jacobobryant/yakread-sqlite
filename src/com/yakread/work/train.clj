@@ -2,7 +2,6 @@
   (:require
    [clojure.tools.logging :as log]
    [com.biffweb :as biff]
-   [com.biffweb.experimental :as biffx]
    [com.yakread.util.biff-staging :as biffs]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.fx :as fx]
@@ -35,7 +34,7 @@
 
 (fx/defmachine queue-add-candidate
   :start
-  (fn [{:keys [biff/conn biff/queues yakread.work.queue-add-candidate/enabled]}]
+  (fn [{:keys [biff/conn* biff/queues yakread.work.queue-add-candidate/enabled]}]
     (when-let [urls (and enabled
                          (= 0 (.size (:work.train/add-candidate queues)))
                          (->> {:select :item/url
@@ -47,7 +46,7 @@
                                         :join [:user-item [:= :item._id :user-item/item]]
                                         :where [:is-not :user-item/favorited-at nil]}]
                                :having [:not [:bool_or [:coalesce [:= :item/doc-type "item/direct"] false]]]}
-                              (biffx/q conn)
+                              (biffs/q conn*)
                               (mapv :item/url)
                               not-empty))]
       (log/info "Found" (count urls) "candidate URLs")

@@ -21,8 +21,8 @@
       (when-not (reserved username)
         username))))
 
-(defn email-username-taken? [conn username]
-  (let [result (-> (biffs/q conn
+(defn email-username-taken? [conn* username]
+  (let [result (-> (biffs/q conn*
                             {:select [[[:or
                                         [:exists
                                          {:select [[[:inline 1]]]

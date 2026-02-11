@@ -3,7 +3,6 @@
    [clojure.string :as str]
    [clojure.tools.logging :as log]
    [com.biffweb :as biff]
-   [com.biffweb.experimental :as biffx]
    [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
    [com.yakread.lib.form :as lib.form]
    [com.yakread.lib.fx :as fx]
@@ -63,13 +62,13 @@
       {:status 204}))
 
   :update-plan
-  (fn [{:keys [biff/conn stripe/quarter-price-id body-params]}]
+  (fn [{:keys [biff/conn* stripe/quarter-price-id body-params]}]
     (let [{:keys [customer items cancel_at]} (get-in body-params [:data :object])
           price-id (get-in items [:data 0 :price :id])
           plan (if (= quarter-price-id price-id)
                  :quarter
                  :annual)
-          [{user-id :xt/id}] (biffx/q conn
+          [{user-id :xt/id}] (biffs/q conn*
                                       {:select :xt/id
                                        :from :user
                                        :where [:= :user/customer-id customer]})]
@@ -83,9 +82,9 @@
        :status 204}))
 
   :delete-plan
-  (fn [{:keys [biff/conn body-params]}]
+  (fn [{:keys [biff/conn* body-params]}]
     (let [{:keys [customer]} (get-in body-params [:data :object])
-          [{user-id :xt/id}] (biffx/q conn
+          [{user-id :xt/id}] (biffs/q conn*
                                       {:select :xt/id
                                        :from :user
                                        :where [:= :user/customer-id customer]})]

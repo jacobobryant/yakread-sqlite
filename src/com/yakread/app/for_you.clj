@@ -1,7 +1,6 @@
 (ns com.yakread.app.for-you
   (:require
    [com.biffweb :as biff]
-   [com.biffweb.experimental :as biffx]
    [com.wsscode.pathom3.connect.operation :refer [?]]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.middleware :as lib.mid]
@@ -10,13 +9,13 @@
    [com.yakread.routes :as routes]
    [com.yakread.util.biff-staging :as biffs]))
 
-(defn- skip-tx [{:keys [biff/conn t]
+(defn- skip-tx [{:keys [biff/conn* t]
                  new-skips :skip
                  user-id :user/id
                  rec-id :rec/id}]
   (when (and new-skips t)
     (let [[{[reclist] :reclists existing-skips :skips}]
-          (biffx/q conn
+          (biffs/q conn*
                    (biffs/bundle
                     {:reclists {:select [:xt/id :reclist/clicked]
                                 :from :reclist
@@ -63,18 +62,18 @@
 
 (fx/defroute record-item-click
   :post
-  (fn [{:biff/keys [conn safe-params now]}]
+  (fn [{:biff/keys [conn* safe-params now]}]
     (let [{:keys [action t skip] item-id :item/id user-id :user/id} safe-params]
       (if (not= action :action/click-item)
         (ui/on-error {:status 400})
         {:status 204
          :biff.fx/tx (concat
-                      (skip-tx {:biff/conn conn
+                      (skip-tx {:biff/conn* conn*
                                 :user/id user-id
                                 :rec/id item-id
                                 :skip skip
                                 :t t})
-                      (when (empty? (biffx/q conn
+                      (when (empty? (biffs/q conn*
                                              {:select 1
                                               :from :user-item
                                               :where [:and
@@ -90,7 +89,7 @@
 
 (fx/defroute record-ad-click
   :post
-  (fn [{:biff/keys [conn safe-params now]}]
+  (fn [{:biff/keys [conn* safe-params now]}]
     (let [{:keys [action skip t ad/click-cost ad.click/source]
            ad-id :ad/id
            user-id :user/id} safe-params]
@@ -98,13 +97,13 @@
         (ui/on-error {:status 400})
         {:status 204
          :biff.fx/tx (concat
-                      (skip-tx {:biff/conn conn
+                      (skip-tx {:biff/conn* conn*
                                 :user/id user-id
                                 :rec/id ad-id
                                 :skip  skip
                                 :t t})
                       (when (empty?
-                             (biffx/q conn
+                             (biffs/q conn*
                                       {:select 1
                                        :from :ad-click
                                        :where [:and

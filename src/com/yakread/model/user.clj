@@ -27,7 +27,7 @@
   (when (:uid session)
     {:user/current {:xt/id (:uid session)}}))
 
-(defresolver suggested-email-username [{:keys [biff/conn]} {:user/keys [email email-username]}]
+(defresolver suggested-email-username [{:keys [biff/conn*]} {:user/keys [email email-username]}]
   #::pco{:input [:user/email (? :user/email-username)]
          :output [:user/suggested-email-username]}
   (when-not email-username
@@ -37,7 +37,7 @@
                             str/lower-case
                             (str/replace #"(\+.*|yakread)" "")
                             lib.user/normalize-email-username)]
-      (when-not (some->> suggested (lib.user/email-username-taken? conn))
+      (when-not (some->> suggested (lib.user/email-username-taken? conn*))
         {:user/suggested-email-username suggested}))))
 
 (defresolver user-id [{:keys [xt/id user/email]}]
@@ -70,10 +70,10 @@
                        (or (not cancel-at)
                            (tick/<= now cancel-at))))})
 
-(defresolver mv [{:keys [biff/conn]} {:user/keys [id]}]
+(defresolver mv [{:keys [biff/conn*]} {:user/keys [id]}]
   {::pco/output [{:user/mv [:xt/id]}]}
   (when-some [mv-user
-              (first (biffs/q conn
+              (first (biffs/q conn*
                               {:select :xt/id
                                :from :mv-user
                                :where [:= :mv.user/user id]

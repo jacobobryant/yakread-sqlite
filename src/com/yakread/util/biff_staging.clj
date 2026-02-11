@@ -24,10 +24,8 @@
    [taoensso.nippy :as nippy])
   (:import
    [java.nio ByteBuffer]
-   [java.sql Connection]
    [java.time Instant ZonedDateTime]
-   [java.util UUID]
-   [javax.sql DataSource]))
+   [java.util UUID]))
 
 (defn doc-asts [{:keys [registry] :as malli-opts}]
   (for [schema-k (keys (malr/schemas (:registry malli-opts)))
@@ -886,25 +884,17 @@
                    [xt-key coerced-v])))
           row)))
 
-(defn- sqlite-conn?
-  "Returns true if conn is a JDBC/SQLite connection (as opposed to an XTDB node)."
-  [conn]
-  (or (instance? Connection conn)
-      (instance? DataSource conn)))
-
 (defn q
-  "Query using an XTDB-style HoneySQL query. Detects connection type and routes
-   accordingly: XTDB nodes use biffx/q, JDBC/SQLite connections translate the
-   query to SQLite format."
+  "Query SQLite using an XTDB-style HoneySQL query.
+   Translates the query to SQLite format, runs it, and converts results
+   back to XTDB-compatible format. conn must be a JDBC/SQLite connection."
   [conn query]
-  (if (sqlite-conn? conn)
-    (let [table (infer-table-from-query query)
-          sqlite-tbl (when table (sqlite-table table))
-          read-fns (when sqlite-tbl
-                     (sqlite/read-coercions @(requiring-resolve 'com.yakread/malli-opts*) sqlite-tbl))
-          sqlite-query (translate-query query)
-          formatted (sql/format sqlite-query)
-          results (jdbc/execute! conn formatted
-                                 {:builder-fn rs/as-unqualified-kebab-maps})]
-      (mapv #(coerce-result-row % table read-fns) results))
-    (biffx/q conn query)))
+  (let [table (infer-table-from-query query)
+        sqlite-tbl (when table (sqlite-table table))
+        read-fns (when sqlite-tbl
+                   (sqlite/read-coercions @(requiring-resolve 'com.yakread/malli-opts*) sqlite-tbl))
+        sqlite-query (translate-query query)
+        formatted (sql/format sqlite-query)
+        results (jdbc/execute! conn formatted
+                               {:builder-fn rs/as-unqualified-kebab-maps})]
+    (mapv #(coerce-result-row % table read-fns) results)))

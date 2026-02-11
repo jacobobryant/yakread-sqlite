@@ -21,10 +21,10 @@
                                                             :email-username username}))}})]
   (fx/defroute set-username
     :post
-    (fn [{:keys [biff/conn session params]}]
+    (fn [{:keys [biff/conn* session params]}]
       (let [username (lib.user/normalize-email-username (:username params))]
         (cond
-          (not-empty (biffx/q conn {:select 1
+          (not-empty (biffs/q conn* {:select 1
                                     :from :user
                                     :where [:and
                                             [:= :xt/id (:uid session)]
@@ -34,7 +34,7 @@
           (or (empty? username)
               ;; TODO
               (not-empty
-               (biffx/q conn
+               (biffs/q conn*
                         {:union
                          [{:select 1
                            :from :user
@@ -52,9 +52,9 @@
                                {:xt (biffx/assert-unique :user {:user/email-username username})
                                 :sqlite nil}]}))))))
 
-(defn- subscribe-feeds-tx [{:keys [biff/conn biff/now session]} feed-urls]
+(defn- subscribe-feeds-tx [{:keys [biff/conn* biff/now session]} feed-urls]
   (let [user-id (:uid session)
-        results (biffx/q conn
+        results (biffs/q conn*
                          {:select [[:feed._id :feed-id]
                                    :feed/url
                                    [:sub._id :sub-id]]

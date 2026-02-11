@@ -3,7 +3,6 @@
    [clojure.string :as str]
    [clojure.tools.logging :as log]
    [com.biffweb :as biff]
-   [com.biffweb.experimental :as biffx]
    [com.yakread.lib.content :as lib.content]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.fx :as fx]
@@ -15,9 +14,9 @@
 
 (def ^:private epoch (java.time.Instant/ofEpochMilli 0))
 
-(defn active-user-ids [conn now]
+(defn active-user-ids [conn* now]
   (let [t0 (tick/<< now (tick/of-months 6))]
-    (->> (biffx/q conn
+    (->> (biffs/q conn*
                   {:union [{:select [[:xt/id :user/id]]
                             :from :user
                             :where [:< t0 :user/joined-at]}
@@ -35,11 +34,11 @@
 ;; TODO modify sync waiting period based on :feed/failed-syncs
 (fx/defmachine sync-all-feeds!
   :start
-  (fn [{:keys [biff/conn biff/now yakread.work.sync-all-feeds/enabled biff/queues]}]
+  (fn [{:keys [biff/conn* biff/now yakread.work.sync-all-feeds/enabled biff/queues]}]
     (when (and enabled (= 0 (.size (:work.subscription/sync-feed queues))))
-      (let [user-ids (active-user-ids conn now)
+      (let [user-ids (active-user-ids conn* now)
             t0 (tick/<< now (tick/of-hours 12))
-            feeds (biffx/q conn
+            feeds (biffs/q conn*
                            {:select :feed._id
                             :from :sub
                             :join [:feed [:= :sub.feed/feed :feed._id]]
@@ -68,9 +67,9 @@
 ;; TODO update url for feeds that change their URL
 (fx/defmachine sync-feed!
   :start
-  (fn [{:biff/keys [conn base-url] {:keys [feed/id]} :biff/job}]
+  (fn [{:biff/keys [conn* base-url] {:keys [feed/id]} :biff/job}]
     (let [[{:feed/keys [url etag last-modified failed-syncs]}]
-          (biffx/q conn {:select [:feed/url
+          (biffs/q conn* {:select [:feed/url
                                   :feed/etag
                                   :feed/last-modified
                                   :feed/failed-syncs]
@@ -91,7 +90,7 @@
        :feed/failed-syncs failed-syncs}))
 
   :parse
-  (fn [{:keys [biff/conn biff/job biff.fx/http biff/now feed/failed-syncs]}]
+  (fn [{:keys [biff/conn* biff/job biff.fx/http biff/now feed/failed-syncs]}]
     (let [{feed-id :feed/id}          job
           {:keys [headers exception]} http
           remus-output                (when-not exception
@@ -160,7 +159,7 @@
           titles   (not-empty (keep :item/title items))
           guids    (not-empty (keep :item.feed/guid items))
           existing (when (or titles guids)
-                     (biffx/q conn
+                     (biffs/q conn*
                               {:select [:item/title :item.feed/guid]
                                :from :item
                                :where [:and

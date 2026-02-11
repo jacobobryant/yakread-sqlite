@@ -8,13 +8,13 @@
 
 ;; TODO rethink what things should be in here vs model.recommend
 
-(defn recent-items [{:biff/keys [conn now]
+(defn recent-items [{:biff/keys [conn* now]
                      :user/keys [digest-last-sent]
                      :keys [all-item-ids]}]
   ;; TODO make this requery for email/rss items
   (let [t0 (cond-> (tick/<< now (tick/new-period 2 :weeks))
              digest-last-sent (tick/max digest-last-sent))]
-    (biffs/q conn
+    (biffs/q conn*
              {:select :xt/id
               :from :item
               :where [:and
@@ -23,25 +23,25 @@
               :order-by [[:item/ingested-at :desc]]
               :limit 50})))
 
-(defresolver digest-sub-items [{:biff/keys [conn now]} {:user/keys [digest-last-sent subscriptions]}]
+(defresolver digest-sub-items [{:biff/keys [conn* now]} {:user/keys [digest-last-sent subscriptions]}]
   {::pco/input [(? :user/digest-last-sent)
                 {:user/subscriptions [{:sub/items [:xt/id]}]}]
    ::pco/output [{:user/digest-sub-items [:xt/id]}]}
   {:user/digest-sub-items
    (recent-items
-    {:biff/conn conn
+    {:biff/conn* conn*
      :biff/now now
      :user/digest-last-sent digest-last-sent
      :all-item-ids (mapv :xt/id (mapcat :sub/items subscriptions))})})
 
-(defresolver digest-bookmarks [{:biff/keys [conn now]} {:user/keys [digest-last-sent bookmarks]}]
+(defresolver digest-bookmarks [{:biff/keys [conn* now]} {:user/keys [digest-last-sent bookmarks]}]
   {::pco/input [(? :user/digest-last-sent)
                 {:user/bookmarks [:xt/id]}]
    ::pco/output [{:user/digest-bookmarks [:xt/id]}]}
   ;; TODO bookmark recency should be based on :user-item/bookmarked-at, not :item/ingested-at
   {:user/digest-bookmarks
    (recent-items
-    {:biff/conn conn
+    {:biff/conn* conn*
      :biff/now now
      :user/digest-last-sent digest-last-sent
      :all-item-ids (mapv :xt/id bookmarks)})})

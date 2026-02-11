@@ -1,7 +1,7 @@
 (ns com.yakread.model.recommend
   (:require
    [clojure.data.generators :as gen]
-   [com.biffweb.experimental :as biffx]
+   [com.yakread.util.biff-staging :as biffs]
    [com.rpl.specter :as sp]
    [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
    [com.yakread.lib.core :as lib.core]
@@ -86,7 +86,7 @@
 
 (defresolver sub-affinity*
   "Returns the 10 most recent interactions (e.g. viewed, liked, etc) for a given sub."
-  [{:keys [biff/conn]} subscriptions]
+  [{:keys [biff/conn*]} subscriptions]
   {::pco/input [:sub/id
                 :sub/title
                 {:sub/user [:xt/id]}
@@ -102,7 +102,7 @@
         user+sub->skips      (into {}
                                    (map (fn [{:keys [reclist/user sub/id zdts]}]
                                           [[user id] zdts]))
-                                   (biffx/q conn
+                                   (biffs/q conn*
                                             {:union-all
                                              (for [{:sub/keys [id user items]} subscriptions]
                                                {:select [:reclist/user
@@ -115,7 +115,7 @@
                                                         [:= :reclist/user (:xt/id user)]
                                                         [:in :skip/item (mapv :xt/id items)]]})}))
         user+sub->user-items (group-by (juxt :user-item/user :sub/id)
-                                       (biffx/q conn
+                                       (biffs/q conn*
                                                 {:union-all
                                                  (for [{:sub/keys [id user items]} subscriptions]
                                                    {:select [:user-item/user
@@ -387,10 +387,10 @@
   {:item/n-skipped-with-digests (+ n-digest-sends n-skipped)})
 
 ;; TODO materialize this
-(defresolver read-urls [{:keys [biff/conn]} {:keys [user/id]}]
+(defresolver read-urls [{:keys [biff/conn*]} {:keys [user/id]}]
   {:user/read-urls (into #{}
                          (keep :item/url)
-                         (biffx/q conn
+                         (biffs/q conn*
                                   {:select :item/url
                                    :from :item
                                    :join [:user-item [:= :item._id :user-item/item]]
@@ -464,10 +464,10 @@
 (defresolver ad-score [{:keys [candidate/score ad/effective-bid]}]
   {:candidate/ad-score (* (max 0.0001 score) effective-bid)})
 
-(defresolver clicked-ads [{:keys [biff/conn]} {:keys [user/id]}]
+(defresolver clicked-ads [{:keys [biff/conn*]} {:keys [user/id]}]
   {:user/clicked-ads (into #{}
                            (map :ad.click/ad)
-                           (biffx/q conn
+                           (biffs/q conn*
                                     {:select :ad.click/ad
                                      :from :ad-click
                                      :where [:= :ad.click/user id]}))})

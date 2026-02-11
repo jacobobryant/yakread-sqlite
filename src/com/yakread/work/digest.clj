@@ -5,7 +5,6 @@
    [com.yakread.util.biff-staging :as biffs]
    [clojure.tools.logging :as log]
    [com.biffweb :as biff]
-   [com.biffweb.experimental :as biffx]
    [com.wsscode.pathom3.connect.operation :as pco :refer [?]]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.fx :as fx]
@@ -39,7 +38,7 @@
 
 (fx/defmachine queue-prepare-digest
   :start
-  (fn [{:keys [biff/conn biff/queues yakread.work.digest/enabled biff/now]}]
+  (fn [{:keys [biff/conn* biff/queues yakread.work.digest/enabled biff/now]}]
     ;; There is a small race condition where the queue could be empty even though the
     ;; :work.digest/prepare-digest consumer(s) are still processing jobs, in which case the
     ;; corresponding users could receive two digests. To deal with that, we could
@@ -47,7 +46,7 @@
     ;; each user and make sure it isn't within the past e.g. 6 hours. Probably doesn't matter
     ;; though. Queues should probably expose the number of in-progress jobs.
     (when (and enabled (= 0 (.size (:work.digest/prepare-digest queues))))
-      (let [users (->> (biffx/q conn
+      (let [users (->> (biffs/q conn*
                                 {:select [:xt/id
                                           :user/email
                                           :user/digest-last-sent

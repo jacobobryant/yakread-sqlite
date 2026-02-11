@@ -3,7 +3,6 @@
    [clojure.set :as set]
    [clojure.string :as str]
    [com.biffweb :as biff]
-   [com.biffweb.experimental :as biffx]
    [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
    [com.yakread.lib.content :as lib.content]
    [com.yakread.lib.core :as lib.core]
@@ -57,9 +56,9 @@
 
 (fx/defroute receive-payment-method
   :get
-  (fn [{:keys [biff/conn biff/secret params]}]
+  (fn [{:keys [biff/conn* biff/secret params]}]
     (let [{:keys [session-id]} params
-          [{ad-id :xt/id}] (biffx/q conn
+          [{ad-id :xt/id}] (biffs/q conn*
                                     {:select :xt/id
                                      :from :ad
                                      :where [:= :ad/session-id session-id]})]
