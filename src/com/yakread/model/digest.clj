@@ -1,9 +1,9 @@
 (ns com.yakread.model.digest
   (:require
    [clojure.string :as str]
+   [com.biffweb.experimental :as biffx]
    [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
    [com.yakread.routes :as routes]
-   [com.yakread.util.biff-staging :as biffs]
    [tick.core :as tick]))
 
 ;; TODO rethink what things should be in here vs model.recommend
@@ -14,7 +14,7 @@
   ;; TODO make this requery for email/rss items
   (let [t0 (cond-> (tick/<< now (tick/new-period 2 :weeks))
              digest-last-sent (tick/max digest-last-sent))]
-    (biffs/q conn
+    (biffx/q conn
              {:select :xt/id
               :from :item
               :where [:and

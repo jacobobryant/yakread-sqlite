@@ -1,9 +1,8 @@
 (ns com.yakread.lib.user
   (:require
    [clojure.string :as str]
-   [com.yakread.lib.core :as lib.core]
-   [honey.sql :as sql]
-   [next.jdbc :as jdbc]))
+   [com.biffweb.experimental :as biffx]
+   [com.yakread.lib.core :as lib.core]))
 
 (let [reserved #{"hello"
                  "support"
@@ -23,19 +22,18 @@
         username))))
 
 (defn email-username-taken? [conn username]
-  (-> (jdbc/execute-one! conn
-                         (sql/format
-                          {:select [[[:or
-                                      [:exists
-                                       {:select [[[:inline 1]]]
-                                        :from :user
-                                        :where [:= :email-username username]
-                                        :limit [:inline 1]}]
-                                      [:exists
-                                       {:select [[[:inline 1]]]
-                                        :from :deleted-user
-                                        :where [:= :email-username-hash (lib.core/sha256 username)]
-                                        :limit [:inline 1]}]]
-                                     :taken]]}))
-      :taken
-      (= 1)))
+  (-> (biffx/q conn
+               {:select [[[:or
+                           [:exists
+                            {:select [[[:inline 1]]]
+                             :from :user
+                             :where [:= :user/email-username username]
+                             :limit [:inline 1]}]
+                           [:exists
+                            {:select [[[:inline 1]]]
+                             :from :deleted-user
+                             :where [:= :deleted-user/email-username-hash (lib.core/sha256 username)]
+                             :limit [:inline 1]}]]
+                          :taken]]})
+      first
+      :taken))

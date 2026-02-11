@@ -4,27 +4,22 @@
   [com.yakread.model.moderation :refer :all]],
  :tests
  [{:eval
-   (t/with-sqlite
-    [conn
+   (t/with-node
+    [node
      {:item
-      [{:xt/id (t/uuid 1),
+      [{:xt/id "item1",
         :item/url "url1",
-        :item/doc-type 2,
-        :item/ingested-at (t/zdt 2000),
-        :item.direct/candidate-status 2}
-       {:xt/id (t/uuid 2),
-        :item/url "url2",
-        :item/doc-type 2,
-        :item/ingested-at (t/zdt 2000)}
-       {:xt/id (t/uuid 3),
+        :item/doc-type :item/direct,
+        :item.direct/candidate-status :approved}
+       {:xt/id "item2", :item/url "url2", :item/doc-type :item/direct}
+       {:xt/id "item3",
         :item/url "url3",
-        :item/doc-type 2,
-        :item/ingested-at (t/zdt 2000)}]}]
+        :item/doc-type :item/direct}]}]
     (next-batch
-     {:biff/conn conn,
+     {:biff/conn node,
       :yakread.model/all-liked-items
-      [{:item/id (t/uuid 1), :item/n-likes 2}
-       {:item/id (t/uuid 2), :item/n-likes 3}]}
+      [{:item/id "item1", :item/n-likes 2}
+       {:item/id "item2", :item/n-likes 3}]}
      {})),
    :result
    {:admin.moderation/remaining 1,
@@ -32,9 +27,8 @@
     :admin.moderation/blocked 0,
     :admin.moderation/ingest-failed 0,
     :admin.moderation/next-batch
-    [{:xt/id #uuid "00020000-0000-0000-0000-000000000002",
+    [{:xt/id "item2",
       :item/url "url2",
-      :item/doc-type 2,
-      :item.direct/candidate-status nil,
+      :item/doc-type :item/direct,
       :item/n-likes 3}]}}
   _]}
