@@ -11,6 +11,7 @@
    [clojure.walk :as walk]
    [com.biffweb :as biff]
    [com.biffweb.experimental :as biffx]
+   [com.yakread.lib.sqlite :as sqlite]
    [com.wsscode.pathom3.connect.operation :as pco]
    [com.wsscode.pathom3.connect.planner :as-alias pcp]
    [com.wsscode.pathom3.connect.runner :as-alias pcr]
@@ -23,8 +24,10 @@
    [taoensso.nippy :as nippy])
   (:import
    [java.nio ByteBuffer]
+   [java.sql Connection]
    [java.time Instant ZonedDateTime]
-   [java.util UUID]))
+   [java.util UUID]
+   [javax.sql DataSource]))
 
 (defn doc-asts [{:keys [registry] :as malli-opts}]
   (for [schema-k (keys (malr/schemas (:registry malli-opts)))
@@ -645,6 +648,33 @@
                    [[:nest_many query] k])
                  k->query)})
 
+;; Mapping of XTDB enum string values to SQLite integer values.
+;; In XTDB, some enums are stored as strings like "item/direct",
+;; while in SQLite they are stored as integer indices.
+(def xt-enum-string->sqlite-int
+  {"item/feed" 0, "item/email" 1, "item/direct" 2
+   "sub/feed" 0, "sub/email" 1
+   "digest.item/icymi" 0, "digest.item/discover" 1
+   "ad/pending" 0, "ad/approved" 1, "ad/rejected" 2
+   "ad.click/web" 0, "ad.click/email" 1
+   "ad.credit/charge" 0, "ad.credit/manual" 1
+   "ad.credit/pending" 0, "ad.credit/confirmed" 1, "ad.credit/failed" 2
+   "feed/approved" 0, "feed/blocked" 1
+   "user/quarter" 0, "user/annual" 1
+   "item.direct/ingest-failed" 0, "item.direct/blocked" 1, "item.direct/approved" 2})
+
+;; Mapping of keyword enum values to SQLite integer values.
+(def xt-enum-kw->sqlite-int
+  {:feed 0, :email 1, :direct 2
+   :icymi 0, :discover 1
+   :pending 0, :approved 1, :rejected 2
+   :web 0
+   :charge 0, :manual 1
+   :confirmed 1, :failed 2
+   :blocked 1
+   :ingest-failed 0
+   :quarter 0, :annual 1})
+
 (defn- coerce-where-clause
   "Recursively walk a where clause, renaming keys and coercing values for SQLite."
   [where table]
@@ -652,10 +682,17 @@
    (fn [x]
      (cond
        (= x :xt/id) :id
-       (and (keyword? x) (contains? xt->sqlite-key x)) (get xt->sqlite-key x)
+       (and (keyword? x) (contains? xt->sqlite-key x))
+       (keyword (name (get xt->sqlite-key x)))
+       ;; Strip namespace from column-reference keywords (e.g. :user/email -> :email)
+       (and (keyword? x) (namespace x))
+       (keyword (name x))
        (uuid? x) (uuid->bytes x)
        (instance? Instant x) (.toEpochMilli ^Instant x)
        (instance? ZonedDateTime x) (.toEpochMilli (.toInstant ^ZonedDateTime x))
+       ;; Convert XTDB enum strings to SQLite integers
+       (and (string? x) (contains? xt-enum-string->sqlite-int x))
+       (get xt-enum-string->sqlite-int x)
        :else x))
    where))
 
@@ -715,6 +752,8 @@
     (vector? (:from query)) (first (:from query))
     :else nil))
 
+(declare translate-query)
+
 (defn- rename-select-key
   "Rename a key in a select clause from XTDB to SQLite format.
    Handles: bare keywords, aliased pairs, aggregates."
@@ -734,11 +773,14 @@
     (keyword? select) (rename-select-key select table)
     ;; :select 1 -> :select 1
     (number? select) select
+    ;; subquery map in select
+    (map? select) (translate-query select)
     ;; :select [:col1 :col2] -> :select [:col1 :col2]
     (vector? select) (mapv (fn [item]
                              (cond
                                (keyword? item) (rename-select-key item table)
                                (vector? item) (translate-select item table)
+                               (map? item) (translate-query item)
                                :else item))
                            select)
     :else select))
@@ -789,19 +831,26 @@
 
 (defn- result-key->xt-key
   "Convert a SQLite result column key back to an XTDB key."
-  [k table]
-  (let [;; SQLite results come back as :column_name, need to convert to :table/column-name
-        sqlite-key (keyword (name (sqlite-table table))
-                            (str/replace (name k) "_" "-"))
-        id-key (sqlite-id-key (sqlite-table table))]
-    (cond
-      ;; :id -> :xt/id
-      (= k :id) :xt/id
-      (= sqlite-key id-key) :xt/id
-      ;; Check reverse mapping
-      (contains? sqlite->xt-key sqlite-key) (get sqlite->xt-key sqlite-key)
-      ;; Default: use the sqlite-qualified key
-      :else sqlite-key)))
+  [k table read-coerce-fns]
+  (if (nil? table)
+    ;; No table context (e.g. top-level query with only subqueries) — return key as-is
+    k
+    (let [;; SQLite results come back as :column_name, need to convert to :table/column-name
+          sqlite-key (keyword (name (sqlite-table table))
+                              (str/replace (name k) "_" "-"))
+          id-key (sqlite-id-key (sqlite-table table))]
+      (cond
+        ;; :id -> :xt/id
+        (= k :id) :xt/id
+        (= sqlite-key id-key) :xt/id
+        ;; Check reverse mapping
+        (contains? sqlite->xt-key sqlite-key) (get sqlite->xt-key sqlite-key)
+        ;; Check if this is a known column (exists in read coercions or schema)
+        (contains? read-coerce-fns sqlite-key) sqlite-key
+        ;; If no match found, treat as an alias (e.g. :count) — keep unqualified
+        :else (if (or (namespace k) (str/includes? (name k) "_"))
+                sqlite-key
+                k)))))
 
 (defn- coerce-result-value
   "Coerce a SQLite result value back to XTDB-compatible format.
@@ -812,23 +861,43 @@
     :else v))
 
 (defn- coerce-result-row
-  "Coerce a single result row from SQLite format back to XTDB format."
-  [row table]
+  "Coerce a single result row from SQLite format back to XTDB format.
+   Uses schema-aware read coercions for proper enum/type handling."
+  [row table read-coerce-fns]
   (when row
     (into {}
           (map (fn [[k v]]
-                 [(result-key->xt-key k table)
-                  (coerce-result-value v)]))
+                 (let [xt-key (result-key->xt-key k table read-coerce-fns)
+                       ;; Try schema-aware coercion first (handles enums, etc.)
+                       coerce-fn (when table
+                                   (get read-coerce-fns
+                                        (keyword (name (sqlite-table table))
+                                                 (str/replace (name k) "_" "-"))))
+                       coerced-v (cond
+                                   (and coerce-fn (some? v)) (coerce-fn v)
+                                   :else (coerce-result-value v))]
+                   [xt-key coerced-v])))
           row)))
 
+(defn- sqlite-conn?
+  "Returns true if conn is a JDBC/SQLite connection (as opposed to an XTDB node)."
+  [conn]
+  (or (instance? Connection conn)
+      (instance? DataSource conn)))
+
 (defn q
-  "Query SQLite using an XTDB-style HoneySQL query.
-   Translates the query to SQLite format, runs it, and converts results
-   back to XTDB-compatible format."
+  "Query using an XTDB-style HoneySQL query. Detects connection type and routes
+   accordingly: XTDB nodes use biffx/q, JDBC/SQLite connections translate the
+   query to SQLite format."
   [conn query]
-  (let [table (infer-table-from-query query)
-        sqlite-query (translate-query query)
-        formatted (sql/format sqlite-query)
-        results (jdbc/execute! conn formatted
-                               {:builder-fn rs/as-unqualified-kebab-maps})]
-    (mapv #(coerce-result-row % table) results)))
+  (if (sqlite-conn? conn)
+    (let [table (infer-table-from-query query)
+          sqlite-tbl (when table (sqlite-table table))
+          read-fns (when sqlite-tbl
+                     (sqlite/read-coercions @(requiring-resolve 'com.yakread/malli-opts*) sqlite-tbl))
+          sqlite-query (translate-query query)
+          formatted (sql/format sqlite-query)
+          results (jdbc/execute! conn formatted
+                                 {:builder-fn rs/as-unqualified-kebab-maps})]
+      (mapv #(coerce-result-row % table read-fns) results))
+    (biffx/q conn query)))

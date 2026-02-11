@@ -1,7 +1,7 @@
 (ns com.yakread.model.moderation
   (:require
-   [com.biffweb.experimental :as biffx]
-   [com.wsscode.pathom3.connect.operation :as pco :refer [defresolver]]))
+   [com.wsscode.pathom3.connect.operation :as pco :refer [defresolver]]
+   [com.yakread.util.biff-staging :as biffs]))
 
 (defresolver next-batch [{:keys [biff/conn yakread.model/all-liked-items]} _]
   {::pco/output [{:admin.moderation/next-batch [:xt/id :item/n-likes]}
@@ -9,14 +9,14 @@
                  :admin.moderation/approved
                  :admin.moderation/blocked
                  :admin.moderation/ingest-failed]}
-  (let [direct-items (biffx/q conn
+  (let [direct-items (biffs/q conn
                               {:select [:xt/id :item/url :item/doc-type :item.direct/candidate-status]
                                :from :item
                                :where [:= :item/doc-type "item/direct"]})
         url->direct-item (into {} (map (juxt :item/url identity)) direct-items)
         item->url (into {}
                         (map (juxt :xt/id :item/url))
-                        (biffx/q conn
+                        (biffs/q conn
                                  {:select [:xt/id :item/url]
                                   :from :item
                                   :where [:in :xt/id (mapv :item/id all-liked-items)]}))
@@ -36,7 +36,7 @@
                                 vec)
         statuses (into {}
                        (map (juxt :item.direct/candidate-status :count))
-                       (biffx/q conn
+                       (biffs/q conn
                                 {:select [:item.direct/candidate-status
                                           [[:count :xt/id] :count]]
                                  :from :item

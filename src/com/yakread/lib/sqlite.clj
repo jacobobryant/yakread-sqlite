@@ -18,7 +18,7 @@
    [com.zaxxer.hikari HikariConfig HikariDataSource]
    [java.nio ByteBuffer]
    [java.sql ResultSet]
-   [java.time Instant]
+   [java.time Instant ZonedDateTime]
    [java.util UUID]))
 
 ;; ============================================================================
@@ -198,10 +198,12 @@
     (.array bb)))
 
 (defn- inst->epoch-ms
-  "Convert an Instant to epoch milliseconds."
+  "Convert an Instant or ZonedDateTime to epoch milliseconds."
   [x]
   (when x
-    (.toEpochMilli ^Instant x)))
+    (if (instance? ZonedDateTime x)
+      (.toEpochMilli (.toInstant ^ZonedDateTime x))
+      (.toEpochMilli ^Instant x))))
 
 (defn- bool->int
   "Convert a boolean to 0 or 1 for SQLite."
@@ -265,6 +267,24 @@
          acc)))
    {:read {} :write {}}
    attrs))
+
+(defn write-coercions
+  "Build write coercion map for a table: {attr-keyword -> coerce-fn}.
+   Used for converting Clojure values to SQLite values (enums, UUIDs, etc.)."
+  [malli-opts table-key]
+  (let [attrs (->> (table-asts table-key malli-opts)
+                   (mapv :keys)
+                   (reduce attr-union {}))]
+    (:write (build-coercions attrs))))
+
+(defn read-coercions
+  "Build read coercion map for a table: {attr-keyword -> coerce-fn}.
+   Used for converting SQLite values to Clojure values (enums, UUIDs, etc.)."
+  [malli-opts table-key]
+  (let [attrs (->> (table-asts table-key malli-opts)
+                   (mapv :keys)
+                   (reduce attr-union {}))]
+    (:read (build-coercions attrs))))
 
 (defn- make-column-reader
   "Create a custom column reader that applies coercions.

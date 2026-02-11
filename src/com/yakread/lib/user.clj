@@ -1,8 +1,8 @@
 (ns com.yakread.lib.user
   (:require
    [clojure.string :as str]
-   [com.biffweb.experimental :as biffx]
-   [com.yakread.lib.core :as lib.core]))
+   [com.yakread.lib.core :as lib.core]
+   [com.yakread.util.biff-staging :as biffs]))
 
 (let [reserved #{"hello"
                  "support"
@@ -22,18 +22,22 @@
         username))))
 
 (defn email-username-taken? [conn username]
-  (-> (biffx/q conn
-               {:select [[[:or
-                           [:exists
-                            {:select [[[:inline 1]]]
-                             :from :user
-                             :where [:= :user/email-username username]
-                             :limit [:inline 1]}]
-                           [:exists
-                            {:select [[[:inline 1]]]
-                             :from :deleted-user
-                             :where [:= :deleted-user/email-username-hash (lib.core/sha256 username)]
-                             :limit [:inline 1]}]]
-                          :taken]]})
-      first
-      :taken))
+  (let [result (-> (biffs/q conn
+                            {:select [[[:or
+                                        [:exists
+                                         {:select [[[:inline 1]]]
+                                          :from :user
+                                          :where [:= :user/email-username username]
+                                          :limit [:inline 1]}]
+                                        [:exists
+                                         {:select [[[:inline 1]]]
+                                          :from :deleted-user
+                                          :where [:= :deleted-user/email-username-hash (lib.core/sha256 username)]
+                                          :limit [:inline 1]}]]
+                                       :taken]]})
+                   first
+                   :taken)]
+    ;; XTDB returns boolean, SQLite returns 0/1 integer
+    (if (number? result)
+      (not (zero? result))
+      (boolean result))))

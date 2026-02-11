@@ -4,38 +4,56 @@
   [com.yakread.model.digest :refer :all]],
  :tests
  [{:eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:item
-      [{:xt/id "item1", :item/ingested-at (t/zdt 2001)}
-       {:xt/id "item2", :item/ingested-at (t/zdt 2003)}]}]
+      [{:xt/id (t/uuid 1),
+        :item/ingested-at (t/zdt 2001),
+        :item/record-type :feed}
+       {:xt/id (t/uuid 2),
+        :item/ingested-at (t/zdt 2003),
+        :item/record-type :feed}]}]
     (digest-sub-items
-     {:biff/conn node, :biff/now (t/zdt 2003 1 10)}
+     {:biff/conn conn, :biff/now (t/zdt 2003 1 10)}
      {:user/subscriptions
-      [{:sub/items [{:xt/id "item1"} {:xt/id "item2"}]}]})),
-   :result {:user/digest-sub-items [{:xt/id "item2"}]}}
+      [{:sub/items [{:xt/id (t/uuid 1)} {:xt/id (t/uuid 2)}]}]})),
+   :result
+   {:user/digest-sub-items
+    [{:xt/id #uuid "00020000-0000-0000-0000-000000000002"}]}}
   _
   {:eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:item
-      [{:xt/id "item1", :item/ingested-at (t/zdt 2003 1 4)}
-       {:xt/id "item2", :item/ingested-at (t/zdt 2003 1 6)}]}]
+      [{:xt/id (t/uuid 1),
+        :item/ingested-at (t/zdt 2003 1 4),
+        :item/record-type :feed}
+       {:xt/id (t/uuid 2),
+        :item/ingested-at (t/zdt 2003 1 6),
+        :item/record-type :feed}]}]
     (digest-sub-items
-     {:biff/conn node, :biff/now (t/zdt 2003 1 10)}
+     {:biff/conn conn, :biff/now (t/zdt 2003 1 10)}
      {:user/digest-last-sent (t/zdt 2003 1 5),
       :user/subscriptions
-      [{:sub/items [{:xt/id "item1"} {:xt/id "item2"}]}]})),
-   :result {:user/digest-sub-items [{:xt/id "item2"}]}}
+      [{:sub/items [{:xt/id (t/uuid 1)} {:xt/id (t/uuid 2)}]}]})),
+   :result
+   {:user/digest-sub-items
+    [{:xt/id #uuid "00020000-0000-0000-0000-000000000002"}]}}
   _
   {:eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:item
-      [{:xt/id "item1", :item/ingested-at (t/zdt 2001)}
-       {:xt/id "item2", :item/ingested-at (t/zdt 2003)}]}]
+      [{:xt/id (t/uuid 1),
+        :item/ingested-at (t/zdt 2001),
+        :item/record-type :feed}
+       {:xt/id (t/uuid 2),
+        :item/ingested-at (t/zdt 2003),
+        :item/record-type :feed}]}]
     (digest-bookmarks
-     {:biff/conn node, :biff/now (t/zdt 2003 1 10)}
-     {:user/bookmarks [{:xt/id "item1"} {:xt/id "item2"}]})),
-   :result {:user/digest-bookmarks [{:xt/id "item2"}]}}
+     {:biff/conn conn, :biff/now (t/zdt 2003 1 10)}
+     {:user/bookmarks [{:xt/id (t/uuid 1)} {:xt/id (t/uuid 2)}]})),
+   :result
+   {:user/digest-bookmarks
+    [{:xt/id #uuid "00020000-0000-0000-0000-000000000002"}]}}
   _]}
