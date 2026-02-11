@@ -9,6 +9,7 @@
     (seed/seed! @com.yakread/system)"
   (:require
    [com.biffweb.experimental :as biffx]
+   [com.yakread.util.biff-staging :as biffs]
    [tick.core :as tick]))
 
 (def seed-email "seed@example.com")
@@ -146,12 +147,12 @@
        :mv.sub/affinity-low  0.5
        :mv.sub/affinity-high 0.5}]]))
 
-(defn seed! [{:keys [biff/node] :as ctx}]
+(defn seed! [{:keys [biff/conn*] :as ctx}]
   (println "Inserting seed data for e2e tests...")
-  (biffx/submit-tx ctx (seed-tx))
+  (biffs/submit-tx ctx (seed-tx))
   ;; Wait for the transaction to be indexed
   (Thread/sleep 2000)
-  (let [user (first (biffx/q node {:select :* :from :user :where [:= :user/email seed-email]}))]
+  (let [user (first (biffs/q conn* {:select :* :from :user :where [:= :user/email seed-email]}))]
     (if user
       (println "Seed data inserted successfully. User:" seed-email)
       (println "WARNING: Seed data may not have been indexed yet."))))

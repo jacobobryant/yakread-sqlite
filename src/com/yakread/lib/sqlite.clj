@@ -463,7 +463,7 @@
                   {::pco/input [id-key]
                    ::pco/output output
                    ::pco/batch? true}
-                  (fn [{:keys [biff/conn]} inputs]
+                  (fn [{:keys [biff/conn*]} inputs]
                     (let [ids (mapv id-key inputs)
                           id-write-fn (get-in coercions [:write id-key])
                           db-ids (if id-write-fn
@@ -472,7 +472,7 @@
                           sql-map {:select :*
                                    :from table-key
                                    :where [:in :id db-ids]}
-                          raw-results (jdbc/execute! conn
+                          raw-results (jdbc/execute! conn*
                                                      (sql/format sql-map)
                                                      {:builder-fn (rs/builder-adapter
                                                                    rs/as-unqualified-kebab-maps

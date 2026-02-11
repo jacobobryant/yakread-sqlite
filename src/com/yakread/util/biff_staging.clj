@@ -927,7 +927,7 @@
    Uses schema-aware read coercions for proper enum/type handling."
   [row table read-coerce-fns]
   (when row
-    (into {}
+    (let [result (into {}
           (map (fn [[k v]]
                  (let [xt-key (result-key->xt-key k table read-coerce-fns)
                        ;; Try schema-aware coercion first (handles enums, etc.)
@@ -939,7 +939,13 @@
                                    (and coerce-fn (some? v)) (coerce-fn v)
                                    :else (coerce-result-value v))]
                    [xt-key coerced-v])))
-          row)))
+          row)]
+      ;; Also add the table-specific ID key (e.g. :sub/id, :item/id)
+      ;; so that Pathom sqlite resolvers can use it as their input key
+      (if-let [xt-id (:xt/id result)]
+        (let [table-id-key (keyword (name (sqlite-table table)) "id")]
+          (assoc result table-id-key xt-id))
+        result))))
 
 (defn q
   "Query SQLite using an XTDB-style HoneySQL query.
