@@ -340,6 +340,12 @@
     (contains? xt->sqlite-key k)
     (get xt->sqlite-key k)
 
+    ;; Handle XTDB dotted table namespaces (e.g. :ad.click/id -> :ad-click/id)
+    (and (namespace k)
+         (str/includes? (namespace k) ".")
+         (contains? xt->sqlite-table (keyword (namespace k))))
+    (keyword (name (get xt->sqlite-table (keyword (namespace k)))) (name k))
+
     :else k))
 
 (defn rename-key*
@@ -773,6 +779,30 @@
     (keyword? k) (rename-key k table)
     :else k))
 
+(declare translate-select)
+
+(defn- translate-select-item
+  "Translate a single select item that is a vector.
+   Handles both [expr alias] pairs and function calls like [:sum :col]."
+  [item table]
+  (if (and (= 2 (count item))
+           (keyword? (second item))
+           ;; The first element is not a bare keyword (i.e. it's a vector/number/map expression)
+           ;; OR the first element is a dotted XTDB reference like :ad._id
+           (or (not (keyword? (first item)))
+               (str/ends-with? (name (first item)) "._id")))
+    ;; [expr alias] pair — translate expr, strip namespace from alias
+    [(translate-select (first item) table)
+     (keyword (name (second item)))]
+    ;; Function call or other structure — recurse normally
+    (mapv (fn [x]
+            (cond
+              (keyword? x) (rename-select-key x table)
+              (vector? x) (translate-select-item x table)
+              (map? x) (translate-query x)
+              :else x))
+          item)))
+
 (defn- translate-select
   "Translate select clause from XTDB to SQLite format."
   [select table]
@@ -783,11 +813,11 @@
     (number? select) select
     ;; subquery map in select
     (map? select) (translate-query select)
-    ;; :select [:col1 :col2] -> :select [:col1 :col2]
+    ;; :select [:col1 :col2] or [expr alias] pairs
     (vector? select) (mapv (fn [item]
                              (cond
                                (keyword? item) (rename-select-key item table)
-                               (vector? item) (translate-select item table)
+                               (vector? item) (translate-select-item item table)
                                (map? item) (translate-query item)
                                :else item))
                            select)
