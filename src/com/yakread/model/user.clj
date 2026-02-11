@@ -1,7 +1,7 @@
 (ns com.yakread.model.user
   (:require
    [clojure.string :as str]
-   [com.biffweb.experimental :as biffx]
+   [com.yakread.util.biff-staging :as biffs]
    [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
    [com.yakread.lib.ui :as ui]
    [com.yakread.lib.user :as lib.user]
@@ -73,7 +73,7 @@
 (defresolver mv [{:keys [biff/conn]} {:user/keys [id]}]
   {::pco/output [{:user/mv [:xt/id]}]}
   (when-some [mv-user
-              (first (biffx/q conn
+              (first (biffs/q conn
                               {:select :xt/id
                                :from :mv-user
                                :where [:= :mv.user/user id]
