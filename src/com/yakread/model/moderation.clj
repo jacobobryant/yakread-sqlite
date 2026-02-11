@@ -1,7 +1,7 @@
 (ns com.yakread.model.moderation
   (:require
-   [com.biffweb.experimental :as biffx]
-   [com.wsscode.pathom3.connect.operation :as pco :refer [defresolver]]))
+   [com.wsscode.pathom3.connect.operation :as pco :refer [defresolver]]
+   [com.yakread.util.biff-staging :as biffs]))
 
 (defresolver next-batch [{:keys [biff/conn yakread.model/all-liked-items]} _]
   {::pco/output [{:admin.moderation/next-batch [:xt/id :item/n-likes]}
@@ -9,14 +9,14 @@
                  :admin.moderation/approved
                  :admin.moderation/blocked
                  :admin.moderation/ingest-failed]}
-  (let [direct-items (biffx/q conn
+  (let [direct-items (biffs/q conn
                               {:select [:xt/id :item/url :item/doc-type :item.direct/candidate-status]
                                :from :item
-                               :where [:= :item/doc-type "item/direct"]})
+                               :where [:= :item/doc-type 2]})
         url->direct-item (into {} (map (juxt :item/url identity)) direct-items)
         item->url (into {}
                         (map (juxt :xt/id :item/url))
-                        (biffx/q conn
+                        (biffs/q conn
                                  {:select [:xt/id :item/url]
                                   :from :item
                                   :where [:in :xt/id (mapv :item/id all-liked-items)]}))
@@ -35,16 +35,17 @@
                                 (sort-by :item/n-likes >)
                                 vec)
         statuses (into {}
-                       (map (juxt :item.direct/candidate-status :count))
-                       (biffx/q conn
+                       (map (juxt :item.direct/candidate-status :item/count))
+                       (biffs/q conn
                                 {:select [:item.direct/candidate-status
                                           [[:count :xt/id] :count]]
                                  :from :item
-                                 :where [:is-not :item.direct/candidate-status nil]}))]
+                                 :where [:is-not :item.direct/candidate-status nil]
+                                 :group-by [:item.direct/candidate-status]}))]
     {:admin.moderation/remaining (count liked-direct-items)
-     :admin.moderation/approved (get statuses :approved 0)
-     :admin.moderation/blocked (get statuses :blocked 0)
-     :admin.moderation/ingest-failed (get statuses :ingest-failed 0)
+     :admin.moderation/approved (get statuses 2 0)
+     :admin.moderation/blocked (get statuses 1 0)
+     :admin.moderation/ingest-failed (get statuses 0 0)
      :admin.moderation/next-batch (vec (take 50 liked-direct-items))}))
 
 (def module {:resolvers [next-batch]})
