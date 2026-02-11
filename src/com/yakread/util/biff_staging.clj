@@ -781,18 +781,31 @@
 
 (declare translate-select)
 
+(def ^:private sql-functions
+  "Set of known HoneySQL function/operator keywords that should NOT be treated as column references."
+  #{:sum :count :max :min :avg :coalesce :inline :exists :or :and :not
+    :is :is-not :in :not-in :like :between :case :when :then :else
+    :distinct :cast :upper :lower :length :abs :round :ifnull :nullif
+    :group-concat :total :typeof})
+
 (defn- translate-select-item
   "Translate a single select item that is a vector.
    Handles both [expr alias] pairs and function calls like [:sum :col]."
   [item table]
   (if (and (= 2 (count item))
            (keyword? (second item))
-           ;; The first element is not a bare keyword (i.e. it's a vector/number/map expression)
-           ;; OR the first element is a dotted XTDB reference like :ad._id
+           ;; Detect [expr alias] pairs:
+           ;; - first element is not a keyword (it's a sub-expression like [:coalesce ...])
+           ;; - first element is a dotted XTDB reference like :ad._id
+           ;; - both are keywords and second has namespace, but first is NOT a SQL function
            (or (not (keyword? (first item)))
-               (str/ends-with? (name (first item)) "._id")))
+               (str/ends-with? (name (first item)) "._id")
+               (and (namespace (second item))
+                    (not (sql-functions (first item))))))
     ;; [expr alias] pair — translate expr, strip namespace from alias
-    [(translate-select (first item) table)
+    [(if (keyword? (first item))
+       (rename-select-key (first item) table)
+       (translate-select (first item) table))
      (keyword (name (second item)))]
     ;; Function call or other structure — recurse normally
     (mapv (fn [x]
@@ -838,9 +851,11 @@
                   (fn [obs]
                     (mapv (fn [ob]
                             (if (vector? ob)
-                              (let [[k dir] ob]
-                                [(rename-select-key k table) dir])
-                              (rename-select-key ob table)))
+                              (let [[k dir] ob
+                                    renamed (rename-select-key k table)]
+                                [(keyword (name renamed)) dir])
+                              (let [renamed (rename-select-key ob table)]
+                                (keyword (name renamed)))))
                           obs))))
         (cond-> (:join query)
           (update :join (fn [joins]
@@ -861,6 +876,8 @@
         (cond-> (:group-by query)
           (update :group-by (fn [gbs]
                               (mapv #(rename-select-key % table) gbs))))
+        (cond-> (:having query)
+          (update :having #(coerce-where-clause % table)))
         ;; Handle union/union-all by recursively translating subqueries
         (cond-> (:union query)
           (update :union (fn [qs] (mapv translate-query qs))))
