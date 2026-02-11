@@ -100,20 +100,20 @@
                                    item items]
                                [(:xt/id user) id (:xt/id item)])
         user+sub->skips      (into {}
-                                   (map (fn [{:keys [reclist/user sub/id zdts]}]
-                                          [[user id] zdts]))
-                                   (biffs/q conn*
-                                            {:union-all
-                                             (for [{:sub/keys [id user items]} subscriptions]
-                                               {:select [:reclist/user
-                                                         [[:inline id] :sub/id]
-                                                         [[:array_agg :reclist/created-at]
-                                                          :zdts]]
-                                                :from :reclist
-                                                :join [:skip [:= :skip/reclist :reclist._id]]
-                                                :where [:and
-                                                        [:= :reclist/user (:xt/id user)]
-                                                        [:in :skip/item (mapv :xt/id items)]]})}))
+                                   (map (fn [[k rows]]
+                                          [k (mapv :created-at rows)]))
+                                   (group-by (juxt :reclist/user :sub/id)
+                                    (biffs/q conn*
+                                             {:union-all
+                                              (for [{:sub/keys [id user items]} subscriptions]
+                                                {:select [:reclist/user
+                                                          [[:inline id] :sub/id]
+                                                          [:reclist/created-at :created-at]]
+                                                 :from :reclist
+                                                 :join [:skip [:= :skip/reclist :reclist._id]]
+                                                 :where [:and
+                                                         [:= :reclist/user (:xt/id user)]
+                                                         [:in :skip/item (mapv :xt/id items)]]})})))
         user+sub->user-items (group-by (juxt :user-item/user :sub/id)
                                        (biffs/q conn*
                                                 {:union-all

@@ -567,6 +567,24 @@
   (and (map? tx-op)
        (contains? tx-op :xt)))
 
+(defn- infer-record-type
+  "Infer the record_type value for tables that use discriminated unions.
+   In XTDB, the type is determined by which subtype attributes are present.
+   In SQLite, it's stored as an integer in the record_type column.
+   Returns the unqualified keyword enum value (e.g. :feed, :email, :direct)."
+  [doc table]
+  (case table
+    :sub (cond
+           (contains? doc :sub.feed/feed)   :feed
+           (contains? doc :sub.email/from)  :email
+           :else nil)
+    :item (cond
+            (contains? doc :item/doc-type)       nil  ;; already has doc-type, will be coerced
+            (contains? doc :item.feed/feed)       :feed
+            (contains? doc :item.email/sub)       :email
+            :else nil)
+    nil))
+
 (defn- xtql->sqlite-honeysql
   "Translate an XTQL operation into a SQLite HoneySQL operation.
    Returns a vector of HoneySQL operations (may be empty or multiple)."
@@ -580,7 +598,11 @@
       (let [docs args]
         (when (seq docs)
           (let [rows (mapv (fn [doc]
-                             (coerce-sqlite-doc (rename-doc-keys doc table) write-fns))
+                             (let [record-type (infer-record-type doc table)
+                                   rt-key (keyword (name table) "record-type")
+                                   doc-with-rt (cond-> doc
+                                                 record-type (assoc rt-key record-type))]
+                               (coerce-sqlite-doc (rename-doc-keys doc-with-rt table) write-fns)))
                            docs)
                 all-keys (vec (into #{} (mapcat keys) rows))
                 id-key (sqlite-id-key sqlite-tbl)

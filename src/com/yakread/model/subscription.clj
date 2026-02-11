@@ -197,12 +197,12 @@
                                   {:select [[source-key :sub/source-id]
                                             :xt/id]
                                    :from :item
-                                   :where [:in
-                                           [:array [source-key [:coalesce
-                                                                :item/published-at
-                                                                :item/ingested-at]]]
-                                           (for [{:sub/keys [source-id published-at]} subs*]
-                                             [:array [source-id published-at]])]})}))]
+                                   :where (into [:or]
+                                                (for [{:sub/keys [source-id published-at]} subs*]
+                                                  [:and
+                                                   [:= source-key source-id]
+                                                   [:= [:coalesce :item/published-at :item/ingested-at]
+                                                    published-at]]))})}))]
     (lib.core/restore-order inputs
                             :sub/source-id
                             results)))
@@ -242,15 +242,18 @@
                  {:sub/items [:xt/id]}]
          :output [{:sub/unread-items [:xt/id]}]
          :batch? true}
-  (let [results (biffs/q conn*
+  (let [user-item-pairs (for [{:sub/keys [user items]} subscriptions
+                              item items]
+                          [(:xt/id user) (:xt/id item)])
+        results (biffs/q conn*
                          {:select [:user-item/user :user-item/item]
                           :from :user-item
                           :where [:and
-                                  [:in
-                                   [:array [:user-item/user :user-item/item]]
-                                   (for [{:sub/keys [user items]} subscriptions
-                                         item items]
-                                     [:array [(:xt/id user) (:xt/id item)]])]
+                                  (into [:or]
+                                        (for [[user-id item-id] user-item-pairs]
+                                          [:and
+                                           [:= :user-item/user user-id]
+                                           [:= :user-item/item item-id]]))
                                   [:is-not
                                    [:coalesce
                                     :user-item/viewed-at

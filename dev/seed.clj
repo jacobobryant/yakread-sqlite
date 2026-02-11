@@ -61,20 +61,17 @@
      [:put-docs :sub
       {:xt/id           (biffx/prefix-uuid seed-user-id sub-id-1)
        :sub/user        seed-user-id
-       :sub/doc-type    :sub/feed
        :sub.feed/feed   feed-id-1
        :sub/created-at  now}]
      [:put-docs :sub
       {:xt/id           (biffx/prefix-uuid seed-user-id sub-id-2)
        :sub/user        seed-user-id
-       :sub/doc-type    :sub/feed
        :sub.feed/feed   feed-id-2
        :sub/created-at  now}]
 
      ;; Feed items
      [:put-docs :item
       {:xt/id              (biffx/prefix-uuid feed-id-1 item-id-1)
-       :item/doc-type      :item/feed
        :item.feed/feed     feed-id-1
        :item/title         "Introduction to Clojure"
        :item/url           "https://example.com/intro-clojure"
@@ -85,7 +82,6 @@
        :item/length        2500}]
      [:put-docs :item
       {:xt/id              (biffx/prefix-uuid feed-id-1 item-id-2)
-       :item/doc-type      :item/feed
        :item.feed/feed     feed-id-1
        :item/title         "Building Web Apps with Biff"
        :item/url           "https://example.com/biff-web-apps"
@@ -96,7 +92,6 @@
        :item/length        3200}]
      [:put-docs :item
       {:xt/id              (biffx/prefix-uuid feed-id-2 item-id-3)
-       :item/doc-type      :item/feed
        :item.feed/feed     feed-id-2
        :item/title         "Tech Industry Update"
        :item/url           "https://example.com/tech-update"
