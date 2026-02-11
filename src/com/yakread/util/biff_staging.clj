@@ -680,11 +680,17 @@
    (fn [x]
      (cond
        (= x :xt/id) :id
+       ;; Handle XTDB table._id references (e.g. :ad._id -> :ad/id)
+       (and (keyword? x) (str/ends-with? (name x) "._id"))
+       (let [tbl-name (subs (name x) 0 (- (count (name x)) 4))
+             sqlite-tbl (get xt->sqlite-table (keyword tbl-name) (keyword tbl-name))]
+         (keyword (name sqlite-tbl) "id"))
+       ;; Rename known column mappings (preserves namespace for table-qualified columns)
        (and (keyword? x) (contains? xt->sqlite-key x))
-       (keyword (name (get xt->sqlite-key x)))
-       ;; Strip namespace from column-reference keywords (e.g. :user/email -> :email)
+       (get xt->sqlite-key x)
+       ;; Other namespaced keywords — use rename-key to map properly
        (and (keyword? x) (namespace x))
-       (keyword (name x))
+       (rename-key x table)
        (uuid? x) (uuid->bytes x)
        (instance? Instant x) (.toEpochMilli ^Instant x)
        (instance? ZonedDateTime x) (.toEpochMilli (.toInstant ^ZonedDateTime x))
@@ -759,8 +765,12 @@
   (cond
     (= k :*) :*
     (= k :xt/id) :id
-    (keyword? k) (let [renamed (rename-key k table)]
-                   (keyword (name renamed)))
+    ;; Handle XTDB table._id references (e.g. :ad._id -> :ad/id, :skip._id -> :skip/id)
+    (and (keyword? k) (str/ends-with? (name k) "._id"))
+    (let [tbl-name (subs (name k) 0 (- (count (name k)) 4))
+          sqlite-tbl (get xt->sqlite-table (keyword tbl-name) (keyword tbl-name))]
+      (keyword (name sqlite-tbl) "id"))
+    (keyword? k) (rename-key k table)
     :else k))
 
 (defn- translate-select
@@ -895,6 +905,7 @@
                    (sqlite/read-coercions @(requiring-resolve 'com.yakread/malli-opts*) sqlite-tbl))
         sqlite-query (translate-query query)
         formatted (sql/format sqlite-query)
+        _ (log/debug "biffs/q SQL:" (first formatted))
         results (jdbc/execute! conn formatted
                                {:builder-fn rs/as-unqualified-kebab-maps})]
     (mapv #(coerce-result-row % table read-fns) results)))
