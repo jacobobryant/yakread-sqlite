@@ -80,14 +80,14 @@
 (defn start-test-sqlite
   "Create an in-memory SQLite database, create tables, and insert test data.
    table->records is a map of table-keyword -> vector of XTDB-format records.
-   Returns a JDBC DataSource (closeable)."
+   Returns a JDBC connection."
   [table->records]
-  (let [ds (jdbc/get-datasource {:dbtype "sqlite" :dbname ":memory:"})
+  (let [conn (jdbc/get-connection {:dbtype "sqlite" :dbname ":memory:"})
         schema-sql (sqlite/generate-schema-sql main/malli-opts*)]
     ;; Create tables - execute each statement separately
     (doseq [stmt (str/split schema-sql #";\s*")
             :when (not (str/blank? stmt))]
-      (jdbc/execute! ds [(str stmt ";")]))
+      (jdbc/execute! conn [(str stmt ";")]))
     ;; Insert data
     (doseq [[table records] table->records
             :when (seq records)
@@ -95,8 +95,8 @@
                   rows (mapv #(xt-record->sqlite-row table %) records)]]
       (doseq [row rows]
         (let [sql-map {:insert-into sqlite-tbl :values [row]}]
-          (jdbc/execute! ds (sql/format sql-map)))))
-    ds))
+          (jdbc/execute! conn (sql/format sql-map)))))
+    conn))
 
 (defmacro with-sqlite [[conn-sym db-contents] & body]
   `(let [~conn-sym (start-test-sqlite ~db-contents)]
