@@ -829,6 +829,15 @@
         (cond-> (:union-all query)
           (update :union-all (fn [qs] (mapv translate-query qs)))))))
 
+(def ^:private schema-info-cache (delay (sqlite/schema-info @(requiring-resolve 'com.yakread/malli-opts*))))
+
+(defn- table-has-column?
+  "Check if the table schema has a column with the given unqualified name."
+  [table column-name]
+  (let [info @schema-info-cache
+        sqlite-tbl (sqlite-table table)]
+    (some? (get-in info [sqlite-tbl (keyword (name sqlite-tbl) (name column-name))]))))
+
 (defn- result-key->xt-key
   "Convert a SQLite result column key back to an XTDB key."
   [k table read-coerce-fns]
@@ -845,12 +854,10 @@
         (= sqlite-key id-key) :xt/id
         ;; Check reverse mapping
         (contains? sqlite->xt-key sqlite-key) (get sqlite->xt-key sqlite-key)
-        ;; Check if this is a known column (exists in read coercions or schema)
-        (contains? read-coerce-fns sqlite-key) sqlite-key
-        ;; If no match found, treat as an alias (e.g. :count) — keep unqualified
-        :else (if (or (namespace k) (str/includes? (name k) "_"))
-                sqlite-key
-                k)))))
+        ;; Check if this is a known column in the schema
+        (table-has-column? table (str/replace (name k) "_" "-")) sqlite-key
+        ;; Otherwise, treat as an alias (e.g. :count) — keep unqualified
+        :else k))))
 
 (defn- coerce-result-value
   "Coerce a SQLite result value back to XTDB-compatible format.

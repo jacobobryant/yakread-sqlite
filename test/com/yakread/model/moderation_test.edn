@@ -28,7 +28,7 @@
      {})),
    :result
    {:admin.moderation/remaining 1,
-    :admin.moderation/approved nil,
+    :admin.moderation/approved 1,
     :admin.moderation/blocked 0,
     :admin.moderation/ingest-failed 0,
     :admin.moderation/next-batch
