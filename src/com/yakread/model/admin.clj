@@ -38,7 +38,7 @@
                     (update acc date (fnil + 0) cost)))
                 {}))})
 
-(defresolver ads [{:biff/keys [conn]} _]
+(defresolver ads [{:biff/keys [conn*]} _]
   {::pco/output [{:admin/ads [:xt/id]}]}
   {:admin/ads (biffs/q conn* {:select :xt/id :from :ad})})
 
