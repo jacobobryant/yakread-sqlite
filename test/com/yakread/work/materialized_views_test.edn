@@ -66,14 +66,38 @@
        :user-item/item (t/uuid 10),
        :user-item/viewed-at (t/zdt 2000)}}
      :current-item)),
-   :result
-   {:biff.fx/tx
-    [{:biff/upsert :mv-user,
-      [:mv.user/user]
-      {:xt/id #uuid "0001b45f-d4d9-5138-3d93-cb799b3970be",
-       :mv.user/user #uuid "00010000-0000-0000-0000-000000000001",
-       :mv.user/current-item
-       #uuid "00100000-0000-0000-0000-000000000010"}}]}}
+   :ex #error {
+ :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :via
+ [{:type org.postgresql.util.PSQLException
+   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ :trace
+ [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
+  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
+  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
+  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
+  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
+  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
+  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
+  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
+  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
+  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
+  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
+  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 968]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 956]
+  [com.yakread.work.materialized_views$fn__125062 invokeStatic "materialized_views.clj" 42]
+  [com.yakread.work.materialized_views$fn__125062 invoke "materialized_views.clj" 36]
+  [com.yakread.lib.fx$machine$run__123050 invoke "fx.clj" 76]
+  [tmp17617$eval129126 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp17617$eval129126 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc
    "current-item: update current item when new item is more recent",
@@ -96,14 +120,38 @@
        :user-item/item (t/uuid 11),
        :user-item/viewed-at (t/zdt 2001)}}
      :current-item)),
-   :result
-   {:biff.fx/tx
-    [{:biff/upsert :mv-user,
-      [:mv.user/user]
-      {:xt/id #uuid "0001b45f-d4d9-5138-3d93-cb799b3970be",
-       :mv.user/user #uuid "00010000-0000-0000-0000-000000000001",
-       :mv.user/current-item
-       #uuid "00110000-0000-0000-0000-000000000011"}}]}}
+   :ex #error {
+ :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :via
+ [{:type org.postgresql.util.PSQLException
+   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ :trace
+ [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
+  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
+  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
+  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
+  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
+  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
+  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
+  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
+  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
+  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
+  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
+  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 968]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 956]
+  [com.yakread.work.materialized_views$fn__125062 invokeStatic "materialized_views.clj" 42]
+  [com.yakread.work.materialized_views$fn__125062 invoke "materialized_views.clj" 36]
+  [com.yakread.lib.fx$machine$run__123050 invoke "fx.clj" 76]
+  [tmp17617$eval129144 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp17617$eval129144 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "current-item: do not update when new item is older",
    :eval
@@ -125,7 +173,38 @@
        :user-item/item (t/uuid 11),
        :user-item/viewed-at (t/zdt 2000)}}
      :current-item)),
-   :result nil}
+   :ex #error {
+ :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :via
+ [{:type org.postgresql.util.PSQLException
+   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ :trace
+ [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
+  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
+  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
+  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
+  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
+  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
+  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
+  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
+  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
+  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
+  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
+  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 968]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 956]
+  [com.yakread.work.materialized_views$fn__125062 invokeStatic "materialized_views.clj" 42]
+  [com.yakread.work.materialized_views$fn__125062 invoke "materialized_views.clj" 36]
+  [com.yakread.lib.fx$machine$run__123050 invoke "fx.clj" 76]
+  [tmp17617$eval129162 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp17617$eval129162 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc
    "current-item: remove current item when viewed-at is nil and item matches",
@@ -148,13 +227,38 @@
        :user-item/item (t/uuid 10),
        :user-item/viewed-at nil}}
      :current-item)),
-   :result
-   {:biff.fx/tx
-    [{:biff/upsert :mv-user,
-      [:mv.user/user]
-      {:xt/id #uuid "0001b45f-d4d9-5138-3d93-cb799b3970be",
-       :mv.user/user #uuid "00010000-0000-0000-0000-000000000001",
-       :mv.user/current-item nil}}]}}
+   :ex #error {
+ :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :via
+ [{:type org.postgresql.util.PSQLException
+   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ :trace
+ [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
+  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
+  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
+  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
+  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
+  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
+  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
+  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
+  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
+  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
+  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
+  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 968]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 956]
+  [com.yakread.work.materialized_views$fn__125062 invokeStatic "materialized_views.clj" 42]
+  [com.yakread.work.materialized_views$fn__125062 invoke "materialized_views.clj" 36]
+  [com.yakread.lib.fx$machine$run__123050 invoke "fx.clj" 76]
+  [tmp17617$eval129180 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp17617$eval129180 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc
    "current-item: do not remove when viewed-at is nil but item doesn't match",
@@ -177,7 +281,38 @@
        :user-item/item (t/uuid 11),
        :user-item/viewed-at nil}}
      :current-item)),
-   :result nil}
+   :ex #error {
+ :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :via
+ [{:type org.postgresql.util.PSQLException
+   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ :trace
+ [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
+  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
+  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
+  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
+  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
+  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
+  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
+  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
+  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
+  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
+  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
+  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 968]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 956]
+  [com.yakread.work.materialized_views$fn__125062 invokeStatic "materialized_views.clj" 42]
+  [com.yakread.work.materialized_views$fn__125062 invoke "materialized_views.clj" 36]
+  [com.yakread.lib.fx$machine$run__123050 invoke "fx.clj" 76]
+  [tmp17617$eval129198 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp17617$eval129198 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc
    "on-tx: user-item record with email sub queues sub-affinity and current-item",
@@ -191,18 +326,38 @@
        :user-item/item (t/uuid 1),
        :user-item/viewed-at (t/zdt 2000)}}
      :start)),
-   :result
-   {:biff.fx/queue
-    {:jobs
-     ([:work.materialized-views/update
-       {:view :sub-affinity,
-        :sub/id #uuid "01000000-0000-0000-0000-000000000100"}]
-      [:work.materialized-views/update
-       {:user-item/user #uuid "00100000-0000-0000-0000-000000000010",
-        :user-item/item #uuid "00010000-0000-0000-0000-000000000001",
-        :user-item/viewed-at
-        #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-        :view :current-item}])}}}
+   :ex #error {
+ :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :via
+ [{:type org.postgresql.util.PSQLException
+   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ :trace
+ [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
+  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
+  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
+  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
+  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
+  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
+  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
+  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
+  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
+  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
+  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
+  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 968]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 956]
+  [com.yakread.work.materialized_views$fn__125071 invokeStatic "materialized_views.clj" 74]
+  [com.yakread.work.materialized_views$fn__125071 invoke "materialized_views.clj" 66]
+  [com.yakread.lib.fx$machine$run__123050 invoke "fx.clj" 76]
+  [tmp17617$eval129216 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp17617$eval129216 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc
    "on-tx: user-item record with feed sub queues sub-affinity and current-item",
@@ -221,18 +376,38 @@
        :user-item/item (t/uuid 1),
        :user-item/viewed-at (t/zdt 2000)}}
      :start)),
-   :result
-   {:biff.fx/queue
-    {:jobs
-     ([:work.materialized-views/update
-       {:view :sub-affinity,
-        :sub/id #uuid "01000000-0000-0000-0000-000000000100"}]
-      [:work.materialized-views/update
-       {:user-item/user #uuid "00100000-0000-0000-0000-000000000010",
-        :user-item/item #uuid "00010000-0000-0000-0000-000000000001",
-        :user-item/viewed-at
-        #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-        :view :current-item}])}}}
+   :ex #error {
+ :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :via
+ [{:type org.postgresql.util.PSQLException
+   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ :trace
+ [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
+  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
+  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
+  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
+  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
+  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
+  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
+  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
+  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
+  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
+  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
+  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 968]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 956]
+  [com.yakread.work.materialized_views$fn__125071 invokeStatic "materialized_views.clj" 74]
+  [com.yakread.work.materialized_views$fn__125071 invoke "materialized_views.clj" 66]
+  [com.yakread.lib.fx$machine$run__123050 invoke "fx.clj" 76]
+  [tmp17617$eval129234 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp17617$eval129234 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc
    "on-tx: user-item record without sub still queues current-item",
@@ -246,15 +421,38 @@
        :user-item/item (t/uuid 1),
        :user-item/viewed-at (t/zdt 2000)}}
      :start)),
-   :result
-   {:biff.fx/queue
-    {:jobs
-     ([:work.materialized-views/update
-       {:user-item/user #uuid "00100000-0000-0000-0000-000000000010",
-        :user-item/item #uuid "00010000-0000-0000-0000-000000000001",
-        :user-item/viewed-at
-        #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-        :view :current-item}])}}}
+   :ex #error {
+ :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :via
+ [{:type org.postgresql.util.PSQLException
+   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ :trace
+ [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
+  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
+  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
+  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
+  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
+  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
+  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
+  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
+  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
+  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
+  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
+  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 968]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 956]
+  [com.yakread.work.materialized_views$fn__125071 invokeStatic "materialized_views.clj" 74]
+  [com.yakread.work.materialized_views$fn__125071 invoke "materialized_views.clj" 66]
+  [com.yakread.lib.fx$machine$run__123050 invoke "fx.clj" 76]
+  [tmp17617$eval129252 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp17617$eval129252 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "on-tx: skip record with email sub queues sub-affinity",
    :eval
@@ -266,12 +464,38 @@
      {:biff/conn* node,
       :record {:skip/item (t/uuid 2), :skip/reclist (t/uuid 1)}}
      :start)),
-   :result
-   {:biff.fx/queue
-    {:jobs
-     ([:work.materialized-views/update
-       {:view :sub-affinity,
-        :sub/id #uuid "01000000-0000-0000-0000-000000000100"}])}}}
+   :ex #error {
+ :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :via
+ [{:type org.postgresql.util.PSQLException
+   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ :trace
+ [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
+  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
+  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
+  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
+  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
+  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
+  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
+  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
+  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
+  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
+  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
+  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 968]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 956]
+  [com.yakread.work.materialized_views$fn__125071 invokeStatic "materialized_views.clj" 91]
+  [com.yakread.work.materialized_views$fn__125071 invoke "materialized_views.clj" 66]
+  [com.yakread.lib.fx$machine$run__123050 invoke "fx.clj" 76]
+  [tmp17617$eval129270 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp17617$eval129270 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "on-tx: skip record with feed sub queues sub-affinity",
    :eval
@@ -287,12 +511,38 @@
      {:biff/conn* node,
       :record {:skip/item (t/uuid 2), :skip/reclist (t/uuid 1)}}
      :start)),
-   :result
-   {:biff.fx/queue
-    {:jobs
-     ([:work.materialized-views/update
-       {:view :sub-affinity,
-        :sub/id #uuid "01000000-0000-0000-0000-000000000100"}])}}}
+   :ex #error {
+ :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :via
+ [{:type org.postgresql.util.PSQLException
+   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ :trace
+ [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
+  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
+  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
+  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
+  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
+  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
+  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
+  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
+  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
+  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
+  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
+  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 968]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 956]
+  [com.yakread.work.materialized_views$fn__125071 invokeStatic "materialized_views.clj" 91]
+  [com.yakread.work.materialized_views$fn__125071 invoke "materialized_views.clj" 66]
+  [com.yakread.lib.fx$machine$run__123050 invoke "fx.clj" 76]
+  [tmp17617$eval129288 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp17617$eval129288 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "on-tx: skip record without matching sub returns nil jobs",
    :eval
@@ -304,5 +554,36 @@
      {:biff/conn* node,
       :record {:skip/item (t/uuid 2), :skip/reclist (t/uuid 1)}}
      :start)),
-   :result {:biff.fx/queue {:jobs ()}}}
+   :ex #error {
+ :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :via
+ [{:type org.postgresql.util.PSQLException
+   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ :trace
+ [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
+  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
+  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
+  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
+  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
+  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
+  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
+  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
+  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
+  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
+  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
+  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 968]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 956]
+  [com.yakread.work.materialized_views$fn__125071 invokeStatic "materialized_views.clj" 91]
+  [com.yakread.work.materialized_views$fn__125071 invoke "materialized_views.clj" 66]
+  [com.yakread.lib.fx$machine$run__123050 invoke "fx.clj" 76]
+  [tmp17617$eval129306 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp17617$eval129306 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _]}

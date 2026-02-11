@@ -219,10 +219,19 @@
 (defn- make-enum-writer
   "Create an enum writer from a clojure-value->db-value map."
   [enum-map]
-  (let [reverse-map (into {} (map (fn [[k v]] [v k]) enum-map))]
+  (let [reverse-map (into {} (map (fn [[k v]] [v k]) enum-map))
+        ;; Also create a map for qualified keywords (e.g. :item/direct -> 2)
+        ;; by stripping namespace from the clj-val lookup
+        name-reverse-map (into {} (map (fn [[k v]] [(keyword (name k)) v]) reverse-map))]
     (fn [clj-val]
       (when (some? clj-val)
         (or (get reverse-map clj-val)
+            ;; Try unqualified lookup for qualified keywords
+            (when (qualified-keyword? clj-val)
+              (get name-reverse-map (keyword (name clj-val))))
+            ;; Try string form (e.g. "item/direct")
+            (when (string? clj-val)
+              (get name-reverse-map (keyword (last (str/split clj-val #"/")))))
             (throw (ex-info "Unknown enum value for write"
                             {:value clj-val
                              :available-values reverse-map})))))))

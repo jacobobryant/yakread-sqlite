@@ -404,14 +404,19 @@
     (coerce-sqlite-value v)))
 
 (defn- coerce-sqlite-doc
-  "Coerce all values in a document map for SQLite storage."
-  [doc]
-  (into {}
-        (map (fn [[k v]]
-               [k (if (some? v)
-                    (coerce-sqlite-value v)
-                    v)]))
-        doc))
+  "Coerce all values in a document map for SQLite storage.
+   Uses schema-aware write coercions for proper enum/type handling."
+  ([doc] (coerce-sqlite-doc doc nil))
+  ([doc write-fns]
+   (into {}
+         (map (fn [[k v]]
+                [k (if (some? v)
+                     (let [coerce-fn (get write-fns k)]
+                       (if coerce-fn
+                         (coerce-fn v)
+                         (coerce-sqlite-value v)))
+                     v)]))
+         doc)))
 
 (defn- coerce-sqlite-set
   "Coerce all values in a :set map for SQLite storage, handling SQL expressions."
@@ -568,13 +573,14 @@
   [tx-op]
   (let [[op table-or-opts & args] tx-op
         table (if (keyword? table-or-opts) table-or-opts (:into table-or-opts))
-        sqlite-tbl (sqlite-table table)]
+        sqlite-tbl (sqlite-table table)
+        write-fns (sqlite/write-coercions @(requiring-resolve 'com.yakread/malli-opts*) sqlite-tbl)]
     (case op
       :put-docs
       (let [docs args]
         (when (seq docs)
           (let [rows (mapv (fn [doc]
-                             (coerce-sqlite-doc (rename-doc-keys doc table)))
+                             (coerce-sqlite-doc (rename-doc-keys doc table) write-fns))
                            docs)
                 all-keys (vec (into #{} (mapcat keys) rows))
                 id-key (sqlite-id-key sqlite-tbl)
@@ -590,7 +596,7 @@
       (let [docs args]
         (mapv (fn [doc]
                 (let [renamed (rename-doc-keys doc table)
-                      coerced (coerce-sqlite-doc renamed)
+                      coerced (coerce-sqlite-doc renamed write-fns)
                       id-key (sqlite-id-key sqlite-tbl)
                       id-val (get coerced id-key)]
                   {:update sqlite-tbl
