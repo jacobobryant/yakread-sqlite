@@ -70,7 +70,7 @@
                        :definition-2 (m2 conflicting-attr)})))
     (merge m1 m2)))
 
-(defn- schema-info
+(defn schema-info
   "Extract schema info: map of table-key -> attrs map."
   [malli-opts]
   (into {}
@@ -150,20 +150,20 @@
 ;; Type Coercion
 ;; ============================================================================
 
-(defn- bytes->uuid
+(defn bytes->uuid
   "Convert a 16-byte array back to a UUID."
   [^bytes byte-array]
   (when byte-array
     (let [bb (ByteBuffer/wrap byte-array)]
       (UUID. (.getLong bb) (.getLong bb)))))
 
-(defn- epoch-ms->inst
+(defn epoch-ms->inst
   "Convert epoch milliseconds to an Instant."
   [ms]
   (when ms
     (Instant/ofEpochMilli ms)))
 
-(defn- int->bool
+(defn int->bool
   "Convert 0/1 integer to boolean. Throws for unexpected values."
   [n]
   (when (some? n)
@@ -173,13 +173,13 @@
       (throw (ex-info "Invalid boolean value, expected 0 or 1"
                       {:value n})))))
 
-(defn- fast-thaw
+(defn fast-thaw
   "Thaw a nippy-frozen blob using fast-thaw."
   [blob]
   (when blob
     (nippy/fast-thaw blob)))
 
-(defn- make-enum-reader
+(defn make-enum-reader
   "Create an enum reader function from a db-value->clojure-value map."
   [enum-map]
   (fn [db-val]
@@ -189,7 +189,7 @@
                           {:value db-val
                            :available-values enum-map}))))))
 
-(defn- uuid->bytes
+(defn uuid->bytes
   "Convert a UUID to a 16-byte array for SQLite BLOB storage."
   [^UUID uuid]
   (let [bb (ByteBuffer/allocate 16)]
@@ -208,7 +208,7 @@
   [b]
   (if b 1 0))
 
-(defn- fast-freeze
+(defn fast-freeze
   "Freeze a value using nippy fast-freeze."
   [v]
   (when v

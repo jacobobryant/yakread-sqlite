@@ -71,6 +71,7 @@
    :digest/user                      :digest
    :bulk-send/sent-at                :bulk-send
    :reclist/user                     :reclist
+   :skip/user                        :reclist
    :ad/user                          :ad
    :ad.click/user                    :ad-click
    :ad.credit/ad                     :ad-credit
