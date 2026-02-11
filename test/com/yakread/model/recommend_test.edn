@@ -54,7 +54,7 @@
         :user-item/user "user1",
         :user-item/viewed-at (t/zdt 2003)}]}]
     (sub-affinity*
-     {:biff/conn node}
+     {:biff/conn* node}
      [{:sub/id "sub1",
        :sub/title "my sub",
        :sub/user {:xt/id "user1"},
@@ -218,7 +218,7 @@
         :user-item/user "user1",
         :user-item/item "item2",
         :user-item/viewed-at (t/zdt 2000)}]}]
-    (read-urls {:biff/conn node} {:user/id "user1"})),
+    (read-urls {:biff/conn* node} {:user/id "user1"})),
    :result {:user/read-urls #{"url2"}}}
   _
   {:doc "clicked-ads",
@@ -230,6 +230,6 @@
        {:xt/id "ad-click2",
         :ad.click/ad "ad2",
         :ad.click/user "user2"}]}]
-    (clicked-ads {:biff/conn node} {:user/id "user1"})),
+    (clicked-ads {:biff/conn* node} {:user/id "user1"})),
    :result {:user/clicked-ads #{"ad1"}}}
   _]}

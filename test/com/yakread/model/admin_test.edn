@@ -13,7 +13,7 @@
         :user/email "old@test.com",
         :user/joined-at (t/zdt 1999)}]}]
     (recent-users
-     {:biff/conn node, :biff/now (.toInstant (t/zdt 2000 1 8))}
+     {:biff/conn* node, :biff/now (.toInstant (t/zdt 2000 1 8))}
      {})),
    :result
    {:admin/recent-users
@@ -28,7 +28,7 @@
         :user/email "old@test.com",
         :user/joined-at (t/zdt 1999)}]}]
     (recent-users
-     {:biff/conn node, :biff/now (.toInstant (t/zdt 2000 1 8))}
+     {:biff/conn* node, :biff/now (.toInstant (t/zdt 2000 1 8))}
      {})),
    :result {:admin/recent-users []}}
   _
@@ -36,13 +36,13 @@
    :eval
    (t/with-node
     [node {:ad [{:xt/id (t/uuid 1)} {:xt/id (t/uuid 2)}]}]
-    (ads {:biff/conn node} {})),
+    (ads {:biff/conn* node} {})),
    :result
    {:admin/ads
     [{:xt/id #uuid "00010000-0000-0000-0000-000000000001"}
      {:xt/id #uuid "00020000-0000-0000-0000-000000000002"}]}}
   _
   {:doc "ads returns empty when no ads",
-   :eval (t/with-node [node {}] (ads {:biff/conn node} {})),
+   :eval (t/with-node [node {}] (ads {:biff/conn* node} {})),
    :result {:admin/ads []}}
   _]}

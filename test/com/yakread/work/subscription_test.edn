@@ -55,7 +55,7 @@
         :feed/url "url3",
         :feed/synced-at (t/zdt 2019 12 31)}]}]
     (sync-all-feeds!
-     {:biff/conn node,
+     {:biff/conn* node,
       :biff/now (t/zdt 2020),
       :yakread.work.sync-all-feeds/enabled true,
       :biff/queues
@@ -84,7 +84,7 @@
       (fn
        [feed-id]
        (sync-feed!
-        {:biff/conn node,
+        {:biff/conn* node,
          :biff/base-url "https://example.com",
          :biff/job {:feed/id feed-id}}
         :start))]
@@ -130,7 +130,7 @@
         :item.feed/guid "https://biffweb.com/p/removing-effects/"}]}]
     (t/truncate
      (sync-feed!
-      {:biff/conn node,
+      {:biff/conn* node,
        :biff/job {:feed/id "feed1"},
        :biff.fx/http
        (update

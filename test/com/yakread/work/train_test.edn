@@ -21,7 +21,7 @@
         :user-item/item "item2",
         :user-item/favorited-at (t/zdt 2000)}]}]
     (queue-add-candidate
-     {:biff/conn node,
+     {:biff/conn* node,
       :biff/queues
       {:work.train/add-candidate
        (java.util.concurrent.ConcurrentLinkedQueue.)},

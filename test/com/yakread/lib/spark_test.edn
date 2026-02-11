@@ -12,7 +12,7 @@
        {:xt/id "item2",
         :item/url "url2",
         :item.direct/candidate-status :approved}]}]
-    (item-candidates {:biff/conn node} {})),
+    (item-candidates {:biff/conn* node} {})),
    :result
    {:com.yakread.lib.spark/item-candidates
     [{:xt/id "item2", :item/url "url2"}]}}
@@ -21,7 +21,7 @@
    :eval
    (t/with-node
     [node {}]
-    (ads {:biff/conn node, :biff/now (t/zdt 2000)} {})),
+    (ads {:biff/conn* node, :biff/now (t/zdt 2000)} {})),
    :result
    {:com.yakread.lib.spark/all-ads [],
     :com.yakread.lib.spark/ad-candidates []}}
@@ -54,7 +54,7 @@
         :ad.click/ad "ad3",
         :ad.click/created-at (t/zdt 1999),
         :ad.click/cost 200}]}]
-    (ads {:biff/conn node, :biff/now (t/zdt 2000)} {})),
+    (ads {:biff/conn* node, :biff/now (t/zdt 2000)} {})),
    :result
    {:com.yakread.lib.spark/all-ads
     [{:xt/id "ad2", :ad/recent-cost 300}
@@ -76,7 +76,7 @@
    (t/with-node
     [node {}]
     {:input (ad-interaction-info node),
-     :ratings (ad-ratings {:biff/conn node} {})}),
+     :ratings (ad-ratings {:biff/conn* node} {})}),
    :result
    {:input [], :ratings {:com.yakread.lib.spark/ad-ratings []}}}
   _
@@ -109,7 +109,7 @@
         :ad.click/ad "ad1",
         :ad.click/created-at (t/zdt 2002)}]}]
     {:input (ad-interaction-info node),
-     :ratings (ad-ratings {:biff/conn node} {})}),
+     :ratings (ad-ratings {:biff/conn* node} {})}),
    :result
    {:input
     [{:ad-id "ad1",
@@ -144,7 +144,7 @@
        {:xt/id "item3", :item/url "url2"}
        {:xt/id "item4", :item/url "url3"}]}]
     (dedupe-item-id
-     {:biff/conn node}
+     {:biff/conn* node}
      {:com.yakread.lib.spark/item-candidates
       [{:xt/id "item1", :item/url "url1"}
        {:xt/id "item3", :item/url "url2"}]})),
@@ -157,7 +157,7 @@
    (t/with-node
     [node {}]
     (item-ratings
-     {:biff/conn node}
+     {:biff/conn* node}
      {:com.yakread.lib.spark/item-candidates [],
       :com.yakread.lib.spark/dedupe-item-id {}})),
    :result {:com.yakread.lib.spark/item-ratings []}}
@@ -188,7 +188,7 @@
         :skip/reclist "reclist2",
         :skip/item "item3"}]}]
     (item-ratings
-     {:biff/conn node}
+     {:biff/conn* node}
      {:com.yakread.lib.spark/item-candidates
       [{:xt/id "item1", :item/url "url1"}
        {:xt/id "item2", :item/url "url2"}],
@@ -209,7 +209,7 @@
   _
   {:doc "all-liked-items - empty database",
    :eval
-   (t/with-node [node {}] (all-liked-items {:biff/conn node} {})),
+   (t/with-node [node {}] (all-liked-items {:biff/conn* node} {})),
    :result {:yakread.model/all-liked-items []}}
   _
   {:doc "all-liked-items",
@@ -227,7 +227,7 @@
         :user-item/item "item2",
         :user-item/favorited-at (t/zdt 2000)}
        {:xt/id "usit4", :user-item/item "item3"}]}]
-    (all-liked-items {:biff/conn node} {})),
+    (all-liked-items {:biff/conn* node} {})),
    :result
    {:yakread.model/all-liked-items
     [{:item/id "item2", :item/n-likes 2}

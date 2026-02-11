@@ -21,7 +21,7 @@
       (fn
        [message-overrides]
        (deliver*
-        {:biff/conn node,
+        {:biff/conn* node,
          :yakread/domain "example.com",
          :biff.smtp/message (merge message message-overrides)}
         :start))]
@@ -61,7 +61,7 @@
         :sub/user (t/uuid 0)}]}]
     (deliver*
      {:biff.smtp/message message,
-      :biff/conn node,
+      :biff/conn* node,
       :biff/now (t/zdt 2000),
       :com.yakread.smtp/url "https://example.com/p/example-post",
       :com.yakread.fx/js {:html html}}
@@ -106,7 +106,7 @@
     [node {:user [{:xt/id (t/uuid 0), :user/email-username "bob"}]}]
     (deliver*
      {:biff.smtp/message message,
-      :biff/conn node,
+      :biff/conn* node,
       :biff/now (t/zdt 2000),
       :com.yakread.smtp/url "https://example.com/p/example-post",
       :com.yakread.fx/js {:html html}}

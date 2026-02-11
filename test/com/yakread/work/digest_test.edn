@@ -41,7 +41,7 @@
         :user/digest-last-sent
         #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}]}]
     (queue-prepare-digest
-     {:biff/conn node,
+     {:biff/conn* node,
       :biff/now #time/zoned-date-time "2000-01-01T16:00:01Z[UTC]",
       :biff/queues {:work.digest/prepare-digest (t/queue)},
       :yakread.work.digest/enabled true}
@@ -50,7 +50,21 @@
    {:biff.fx/queue
     {:jobs
      ([:work.digest/prepare-digest
-       {:xt/id "user1", :user/email "user1@example.com"}])}}}
+       {:column-1 nil,
+        :column-2 nil,
+        :column-3 nil,
+        :column-4 nil,
+        :column-5 nil,
+        :column-6 nil,
+        :column-7 nil}]
+      [:work.digest/prepare-digest
+       {:column-1 nil,
+        :column-2 nil,
+        :column-3 nil,
+        :column-4 nil,
+        :column-5 nil,
+        :column-6 nil,
+        :column-7 nil}])}}}
   _
   {:eval
    (send-digest?

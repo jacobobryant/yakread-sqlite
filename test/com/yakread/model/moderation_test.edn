@@ -21,7 +21,7 @@
         :item/record-type :direct,
         :item/ingested-at (t/zdt 2000)}]}]
     (next-batch
-     {:biff/conn conn,
+     {:biff/conn* conn,
       :yakread.model/all-liked-items
       [{:item/id (t/uuid 1), :item/n-likes 2}
        {:item/id (t/uuid 2), :item/n-likes 3}]}

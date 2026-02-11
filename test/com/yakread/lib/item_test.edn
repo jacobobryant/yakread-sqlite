@@ -25,13 +25,13 @@
         (fn
          [ctx params]
          {:on-success
-          {:ctx (dissoc ctx :biff/conn), :params params}})})
+          {:ctx (dissoc ctx :biff/conn*), :params params}})})
       start*
       (fn
        [url]
        (start
         {:biff/base-url "https://example.com",
-         :biff/conn node,
+         :biff/conn* node,
          :url url}))]
      {:matching-url (start* "url1"),
       :matching-redirect (start* "url3"),

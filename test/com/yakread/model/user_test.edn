@@ -7,8 +7,8 @@
    (t/with-sqlite
     [conn
      {:mv-user [{:xt/id (t/uuid 1), :mv-user/user-id (t/uuid 10)}]}]
-    {:exists (mv {:biff/conn conn} {:user/id (t/uuid 10)}),
-     :not-exists (mv {:biff/conn conn} {:user/id (t/uuid 20)})}),
+    {:exists (mv {:biff/conn* conn} {:user/id (t/uuid 10)}),
+     :not-exists (mv {:biff/conn* conn} {:user/id (t/uuid 20)})}),
    :result
    {:exists
     {:user/mv {:xt/id #uuid "00010000-0000-0000-0000-000000000001"}},

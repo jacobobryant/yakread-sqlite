@@ -59,7 +59,7 @@
    (t/with-node
     [node {:stuff [{:xt/id "stuff1", :x 1, :y 1}]}]
     (biff-tx-op
-     {:biff/conn node}
+     {:biff/conn* node}
      [:biff/upsert
       :stuff
       [:x :y]
@@ -90,7 +90,7 @@
    (t/with-node
     [node {:stuff [{:xt/id "stuff1", :x 1, :y 1}]}]
     (biff-tx-op
-     {:biff/conn node}
+     {:biff/conn* node}
      [:biff/upsert
       :stuff
       [:x :y]

@@ -14,7 +14,7 @@
         :item/ingested-at (t/zdt 2003),
         :item/record-type :feed}]}]
     (digest-sub-items
-     {:biff/conn conn, :biff/now (t/zdt 2003 1 10)}
+     {:biff/conn* conn, :biff/now (t/zdt 2003 1 10)}
      {:user/subscriptions
       [{:sub/items [{:xt/id (t/uuid 1)} {:xt/id (t/uuid 2)}]}]})),
    :result
@@ -32,7 +32,7 @@
         :item/ingested-at (t/zdt 2003 1 6),
         :item/record-type :feed}]}]
     (digest-sub-items
-     {:biff/conn conn, :biff/now (t/zdt 2003 1 10)}
+     {:biff/conn* conn, :biff/now (t/zdt 2003 1 10)}
      {:user/digest-last-sent (t/zdt 2003 1 5),
       :user/subscriptions
       [{:sub/items [{:xt/id (t/uuid 1)} {:xt/id (t/uuid 2)}]}]})),
@@ -51,7 +51,7 @@
         :item/ingested-at (t/zdt 2003),
         :item/record-type :feed}]}]
     (digest-bookmarks
-     {:biff/conn conn, :biff/now (t/zdt 2003 1 10)}
+     {:biff/conn* conn, :biff/now (t/zdt 2003 1 10)}
      {:user/bookmarks [{:xt/id (t/uuid 1)} {:xt/id (t/uuid 2)}]})),
    :result
    {:user/digest-bookmarks

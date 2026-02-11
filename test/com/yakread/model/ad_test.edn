@@ -12,7 +12,7 @@
      (t/start-test-node
       {:user [{:xt/id "user1", :user/email "alice@example.com"}],
        :ad [{:xt/id "ad1", :ad/user "user1"}]})]
-    (user-ad {:biff/conn node} {:xt/id "user1"})),
+    (user-ad {:biff/conn* node} {:xt/id "user1"})),
    :result {:user/ad {:xt/id "ad1"}}}
   _
   {:eval
@@ -35,8 +35,8 @@
         {:xt/id "ad-click5",
          :ad.click/ad "ad2",
          :ad.click/user "user4"}]})]
-    {:not-empty (n-clicks {:biff/conn node} {:ad/id "ad2"}),
-     :empty (n-clicks {:biff/conn node} {:ad/id "ad3"})}),
+    {:not-empty (n-clicks {:biff/conn* node} {:ad/id "ad2"}),
+     :empty (n-clicks {:biff/conn* node} {:ad/id "ad3"})}),
    :result {:not-empty {:ad/n-clicks 3}, :empty {:ad/n-clicks 0}}}
   _
   {:eval
@@ -60,7 +60,7 @@
          :ad.click/ad "ad2",
          :ad.click/created-at (t/zdt 2004)}]})]
     (last-clicked
-     {:biff/conn node}
+     {:biff/conn* node}
      [{:xt/id "ad1"} {:xt/id "ad2"} {:xt/id "ad3"}])),
    :result
    [{:xt/id "ad1",
@@ -95,7 +95,7 @@
          :ad.credit/charge-status :pending,
          :ad.credit/amount 100}]})]
     (amount-pending
-     {:biff/conn node}
+     {:biff/conn* node}
      [{:xt/id "ad1"} {:xt/id "ad2"} {:xt/id "ad4"}])),
    :result
    [{:xt/id "ad1", :ad/amount-pending 175}
@@ -127,7 +127,7 @@
          :ad.credit/ad "ad3",
          :ad.credit/charge-status :pending,
          :ad.credit/amount 100}]})]
-    (pending-charge {:biff/conn node} {:xt/id "ad1"})),
+    (pending-charge {:biff/conn* node} {:xt/id "ad1"})),
    :result {:ad/pending-charge {:xt/id "ad-credit2"}}}
   _
   {:eval
@@ -155,7 +155,7 @@
          :ad.credit/ad "ad3",
          :ad.credit/charge-status :pending,
          :ad.credit/amount 100}]})]
-    (pending-charges {:biff/conn node} nil)),
+    (pending-charges {:biff/conn* node} nil)),
    :result
    {:admin/pending-charges
     [{:xt/id "ad-credit5"}
