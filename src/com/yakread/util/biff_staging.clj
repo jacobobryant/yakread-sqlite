@@ -557,7 +557,7 @@
           (let [rows (mapv (fn [doc]
                              (coerce-sqlite-doc (rename-doc-keys doc table)))
                            docs)
-                all-keys (vec (keys (first rows)))
+                all-keys (vec (into #{} (mapcat keys) rows))
                 id-key (sqlite-id-key sqlite-tbl)
                 non-id-keys (into [] (comp (remove #{id-key})
                                            (map #(keyword (name %))))
@@ -589,15 +589,20 @@
       [])))
 
 (defn- submit-sqlite-tx!
-  "Submit a vector of HoneySQL operations to SQLite."
+  "Submit a vector of HoneySQL operations to SQLite.
+   Errors are logged but do not propagate, so that SQLite failures
+   don't crash the server during the dual-write migration phase."
   [conn ops]
   (when (and conn (seq ops))
-    (jdbc/with-transaction [tx conn]
-      (doseq [op ops]
-        (let [formatted (if (vector? op)
-                          op
-                          (sql/format op))]
-          (jdbc/execute! tx formatted))))))
+    (try
+      (jdbc/with-transaction [tx conn]
+        (doseq [op ops]
+          (let [formatted (if (vector? op)
+                            op
+                            (sql/format op))]
+            (jdbc/execute! tx formatted))))
+      (catch Exception e
+        (log/error e "Error in submit-sqlite-tx!")))))
 
 (defn submit-tx [ctx tx]
   (let [resolved (resolve-tx-ops ctx tx)
@@ -620,8 +625,8 @@
                                     (let [sqlite-val (:sqlite op)]
                                       (when sqlite-val [sqlite-val])))))
                         resolved)]
-    (biffx/submit-tx ctx xt-tx)
-    (submit-sqlite-tx! (:biff/conn* ctx) sqlite-tx)))
+    (submit-sqlite-tx! (:biff/conn* ctx) sqlite-tx)
+    (biffx/submit-tx ctx xt-tx)))
 
 (defn bundle [& {:as k->query}]
   {:select (mapv (fn [[k query]]
