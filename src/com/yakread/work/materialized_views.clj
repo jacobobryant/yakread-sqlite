@@ -74,7 +74,7 @@
                 (when-some [sub-id (-> (biffs/q
                                         conn*
                                         {:select [[[:coalesce :item/email-sub-id :sub/id]
-                                                   :sub/id]]
+                                                   :sub-id]]
                                          :from :item
                                          :where [:= :item/id (:user-item/item record)]
                                          :left-join [:sub [:and
@@ -83,7 +83,7 @@
                                                            [:= :sub/user-id (:user-item/user record)]]]
                                          :limit 1})
                                        first
-                                       :sub/id)]
+                                       :sub-id)]
                   [{:view :sub-affinity :sub/id sub-id}])
                 [(merge record {:view :current-item})])
 
@@ -91,7 +91,7 @@
                (when-some [sub-id (-> (biffs/q
                                        conn*
                                        {:select [[[:coalesce :item/email-sub-id :sub/id]
-                                                  :sub/id]]
+                                                  :sub-id]]
                                         :from :reclist
                                         :where [:= :reclist/id (:skip/reclist record)]
                                         :join [:item [:= :item/id (:skip/item record)]]
@@ -101,7 +101,7 @@
                                                           [:= :sub/user-id :reclist/user-id]]]
                                         :limit 1})
                                       first
-                                      :sub/id)]
+                                      :sub-id)]
                  [{:view :sub-affinity :sub/id sub-id}])))]
         [:work.materialized-views/update job])}}))
 

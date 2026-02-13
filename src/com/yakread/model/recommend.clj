@@ -102,24 +102,24 @@
         user+sub->skips      (into {}
                                    (map (fn [[k rows]]
                                           [k (mapv :created-at rows)]))
-                                   (group-by (juxt :reclist/user-id :sub/id)
+                                   (group-by (juxt :reclist/user-id :sub-id)
                                     (biffs/q conn*
                                              {:union-all
                                               (for [{:sub/keys [id user items]} subscriptions]
                                                 {:select [:reclist/user-id
-                                                          [[:inline id] :sub/id]
+                                                          [[:inline id] :sub-id]
                                                           [:reclist/created-at :created-at]]
                                                  :from :reclist
                                                  :join [:skip [:= :skip/reclist-id :reclist/id]]
                                                  :where [:and
                                                          [:= :reclist/user-id (:xt/id user)]
                                                          [:in :skip/item-id (mapv :xt/id items)]]})})))
-        user+sub->user-items (group-by (juxt :user-item/user-id :sub/id)
+        user+sub->user-items (group-by (juxt :user-item/user-id :sub-id)
                                        (biffs/q conn*
                                                 {:union-all
                                                  (for [{:sub/keys [id user items]} subscriptions]
                                                    {:select [:user-item/user-id
-                                                             [[:inline id] :sub/id]
+                                                             [[:inline id] :sub-id]
                                                              :user-item/favorited-at
                                                              :user-item/reported-at
                                                              :user-item/disliked-at

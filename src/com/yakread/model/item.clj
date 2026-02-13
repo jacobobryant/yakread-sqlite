@@ -76,7 +76,7 @@
          :batch? true}
   (let [results (biffs/q conn*
                          {:select [[:skip/item-id :item-id]
-                                   [[:count :skip/id] :item/n-skipped]]
+                                   [[:count :skip/id] :n-skipped]]
                           :from :skip
                           :join [:reclist [:= :skip/reclist-id :reclist/id]]
                           :where [:and
@@ -85,7 +85,7 @@
                           :group-by [:skip/item-id]})]
     (lib.core/restore-order items
                             :xt/id
-                            (mapv #(assoc % :xt/id (:item-id %)) results)
+                            (mapv #(assoc % :xt/id (:item-id %) :item/n-skipped (:n-skipped %)) results)
                             (fn [{:keys [xt/id]}]
                               {:xt/id id
                                :item/n-skipped 0}))))
@@ -297,7 +297,7 @@
                          {:union
                           [{:select [[:digest/ad-id :item-id]
                                      [[:count :digest/id]
-                                      :item/n-digest-sends]]
+                                      :n-digest-sends]]
                             :from :digest
                             :where [:and
                                     [:= :digest/user-id (:uid session)]
@@ -305,7 +305,7 @@
                             :group-by [:digest/ad-id]}
                            {:select [[:digest-item/item-id :item-id]
                                      [[:count :digest-item/digest-id]
-                                      :item/n-digest-sends]]
+                                      :n-digest-sends]]
                             :from :digest-item
                             :join [:digest [:= :digest-item/digest-id :digest/id]]
                             :where [:and
@@ -316,7 +316,7 @@
                             :group-by [:digest-item/item-id]}]})]
     (lib.core/restore-order items
                             :xt/id
-                            (mapv #(assoc % :xt/id (:item-id %)) results)
+                            (mapv #(assoc % :xt/id (:item-id %) :item/n-digest-sends (:n-digest-sends %)) results)
                             (fn [{:keys [xt/id]}]
                               {:xt/id id
                                :item/n-digest-sends 0}))))

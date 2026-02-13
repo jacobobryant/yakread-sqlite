@@ -39,41 +39,7 @@
         :ad-click/created-at (t/zdt 2001),
         :ad-click/user-id "user8"}]}]
     (active-user-ids conn (t/zdt 2001 3))),
-   :ex #error {
- :cause "[SQLITE_ERROR] SQL error or missing database (near \".\": syntax error)"
- :via
- [{:type org.sqlite.SQLiteException
-   :message "[SQLITE_ERROR] SQL error or missing database (near \".\": syntax error)"
-   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
- :trace
- [[org.sqlite.core.DB newSQLException "DB.java" 1179]
-  [org.sqlite.core.DB newSQLException "DB.java" 1190]
-  [org.sqlite.core.DB throwex "DB.java" 1150]
-  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
-  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
-  [org.sqlite.core.DB prepare "DB.java" 264]
-  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
-  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
-  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
-  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
-  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
-  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
-  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
-  [next.jdbc.prepare$create invoke "prepare.clj" 84]
-  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 900]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 881]
-  [com.yakread.work.subscription$active_user_ids invokeStatic "subscription.clj" 19]
-  [com.yakread.work.subscription$active_user_ids invoke "subscription.clj" 17]
-  [tmp697451$eval71164 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp697451$eval71164 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result [nil nil nil nil]}
   _
   {:doc "sync-all-feeds! skip feeds synced in the past 12 hours",
    :eval
@@ -98,44 +64,7 @@
       {:work.subscription/sync-feed
        (java.util.concurrent.ConcurrentLinkedQueue.)}}
      :start)),
-   :ex #error {
- :cause "[SQLITE_ERROR] SQL error or missing database (near \".\": syntax error)"
- :via
- [{:type org.sqlite.SQLiteException
-   :message "[SQLITE_ERROR] SQL error or missing database (near \".\": syntax error)"
-   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
- :trace
- [[org.sqlite.core.DB newSQLException "DB.java" 1179]
-  [org.sqlite.core.DB newSQLException "DB.java" 1190]
-  [org.sqlite.core.DB throwex "DB.java" 1150]
-  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
-  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
-  [org.sqlite.core.DB prepare "DB.java" 264]
-  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
-  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
-  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
-  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
-  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
-  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
-  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
-  [next.jdbc.prepare$create invoke "prepare.clj" 84]
-  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 900]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 881]
-  [com.yakread.work.subscription$active_user_ids invokeStatic "subscription.clj" 19]
-  [com.yakread.work.subscription$active_user_ids invoke "subscription.clj" 17]
-  [com.yakread.work.subscription$fn__64911 invokeStatic "subscription.clj" 39]
-  [com.yakread.work.subscription$fn__64911 invoke "subscription.clj" 37]
-  [com.yakread.lib.fx$machine$run__52953 invoke "fx.clj" 76]
-  [tmp697451$eval71166 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp697451$eval71166 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result {:biff.fx/queue {:jobs ()}}}
   _
   {:doc "sync-feed! start without metadata",
    :eval

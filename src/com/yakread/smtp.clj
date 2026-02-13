@@ -78,11 +78,11 @@
                        [:personal :address])
             text (lib.content/html->text html)
 
-            [{user-id :user/id
-              sub-id :sub/id}]
+            [{user-id :user-id
+              sub-id :sub-id}]
             (biffs/q conn*
-                     {:select [[:user/id :user/id]
-                               [:sub/id :sub/id]]
+                     {:select [[:user/id :user-id]
+                               [:sub/id :sub-id]]
                       :from :user
                       :left-join [:sub [:and
                                         [:= :sub/user-id :user/id]

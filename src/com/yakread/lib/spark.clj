@@ -39,13 +39,14 @@
                                          :ad/payment-failed
                                          :ad/payment-method
                                          :ad/budget
-                                         [[:coalesce [:sum :ad-click/cost] 0] :ad/recent-cost]]
+                                         [[:coalesce [:sum :ad-click/cost] 0] :recent-cost]]
                                 :from :ad
                                 :left-join [:ad-click [:and
                                                        [:= :ad-click/ad-id :ad/id]
                                                        [:<
                                                         (tick/<< now (tick/of-days 7))
-                                                        :ad-click/created-at]]]}))]
+                                                        :ad-click/created-at]]]
+                                :group-by [:ad/id]}))]
     {::all-ads all-ads
      ::ad-candidates (filterv lib.ads/active? all-ads)}))
 
@@ -126,12 +127,12 @@
 
 
         dedupe-usit (fn [usit]
-                      (update usit :user-item/item dedupe-item-id))
-        usit-key (juxt :user-item/user :user-item/item)
+                      (update usit :usit-item dedupe-item-id))
+        usit-key (juxt :usit-user :usit-item)
         item-usits (->> (when all-item-ids
                           (biffs/q conn*
-                                   {:select [[:user-item/user-id :user-item/user]
-                                             [:user-item/item-id :user-item/item]
+                                   {:select [[:user-item/user-id :usit-user]
+                                             [:user-item/item-id :usit-item]
                                              :user-item/favorited-at
                                              :user-item/disliked-at
                                              :user-item/reported-at
@@ -150,13 +151,16 @@
                         :else b))
         skip-usits (->> (when all-item-ids
                           (biffs/q conn*
-                                   {:select [[:reclist/user-id :user-item/user]
-                                             [:skip/item-id :user-item/item]
-                                             [[:count :skip/id] :user-item/skips]
-                                             [[:max :reclist/created-at] :user-item/skipped-at]]
+                                   {:select [[:reclist/user-id :usit-user]
+                                             [:skip/item-id :usit-item]
+                                             [[:count :skip/id] :usit-skips]
+                                             [[:max :reclist/created-at] :skipped-at]]
                                     :from :skip
                                     :join [:reclist [:= :reclist/id :skip/reclist-id]]
                                     :where [:in :skip/item-id all-item-ids]}))
+                        (mapv #(-> %
+                                   (assoc :user-item/skipped-at (:skipped-at %))
+                                   (dissoc :skipped-at)))
                         (mapv dedupe-usit)
                         (group-by usit-key)
                         (vals)
@@ -176,12 +180,12 @@
                              [:user-item/reported-at 0]
                              [:user-item/viewed-at 0.75]
                              [:user-item/skipped-at (-> 0.5
-                                                        (- (* 0.1 (:user-item/skips usit 0)))
+                                                        (- (* 0.1 (:usit-skips usit 0)))
                                                         (max 0))]
                              [:user-item/bookmarked-at 0.6]])]
                 :when value]
-            {:rating/user (:user-item/user usit)
-             :rating/candidate (:user-item/item usit)
+            {:rating/user (:usit-user usit)
+             :rating/candidate (:usit-item usit)
              :rating/value value
              :rating/created-at created-at}))}))
 
@@ -287,13 +291,14 @@
                   [:item/id :item/n-likes]}]}
   {:yakread.model/all-liked-items
    (into []
-         (remove (comp nil? :item/id))
+         (comp (map #(assoc % :item/id (:id %) :item/n-likes (:n-likes %)))
+               (remove (comp nil? :item/id)))
          (biffs/q conn*
-                  {:select [[:user-item/item-id :item/id]
-                            [[:count :user-item/id] :item/n-likes]]
+                  {:select [[:user-item/item-id :id]
+                            [[:count :user-item/id] :n-likes]]
                    :from :user-item
                    :where [:is-not :user-item/favorited-at nil]
-                   :order-by [[:item/n-likes :desc]]}))})
+                   :order-by [[:n-likes :desc]]}))})
 
 (def ^:private pathom-env (pci/register [item-candidates
                                          ads

@@ -17,19 +17,19 @@
 (defn active-user-ids [conn* now]
   (let [t0 (tick/<< now (tick/of-months 6))]
     (->> (biffs/q conn*
-                  {:union [{:select [[:user/id :user/id]]
+                  {:union [{:select [[:user/id :id]]
                             :from :user
                             :where [:< t0 :user/joined-at]}
-                           {:select [[:user-item/user-id :user/id]]
+                           {:select [[:user-item/user-id :id]]
                             :from :user-item
                             :where [:< t0 :user-item/viewed-at]}
-                           {:select [[:ad/user-id :user/id]]
+                           {:select [[:ad/user-id :id]]
                             :from :ad
                             :where [:< t0 :ad/updated-at]}
-                           {:select [[:ad-click/user-id :user/id]]
+                           {:select [[:ad-click/user-id :id]]
                             :from :ad-click
                             :where [:< t0 :ad-click/created-at]}]})
-         (mapv :user/id))))
+         (mapv :id))))
 
 ;; TODO modify sync waiting period based on :feed/failed-syncs
 (fx/defmachine sync-all-feeds!
