@@ -438,73 +438,85 @@
 
    Example: {:ad/user-id #uuid \"...\", :ad/user {:user/id #uuid \"...\"}}"
   [malli-opts]
-  (for [[table-key attrs] (schema-info malli-opts)
-        :let [id-key (table-id-key table-key)
-              coercions (build-coercions attrs)
-              read-coercions (:read coercions)
-              column-reader (make-column-reader table-key read-coercions)
+  (let [tables (schema-info malli-opts)]
+    (concat
+     ;; Generate :xt/id <-> :table/id bridge resolvers for each table
+     (for [[table-key _] tables
+           :let [id-key (table-id-key table-key)]]
+       (pco/resolver (symbol "com.yakread.lib.sqlite"
+                             (str (name table-key) "-xt-id"))
+                     {::pco/input [:xt/id]
+                      ::pco/output [id-key]}
+                     (fn [_ {:keys [xt/id]}]
+                       {id-key id})))
+     ;; Generate table data resolvers
+     (for [[table-key attrs] tables
+           :let [id-key (table-id-key table-key)
+                 coercions (build-coercions attrs)
+                 read-coercions (:read coercions)
+                 column-reader (make-column-reader table-key read-coercions)
 
-              ;; Find reference attrs
-              ref-attrs (into {}
-                              (keep (fn [[attr _]]
-                                      (when-let [target (ref-target attrs attr)]
-                                        [attr target])))
-                              attrs)
+                 ;; Find reference attrs
+                 ref-attrs (into {}
+                                 (keep (fn [[attr _]]
+                                         (when-let [target (ref-target attrs attr)]
+                                           [attr target])))
+                                 attrs)
 
-              ;; Build output spec
-              output (vec (for [k (keys attrs)
-                                :when (not= k id-key)
-                                :let [is-ref? (contains? ref-attrs k)
-                                      target (get ref-attrs k)
-                                      target-id-key (when target (table-id-key target))
-                                      join-key (when is-ref? (strip-id-suffix k))]]
-                            (if is-ref?
-                              ;; Return both the raw -id and the join
-                              {join-key [target-id-key]}
-                              k)))
+                 ;; Build output spec
+                 output (vec (for [k (keys attrs)
+                                   :when (not= k id-key)
+                                   :let [is-ref? (contains? ref-attrs k)
+                                         target (get ref-attrs k)
+                                         target-id-key (when target (table-id-key target))
+                                         join-key (when is-ref? (strip-id-suffix k))]]
+                               (if is-ref?
+                                 ;; Return both the raw -id and the join
+                                 {join-key [target-id-key]}
+                                 k)))
 
-              ;; Add the raw -id keys to output
-              output (into output (keys ref-attrs))
+                 ;; Add the raw -id keys to output
+                 output (into output (keys ref-attrs))
 
-              op-name (symbol "com.yakread.lib.sqlite"
-                              (str (name table-key) "-resolver"))]]
-    (pco/resolver op-name
-                  {::pco/input [id-key]
-                   ::pco/output output
-                   ::pco/batch? true}
-                  (fn [{:keys [biff/conn*]} inputs]
-                    (let [ids (mapv id-key inputs)
-                          id-write-fn (get-in coercions [:write id-key])
-                          db-ids (if id-write-fn
-                                   (mapv id-write-fn ids)
-                                   ids)
-                          sql-map {:select :*
-                                   :from table-key
-                                   :where [:in :id db-ids]}
-                          raw-results (jdbc/execute! conn*
-                                                     (sql/format sql-map)
-                                                     {:builder-fn (rs/builder-adapter
-                                                                   rs/as-unqualified-kebab-maps
-                                                                   column-reader)})
-                          ;; Post-process to add join keys
-                          process-row (fn [row]
-                                        (reduce
-                                         (fn [row [ref-attr target]]
-                                           (let [target-id-key (table-id-key target)
-                                                 join-key (strip-id-suffix ref-attr)
-                                                 ref-val (get row ref-attr)]
-                                             (assoc row join-key (when (some? ref-val)
-                                                                   {target-id-key ref-val}))))
-                                         row
-                                         ref-attrs))
-                          results (mapv process-row raw-results)
-                          id->result (into {} (map (juxt id-key identity)) results)]
-                      (mapv (fn [input]
-                              (let [id (get input id-key)]
-                                (-> (get id->result id {})
-                                    lib.core/some-vals
-                                    (assoc id-key id))))
-                            inputs))))))
+                 op-name (symbol "com.yakread.lib.sqlite"
+                                 (str (name table-key) "-resolver"))]]
+       (pco/resolver op-name
+                     {::pco/input [id-key]
+                      ::pco/output output
+                      ::pco/batch? true}
+                     (fn [{:keys [biff/conn*]} inputs]
+                       (let [ids (mapv id-key inputs)
+                             id-write-fn (get-in coercions [:write id-key])
+                             db-ids (if id-write-fn
+                                      (mapv id-write-fn ids)
+                                      ids)
+                             sql-map {:select :*
+                                      :from table-key
+                                      :where [:in :id db-ids]}
+                             raw-results (jdbc/execute! conn*
+                                                        (sql/format sql-map)
+                                                        {:builder-fn (rs/builder-adapter
+                                                                      rs/as-unqualified-kebab-maps
+                                                                      column-reader)})
+                             ;; Post-process to add join keys
+                             process-row (fn [row]
+                                           (reduce
+                                            (fn [row [ref-attr target]]
+                                              (let [target-id-key (table-id-key target)
+                                                    join-key (strip-id-suffix ref-attr)
+                                                    ref-val (get row ref-attr)]
+                                                (assoc row join-key (when (some? ref-val)
+                                                                      {target-id-key ref-val}))))
+                                            row
+                                            ref-attrs))
+                             results (mapv process-row raw-results)
+                             id->result (into {} (map (juxt id-key identity)) results)]
+                         (mapv (fn [input]
+                                 (let [id (get input id-key)]
+                                   (-> (get id->result id {})
+                                       lib.core/some-vals
+                                       (assoc id-key id))))
+                               inputs))))))))
 
 
 ;; ============================================================================

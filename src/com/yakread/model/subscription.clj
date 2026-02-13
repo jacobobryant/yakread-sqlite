@@ -9,8 +9,8 @@
    [xtdb.api :as-alias xt]))
 
 (defresolver user-subs [{:keys [biff/conn*]} {:keys [user/id]}]
-  #::pco{:output [{:user/subscriptions [:xt/id]}
-                  {:user/unsubscribed [:xt/id]}]}
+  #::pco{:output [{:user/subscriptions [:sub/id]}
+                  {:user/unsubscribed [:sub/id]}]}
   (let [{subbed false
          unsubbed true} (->> (biffs/q conn*
                                        {:select [:sub/id :sub/email-unsubscribed-at]
@@ -18,7 +18,7 @@
                                         :where [:= :sub/user-id id]})
                               (group-by (comp some? :sub/email-unsubscribed-at)))]
     {:user/subscriptions (or subbed [])
-     :user/unsubscribed (mapv #(select-keys % [:xt/id]) unsubbed)}))
+     :user/unsubscribed (mapv #(select-keys % [:sub/id]) unsubbed)}))
 
 (defresolver email-title [{:keys [sub/email-from]}]
   {:sub/title (str/replace email-from #"\s<.*>" "")})
@@ -50,22 +50,22 @@
 (defresolver sub-id->xt-id [{:keys [sub/id]}]
   {:xt/id id})
 
+(defresolver xt-id->sub-id [{:keys [xt/id]}]
+  {:sub/id id})
+
 (defresolver sub-info [{:keys [xt/id sub/feed sub/email-from]}]
   #::pco{:input [:xt/id
                  {(? :sub/feed) [:feed/id]}
                  (? :sub/email-from)]
-         :output [:sub/id
-                  :sub/source-id
+         :output [:sub/source-id
                   :sub/doc-type]}
   (cond
     email-from
-    {:sub/id id
-     :sub/source-id id
+    {:sub/source-id id
      :sub/doc-type :sub/email}
 
     feed
-    {:sub/id id
-     :sub/source-id (:feed/id feed)
+    {:sub/source-id (:feed/id feed)
      :sub/doc-type :sub/feed}))
 
 (defn- doc-type->source-key [doc-type]
@@ -298,6 +298,7 @@
 (def module {:resolvers [user-subs
                          sub-info
                          sub-id->xt-id
+                         xt-id->sub-id
                          email-title
                          feed-sub-title
                          items-unread
