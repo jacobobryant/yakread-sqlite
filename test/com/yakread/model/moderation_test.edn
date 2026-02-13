@@ -35,6 +35,5 @@
     [{:xt/id #uuid "00020000-0000-0000-0000-000000000002",
       :item/url "url2",
       :item/record-type :direct,
-      :item/direct-candidate-status nil,
       :item/n-likes 3}]}}
   _]}

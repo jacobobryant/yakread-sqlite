@@ -40,7 +40,8 @@
                                 {:select [:item/direct-candidate-status
                                           [[:count :item/id] :count]]
                                  :from :item
-                                 :where [:is-not :item/direct-candidate-status nil]}))]
+                                 :where [:is-not :item/direct-candidate-status nil]
+                                 :group-by [:item/direct-candidate-status]}))]
     {:admin.moderation/remaining (count liked-direct-items)
      :admin.moderation/approved (get statuses :approved 0)
      :admin.moderation/blocked (get statuses :blocked 0)

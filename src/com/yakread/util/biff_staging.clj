@@ -788,20 +788,32 @@
     (instance? (Class/forName "[B") v) (bytes->uuid v)
     :else v))
 
+(defn- table-column-names
+  "Get the set of column names (unqualified, kebab-case) for a table from schema."
+  [malli-opts table]
+  (when (and malli-opts table)
+    (when-let [attrs (get (sqlite/schema-info malli-opts) table)]
+      (into #{"id"} ;; always include :id
+            (map (fn [[attr _]]
+                   (name attr)))
+            attrs))))
+
 (defn- coerce-result-row
   "Coerce a single result row from SQLite.
    Applies schema-aware read coercions (bytes->UUID, int->enum, epoch-ms->Instant).
    Maps :id -> :xt/id for Pathom compatibility.
+   Only table-qualifies keys that are known schema columns; aliases stay unqualified.
    Removes nil values to match XTDB behavior (missing fields are absent, not nil)."
-  [row table read-coerce-fns]
+  [row table read-coerce-fns known-columns]
   (when row
     (into {}
           (keep (fn [[k v]]
                   (when (some? v)
-                    (let [;; SQLite results come back as :column_name (unqualified kebab)
-                          sqlite-key (when table
-                                       (keyword (name table)
-                                                (str/replace (name k) "_" "-")))
+                    (let [col-name (str/replace (name k) "_" "-")
+                          ;; Only namespace if it's a known schema column
+                          is-schema-col (and known-columns (contains? known-columns col-name))
+                          sqlite-key (when (and table is-schema-col)
+                                      (keyword (name table) col-name))
                           ;; Map :id -> :xt/id
                           out-key (cond
                                     (= k :id) :xt/id
@@ -829,6 +841,34 @@
        :else x))
    query))
 
+(defn- coerce-where-enum-values
+  "Coerce enum string/keyword values in WHERE clauses using schema-aware write coercions.
+   Walks :where vectors looking for [:= :column value] patterns where the column
+   has an enum write coercion."
+  [query write-fns]
+  (if (or (nil? write-fns) (nil? (:where query)))
+    query
+    (update query :where
+            (fn walk-where [clause]
+              (cond
+                ;; [:= :col val] or [:!= :col val] etc.
+                (and (vector? clause)
+                     (>= (count clause) 3)
+                     (keyword? (second clause)))
+                (let [col (second clause)]
+                  (if-let [coerce-fn (get write-fns col)]
+                    (into [(first clause) col]
+                          (map (fn [v]
+                                 (if (or (string? v) (keyword? v))
+                                   (try (coerce-fn v) (catch Exception _ v))
+                                   v))
+                               (drop 2 clause)))
+                    ;; Recurse into sub-clauses (e.g. [:and ...])
+                    (mapv walk-where clause)))
+                ;; Recursive case for :and/:or
+                (vector? clause) (mapv walk-where clause)
+                :else clause)))))
+
 (defn q
   "Query SQLite. conn must be a JDBC/SQLite connection.
    Queries should use native SQLite column/table names.
@@ -838,13 +878,16 @@
   ;; instead of using requiring-resolve. We can do that after the migration is finished.
   [conn query]
   (let [table (infer-table-from-query query)
+        malli-opts (when table @(requiring-resolve 'com.yakread/malli-opts*))
         read-fns (when table
-                   ;; TODO: restructure so that malli-opts can be passed as a regular parameter
-                   ;; instead of using requiring-resolve. We can do that after the migration is finished.
-                   (sqlite/read-coercions @(requiring-resolve 'com.yakread/malli-opts*) table))
+                   (sqlite/read-coercions malli-opts table))
+        write-fns (when table
+                    (sqlite/write-coercions malli-opts table))
+        known-cols (table-column-names malli-opts table)
+        query (coerce-where-enum-values query write-fns)
         coerced-query (coerce-query-values query)
         formatted (sql/format coerced-query)
         _ (log/debug "biffs/q SQL:" (first formatted))
         results (jdbc/execute! conn formatted
                                {:builder-fn rs/as-unqualified-kebab-maps})]
-    (mapv #(coerce-result-row % table read-fns) results)))
+    (mapv #(coerce-result-row % table read-fns known-cols) results)))
