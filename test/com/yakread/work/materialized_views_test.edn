@@ -67,33 +67,37 @@
        :user-item/viewed-at (t/zdt 2000)}}
      :current-item)),
    :ex #error {
- :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :cause "[SQLITE_ERROR] SQL error or missing database (no such column: user_item.item)"
  :via
- [{:type org.postgresql.util.PSQLException
-   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
-   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ [{:type org.sqlite.SQLiteException
+   :message "[SQLITE_ERROR] SQL error or missing database (no such column: user_item.item)"
+   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
  :trace
- [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
-  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
-  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
-  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
-  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
-  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
-  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
-  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
-  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
-  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
-  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
-  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+ [[org.sqlite.core.DB newSQLException "DB.java" 1179]
+  [org.sqlite.core.DB newSQLException "DB.java" 1190]
+  [org.sqlite.core.DB throwex "DB.java" 1150]
+  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
+  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
+  [org.sqlite.core.DB prepare "DB.java" 264]
+  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
+  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
+  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
+  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
+  [next.jdbc.prepare$create invoke "prepare.clj" 84]
+  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
   [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
   [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 994]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 982]
-  [com.yakread.work.materialized_views$fn__175242 invokeStatic "materialized_views.clj" 42]
-  [com.yakread.work.materialized_views$fn__175242 invoke "materialized_views.clj" 36]
-  [com.yakread.lib.fx$machine$run__173230 invoke "fx.clj" 76]
-  [tmp15341$eval179328 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp15341$eval179328 invoke "NO_SOURCE_FILE" -1]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.work.materialized_views$fn__64855 invokeStatic "materialized_views.clj" 42]
+  [com.yakread.work.materialized_views$fn__64855 invoke "materialized_views.clj" 36]
+  [com.yakread.lib.fx$machine$run__52951 invoke "fx.clj" 76]
+  [tmp970244$eval71232 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp970244$eval71232 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -121,33 +125,37 @@
        :user-item/viewed-at (t/zdt 2001)}}
      :current-item)),
    :ex #error {
- :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :cause "[SQLITE_ERROR] SQL error or missing database (no such column: user_item.item)"
  :via
- [{:type org.postgresql.util.PSQLException
-   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
-   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ [{:type org.sqlite.SQLiteException
+   :message "[SQLITE_ERROR] SQL error or missing database (no such column: user_item.item)"
+   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
  :trace
- [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
-  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
-  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
-  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
-  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
-  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
-  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
-  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
-  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
-  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
-  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
-  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+ [[org.sqlite.core.DB newSQLException "DB.java" 1179]
+  [org.sqlite.core.DB newSQLException "DB.java" 1190]
+  [org.sqlite.core.DB throwex "DB.java" 1150]
+  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
+  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
+  [org.sqlite.core.DB prepare "DB.java" 264]
+  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
+  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
+  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
+  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
+  [next.jdbc.prepare$create invoke "prepare.clj" 84]
+  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
   [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
   [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 994]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 982]
-  [com.yakread.work.materialized_views$fn__175242 invokeStatic "materialized_views.clj" 42]
-  [com.yakread.work.materialized_views$fn__175242 invoke "materialized_views.clj" 36]
-  [com.yakread.lib.fx$machine$run__173230 invoke "fx.clj" 76]
-  [tmp15341$eval179346 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp15341$eval179346 invoke "NO_SOURCE_FILE" -1]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.work.materialized_views$fn__64855 invokeStatic "materialized_views.clj" 42]
+  [com.yakread.work.materialized_views$fn__64855 invoke "materialized_views.clj" 36]
+  [com.yakread.lib.fx$machine$run__52951 invoke "fx.clj" 76]
+  [tmp970244$eval71234 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp970244$eval71234 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -174,33 +182,37 @@
        :user-item/viewed-at (t/zdt 2000)}}
      :current-item)),
    :ex #error {
- :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :cause "[SQLITE_ERROR] SQL error or missing database (no such column: user_item.item)"
  :via
- [{:type org.postgresql.util.PSQLException
-   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
-   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ [{:type org.sqlite.SQLiteException
+   :message "[SQLITE_ERROR] SQL error or missing database (no such column: user_item.item)"
+   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
  :trace
- [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
-  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
-  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
-  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
-  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
-  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
-  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
-  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
-  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
-  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
-  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
-  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+ [[org.sqlite.core.DB newSQLException "DB.java" 1179]
+  [org.sqlite.core.DB newSQLException "DB.java" 1190]
+  [org.sqlite.core.DB throwex "DB.java" 1150]
+  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
+  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
+  [org.sqlite.core.DB prepare "DB.java" 264]
+  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
+  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
+  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
+  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
+  [next.jdbc.prepare$create invoke "prepare.clj" 84]
+  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
   [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
   [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 994]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 982]
-  [com.yakread.work.materialized_views$fn__175242 invokeStatic "materialized_views.clj" 42]
-  [com.yakread.work.materialized_views$fn__175242 invoke "materialized_views.clj" 36]
-  [com.yakread.lib.fx$machine$run__173230 invoke "fx.clj" 76]
-  [tmp15341$eval179364 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp15341$eval179364 invoke "NO_SOURCE_FILE" -1]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.work.materialized_views$fn__64855 invokeStatic "materialized_views.clj" 42]
+  [com.yakread.work.materialized_views$fn__64855 invoke "materialized_views.clj" 36]
+  [com.yakread.lib.fx$machine$run__52951 invoke "fx.clj" 76]
+  [tmp970244$eval71236 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp970244$eval71236 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -228,33 +240,37 @@
        :user-item/viewed-at nil}}
      :current-item)),
    :ex #error {
- :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :cause "[SQLITE_ERROR] SQL error or missing database (no such column: user_item.item)"
  :via
- [{:type org.postgresql.util.PSQLException
-   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
-   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ [{:type org.sqlite.SQLiteException
+   :message "[SQLITE_ERROR] SQL error or missing database (no such column: user_item.item)"
+   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
  :trace
- [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
-  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
-  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
-  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
-  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
-  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
-  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
-  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
-  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
-  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
-  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
-  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+ [[org.sqlite.core.DB newSQLException "DB.java" 1179]
+  [org.sqlite.core.DB newSQLException "DB.java" 1190]
+  [org.sqlite.core.DB throwex "DB.java" 1150]
+  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
+  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
+  [org.sqlite.core.DB prepare "DB.java" 264]
+  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
+  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
+  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
+  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
+  [next.jdbc.prepare$create invoke "prepare.clj" 84]
+  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
   [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
   [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 994]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 982]
-  [com.yakread.work.materialized_views$fn__175242 invokeStatic "materialized_views.clj" 42]
-  [com.yakread.work.materialized_views$fn__175242 invoke "materialized_views.clj" 36]
-  [com.yakread.lib.fx$machine$run__173230 invoke "fx.clj" 76]
-  [tmp15341$eval179382 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp15341$eval179382 invoke "NO_SOURCE_FILE" -1]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.work.materialized_views$fn__64855 invokeStatic "materialized_views.clj" 42]
+  [com.yakread.work.materialized_views$fn__64855 invoke "materialized_views.clj" 36]
+  [com.yakread.lib.fx$machine$run__52951 invoke "fx.clj" 76]
+  [tmp970244$eval71238 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp970244$eval71238 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -282,33 +298,37 @@
        :user-item/viewed-at nil}}
      :current-item)),
    :ex #error {
- :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :cause "[SQLITE_ERROR] SQL error or missing database (no such column: user_item.item)"
  :via
- [{:type org.postgresql.util.PSQLException
-   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
-   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ [{:type org.sqlite.SQLiteException
+   :message "[SQLITE_ERROR] SQL error or missing database (no such column: user_item.item)"
+   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
  :trace
- [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
-  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
-  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
-  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
-  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
-  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
-  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
-  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
-  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
-  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
-  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
-  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+ [[org.sqlite.core.DB newSQLException "DB.java" 1179]
+  [org.sqlite.core.DB newSQLException "DB.java" 1190]
+  [org.sqlite.core.DB throwex "DB.java" 1150]
+  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
+  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
+  [org.sqlite.core.DB prepare "DB.java" 264]
+  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
+  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
+  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
+  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
+  [next.jdbc.prepare$create invoke "prepare.clj" 84]
+  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
   [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
   [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 994]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 982]
-  [com.yakread.work.materialized_views$fn__175242 invokeStatic "materialized_views.clj" 42]
-  [com.yakread.work.materialized_views$fn__175242 invoke "materialized_views.clj" 36]
-  [com.yakread.lib.fx$machine$run__173230 invoke "fx.clj" 76]
-  [tmp15341$eval179400 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp15341$eval179400 invoke "NO_SOURCE_FILE" -1]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.work.materialized_views$fn__64855 invokeStatic "materialized_views.clj" 42]
+  [com.yakread.work.materialized_views$fn__64855 invoke "materialized_views.clj" 36]
+  [com.yakread.lib.fx$machine$run__52951 invoke "fx.clj" 76]
+  [tmp970244$eval71240 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp970244$eval71240 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -318,7 +338,8 @@
    "on-tx: user-item record with email sub queues sub-affinity and current-item",
    :eval
    (t/with-sqlite
-    [conn {:item [{:xt/id (t/uuid 1), :item/email-sub-id (t/uuid 100)}]}]
+    [conn
+     {:item [{:xt/id (t/uuid 1), :item/email-sub-id (t/uuid 100)}]}]
     (on-tx
      {:biff/conn* conn,
       :record
@@ -327,33 +348,37 @@
        :user-item/viewed-at (t/zdt 2000)}}
      :start)),
    :ex #error {
- :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :cause "[SQLITE_ERROR] SQL error or missing database (near \".\": syntax error)"
  :via
- [{:type org.postgresql.util.PSQLException
-   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
-   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ [{:type org.sqlite.SQLiteException
+   :message "[SQLITE_ERROR] SQL error or missing database (near \".\": syntax error)"
+   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
  :trace
- [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
-  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
-  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
-  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
-  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
-  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
-  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
-  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
-  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
-  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
-  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
-  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+ [[org.sqlite.core.DB newSQLException "DB.java" 1179]
+  [org.sqlite.core.DB newSQLException "DB.java" 1190]
+  [org.sqlite.core.DB throwex "DB.java" 1150]
+  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
+  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
+  [org.sqlite.core.DB prepare "DB.java" 264]
+  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
+  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
+  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
+  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
+  [next.jdbc.prepare$create invoke "prepare.clj" 84]
+  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
   [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
   [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 994]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 982]
-  [com.yakread.work.materialized_views$fn__175251 invokeStatic "materialized_views.clj" 74]
-  [com.yakread.work.materialized_views$fn__175251 invoke "materialized_views.clj" 66]
-  [com.yakread.lib.fx$machine$run__173230 invoke "fx.clj" 76]
-  [tmp15341$eval179418 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp15341$eval179418 invoke "NO_SOURCE_FILE" -1]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.work.materialized_views$fn__64864 invokeStatic "materialized_views.clj" 74]
+  [com.yakread.work.materialized_views$fn__64864 invoke "materialized_views.clj" 66]
+  [com.yakread.lib.fx$machine$run__52951 invoke "fx.clj" 76]
+  [tmp970244$eval71242 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp970244$eval71242 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -377,33 +402,37 @@
        :user-item/viewed-at (t/zdt 2000)}}
      :start)),
    :ex #error {
- :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :cause "[SQLITE_ERROR] SQL error or missing database (near \".\": syntax error)"
  :via
- [{:type org.postgresql.util.PSQLException
-   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
-   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ [{:type org.sqlite.SQLiteException
+   :message "[SQLITE_ERROR] SQL error or missing database (near \".\": syntax error)"
+   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
  :trace
- [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
-  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
-  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
-  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
-  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
-  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
-  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
-  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
-  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
-  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
-  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
-  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+ [[org.sqlite.core.DB newSQLException "DB.java" 1179]
+  [org.sqlite.core.DB newSQLException "DB.java" 1190]
+  [org.sqlite.core.DB throwex "DB.java" 1150]
+  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
+  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
+  [org.sqlite.core.DB prepare "DB.java" 264]
+  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
+  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
+  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
+  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
+  [next.jdbc.prepare$create invoke "prepare.clj" 84]
+  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
   [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
   [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 994]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 982]
-  [com.yakread.work.materialized_views$fn__175251 invokeStatic "materialized_views.clj" 74]
-  [com.yakread.work.materialized_views$fn__175251 invoke "materialized_views.clj" 66]
-  [com.yakread.lib.fx$machine$run__173230 invoke "fx.clj" 76]
-  [tmp15341$eval179436 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp15341$eval179436 invoke "NO_SOURCE_FILE" -1]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.work.materialized_views$fn__64864 invokeStatic "materialized_views.clj" 74]
+  [com.yakread.work.materialized_views$fn__64864 invoke "materialized_views.clj" 66]
+  [com.yakread.lib.fx$machine$run__52951 invoke "fx.clj" 76]
+  [tmp970244$eval71244 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp970244$eval71244 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -422,33 +451,37 @@
        :user-item/viewed-at (t/zdt 2000)}}
      :start)),
    :ex #error {
- :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :cause "[SQLITE_ERROR] SQL error or missing database (near \".\": syntax error)"
  :via
- [{:type org.postgresql.util.PSQLException
-   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
-   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ [{:type org.sqlite.SQLiteException
+   :message "[SQLITE_ERROR] SQL error or missing database (near \".\": syntax error)"
+   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
  :trace
- [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
-  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
-  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
-  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
-  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
-  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
-  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
-  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
-  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
-  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
-  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
-  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+ [[org.sqlite.core.DB newSQLException "DB.java" 1179]
+  [org.sqlite.core.DB newSQLException "DB.java" 1190]
+  [org.sqlite.core.DB throwex "DB.java" 1150]
+  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
+  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
+  [org.sqlite.core.DB prepare "DB.java" 264]
+  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
+  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
+  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
+  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
+  [next.jdbc.prepare$create invoke "prepare.clj" 84]
+  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
   [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
   [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 994]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 982]
-  [com.yakread.work.materialized_views$fn__175251 invokeStatic "materialized_views.clj" 74]
-  [com.yakread.work.materialized_views$fn__175251 invoke "materialized_views.clj" 66]
-  [com.yakread.lib.fx$machine$run__173230 invoke "fx.clj" 76]
-  [tmp15341$eval179454 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp15341$eval179454 invoke "NO_SOURCE_FILE" -1]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.work.materialized_views$fn__64864 invokeStatic "materialized_views.clj" 74]
+  [com.yakread.work.materialized_views$fn__64864 invoke "materialized_views.clj" 66]
+  [com.yakread.lib.fx$machine$run__52951 invoke "fx.clj" 76]
+  [tmp970244$eval71246 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp970244$eval71246 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -465,33 +498,37 @@
       :record {:skip/item (t/uuid 2), :skip/reclist (t/uuid 1)}}
      :start)),
    :ex #error {
- :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :cause "[SQLITE_ERROR] SQL error or missing database (near \".\": syntax error)"
  :via
- [{:type org.postgresql.util.PSQLException
-   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
-   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ [{:type org.sqlite.SQLiteException
+   :message "[SQLITE_ERROR] SQL error or missing database (near \".\": syntax error)"
+   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
  :trace
- [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
-  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
-  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
-  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
-  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
-  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
-  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
-  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
-  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
-  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
-  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
-  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+ [[org.sqlite.core.DB newSQLException "DB.java" 1179]
+  [org.sqlite.core.DB newSQLException "DB.java" 1190]
+  [org.sqlite.core.DB throwex "DB.java" 1150]
+  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
+  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
+  [org.sqlite.core.DB prepare "DB.java" 264]
+  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
+  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
+  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
+  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
+  [next.jdbc.prepare$create invoke "prepare.clj" 84]
+  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
   [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
   [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 994]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 982]
-  [com.yakread.work.materialized_views$fn__175251 invokeStatic "materialized_views.clj" 91]
-  [com.yakread.work.materialized_views$fn__175251 invoke "materialized_views.clj" 66]
-  [com.yakread.lib.fx$machine$run__173230 invoke "fx.clj" 76]
-  [tmp15341$eval179472 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp15341$eval179472 invoke "NO_SOURCE_FILE" -1]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.work.materialized_views$fn__64864 invokeStatic "materialized_views.clj" 91]
+  [com.yakread.work.materialized_views$fn__64864 invoke "materialized_views.clj" 66]
+  [com.yakread.lib.fx$machine$run__52951 invoke "fx.clj" 76]
+  [tmp970244$eval71248 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp970244$eval71248 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -512,33 +549,37 @@
       :record {:skip/item (t/uuid 2), :skip/reclist (t/uuid 1)}}
      :start)),
    :ex #error {
- :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :cause "[SQLITE_ERROR] SQL error or missing database (near \".\": syntax error)"
  :via
- [{:type org.postgresql.util.PSQLException
-   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
-   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ [{:type org.sqlite.SQLiteException
+   :message "[SQLITE_ERROR] SQL error or missing database (near \".\": syntax error)"
+   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
  :trace
- [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
-  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
-  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
-  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
-  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
-  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
-  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
-  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
-  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
-  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
-  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
-  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+ [[org.sqlite.core.DB newSQLException "DB.java" 1179]
+  [org.sqlite.core.DB newSQLException "DB.java" 1190]
+  [org.sqlite.core.DB throwex "DB.java" 1150]
+  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
+  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
+  [org.sqlite.core.DB prepare "DB.java" 264]
+  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
+  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
+  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
+  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
+  [next.jdbc.prepare$create invoke "prepare.clj" 84]
+  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
   [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
   [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 994]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 982]
-  [com.yakread.work.materialized_views$fn__175251 invokeStatic "materialized_views.clj" 91]
-  [com.yakread.work.materialized_views$fn__175251 invoke "materialized_views.clj" 66]
-  [com.yakread.lib.fx$machine$run__173230 invoke "fx.clj" 76]
-  [tmp15341$eval179490 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp15341$eval179490 invoke "NO_SOURCE_FILE" -1]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.work.materialized_views$fn__64864 invokeStatic "materialized_views.clj" 91]
+  [com.yakread.work.materialized_views$fn__64864 invoke "materialized_views.clj" 66]
+  [com.yakread.lib.fx$machine$run__52951 invoke "fx.clj" 76]
+  [tmp970244$eval71250 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp970244$eval71250 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -555,33 +596,37 @@
       :record {:skip/item (t/uuid 2), :skip/reclist (t/uuid 1)}}
      :start)),
    :ex #error {
- :cause "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
+ :cause "[SQLITE_ERROR] SQL error or missing database (near \".\": syntax error)"
  :via
- [{:type org.postgresql.util.PSQLException
-   :message "ERROR: readBinary unsupported on Bytes\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb.pgwire/invalid-arg-representation\",\"readBinary unsupported on Bytes\",[\"^ \",\"~:arg-format\",\"~:binary\",\"~:arg-idx\",0]]]"
-   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ [{:type org.sqlite.SQLiteException
+   :message "[SQLITE_ERROR] SQL error or missing database (near \".\": syntax error)"
+   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
  :trace
- [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
-  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
-  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
-  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
-  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
-  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
-  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
-  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
-  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
-  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
-  [next.jdbc.result_set$eval14859$fn__14867 invoke "result_set.clj" 952]
-  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+ [[org.sqlite.core.DB newSQLException "DB.java" 1179]
+  [org.sqlite.core.DB newSQLException "DB.java" 1190]
+  [org.sqlite.core.DB throwex "DB.java" 1150]
+  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
+  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
+  [org.sqlite.core.DB prepare "DB.java" 264]
+  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
+  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
+  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
+  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
+  [next.jdbc.prepare$create invoke "prepare.clj" 84]
+  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
   [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
   [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 994]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 982]
-  [com.yakread.work.materialized_views$fn__175251 invokeStatic "materialized_views.clj" 91]
-  [com.yakread.work.materialized_views$fn__175251 invoke "materialized_views.clj" 66]
-  [com.yakread.lib.fx$machine$run__173230 invoke "fx.clj" 76]
-  [tmp15341$eval179508 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp15341$eval179508 invoke "NO_SOURCE_FILE" -1]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.work.materialized_views$fn__64864 invokeStatic "materialized_views.clj" 91]
+  [com.yakread.work.materialized_views$fn__64864 invoke "materialized_views.clj" 66]
+  [com.yakread.lib.fx$machine$run__52951 invoke "fx.clj" 76]
+  [tmp970244$eval71252 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp970244$eval71252 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]

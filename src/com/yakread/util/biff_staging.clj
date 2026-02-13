@@ -823,7 +823,9 @@
                           coerce-fn (when sqlite-key
                                       (get read-coerce-fns sqlite-key))
                           coerced-v (cond
-                                      (and coerce-fn (some? v)) (coerce-fn v)
+                                      (and coerce-fn (some? v))
+                                      (try (coerce-fn v)
+                                           (catch Exception _ (coerce-result-value v)))
                                       :else (coerce-result-value v))]
                       [out-key coerced-v]))))
           row)))

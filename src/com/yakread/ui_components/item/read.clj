@@ -26,7 +26,7 @@
                           :user-item/reported-at nil
                           :user-item/report-reason nil
                           :user-item/skipped-at nil}
-                    :where [:= :xt/id (get-in item [:item/user-item :xt/id])]})]}))
+                    :where [:= :user-item/id (get-in item [:item/user-item :xt/id])]})]}))
 
 (fx/defroute-pathom toggle-favorite
   [{:params/item
@@ -48,7 +48,7 @@
                             :user-item/disliked-at nil
                             :user-item/reported-at nil
                             :user-item/report-reason nil}
-                      :where [:= :xt/id (:xt/id user-item)]})]})))
+                      :where [:= :user-item/id (:xt/id user-item)]})]})))
 
 (fx/defroute-pathom not-interested
   [{:params/item [{:item/user-item [:xt/id]}]}
@@ -62,7 +62,7 @@
                    {:update :user-item
                     :set {:user-item/favorited-at nil
                           :user-item/disliked-at now}
-                    :where [:= :xt/id (get-in item [:item/user-item :xt/id])]})]}))
+                    :where [:= :user-item/id (get-in item [:item/user-item :xt/id])]})]}))
 
 (defn bar-button-icon-label [icon text]
   [:.flex.justify-center

@@ -20,7 +20,42 @@
         :user-item/item-id "item3",
         :user-item/favorited-at (t/zdt 2000)}]}]
     (user-favorites {:biff/conn* conn} {:user/id "user1"})),
-   :result {:user/favorites [], :user/more-favorites false}}
+   :ex #error {
+ :cause "[SQLITE_ERROR] SQL error or missing database (no such column: xt.id)"
+ :via
+ [{:type org.sqlite.SQLiteException
+   :message "[SQLITE_ERROR] SQL error or missing database (no such column: xt.id)"
+   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
+ :trace
+ [[org.sqlite.core.DB newSQLException "DB.java" 1179]
+  [org.sqlite.core.DB newSQLException "DB.java" 1190]
+  [org.sqlite.core.DB throwex "DB.java" 1150]
+  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
+  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
+  [org.sqlite.core.DB prepare "DB.java" 264]
+  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
+  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
+  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
+  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
+  [next.jdbc.prepare$create invoke "prepare.clj" 84]
+  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.model.item$user_favorites__60437 invokeStatic "item.clj" 31]
+  [com.yakread.model.item$user_favorites__60437 invoke "item.clj" 18]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp377638$eval95187 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp377638$eval95187 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:eval
    (t/with-sqlite
@@ -38,7 +73,42 @@
         :user-item/item-id "item3",
         :user-item/bookmarked-at (t/zdt 2000)}]}]
     (user-bookmarks {:biff/conn* conn} {:user/id "user1"})),
-   :result {:user/bookmarks [], :user/more-bookmarks false}}
+   :ex #error {
+ :cause "[SQLITE_ERROR] SQL error or missing database (no such column: xt.id)"
+ :via
+ [{:type org.sqlite.SQLiteException
+   :message "[SQLITE_ERROR] SQL error or missing database (no such column: xt.id)"
+   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
+ :trace
+ [[org.sqlite.core.DB newSQLException "DB.java" 1179]
+  [org.sqlite.core.DB newSQLException "DB.java" 1190]
+  [org.sqlite.core.DB throwex "DB.java" 1150]
+  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
+  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
+  [org.sqlite.core.DB prepare "DB.java" 264]
+  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
+  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
+  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
+  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
+  [next.jdbc.prepare$create invoke "prepare.clj" 84]
+  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.model.item$user_bookmarks__60448 invokeStatic "item.clj" 56]
+  [com.yakread.model.item$user_bookmarks__60448 invoke "item.clj" 43]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp377638$eval95189 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp377638$eval95189 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:eval
    (t/with-sqlite
@@ -50,20 +120,60 @@
        {:xt/id "reclist4", :reclist/user-id "user1"}
        {:xt/id "reclist5", :reclist/user-id "user1"}],
       :skip
-      [{:xt/id "skip1", :skip/reclist-id "reclist1", :skip/item-id "item1"}
-       {:xt/id "skip2", :skip/reclist-id "reclist2", :skip/item-id "item1"}
-       {:xt/id "skip3", :skip/reclist-id "reclist3", :skip/item-id "item1"}
-       {:xt/id "skip4", :skip/reclist-id "reclist4", :skip/item-id "item2"}
+      [{:xt/id "skip1",
+        :skip/reclist-id "reclist1",
+        :skip/item-id "item1"}
+       {:xt/id "skip2",
+        :skip/reclist-id "reclist2",
+        :skip/item-id "item1"}
+       {:xt/id "skip3",
+        :skip/reclist-id "reclist3",
+        :skip/item-id "item1"}
+       {:xt/id "skip4",
+        :skip/reclist-id "reclist4",
+        :skip/item-id "item2"}
        {:xt/id "skip5",
         :skip/reclist-id "reclist5",
         :skip/item-id "item3"}]}]
     (n-skipped
      {:biff/conn* conn, :session {:uid "user1"}}
      [{:xt/id "item1"} {:xt/id "item2"} {:xt/id "item4"}])),
-   :result
-   [{:xt/id "item1", :item/n-skipped 2}
-    {:xt/id "item2", :item/n-skipped 1}
-    {:xt/id "item4", :item/n-skipped 0}]}
+   :ex #error {
+ :cause "[SQLITE_ERROR] SQL error or missing database (near \".\": syntax error)"
+ :via
+ [{:type org.sqlite.SQLiteException
+   :message "[SQLITE_ERROR] SQL error or missing database (near \".\": syntax error)"
+   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
+ :trace
+ [[org.sqlite.core.DB newSQLException "DB.java" 1179]
+  [org.sqlite.core.DB newSQLException "DB.java" 1190]
+  [org.sqlite.core.DB throwex "DB.java" 1150]
+  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
+  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
+  [org.sqlite.core.DB prepare "DB.java" 264]
+  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
+  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
+  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
+  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
+  [next.jdbc.prepare$create invoke "prepare.clj" 84]
+  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.model.item$n_skipped__60462 invokeStatic "item.clj" 77]
+  [com.yakread.model.item$n_skipped__60462 invoke "item.clj" 73]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp377638$eval95191 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp377638$eval95191 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:eval
    (t/with-sqlite
@@ -81,10 +191,42 @@
     (user-item
      {:biff/conn* conn, :session {:uid "user1"}}
      [{:xt/id "item1"} {:xt/id "item2"} {:xt/id "item3"}])),
-   :result
-   [{:xt/id "item1", :item/user-item {:xt/id "user-item1"}}
-    {:xt/id "item2", :item/user-item {:xt/id "user-item2"}}
-    {}]}
+   :ex #error {
+ :cause "[SQLITE_ERROR] SQL error or missing database (no such column: xt.id)"
+ :via
+ [{:type org.sqlite.SQLiteException
+   :message "[SQLITE_ERROR] SQL error or missing database (no such column: xt.id)"
+   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
+ :trace
+ [[org.sqlite.core.DB newSQLException "DB.java" 1179]
+  [org.sqlite.core.DB newSQLException "DB.java" 1190]
+  [org.sqlite.core.DB throwex "DB.java" 1150]
+  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
+  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
+  [org.sqlite.core.DB prepare "DB.java" 264]
+  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
+  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
+  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
+  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
+  [next.jdbc.prepare$create invoke "prepare.clj" 84]
+  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.model.item$user_item__60470 invokeStatic "item.clj" 101]
+  [com.yakread.model.item$user_item__60470 invoke "item.clj" 92]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp377638$eval95193 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp377638$eval95193 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "image-from-feed",
    :eval
@@ -135,17 +277,42 @@
       {:biff/conn* conn}
       {:session/user {:xt/id "user1"},
        :params/paginate-after "item2"})}),
-   :result
-   {:all
-    {:user/history-items
-     [{:xt/id "item2", :item/user-item {:xt/id "user-item2"}}
-      {:xt/id "item1", :item/user-item {:xt/id "user-item1"}}]},
-    :page-1
-    {:user/history-items
-     [{:xt/id "item2", :item/user-item {:xt/id "user-item2"}}]},
-    :page-2
-    {:user/history-items
-     [{:xt/id "item1", :item/user-item {:xt/id "user-item1"}}]}}}
+   :ex #error {
+ :cause "[SQLITE_ERROR] SQL error or missing database (no such column: xt.id)"
+ :via
+ [{:type org.sqlite.SQLiteException
+   :message "[SQLITE_ERROR] SQL error or missing database (no such column: xt.id)"
+   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
+ :trace
+ [[org.sqlite.core.DB newSQLException "DB.java" 1179]
+  [org.sqlite.core.DB newSQLException "DB.java" 1190]
+  [org.sqlite.core.DB throwex "DB.java" 1150]
+  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
+  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
+  [org.sqlite.core.DB prepare "DB.java" 264]
+  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
+  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
+  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
+  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
+  [next.jdbc.prepare$create invoke "prepare.clj" 84]
+  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.model.item$history_items__60495 invokeStatic "item.clj" 144]
+  [com.yakread.model.item$history_items__60495 invoke "item.clj" 135]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp377638$eval95197 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp377638$eval95197 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "feed-sub",
    :eval
@@ -157,7 +324,42 @@
     (feed-sub
      {:biff/conn* conn, :session {:uid "user1"}}
      [{:item.feed/feed {:xt/id "feed1"}}])),
-   :result [{:item/sub {:xt/id "sub1"}}]}
+   :ex #error {
+ :cause "[SQLITE_ERROR] SQL error or missing database (no such column: xt.id)"
+ :via
+ [{:type org.sqlite.SQLiteException
+   :message "[SQLITE_ERROR] SQL error or missing database (no such column: xt.id)"
+   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
+ :trace
+ [[org.sqlite.core.DB newSQLException "DB.java" 1179]
+  [org.sqlite.core.DB newSQLException "DB.java" 1190]
+  [org.sqlite.core.DB throwex "DB.java" 1150]
+  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
+  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
+  [org.sqlite.core.DB prepare "DB.java" 264]
+  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
+  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
+  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
+  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
+  [next.jdbc.prepare$create invoke "prepare.clj" 84]
+  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.model.item$feed_sub__60529 invokeStatic "item.clj" 201]
+  [com.yakread.model.item$feed_sub__60529 invoke "item.clj" 193]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp377638$eval95199 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp377638$eval95199 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "email-sub",
    :eval (email-sub {:item.email/sub {:xt/id "sub3"}}),
@@ -169,7 +371,9 @@
     [conn
      {:digest
       [{:xt/id "digest1", :digest/user-id "user1", :digest/ad-id "ad1"}
-       {:xt/id "digest2", :digest/user-id "user1", :digest/ad-id "ad1"}],
+       {:xt/id "digest2",
+        :digest/user-id "user1",
+        :digest/ad-id "ad1"}],
       :digest-item
       [{:xt/id "digest-item1",
         :digest-item/digest-id "digest1",
@@ -196,12 +400,40 @@
       {:xt/id "item5"}
       {:xt/id "ad1"}
       {:xt/id "ad2"}])),
-   :result
-   [{:xt/id "item1", :item/n-digest-sends 0}
-    {:xt/id "item2", :item/n-digest-sends 1}
-    {:xt/id "item3", :item/n-digest-sends 1}
-    {:xt/id "item4", :item/n-digest-sends 2}
-    {:xt/id "item5", :item/n-digest-sends 0}
-    {:xt/id "ad1", :item/n-digest-sends 2}
-    {:xt/id "ad2", :item/n-digest-sends 0}]}
+   :ex #error {
+ :cause "[SQLITE_ERROR] SQL error or missing database (near \".\": syntax error)"
+ :via
+ [{:type org.sqlite.SQLiteException
+   :message "[SQLITE_ERROR] SQL error or missing database (near \".\": syntax error)"
+   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
+ :trace
+ [[org.sqlite.core.DB newSQLException "DB.java" 1179]
+  [org.sqlite.core.DB newSQLException "DB.java" 1190]
+  [org.sqlite.core.DB throwex "DB.java" 1150]
+  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
+  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
+  [org.sqlite.core.DB prepare "DB.java" 264]
+  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
+  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
+  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
+  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
+  [next.jdbc.prepare$create invoke "prepare.clj" 84]
+  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.model.item$digest_sends__60593 invokeStatic "item.clj" 295]
+  [com.yakread.model.item$digest_sends__60593 invoke "item.clj" 291]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp377638$eval95203 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp377638$eval95203 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _]}

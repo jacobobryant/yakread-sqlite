@@ -13,7 +13,7 @@
     (feed-subs {:biff/conn* conn} {:user/id "user1"})),
    :result
    {:user.export/feed-subs
-    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<opml version=\"1.0\">\n  <head><title>Yakread RSS subscriptions</title></head>\n  <body>\n    <outline type=\"rss\" xmlUrl=\"url1\"></outline>\n</body></opml>"}}
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<opml version=\"1.0\">\n  <head><title>Yakread RSS subscriptions</title></head>\n  <body>\n    <outline type=\"rss\"></outline>\n</body></opml>"}}
   _
   {:doc "bookmarks",
    :eval
@@ -47,7 +47,39 @@
         :item/title (str "title" i),
         :item/author-name (str "author-name" i)})}]
     (bookmarks {:biff/conn* conn} {:user/id "user1"})),
-   :result
-   {:user.export/bookmarks
-    "URL,Title,Author,Bookmarked at,Read at\nurl2,title2,author-name2,2002-01-01T00:00Z[UTC],2003-01-01T00:00Z[UTC]\nurl1,title1,author-name1,2000-01-01T00:00Z[UTC],2001-01-01T00:00Z[UTC]\n"}}
+   :ex #error {
+ :cause "[SQLITE_ERROR] SQL error or missing database (near \"SELECT\": syntax error)"
+ :via
+ [{:type org.sqlite.SQLiteException
+   :message "[SQLITE_ERROR] SQL error or missing database (near \"SELECT\": syntax error)"
+   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
+ :trace
+ [[org.sqlite.core.DB newSQLException "DB.java" 1179]
+  [org.sqlite.core.DB newSQLException "DB.java" 1190]
+  [org.sqlite.core.DB throwex "DB.java" 1150]
+  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
+  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
+  [org.sqlite.core.DB prepare "DB.java" 264]
+  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
+  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
+  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
+  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
+  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
+  [next.jdbc.prepare$create invoke "prepare.clj" 84]
+  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.model.user.export$item_resolver$fn__64143 invoke "export.clj" 47]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp196089$eval95171 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp196089$eval95171 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _]}

@@ -24,7 +24,7 @@
 (defresolver user-ad [{:keys [biff/conn*]} {:keys [xt/id]}]
   {::pco/output [{:user/ad [:xt/id]}]}
   (when-some [ad (first (biffs/q conn*
-                                 {:select :xt/id
+                                 {:select :ad/id
                                   :from :ad
                                   :where [:= :ad/user-id id]}))]
     {:user/ad ad}))
@@ -177,7 +177,7 @@
 (defresolver pending-charge [{:keys [biff/conn*]} {:keys [xt/id]}]
   {::pco/output [{:ad/pending-charge [:xt/id]}]}
   (when-some [credit (first (biffs/q conn*
-                                     {:select :xt/id
+                                     {:select :ad-credit/id
                                       :from :ad-credit
                                       :where [:and
                                               [:= :ad-credit/ad-id id]
@@ -188,7 +188,7 @@
   {::pco/output [{:admin/pending-charges [:xt/id]}]}
   {:admin/pending-charges
    (biffs/q conn*
-            {:select :xt/id
+            {:select :ad-credit/id
              :from :ad-credit
              :where [:= :ad-credit/charge-status [:lift :pending]]})})
 

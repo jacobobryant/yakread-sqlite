@@ -27,7 +27,7 @@
           (not-empty (biffs/q conn* {:select 1
                                     :from :user
                                     :where [:and
-                                            [:= :xt/id (:uid session)]
+                                            [:= :user/id (:uid session)]
                                             [:is-not :user/email-username nil]]}))
           (response true nil)
 

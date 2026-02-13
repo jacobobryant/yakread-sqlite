@@ -29,7 +29,7 @@
       (case doc-type
         :sub/feed
         (merge base
-               {:biff.fx/tx [(biffs/dual-write {:delete-from :sub :where [:= :xt/id id]})]})
+               {:biff.fx/tx [(biffs/dual-write {:delete-from :sub :where [:= :sub/id id]})]})
 
         :sub/email
         (let [{:item.email/keys [list-unsubscribe list-unsubscribe-post]} latest-item
@@ -62,7 +62,7 @@
     {:biff.fx/tx [(biffs/dual-write
                    {:update :sub
                     :set {:sub/pinned-at (when-not pinned-at now)}
-                    :where [:= :xt/id id]})]
+                    :where [:= :sub/id id]})]
      :biff.fx/render {:route-sym `page-content-route
                       :request-method :get}
      :biff.fx/next :return})
@@ -81,7 +81,7 @@
     {:biff.fx/tx [(biffs/dual-write
                    {:update :sub
                     :set {:sub.email/unsubscribed-at nil}
-                    :where [:in :xt/id (mapv :sub/id subscriptions)]})]
+                    :where [:in :sub/id (mapv :sub/id subscriptions)]})]
      :status 204
      :headers {"HX-Redirect" (href `unsubs-page)}}))
 

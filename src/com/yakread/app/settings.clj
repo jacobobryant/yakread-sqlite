@@ -78,7 +78,7 @@
                            :user/cancel-at (when cancel_at
                                              (tick/in (tick/instant (* cancel_at 1000))
                                                       "UTC"))}
-                     :where [:= :xt/id user-id]})]
+                     :where [:= :user/id user-id]})]
        :status 204}))
 
   :delete-plan
@@ -92,7 +92,7 @@
                       {:update :user
                        :set {:user/plan nil
                              :user/cancel-at nil}
-                       :where [:= :xt/id user-id]})]
+                       :where [:= :user/id user-id]})]
        :status 204})))
 
 (fx/defroute-pathom manage-premium

@@ -16,35 +16,39 @@
       :item/id (t/uuid 1),
       :user/id (t/uuid 0)},
      :biff/now (t/zdt 2000)}),
-   :result
-   {:status 204,
-    :biff.fx/tx
-    ([:biff/upsert
-      :reclist
-      [:reclist/user :reclist/created-at]
-      {:reclist/user #uuid "00000000-0000-0000-0000-000000000000",
-       :reclist/created-at
-       #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-       :reclist/clicked
-       #{#uuid "00010000-0000-0000-0000-000000000001"},
-       :xt/id #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be"}]
-     [:biff/upsert
-      :skip
-      [:skip/reclist :skip/item]
-      {:skip/reclist #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
-       :skip/item #uuid "00020000-0000-0000-0000-000000000002",
-       :xt/id #uuid "0000c9f6-4f1d-f03a-8ce9-70b71df42503"}
-      {:skip/reclist #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
-       :skip/item #uuid "00030000-0000-0000-0000-000000000003",
-       :xt/id #uuid "0000ba3d-c812-a76d-554d-cd2b40b5f04b"}]
-     [:biff/upsert
-      :user-item
-      [:user-item/user :user-item/item]
-      {:user-item/user #uuid "00000000-0000-0000-0000-000000000000",
-       :user-item/item #uuid "00010000-0000-0000-0000-000000000001",
-       :user-item/viewed-at
-       #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-       :xt/id #uuid "0000c222-9cef-e94d-fc1e-932efb9a0f58"}])}}
+   :ex #error {
+ :cause "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
+ :via
+ [{:type java.lang.IllegalArgumentException
+   :message "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
+   :at [clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]}]
+ :trace
+ [[clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]
+  [clojure.core$_cache_protocol_fn invoke "core_deftype.clj" 577]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.app.for_you$skip_tx invokeStatic "for_you.clj" 18]
+  [com.yakread.app.for_you$skip_tx invoke "for_you.clj" 12]
+  [com.yakread.app.for_you$fn__59040$fn__59042 invoke "for_you.clj" 71]
+  [clojure.lang.AFn applyToHelper "AFn.java" 154]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.core$apply invoke "core.clj" 662]
+  [com.yakread.lib.fx$wrap_hiccup$fn__52977 doInvoke "fx.clj" 125]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [com.yakread.lib.fx$machine$run__52951 invoke "fx.clj" 76]
+  [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
+  [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
+  [clojure.lang.RestFn invoke "RestFn.java" 445]
+  [tmp455950$eval71300 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp455950$eval71300 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "record-item-click with existing skips",
    :eval
@@ -71,30 +75,39 @@
       :item/id (t/uuid 3),
       :user/id (t/uuid 5)},
      :biff/now (t/zdt 2000)}),
-   :result
-   {:status 204,
-    :biff.fx/tx
-    ([:biff/upsert
-      :reclist
-      [:reclist/user :reclist/created-at]
-      {:reclist/user #uuid "00050000-0000-0000-0000-000000000005",
-       :reclist/created-at
-       #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-       :reclist/clicked
-       #{#uuid "00010000-0000-0000-0000-000000000001"
-         #uuid "00030000-0000-0000-0000-000000000003"
-         #uuid "00040000-0000-0000-0000-000000000004"},
-       :xt/id #uuid "00000000-0000-0000-0000-000000000000"}]
-     {:xt [:delete :skip "skip2"],
-      :sqlite {:delete-from :skip, :where [:in :id ["skip2"]]}}
-     [:biff/upsert
-      :user-item
-      [:user-item/user :user-item/item]
-      {:user-item/user #uuid "00050000-0000-0000-0000-000000000005",
-       :user-item/item #uuid "00030000-0000-0000-0000-000000000003",
-       :user-item/viewed-at
-       #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-       :xt/id #uuid "0005b45f-d4d9-5138-3d93-cb799b3970be"}])}}
+   :ex #error {
+ :cause "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
+ :via
+ [{:type java.lang.IllegalArgumentException
+   :message "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
+   :at [clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]}]
+ :trace
+ [[clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]
+  [clojure.core$_cache_protocol_fn invoke "core_deftype.clj" 577]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.app.for_you$skip_tx invokeStatic "for_you.clj" 18]
+  [com.yakread.app.for_you$skip_tx invoke "for_you.clj" 12]
+  [com.yakread.app.for_you$fn__59040$fn__59042 invoke "for_you.clj" 71]
+  [clojure.lang.AFn applyToHelper "AFn.java" 154]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.core$apply invoke "core.clj" 662]
+  [com.yakread.lib.fx$wrap_hiccup$fn__52977 doInvoke "fx.clj" 125]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [com.yakread.lib.fx$machine$run__52951 invoke "fx.clj" 76]
+  [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
+  [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
+  [clojure.lang.RestFn invoke "RestFn.java" 445]
+  [tmp455950$eval94598 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp455950$eval94598 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "record-ad-click",
    :eval
@@ -111,25 +124,37 @@
       :ad.click/source :email,
       :user/id (t/uuid 0)},
      :biff/now (t/zdt 2000)}),
-   :result
-   {:status 204,
-    :biff.fx/tx
-    ([:biff/upsert
-      :reclist
-      [:reclist/user :reclist/created-at]
-      {:reclist/user #uuid "00000000-0000-0000-0000-000000000000",
-       :reclist/created-at
-       #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-       :reclist/clicked
-       #{#uuid "00010000-0000-0000-0000-000000000001"},
-       :xt/id #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be"}]
-     [:biff/upsert
-      :ad-click
-      [:ad.click/user :ad.click/ad]
-      {:ad.click/user #uuid "00000000-0000-0000-0000-000000000000",
-       :ad.click/ad #uuid "00010000-0000-0000-0000-000000000001",
-       :ad.click/created-at
-       #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-       :ad.click/cost 50,
-       :ad.click/source :email}])}}
+   :ex #error {
+ :cause "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
+ :via
+ [{:type java.lang.IllegalArgumentException
+   :message "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
+   :at [clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]}]
+ :trace
+ [[clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]
+  [clojure.core$_cache_protocol_fn invoke "core_deftype.clj" 577]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
+  [com.yakread.app.for_you$skip_tx invokeStatic "for_you.clj" 18]
+  [com.yakread.app.for_you$skip_tx invoke "for_you.clj" 12]
+  [com.yakread.app.for_you$fn__59056$fn__59058 invoke "for_you.clj" 100]
+  [clojure.lang.AFn applyToHelper "AFn.java" 154]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.core$apply invoke "core.clj" 662]
+  [com.yakread.lib.fx$wrap_hiccup$fn__52977 doInvoke "fx.clj" 125]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [com.yakread.lib.fx$machine$run__52951 invoke "fx.clj" 76]
+  [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
+  [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
+  [clojure.lang.RestFn invoke "RestFn.java" 445]
+  [tmp455950$eval94616 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp455950$eval94616 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _]}

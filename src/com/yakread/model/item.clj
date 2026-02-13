@@ -29,7 +29,7 @@
                              {:item/id item-id
                               :item/user-item {:xt/id id}}))
                       (biffs/q conn*
-                               {:select [:xt/id :user-item/item-id]
+                               {:select [:user-item/id :user-item/item-id]
                                 :from :user-item
                                 :where [:and
                                         [:= :user-item/user-id id]
@@ -54,7 +54,7 @@
                              {:item/id item-id
                               :item/user-item {:xt/id id}}))
                       (biffs/q conn*
-                               {:select [:xt/id :user-item/item-id]
+                               {:select [:user-item/id :user-item/item-id]
                                 :from :user-item
                                 :where [:and
                                         [:= :user-item/user-id id]
@@ -75,16 +75,17 @@
          :output [:item/n-skipped]
          :batch? true}
   (let [results (biffs/q conn*
-                         {:select [[:skip/item-id :xt/id]
+                         {:select [[:skip/item-id :item-id]
                                    [[:count :skip/id] :item/n-skipped]]
                           :from :skip
                           :join [:reclist [:= :skip/reclist-id :reclist/id]]
                           :where [:and
                                   [:= :reclist/user-id (:uid session)]
-                                  [:in :skip/item-id (mapv :xt/id items)]]})]
+                                  [:in :skip/item-id (mapv :xt/id items)]]
+                          :group-by [:skip/item-id]})]
     (lib.core/restore-order items
                             :xt/id
-                            results
+                            (mapv #(assoc % :xt/id (:item-id %)) results)
                             (fn [{:keys [xt/id]}]
                               {:xt/id id
                                :item/n-skipped 0}))))
@@ -99,7 +100,7 @@
                              (when (item-ids item-id)
                                {:xt/id item-id :item/user-item {:xt/id id}})))
                       (biffs/q conn*
-                               {:select [:xt/id :user-item/item-id]
+                               {:select [:user-item/id :user-item/item-id]
                                 :from :user-item
                                 :where [:= :user-item/user-id (:uid session)]}))]
     (lib.core/restore-order items :xt/id results)))
@@ -142,7 +143,7 @@
   (let [{:keys [batch-size] :or {batch-size 100}} (pco/params ctx)]
     {:user/history-items
      (->> (biffs/q conn*
-                   {:select [:xt/id
+                   {:select [:user-item/id
                              :user-item/item-id
                              :user-item/viewed-at
                              :user-item/favorited-at
@@ -199,7 +200,7 @@
                         (map (juxt :sub/feed-id :xt/id))
                         (when (not-empty feed-ids)
                           (biffs/q conn*
-                                   {:select [:xt/id :sub/feed-id]
+                                   {:select [:sub/id :sub/feed-id]
                                     :from :sub
                                     :where [:and
                                             [:= :sub/user-id (:uid session)]
@@ -294,14 +295,15 @@
    ::pco/batch? true}
   (let [results (biffs/q conn*
                          {:union
-                          [{:select [[:digest/ad-id :xt/id]
-                                     [[:count :xt/id]
+                          [{:select [[:digest/ad-id :item-id]
+                                     [[:count :digest/id]
                                       :item/n-digest-sends]]
                             :from :digest
                             :where [:and
                                     [:= :digest/user-id (:uid session)]
-                                    [:in :digest/ad-id (mapv :xt/id items)]]}
-                           {:select [[:digest-item/item-id :xt/id]
+                                    [:in :digest/ad-id (mapv :xt/id items)]]
+                            :group-by [:digest/ad-id]}
+                           {:select [[:digest-item/item-id :item-id]
                                      [[:count :digest-item/digest-id]
                                       :item/n-digest-sends]]
                             :from :digest-item
@@ -310,10 +312,11 @@
                                     [:= :digest/user-id (:uid session)]
                                     ;; TODO seems like it might be faster without this assuming #
                                     ;; digests is << # candidate items
-                                    [:in :digest-item/item-id (mapv :xt/id items)]]}]})]
+                                    [:in :digest-item/item-id (mapv :xt/id items)]]
+                            :group-by [:digest-item/item-id]}]})]
     (lib.core/restore-order items
                             :xt/id
-                            results
+                            (mapv #(assoc % :xt/id (:item-id %)) results)
                             (fn [{:keys [xt/id]}]
                               {:xt/id id
                                :item/n-digest-sends 0}))))

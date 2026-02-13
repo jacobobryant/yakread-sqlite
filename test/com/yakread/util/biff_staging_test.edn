@@ -66,24 +66,51 @@
       {:xt/id "stuff1-new-id", :x 1, :y 1, :z 1}
       {:xt/id "stuff2-new-id", :x 2, :y 2, :z 2}
       {:x 3, :y 3, :z 3}])),
-   :result
-   [[:biff/assert-query
-     {:select [:x :y :xt/id],
-      :from :stuff,
-      :where
-      [:in
-       [:array [:x :y]]
-       ([:array [1 1]] [:array [2 2]] [:array [3 3]])]}
-     [{:x 1, :y 1, :xt/id "stuff1"}]]
-    [:put-docs
-     :stuff
-     {:xt/id "stuff2-new-id", :x 2, :y 2, :z 2}
-     {:xt/id #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503",
-      :x 3,
-      :y 3,
-      :z 3}]
-    {:xt {:update :stuff, :set {:z 1}, :where [:= :xt/id "stuff1"]},
-     :sqlite {:update :stuff, :set {:z 1}, :where [:= :id "stuff1"]}}]}
+   :ex #error {
+ :cause "No implementation of method: :get-connection of protocol: #'next.jdbc.protocols/Connectable found for class: nil"
+ :via
+ [{:type java.lang.IllegalArgumentException
+   :message "No implementation of method: :get-connection of protocol: #'next.jdbc.protocols/Connectable found for class: nil"
+   :at [clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]}]
+ :trace
+ [[clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]
+  [clojure.core$_cache_protocol_fn invoke "core_deftype.clj" 577]
+  [next.jdbc.protocols$eval14669$fn__14670$G__14660__14677 invoke "protocols.clj" 25]
+  [next.jdbc$get_connection invokeStatic "jdbc.clj" 169]
+  [next.jdbc$get_connection invoke "jdbc.clj" 148]
+  [xtdb.api$with_conn invokeStatic "api.clj" 55]
+  [xtdb.api$with_conn invoke "api.clj" 40]
+  [xtdb.api$plan_q$reify__17800 reduce "api.clj" 116]
+  [clojure.core$reduce invokeStatic "core.clj" 6964]
+  [clojure.core$into invokeStatic "core.clj" 7038]
+  [clojure.core$into invoke "core.clj" 7029]
+  [xtdb.api$q invokeStatic "api.clj" 172]
+  [xtdb.api$q invoke "api.clj" 128]
+  [xtdb.api$q invokeStatic "api.clj" 169]
+  [xtdb.api$q invoke "api.clj" 128]
+  [clojure.lang.AFn applyToHelper "AFn.java" 156]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.core$apply invokeStatic "core.clj" 671]
+  [clojure.core$apply invoke "core.clj" 662]
+  [com.biffweb.impl.xtdb2$q invokeStatic "xtdb2.clj" 37]
+  [com.biffweb.impl.xtdb2$q doInvoke "xtdb2.clj" 36]
+  [clojure.lang.RestFn invoke "RestFn.java" 428]
+  [clojure.lang.AFn applyToHelper "AFn.java" 156]
+  [clojure.lang.RestFn applyTo "RestFn.java" 135]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.core$apply invoke "core.clj" 662]
+  [com.biffweb.experimental$q invokeStatic "experimental.clj" 74]
+  [com.biffweb.experimental$q doInvoke "experimental.clj" 71]
+  [clojure.lang.RestFn invoke "RestFn.java" 424]
+  [com.yakread.util.biff_staging$eval52736$fn__52739 invoke "biff_staging.clj" 502]
+  [clojure.lang.MultiFn invoke "MultiFn.java" 234]
+  [tmp18453$eval95037 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp18453$eval95037 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc ":biff/upsert :on-insert / :on-delete",
    :eval
@@ -104,17 +131,49 @@
        :y 2,
        :biff/on-insert {:z 1},
        :biff/on-update {:z [:+ :z 1]}}])),
-   :result
-   [[:biff/assert-query
-     {:select [:x :y :xt/id],
-      :from :stuff,
-      :where [:in [:array [:x :y]] ([:array [1 1]] [:array [2 2]])]}
-     [{:x 1, :y 1, :xt/id "stuff1"}]]
-    [:put-docs :stuff {:xt/id "stuff2-new-id", :x 2, :y 2, :z 1}]
-    {:xt
-     {:update :stuff,
-      :set {:z [:+ :z 1]},
-      :where [:= :xt/id "stuff1"]},
-     :sqlite
-     {:update :stuff, :set {:z [:+ :z 1]}, :where [:= :id "stuff1"]}}]}
+   :ex #error {
+ :cause "No implementation of method: :get-connection of protocol: #'next.jdbc.protocols/Connectable found for class: nil"
+ :via
+ [{:type java.lang.IllegalArgumentException
+   :message "No implementation of method: :get-connection of protocol: #'next.jdbc.protocols/Connectable found for class: nil"
+   :at [clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]}]
+ :trace
+ [[clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]
+  [clojure.core$_cache_protocol_fn invoke "core_deftype.clj" 577]
+  [next.jdbc.protocols$eval14669$fn__14670$G__14660__14677 invoke "protocols.clj" 25]
+  [next.jdbc$get_connection invokeStatic "jdbc.clj" 169]
+  [next.jdbc$get_connection invoke "jdbc.clj" 148]
+  [xtdb.api$with_conn invokeStatic "api.clj" 55]
+  [xtdb.api$with_conn invoke "api.clj" 40]
+  [xtdb.api$plan_q$reify__17800 reduce "api.clj" 116]
+  [clojure.core$reduce invokeStatic "core.clj" 6964]
+  [clojure.core$into invokeStatic "core.clj" 7038]
+  [clojure.core$into invoke "core.clj" 7029]
+  [xtdb.api$q invokeStatic "api.clj" 172]
+  [xtdb.api$q invoke "api.clj" 128]
+  [xtdb.api$q invokeStatic "api.clj" 169]
+  [xtdb.api$q invoke "api.clj" 128]
+  [clojure.lang.AFn applyToHelper "AFn.java" 156]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.lang.Var applyTo "Var.java" 707]
+  [clojure.core$apply invokeStatic "core.clj" 671]
+  [clojure.core$apply invoke "core.clj" 662]
+  [com.biffweb.impl.xtdb2$q invokeStatic "xtdb2.clj" 37]
+  [com.biffweb.impl.xtdb2$q doInvoke "xtdb2.clj" 36]
+  [clojure.lang.RestFn invoke "RestFn.java" 428]
+  [clojure.lang.AFn applyToHelper "AFn.java" 156]
+  [clojure.lang.RestFn applyTo "RestFn.java" 135]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.core$apply invoke "core.clj" 662]
+  [com.biffweb.experimental$q invokeStatic "experimental.clj" 74]
+  [com.biffweb.experimental$q doInvoke "experimental.clj" 71]
+  [clojure.lang.RestFn invoke "RestFn.java" 424]
+  [com.yakread.util.biff_staging$eval52736$fn__52739 invoke "biff_staging.clj" 502]
+  [clojure.lang.MultiFn invoke "MultiFn.java" 234]
+  [tmp18453$eval95055 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp18453$eval95055 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _]}

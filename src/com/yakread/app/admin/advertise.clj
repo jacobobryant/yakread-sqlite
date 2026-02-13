@@ -58,7 +58,7 @@
                         (biffs/dual-write
                          {:update :ad
                           :set {:ad/balance [:- :ad/balance amount]}
-                          :where [:= :xt/id ad-id]})])
+                          :where [:= :ad/id ad-id]})])
 
                      ;; record failed payment
                      (for [{:keys [xt/id] :ad.credit/keys [ad]} failed
