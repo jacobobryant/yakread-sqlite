@@ -13,10 +13,10 @@
                   {:user/unsubscribed [:xt/id]}]}
   (let [{subbed false
          unsubbed true} (->> (biffs/q conn*
-                                       {:select [:xt/id :sub.email/unsubscribed-at]
+                                       {:select [:sub/id :sub/email-unsubscribed-at]
                                         :from :sub
-                                        :where [:= :sub/user id]})
-                              (group-by (comp some? :sub.email/unsubscribed-at)))]
+                                        :where [:= :sub/user-id id]})
+                              (group-by (comp some? :sub/email-unsubscribed-at)))]
     {:user/subscriptions (or subbed [])
      :user/unsubscribed (mapv #(select-keys % [:xt/id]) unsubbed)}))
 
@@ -40,9 +40,9 @@
   {::pco/output [{:sub.email/latest-item [:xt/id]}]}
   (when-some [item (when (= doc-type :sub/email)
                      (first (biffs/q conn*
-                                     {:select :xt/id
+                                     {:select :item/id
                                       :from :item
-                                      :where [:= :item.email/sub id]
+                                      :where [:= :item/email-sub-id id]
                                       :order-by [[:item/ingested-at :desc]]
                                       :limit 1})))]
     {:sub.email/latest-item item}))
@@ -70,8 +70,8 @@
 
 (defn- doc-type->source-key [doc-type]
   (case doc-type
-    :sub/email :item.email/sub
-    :sub/feed :item.feed/feed))
+    :sub/email :item/email-sub-id
+    :sub/feed :item/feed-id))
 
 (defresolver total [{:keys [biff/conn*]} inputs]
   {::pco/input [:sub/source-id :sub/doc-type]
@@ -85,7 +85,8 @@
                             {:select [[source-key :sub/source-id]
                                       [:%count.* :sub/total]]
                              :from :item
-                             :where [:in source-key source-ids]})})]
+                             :where [:in source-key source-ids]
+                             :group-by [source-key]})})]
     (lib.core/restore-order inputs
                             :sub/source-id
                             results
@@ -105,13 +106,13 @@
                                      [doc-type inputs] (group-by :sub/doc-type inputs)
                                      :let [source-ids (mapv :sub/source-id inputs)
                                            source-key (doc-type->source-key doc-type)]]
-                                 {:select [[:user-item/user :sub/user]
+                                 {:select [[:user-item/user-id :sub/user]
                                            [source-key :sub/source-id]
-                                           [[:count :user-item/item] :sub/items-read]]
+                                           [[:count :user-item/item-id] :sub/items-read]]
                                   :from :user-item
-                                  :join [:item [:= :item._id :user-item/item]]
+                                  :join [:item [:= :item/id :user-item/item-id]]
                                   :where [:and
-                                          [:= :user-item/user user-id]
+                                          [:= :user-item/user-id user-id]
                                           [:in source-key source-ids]
                                           [:is-not [:coalesce
                                                     :user-item/viewed-at
@@ -119,7 +120,8 @@
                                                     :user-item/favorited-at
                                                     :user-item/disliked-at
                                                     :user-item/reported-at]
-                                           nil]]})})
+                                           nil]]
+                                  :group-by [:user-item/user-id source-key]})})
                      (mapv (fn [record]
                              (update record :sub/user #(array-map :xt/id %)))))]
     (lib.core/restore-order inputs
@@ -148,7 +150,8 @@
                                       [[:max [:coalesce :item/published-at :item/ingested-at]]
                                        :sub/published-at]]
                              :from :item
-                             :where [:in source-key source-ids]})})]
+                             :where [:in source-key source-ids]
+                             :group-by [source-key]})})]
     (lib.core/restore-order inputs
                             :sub/source-id
                             results
@@ -166,7 +169,7 @@
                                (for [[doc-type source-ids]  doc-type->source-ids
                                      :let [source-key (doc-type->source-key doc-type)]]
                                  {:select [[source-key :sub/source-id]
-                                           :xt/id]
+                                           :item/id]
                                   :from :item
                                   :where [:in source-key source-ids]})})
                      (group-by :sub/source-id)
@@ -190,12 +193,12 @@
                              {:sub/source-id source-id
                               :sub/latest-item {:xt/id id}}))
                       (biffs/q conn*
-                               ;; TODO try [:coalesce :item.feed/feed :item.email/sub]
+                               ;; TODO try [:coalesce :item/feed-id :item/email-sub-id]
                                {:union-all
                                 (for [[doc-type subs*]  doc-type->subs
                                       :let [source-key (doc-type->source-key doc-type)]]
                                   {:select [[source-key :sub/source-id]
-                                            :xt/id]
+                                            :item/id]
                                    :from :item
                                    :where (into [:or]
                                                 (for [{:sub/keys [source-id published-at]} subs*]
@@ -213,9 +216,9 @@
                    (lib.serialize/url->uuid (:sub-id path-params)))
         [sub] (when (some? sub-id)
                 (biffs/q conn*
-                         {:select [:xt/id :sub/user]
+                         {:select [:sub/id [:sub/user-id :sub/user]]
                           :from :sub
-                          :where [:= :xt/id sub-id]}))]
+                          :where [:= :sub/id sub-id]}))]
     (when (and sub (= (:uid session) (:sub/user sub)))
       {:params/sub (update sub :sub/user #(array-map :xt/id %))})))
 
@@ -225,9 +228,9 @@
   (let [sub-ids (mapv #(some-> % name parse-uuid) (keys (:subs params)))
         subs* (when (not-empty sub-ids)
                 (biffs/q conn*
-                         {:select [:xt/id :sub/user]
+                         {:select [:sub/id [:sub/user-id :sub/user]]
                           :from :sub
-                          :where [:in :xt/id sub-ids]}))]
+                          :where [:in :sub/id sub-ids]}))]
 
     (when (and (= (count sub-ids) (count subs*))
                (every? #(= (:uid session) (:sub/user %)) subs*))
@@ -246,14 +249,14 @@
                               item items]
                           [(:xt/id user) (:xt/id item)])
         results (biffs/q conn*
-                         {:select [:user-item/user :user-item/item]
+                         {:select [:user-item/user-id :user-item/item-id]
                           :from :user-item
                           :where [:and
                                   (into [:or]
                                         (for [[user-id item-id] user-item-pairs]
                                           [:and
-                                           [:= :user-item/user user-id]
-                                           [:= :user-item/item item-id]]))
+                                           [:= :user-item/user-id user-id]
+                                           [:= :user-item/item-id item-id]]))
                                   [:is-not
                                    [:coalesce
                                     :user-item/viewed-at
@@ -262,9 +265,9 @@
                                     :user-item/disliked-at
                                     :user-item/reported-at]
                                    nil]]})
-        user->read-items (update-vals (group-by :user-item/user results)
+        user->read-items (update-vals (group-by :user-item/user-id results)
                                       (fn [results]
-                                        (into #{} (map :user-item/item) results)))]
+                                        (into #{} (map :user-item/item-id) results)))]
     (mapv (fn [{:sub/keys [user items]}]
             (let [read-items (get user->read-items (:xt/id user) #{})
                   unread-items (filterv (complement (comp read-items :xt/id)) items)]
@@ -279,10 +282,10 @@
                         {:xt/id id
                          :sub/mv {:xt/id mv}})
                       (biffs/q conn*
-                               {:select [[:xt/id :sub/mv]
-                                         [:mv.sub/sub :xt/id]]
+                               {:select [[:mv-sub/id :sub/mv]
+                                         [:mv-sub/sub-id :xt/id]]
                                 :from :mv-sub
-                                :where [:in :mv.sub/sub (mapv :xt/id subs*)]}))]
+                                :where [:in :mv-sub/sub-id (mapv :xt/id subs*)]}))]
     (lib.core/restore-order subs* :xt/id results)))
 
 (def module {:resolvers [user-subs

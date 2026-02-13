@@ -14,40 +14,40 @@
  :tests
  [{:doc "active-users",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:user
       [{:xt/id "user1", :user/joined-at (t/zdt 2000)}
        {:xt/id "user2", :user/joined-at (t/zdt 2001)}],
       :user-item
       [{:xt/id "user-item1",
         :user-item/viewed-at (t/zdt 2000),
-        :user-item/user "user3"}
+        :user-item/user-id "user3"}
        {:xt/id "user-item2",
         :user-item/viewed-at (t/zdt 2001),
-        :user-item/user "user4"}],
+        :user-item/user-id "user4"}],
       :ad
-      [{:xt/id "ad1", :ad/updated-at (t/zdt 2000), :ad/user "user5"}
-       {:xt/id "ad2", :ad/updated-at (t/zdt 2001), :ad/user "user6"}],
+      [{:xt/id "ad1", :ad/updated-at (t/zdt 2000), :ad/user-id "user5"}
+       {:xt/id "ad2", :ad/updated-at (t/zdt 2001), :ad/user-id "user6"}],
       :ad-click
       [{:xt/id "ad-click1",
-        :ad.click/created-at (t/zdt 2000),
-        :ad.click/user "user7"}
+        :ad-click/created-at (t/zdt 2000),
+        :ad-click/user-id "user7"}
        {:xt/id "ad-click2",
-        :ad.click/created-at (t/zdt 2001),
-        :ad.click/user "user8"}]}]
-    (active-user-ids node (t/zdt 2001 3))),
+        :ad-click/created-at (t/zdt 2001),
+        :ad-click/user-id "user8"}]}]
+    (active-user-ids conn (t/zdt 2001 3))),
    :result ["user2" "user4" "user6" "user8"]}
   _
   {:doc "sync-all-feeds! skip feeds synced in the past 12 hours",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:user [{:xt/id "user1", :user/joined-at (t/zdt 2020)}],
       :sub
-      [{:xt/id "sub1", :sub/user "user1", :sub.feed/feed "feed1"}
-       {:xt/id "sub2", :sub/user "user1", :sub.feed/feed "feed2"}
-       {:xt/id "sub3", :sub/user "user1", :sub.feed/feed "feed3"}],
+      [{:xt/id "sub1", :sub/user-id "user1", :sub/feed-id "feed1"}
+       {:xt/id "sub2", :sub/user-id "user1", :sub/feed-id "feed2"}
+       {:xt/id "sub3", :sub/user-id "user1", :sub/feed-id "feed3"}],
       :feed
       [{:xt/id "feed1", :feed/url "url1"}
        {:xt/id "feed2", :feed/url "url2", :feed/synced-at (t/zdt 2020)}
@@ -55,7 +55,7 @@
         :feed/url "url3",
         :feed/synced-at (t/zdt 2019 12 31)}]}]
     (sync-all-feeds!
-     {:biff/conn* node,
+     {:biff/conn* conn,
       :biff/now (t/zdt 2020),
       :yakread.work.sync-all-feeds/enabled true,
       :biff/queues
@@ -70,8 +70,8 @@
   _
   {:doc "sync-feed! start without metadata",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:feed
       [{:xt/id "feed1", :feed/url "url1"}
        {:xt/id "feed2",
@@ -84,7 +84,7 @@
       (fn
        [feed-id]
        (sync-feed!
-        {:biff/conn* node,
+        {:biff/conn* conn,
          :biff/base-url "https://example.com",
          :biff/job {:feed/id feed-id}}
         :start))]
@@ -119,18 +119,18 @@
   _
   {:doc "sync-feed! :parse",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:item
       [{:xt/id "item1",
-        :item.feed/feed "feed1",
+        :item/feed-id "feed1",
         :item/title "Speeding up page loads with secondary indexes"}
        {:xt/id "item2",
-        :item.feed/feed "feed1",
-        :item.feed/guid "https://biffweb.com/p/removing-effects/"}]}]
+        :item/feed-id "feed1",
+        :item/feed-guid "https://biffweb.com/p/removing-effects/"}]}]
     (t/truncate
      (sync-feed!
-      {:biff/conn* node,
+      {:biff/conn* conn,
        :biff/job {:feed/id "feed1"},
        :biff.fx/http
        (update
