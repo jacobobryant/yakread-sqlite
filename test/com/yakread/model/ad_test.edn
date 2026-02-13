@@ -81,13 +81,13 @@
   [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
   [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
   [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
-  [com.yakread.model.ad$last_clicked__60267 invokeStatic "ad.clj" 95]
-  [com.yakread.model.ad$last_clicked__60267 invoke "ad.clj" 91]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 900]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 881]
+  [com.yakread.model.ad$last_clicked__60270 invokeStatic "ad.clj" 95]
+  [com.yakread.model.ad$last_clicked__60270 invoke "ad.clj" 91]
   [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp809089$eval70494 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp809089$eval70494 invoke "NO_SOURCE_FILE" -1]
+  [tmp374286$eval95223 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp374286$eval95223 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -145,13 +145,13 @@
   [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
   [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
   [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 893]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 874]
-  [com.yakread.model.ad$amount_pending__60271 invokeStatic "ad.clj" 106]
-  [com.yakread.model.ad$amount_pending__60271 invoke "ad.clj" 102]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 900]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 881]
+  [com.yakread.model.ad$amount_pending__60277 invokeStatic "ad.clj" 108]
+  [com.yakread.model.ad$amount_pending__60277 invoke "ad.clj" 104]
   [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp809089$eval70496 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp809089$eval70496 invoke "NO_SOURCE_FILE" -1]
+  [tmp374286$eval95225 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp374286$eval95225 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -182,7 +182,7 @@
         :ad-credit/charge-status :pending,
         :ad-credit/amount 100}]}]
     (pending-charge {:biff/conn* conn} {:xt/id "ad1"})),
-   :result nil}
+   :result {:ad/pending-charge {:xt/id "ad-credit1"}}}
   _
   {:eval
    (t/with-sqlite
@@ -209,7 +209,12 @@
         :ad-credit/charge-status :pending,
         :ad-credit/amount 100}]}]
     (pending-charges {:biff/conn* conn} nil)),
-   :result {:admin/pending-charges []}}
+   :result
+   {:admin/pending-charges
+    [{:xt/id "ad-credit1"}
+     {:xt/id "ad-credit2"}
+     {:xt/id "ad-credit4"}
+     {:xt/id "ad-credit5"}]}}
   _
   {:eval
    (let

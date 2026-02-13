@@ -31,14 +31,14 @@
          :ad/card-details nil,
          :ad/updated-at
          #time/zoned-date-time "2000-01-01T00:00Z[UTC]"},
-        :where [:= :xt/id "ad1"]},
+        :where [:= :ad/id "ad1"]},
        :sqlite
        {:update :ad,
         :set
         {:ad/payment-method nil,
          :ad/card-details nil,
          :ad/updated-at 946684800000},
-        :where [:= :id "ad1"]}}]}
+        :where [:= :ad/id "ad1"]}}]}
     {:biff.fx/http
      {:method :post,
       :url "https://api.stripe.com/v1/payment_methods/xyz/detach",
@@ -93,7 +93,7 @@
         :ad/payment-method nil,
         :ad/card-details [:lift nil],
         :ad/updated-at #time/zoned-date-time "2000-01-01T00:00Z[UTC]"},
-       :where [:= :xt/id "ad2"]},
+       :where [:= :ad/id "ad2"]},
       :sqlite
       {:update :ad,
        :set
@@ -101,7 +101,7 @@
         :ad/payment-method nil,
         :ad/card-details nil,
         :ad/updated-at 946684800000},
-       :where [:= :id "ad2"]}}],
+       :where [:= :ad/id "ad2"]}}],
     :biff.fx/next :redirect}}
   _
   {:doc "add-payment-method :post existing customer",
