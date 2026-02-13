@@ -79,9 +79,14 @@
                                      (keyword (name sqlite-tbl) "id")
                                      (keyword (name sqlite-tbl) (name sqlite-k)))
                        coerce-fn (get write-coerce-fns qualified-k)
-                       sqlite-v (if coerce-fn
-                                  (coerce-fn v)
-                                  (biffs/coerce-sqlite-value v))]
+                       sqlite-v (try
+                                  (if coerce-fn
+                                    (coerce-fn v)
+                                    (biffs/coerce-sqlite-value v))
+                                  (catch Exception _
+                                    ;; Fallback for type mismatches (e.g., string IDs in tests
+                                    ;; where the schema expects UUIDs)
+                                    v))]
                    [sqlite-k sqlite-v])))
           record)))
 

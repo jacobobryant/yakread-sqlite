@@ -35,8 +35,8 @@
    (t/with-sqlite
     [node
      {:user
-      [{:xt/id "user1", :user/email "user1@example.com"}
-       {:xt/id "user2",
+      [{:xt/id (t/uuid 1), :user/email "user1@example.com"}
+       {:xt/id (t/uuid 2),
         :user/email "user2@example.com",
         :user/digest-last-sent
         #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}]}]
@@ -50,7 +50,8 @@
    {:biff.fx/queue
     {:jobs
      ([:work.digest/prepare-digest
-       {:xt/id "user1", :user/email "user1@example.com"}])}}}
+       {:xt/id #uuid "00010000-0000-0000-0000-000000000001",
+        :user/email "user1@example.com"}])}}}
   _
   {:eval
    (send-digest?

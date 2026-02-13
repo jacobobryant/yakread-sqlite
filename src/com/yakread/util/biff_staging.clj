@@ -791,34 +791,30 @@
 (defn- coerce-result-row
   "Coerce a single result row from SQLite.
    Applies schema-aware read coercions (bytes->UUID, int->enum, epoch-ms->Instant).
-   Maps :id -> :xt/id for Pathom compatibility."
+   Maps :id -> :xt/id for Pathom compatibility.
+   Removes nil values to match XTDB behavior (missing fields are absent, not nil)."
   [row table read-coerce-fns]
   (when row
-    (let [result (into {}
-                       (map (fn [[k v]]
-                              (let [;; SQLite results come back as :column_name (unqualified kebab)
-                                    sqlite-key (when table
-                                                 (keyword (name table)
-                                                          (str/replace (name k) "_" "-")))
-                                    ;; Map :id -> :xt/id
-                                    out-key (cond
-                                              (= k :id) :xt/id
-                                              sqlite-key sqlite-key
-                                              :else k)
-                                    ;; Apply schema-aware coercion
-                                    coerce-fn (when sqlite-key
-                                                (get read-coerce-fns sqlite-key))
-                                    coerced-v (cond
-                                                (and coerce-fn (some? v)) (coerce-fn v)
-                                                :else (coerce-result-value v))]
-                                [out-key coerced-v])))
-                       row)]
-      ;; Also add the table-specific ID key (e.g. :sub/id, :item/id)
-      ;; so that Pathom sqlite resolvers can use it as their input key
-      (if-let [xt-id (:xt/id result)]
-        (let [table-id-key (keyword (name table) "id")]
-          (assoc result table-id-key xt-id))
-        result))))
+    (into {}
+          (keep (fn [[k v]]
+                  (when (some? v)
+                    (let [;; SQLite results come back as :column_name (unqualified kebab)
+                          sqlite-key (when table
+                                       (keyword (name table)
+                                                (str/replace (name k) "_" "-")))
+                          ;; Map :id -> :xt/id
+                          out-key (cond
+                                    (= k :id) :xt/id
+                                    sqlite-key sqlite-key
+                                    :else k)
+                          ;; Apply schema-aware coercion
+                          coerce-fn (when sqlite-key
+                                      (get read-coerce-fns sqlite-key))
+                          coerced-v (cond
+                                      (and coerce-fn (some? v)) (coerce-fn v)
+                                      :else (coerce-result-value v))]
+                      [out-key coerced-v]))))
+          row)))
 
 (defn- coerce-query-values
   "Walk a HoneySQL query and coerce Clojure values to SQLite-compatible values.
