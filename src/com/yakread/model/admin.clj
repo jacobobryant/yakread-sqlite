@@ -9,7 +9,7 @@
   {::pco/output [{:admin/recent-users [:xt/id]}]}
   {:admin/recent-users
    (biffs/q conn*
-            {:select :xt/id
+            {:select :user/id
              :from :user
              :where [:<= (.minusSeconds now (* 60 60 24 7)) :user/joined-at]})})
 
@@ -28,9 +28,9 @@
 (defresolver revenue [{:biff/keys [conn* now]} _]
   {:admin/revenue
    (->> (biffs/q conn*
-                 {:select [:ad.click/created-at :ad.click/cost]
+                 {:select [:ad-click/created-at :ad-click/cost]
                   :from :ad-click
-                  :where [:<= (.minusSeconds now (* 60 60 24 30)) :ad.click/created-at]})
+                  :where [:<= (.minusSeconds now (* 60 60 24 30)) :ad-click/created-at]})
         (reduce (fn [acc [cost t]]
                   (let [date (.. t
                                  (atZone (ZoneId/of "America/Denver"))
@@ -40,7 +40,7 @@
 
 (defresolver ads [{:biff/keys [conn*]} _]
   {::pco/output [{:admin/ads [:xt/id]}]}
-  {:admin/ads (biffs/q conn* {:select :xt/id :from :ad})})
+  {:admin/ads (biffs/q conn* {:select :ad/id :from :ad})})
 
 (def module
   {:resolvers [recent-users

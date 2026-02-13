@@ -16,11 +16,11 @@
   (fn [{:biff/keys [conn* now]} {:keys [session/user params/item]}]
     (merge {:status 204}
            (when (empty? (biffs/q conn*
-                                     {:select :xt/id
+                                     {:select :user-item/id
                                       :from :user-item
                                       :where [:and
-                                              [:= :user-item/user (:xt/id user)]
-                                              [:= :user-item/item (:xt/id item)]
+                                              [:= :user-item/user-id (:xt/id user)]
+                                              [:= :user-item/item-id (:xt/id item)]
                                               [:is-not :user-item/viewed-at nil]]
                                       :limit 1}))
              {:biff.fx/tx [[:patch-docs :user-item

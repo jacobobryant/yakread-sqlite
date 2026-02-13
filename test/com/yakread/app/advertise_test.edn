@@ -50,7 +50,7 @@
    (t/test-route
     receive-payment-method
     :get
-    {:db {:ad [{:xt/id "ad1", :ad/session-id "my-session-id"}]},
+    {:sqlite-db {:ad [{:xt/id "ad1", :ad/session-id "my-session-id"}]},
      :biff/secret {:stripe/api-key "abc123"},
      :params {:session-id "my-session-id"}}),
    :result
@@ -70,7 +70,7 @@
    (t/test-route
     receive-payment-method
     :get
-    {:db {},
+    {:sqlite-db {},
      :biff/secret {:stripe/api-key "abc123"},
      :params {:session-id "my-session-id"}}),
    :result {:biff.fx/next :redirect}}

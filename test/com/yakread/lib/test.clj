@@ -115,7 +115,7 @@
   (let [[state opts] (if (keyword? (first args))
                        args
                        [method (first args)])
-        {:keys [db] :as ctx} opts
+        {:keys [db sqlite-db] :as ctx} opts
         [_ {f method :as handlers}] route]
     (assert (some? handlers) "invalid route")
     (assert (some? f)
@@ -124,9 +124,16 @@
               ":request-method is required"))
     ;; TODO use a var from this namespace maybe?
     (binding [lib.route/*testing* true]
-      (if db
+      (cond
+        sqlite-db
+        (with-sqlite [conn sqlite-db]
+          (f (assoc ctx :biff/conn* conn) state))
+
+        db
         (with-node [node db]
           (f (assoc ctx :biff/conn node) state))
+
+        :else
         (f ctx state)))))
 
 (defn- read-string* [s & [extra-readers]]

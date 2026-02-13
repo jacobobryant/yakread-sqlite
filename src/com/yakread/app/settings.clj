@@ -69,7 +69,7 @@
                  :quarter
                  :annual)
           [{user-id :xt/id}] (biffs/q conn*
-                                      {:select :xt/id
+                                      {:select :user/id
                                        :from :user
                                        :where [:= :user/customer-id customer]})]
       {:biff.fx/tx [(biffs/dual-write
@@ -85,7 +85,7 @@
   (fn [{:keys [biff/conn* body-params]}]
     (let [{:keys [customer]} (get-in body-params [:data :object])
           [{user-id :xt/id}] (biffs/q conn*
-                                      {:select :xt/id
+                                      {:select :user/id
                                        :from :user
                                        :where [:= :user/customer-id customer]})]
       {:biff.fx/tx [(biffs/dual-write

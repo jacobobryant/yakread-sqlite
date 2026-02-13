@@ -10,16 +10,16 @@
                  :admin.moderation/blocked
                  :admin.moderation/ingest-failed]}
   (let [direct-items (biffs/q conn*
-                              {:select [:xt/id :item/url :item/doc-type :item.direct/candidate-status]
+                              {:select [:item/id :item/url :item/record-type :item/direct-candidate-status]
                                :from :item
-                               :where [:= :item/doc-type "item/direct"]})
+                               :where [:= :item/record-type "direct"]})
         url->direct-item (into {} (map (juxt :item/url identity)) direct-items)
         item->url (into {}
                         (map (juxt :xt/id :item/url))
                         (biffs/q conn*
-                                 {:select [:xt/id :item/url]
+                                 {:select [:item/id :item/url]
                                   :from :item
-                                  :where [:in :xt/id (mapv :item/id all-liked-items)]}))
+                                  :where [:in :item/id (mapv :item/id all-liked-items)]}))
         direct-item-id->likes (->> all-liked-items
                                    (mapv (fn [{:keys [item/id item/n-likes]}]
                                            (when-some [id (-> id item->url url->direct-item :xt/id)]
@@ -31,16 +31,16 @@
                                             (filter :item/n-likes)
                                             ;; remove the ones that have already been approved or
                                             ;; blocked.
-                                            (remove :item.direct/candidate-status)))
+                                            (remove :item/direct-candidate-status)))
                                 (sort-by :item/n-likes >)
                                 vec)
         statuses (into {}
-                       (map (juxt :item.direct/candidate-status :count))
+                       (map (juxt :item/direct-candidate-status :count))
                        (biffs/q conn*
-                                {:select [:item.direct/candidate-status
-                                          [[:count :xt/id] :count]]
+                                {:select [:item/direct-candidate-status
+                                          [[:count :item/id] :count]]
                                  :from :item
-                                 :where [:is-not :item.direct/candidate-status nil]}))]
+                                 :where [:is-not :item/direct-candidate-status nil]}))]
     {:admin.moderation/remaining (count liked-direct-items)
      :admin.moderation/approved (get statuses :approved 0)
      :admin.moderation/blocked (get statuses :blocked 0)

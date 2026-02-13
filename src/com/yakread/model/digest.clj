@@ -15,10 +15,10 @@
   (let [t0 (cond-> (tick/<< now (tick/new-period 2 :weeks))
              digest-last-sent (tick/max digest-last-sent))]
     (biffs/q conn*
-             {:select :xt/id
+             {:select :item/id
               :from :item
               :where [:and
-                      [:in :xt/id all-item-ids]
+                      [:in :item/id all-item-ids]
                       [:< t0 :item/ingested-at]]
               :order-by [[:item/ingested-at :desc]]
               :limit 50})))

@@ -74,9 +74,9 @@
   {::pco/output [{:user/mv [:xt/id]}]}
   (when-some [mv-user
               (first (biffs/q conn*
-                              {:select :xt/id
+                              {:select :mv-user/id
                                :from :mv-user
-                               :where [:= :mv.user/user id]
+                               :where [:= :mv-user/user-id id]
                                :limit 1}))]
     {:user/mv mv-user}))
 
