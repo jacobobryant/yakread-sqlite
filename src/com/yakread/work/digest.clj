@@ -47,7 +47,7 @@
     ;; though. Queues should probably expose the number of in-progress jobs.
     (when (and enabled (= 0 (.size (:work.digest/prepare-digest queues))))
       (let [users (->> (biffs/q conn*
-                                {:select [:xt/id
+                                {:select [:user/id
                                           :user/email
                                           :user/digest-last-sent
                                           :user/suppressed-at

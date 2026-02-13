@@ -68,12 +68,12 @@
   "Convert a single XTDB-format record to a SQLite row.
    Renames keys (e.g., :xt/id -> :id) and coerces values using schema-aware coercions."
   [table record write-coerce-fns]
-  (let [sqlite-tbl (biffs/sqlite-table* table)]
+  (let [sqlite-tbl (biffs/sqlite-table table)]
     (into {}
           (map (fn [[k v]]
                  (let [sqlite-k (cond
                                   (= k :xt/id) :id
-                                  :else (keyword (name (biffs/rename-key* k table))))
+                                  :else (keyword (name (biffs/rename-key k table))))
                        ;; Build table-qualified key for coercion lookup
                        qualified-k (if (= sqlite-k :id)
                                      (keyword (name sqlite-tbl) "id")
@@ -81,7 +81,7 @@
                        coerce-fn (get write-coerce-fns qualified-k)
                        sqlite-v (if coerce-fn
                                   (coerce-fn v)
-                                  (biffs/coerce-sqlite-value* v))]
+                                  (biffs/coerce-sqlite-value v))]
                    [sqlite-k sqlite-v])))
           record)))
 
@@ -99,7 +99,7 @@
     ;; Insert data
     (doseq [[table records] table->records
             :when (seq records)
-            :let [sqlite-tbl (biffs/sqlite-table* table)
+            :let [sqlite-tbl (biffs/sqlite-table table)
                   write-fns (sqlite/write-coercions main/malli-opts* sqlite-tbl)
                   rows (mapv #(xt-record->sqlite-row table % write-fns) records)]]
       (doseq [row rows]
