@@ -846,7 +846,7 @@
 (defn- coerce-where-enum-values
   "Coerce enum string/keyword values in WHERE clauses using schema-aware write coercions.
    Walks :where vectors looking for [:= :column value] patterns where the column
-   has an enum write coercion."
+   has an enum write coercion. Also handles [:lift val] wrappers."
   [query write-fns]
   (if (or (nil? write-fns) (nil? (:where query)))
     query
@@ -861,9 +861,16 @@
                   (if-let [coerce-fn (get write-fns col)]
                     (into [(first clause) col]
                           (map (fn [v]
-                                 (if (or (string? v) (keyword? v))
+                                 (cond
+                                   ;; Handle [:lift val] wrappers
+                                   (and (vector? v) (= :lift (first v)))
+                                   (let [inner (second v)]
+                                     (if (or (string? inner) (keyword? inner))
+                                       (try (coerce-fn inner) (catch Exception _ v))
+                                       v))
+                                   (or (string? v) (keyword? v))
                                    (try (coerce-fn v) (catch Exception _ v))
-                                   v))
+                                   :else v))
                                (drop 2 clause)))
                     ;; Recurse into sub-clauses (e.g. [:and ...])
                     (mapv walk-where clause)))
