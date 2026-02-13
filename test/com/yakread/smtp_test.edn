@@ -14,14 +14,14 @@
  :tests
  [{:doc "deliver* invalid domain",
    :eval
-   (t/with-node
-    [node {:user [{:xt/id "user1", :user/email-username "hello"}]}]
+   (t/with-sqlite
+    [conn {:user [{:xt/id "user1", :user/email-username "hello"}]}]
     (let
      [f
       (fn
        [message-overrides]
        (deliver*
-        {:biff/conn* node,
+        {:biff/conn* conn,
          :yakread/domain "example.com",
          :biff.smtp/message (merge message message-overrides)}
         :start))]
@@ -52,16 +52,16 @@
   _
   {:doc "deliver* :end existing sub",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:user [{:xt/id (t/uuid 0), :user/email-username "bob"}],
       :sub
       [{:xt/id (t/uuid 1),
-        :sub.email/from "alice@example.com",
-        :sub/user (t/uuid 0)}]}]
+        :sub/email-from "alice@example.com",
+        :sub/user-id (t/uuid 0)}]}]
     (deliver*
      {:biff.smtp/message message,
-      :biff/conn* node,
+      :biff/conn* conn,
       :biff/now (t/zdt 2000),
       :com.yakread.smtp/url "https://example.com/p/example-post",
       :com.yakread.fx/js {:html html}}
@@ -102,11 +102,11 @@
   _
   {:doc "deliver* :end new sub",
    :eval
-   (t/with-node
-    [node {:user [{:xt/id (t/uuid 0), :user/email-username "bob"}]}]
+   (t/with-sqlite
+    [conn {:user [{:xt/id (t/uuid 0), :user/email-username "bob"}]}]
     (deliver*
      {:biff.smtp/message message,
-      :biff/conn* node,
+      :biff/conn* conn,
       :biff/now (t/zdt 2000),
       :com.yakread.smtp/url "https://example.com/p/example-post",
       :com.yakread.fx/js {:html html}}

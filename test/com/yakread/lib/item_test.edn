@@ -6,8 +6,8 @@
  :tests
  [{:doc "add-item-machine* :start",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:item
       [{:xt/id "item1", :item/url "url1", :item/doc-type :item/direct}
        {:xt/id "item2",
@@ -16,7 +16,7 @@
       :redirect
       [{:xt/id "redirect1",
         :redirect/url "url3",
-        :redirect/item "item2"}]}]
+        :redirect/item-id "item2"}]}]
     (let
      [{:keys [start]}
       (add-item-machine*
@@ -31,7 +31,7 @@
        [url]
        (start
         {:biff/base-url "https://example.com",
-         :biff/conn* node,
+         :biff/conn* conn,
          :url url}))]
      {:matching-url (start* "url1"),
       :matching-redirect (start* "url3"),
