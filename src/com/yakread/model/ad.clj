@@ -15,7 +15,7 @@
 (defresolver effective-bid [{:ad/keys [bid budget recent-cost]}]
   {:ad/effective-bid (min bid (max 0 (- budget recent-cost)))})
 
-(defresolver ad-id [{:keys [xt/id ad/user]}]
+(defresolver ad-id [{:keys [xt/id]}]
   {:ad/id id})
 
 (defresolver xt-id [{:keys [ad/id]}]

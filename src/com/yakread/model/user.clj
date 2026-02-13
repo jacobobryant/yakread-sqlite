@@ -40,7 +40,7 @@
       (when-not (some->> suggested (lib.user/email-username-taken? conn*))
         {:user/suggested-email-username suggested}))))
 
-(defresolver user-id [{:keys [xt/id user/email]}]
+(defresolver user-id [{:keys [xt/id]}]
   {:user/id id})
 
 (defresolver xt-id [{:keys [user/id]}]
