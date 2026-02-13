@@ -186,15 +186,15 @@
   _
   {:doc "delete-account: delete-email-batch with email items",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:item
       [{:xt/id (t/uuid 2),
         :item/content-key "content-key-1",
-        :item.email/raw-content-key "raw-key-1"}
+        :item/email-raw-content-key "raw-key-1"}
        {:xt/id (t/uuid 3), :item/content-key "content-key-2"}]}]
     (delete-account
-     {:biff/conn* node,
+     {:biff/conn* conn,
       :biff/job {:user/id (t/uuid 10)},
       :session {:uid (t/uuid 10)},
       :com.yakread.work.account/email-ids [(t/uuid 2) (t/uuid 3)]}
@@ -221,22 +221,22 @@
   {:doc
    "delete-account: delete-email-batch queries email items from SQL when email-ids not set",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:sub
       [{:xt/id (t/uuid 1),
-        :sub/user (t/uuid 10),
-        :sub.email/from "sender@example.com"}],
+        :sub/user-id (t/uuid 10),
+        :sub/email-from "sender@example.com"}],
       :item
       [{:xt/id (t/uuid 2),
-        :item.email/sub (t/uuid 1),
+        :item/email-sub-id (t/uuid 1),
         :item/content-key "content-key-1",
-        :item.email/raw-content-key "raw-key-1"}
+        :item/email-raw-content-key "raw-key-1"}
        {:xt/id (t/uuid 3),
-        :item.email/sub (t/uuid 1),
+        :item/email-sub-id (t/uuid 1),
         :item/content-key "content-key-2"}]}]
     (delete-account
-     {:biff/conn* node,
+     {:biff/conn* conn,
       :biff/job {:user/id (t/uuid 10)},
       :session {:uid (t/uuid 10)}}
      :delete-email-batch)),

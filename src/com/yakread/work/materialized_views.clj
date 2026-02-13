@@ -42,8 +42,8 @@
            (biffs/q conn*
                     {:select [:user-item/item :user-item/viewed-at]
                      :from :mv-user
-                     :join [:user-item [:= :user-item/item :mv.user/current-item]]
-                     :where [:= :mv.user/user user]}))
+                     :join [:user-item [:= :user-item/item-id :mv-user/current-item-id]]
+                     :where [:= :mv-user/user-id user]}))
 
           new-current-item (cond
                              (and viewed-at
@@ -73,14 +73,14 @@
                (concat
                 (when-some [sub-id (-> (biffs/q
                                         conn*
-                                        {:select [[[:coalesce :item.email/sub :sub._id]
+                                        {:select [[[:coalesce :item/email-sub-id :sub/id]
                                                    :sub/id]]
                                          :from :item
-                                         :where [:= :item._id (:user-item/item record)]
+                                         :where [:= :item/id (:user-item/item record)]
                                          :left-join [:sub [:and
-                                                           [:is-not :item.feed/feed nil]
-                                                           [:= :sub.feed/feed :item.feed/feed]
-                                                           [:= :sub/user (:user-item/user record)]]]
+                                                           [:is-not :item/feed-id nil]
+                                                           [:= :sub/feed-id :item/feed-id]
+                                                           [:= :sub/user-id (:user-item/user record)]]]
                                          :limit 1})
                                        first
                                        :sub/id)]
@@ -90,15 +90,15 @@
                (:skip/item record)
                (when-some [sub-id (-> (biffs/q
                                        conn*
-                                       {:select [[[:coalesce :item.email/sub :sub._id]
+                                       {:select [[[:coalesce :item/email-sub-id :sub/id]
                                                   :sub/id]]
                                         :from :reclist
-                                        :where [:= :reclist._id (:skip/reclist record)]
-                                        :join [:item [:= :item._id (:skip/item record)]]
+                                        :where [:= :reclist/id (:skip/reclist record)]
+                                        :join [:item [:= :item/id (:skip/item record)]]
                                         :left-join [:sub [:and
-                                                          [:is-not :item.feed/feed nil]
-                                                          [:= :sub.feed/feed :item.feed/feed]
-                                                          [:= :sub/user :reclist/user]]]
+                                                          [:is-not :item/feed-id nil]
+                                                          [:= :sub/feed-id :item/feed-id]
+                                                          [:= :sub/user-id :reclist/user-id]]]
                                         :limit 1})
                                       first
                                       :sub/id)]

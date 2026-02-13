@@ -17,26 +17,26 @@
     (let [[{[reclist] :reclists existing-skips :skips}]
           (biffs/q conn*
                    (biffs/bundle
-                    {:reclists {:select [:xt/id :reclist/clicked]
+                    {:reclists {:select [:reclist/id :reclist/clicked]
                                 :from :reclist
                                 :where [:and
-                                        [:= :reclist/user user-id]
+                                        [:= :reclist/user-id user-id]
                                         [:= :reclist/created-at t]]}
-                     :skips {:select [:skip._id :skip/item]
+                     :skips {:select [:skip/id :skip/item-id]
                              :from :reclist
-                             :join [:skip [:= :skip/reclist :reclist._id]]
+                             :join [:skip [:= :skip/reclist-id :reclist/id]]
                              :where [:and
-                                     [:= :reclist/user user-id]
+                                     [:= :reclist/user-id user-id]
                                      [:= :reclist/created-at t]]}}))
 
           old-clicked (:reclist/clicked reclist #{})
           new-clicked (conj old-clicked rec-id)
           delete-skips (into []
-                             (comp (filter (comp new-clicked :skip/item))
+                             (comp (filter (comp new-clicked :skip/item-id))
                                    (map :xt/id))
                              existing-skips)
           create-skips-for (into []
-                                 (remove (into new-clicked (map :skip/item) existing-skips))
+                                 (remove (into new-clicked (map :skip/item-id) existing-skips))
                                  new-skips)
           reclist-id (or (:xt/id reclist)
                          (biffs/gen-uuid user-id))]
@@ -77,8 +77,8 @@
                                              {:select 1
                                               :from :user-item
                                               :where [:and
-                                                      [:= :user-item/user user-id]
-                                                      [:= :user-item/item item-id]
+                                                      [:= :user-item/user-id user-id]
+                                                      [:= :user-item/item-id item-id]
                                                       [:is-not :user-item/viewed-at nil]]
                                               :limit 1}))
                         [[:biff/upsert :user-item [:user-item/user :user-item/item]
@@ -107,8 +107,8 @@
                                       {:select 1
                                        :from :ad-click
                                        :where [:and
-                                               [:= :ad.click/user user-id]
-                                               [:= :ad.click/ad ad-id]]
+                                               [:= :ad-click/user-id user-id]
+                                               [:= :ad-click/ad-id ad-id]]
                                        :limit 1}))
                         [[:biff/upsert :ad-click [:ad.click/user :ad.click/ad]
                           {:ad.click/user user-id

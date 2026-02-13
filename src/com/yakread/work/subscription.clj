@@ -17,18 +17,18 @@
 (defn active-user-ids [conn* now]
   (let [t0 (tick/<< now (tick/of-months 6))]
     (->> (biffs/q conn*
-                  {:union [{:select [[:xt/id :user/id]]
+                  {:union [{:select [[:user/id :user/id]]
                             :from :user
                             :where [:< t0 :user/joined-at]}
-                           {:select [[:user-item/user :user/id]]
+                           {:select [[:user-item/user-id :user/id]]
                             :from :user-item
                             :where [:< t0 :user-item/viewed-at]}
-                           {:select [[:ad/user :user/id]]
+                           {:select [[:ad/user-id :user/id]]
                             :from :ad
                             :where [:< t0 :ad/updated-at]}
-                           {:select [[:ad.click/user :user/id]]
+                           {:select [[:ad-click/user-id :user/id]]
                             :from :ad-click
-                            :where [:< t0 :ad.click/created-at]}]})
+                            :where [:< t0 :ad-click/created-at]}]})
          (mapv :user/id))))
 
 ;; TODO modify sync waiting period based on :feed/failed-syncs
@@ -39,11 +39,11 @@
       (let [user-ids (active-user-ids conn* now)
             t0 (tick/<< now (tick/of-hours 12))
             feeds (biffs/q conn*
-                           {:select :feed._id
+                           {:select :feed/id
                             :from :sub
-                            :join [:feed [:= :sub.feed/feed :feed._id]]
+                            :join [:feed [:= :sub/feed-id :feed/id]]
                             :where [:and
-                                    [:in :sub/user user-ids]
+                                    [:in :sub/user-id user-ids]
                                     [:or
                                      [:is :feed/synced-at nil]
                                      [:< :feed/synced-at t0]]]})]
@@ -74,7 +74,7 @@
                                   :feed/last-modified
                                   :feed/failed-syncs]
                          :from :feed
-                         :where [:= :xt/id id]})]
+                         :where [:= :feed/id id]})]
       {:biff.fx/next :parse
        :biff.fx/http {:method :get
                       :url url
@@ -160,17 +160,17 @@
           guids    (not-empty (keep :item.feed/guid items))
           existing (when (or titles guids)
                      (biffs/q conn*
-                              {:select [:item/title :item.feed/guid]
+                              {:select [:item/title :item/feed-guid]
                                :from :item
                                :where [:and
-                                       [:= :item.feed/feed feed-id]
+                                       [:= :item/feed-id feed-id]
                                        (concat [:or]
                                                (when titles
                                                  [[:in :item/title titles]])
                                                (when guids
-                                                 [[:in :item.feed/guid guids]]))]}))
+                                                 [[:in :item/feed-guid guids]]))]}))
           existing-titles (into #{} (keep :item/title) existing)
-          existing-guids  (into #{} (keep :item.feed/guid) existing)
+          existing-guids  (into #{} (keep :item/feed-guid) existing)
 
           items     (into []
                           (remove (some-fn (comp existing-titles :item/title)

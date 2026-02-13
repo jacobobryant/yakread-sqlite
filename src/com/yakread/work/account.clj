@@ -103,24 +103,24 @@
   (fn [{:keys [biff/conn* biff/job session ::email-ids]}]
     (let [{:keys [user/id]} job
           email-ids (or email-ids
-                        (->> {:select :item._id
+                        (->> {:select :item/id
                               :from :sub
                               :where [:and
-                                      [:= :sub/user (:uid session)]
-                                      [:is-not :sub.email/from nil]]
-                              :join [:item [:= :item.email/sub :sub._id]]}
+                                      [:= :sub/user-id (:uid session)]
+                                      [:is-not :sub/email-from nil]]
+                              :join [:item [:= :item/email-sub-id :sub/id]]}
                              (biffs/q conn*)
                              (mapv :xt/id)))
           batch (when (not-empty email-ids)
                   (biffs/q conn*
-                           {:select [:xt/id :item/content-key :item.email/raw-content-key]
+                           {:select [:item/id :item/content-key :item/email-raw-content-key]
                             :from :item
-                            :where [:in :xt/id (take 500 email-ids)]}))
+                            :where [:in :item/id (take 500 email-ids)]}))
           remaining (drop 500 email-ids)]
       (when (not-empty batch)
         [{:biff.fx/s3 (for [email batch
                             [k config-ns] [[:item/content-key 'yakread.s3.content]
-                                           [:item.email/raw-content-key 'yakread.s3.emails]]
+                                           [:item/email-raw-content-key 'yakread.s3.emails]]
                             :when (get email k)]
                         {:key (str (get email k))
                          :config-ns config-ns

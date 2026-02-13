@@ -14,9 +14,9 @@
      (let [url (str/trim (get-url ctx))]
        (if-some [item (first
                        (biffs/q conn*
-                                {:select [:item._id :item/url]
+                                {:select [:item/id :item/url]
                                  :from :item
-                                 :left-join [:redirect [:= :redirect/item :item._id]]
+                                 :left-join [:redirect [:= :redirect/item-id :item/id]]
                                  :where [:and
                                          [:or
                                           [:= :item/url url]

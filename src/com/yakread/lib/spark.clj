@@ -22,9 +22,9 @@
                                      :item/url]}]}
   {::item-candidates
    (biffs/q conn*
-            {:select [:xt/id :item/url]
+            {:select [:item/id :item/url]
              :from :item
-             :where [:= :item.direct/candidate-status [:lift :approved]]})})
+             :where [:= :item/direct-candidate-status [:lift :approved]]})})
 
 
 (defresolver ads [{:biff/keys [conn* now]} _]
@@ -33,19 +33,19 @@
   (let [all-ads (into []
                       (remove (comp nil? :xt/id))
                       (biffs/q conn*
-                               {:select [:ad._id
+                               {:select [:ad/id
                                          :ad/approve-state
                                          :ad/paused
                                          :ad/payment-failed
                                          :ad/payment-method
                                          :ad/budget
-                                         [[:coalesce [:sum :ad.click/cost] 0] :ad/recent-cost]]
+                                         [[:coalesce [:sum :ad-click/cost] 0] :ad/recent-cost]]
                                 :from :ad
                                 :left-join [:ad-click [:and
-                                                       [:= :ad.click/ad :ad._id]
+                                                       [:= :ad-click/ad-id :ad/id]
                                                        [:<
                                                         (tick/<< now (tick/of-days 7))
-                                                        :ad.click/created-at]]]}))]
+                                                        :ad-click/created-at]]]}))]
     {::all-ads all-ads
      ::ad-candidates (filterv lib.ads/active? all-ads)}))
 
@@ -55,21 +55,21 @@
        (mapv #(apply merge %))))
 
 (defn ad-interaction-info [conn*]
-  (->> {:union [{:select [[:ad._id :ad-id]
-                          [:reclist/user :user-id]
-                          [[:count :skip._id] :n-skips]
+  (->> {:union [{:select [[:ad/id :ad-id]
+                          [:reclist/user-id :user-id]
+                          [[:count :skip/id] :n-skips]
                           [[:max :reclist/created-at] :last-skipped]
                           [nil :last-clicked]]
                  :from :ad
-                 :join [:skip [:= :skip/item :ad._id]
-                        :reclist [:= :skip/reclist :reclist._id]]}
-                {:select [[:ad._id :ad-id]
-                          [:ad.click/user :user-id]
+                 :join [:skip [:= :skip/item-id :ad/id]
+                        :reclist [:= :skip/reclist-id :reclist/id]]}
+                {:select [[:ad/id :ad-id]
+                          [:ad-click/user-id :user-id]
                           [nil :n-skips]
                           [nil :last-skipped]
-                          [[:max :ad.click/created-at] :last-clicked]]
+                          [[:max :ad-click/created-at] :last-clicked]]
                  :from :ad
-                 :join [:ad-click [:= :ad._id :ad.click/ad]]}]}
+                 :join [:ad-click [:= :ad/id :ad-click/ad-id]]}]}
        (biffs/q conn*)
        (remove (comp nil? :ad-id))
        (full-outer-join (juxt :ad-id :user-id))))
@@ -99,7 +99,7 @@
                            (map (juxt :xt/id :item/url))
                            (when candidate-urls
                              (biffs/q conn*
-                                      {:select [:xt/id :item/url]
+                                      {:select [:item/id :item/url]
                                        :from :item
                                        :where [:in :item/url candidate-urls]})))
         url->item-candidate-id (into {}
@@ -120,7 +120,7 @@
                        (not-empty
                         (mapv :xt/id
                               (biffs/q conn*
-                                       {:select :xt/id
+                                       {:select :item/id
                                         :from :item
                                         :where [:in :item/url candidate-urls]}))))
 
@@ -130,15 +130,15 @@
         usit-key (juxt :user-item/user :user-item/item)
         item-usits (->> (when all-item-ids
                           (biffs/q conn*
-                                   {:select [:user-item/user
-                                             :user-item/item
+                                   {:select [[:user-item/user-id :user-item/user]
+                                             [:user-item/item-id :user-item/item]
                                              :user-item/favorited-at
                                              :user-item/disliked-at
                                              :user-item/reported-at
                                              :user-item/viewed-at
                                              :user-item/bookmarked-at]
                                     :from :user-item
-                                    :where [:in :user-item/item all-item-ids]}))
+                                    :where [:in :user-item/item-id all-item-ids]}))
                         (mapv dedupe-usit)
                         (group-by usit-key)
                         (vals)
@@ -150,13 +150,13 @@
                         :else b))
         skip-usits (->> (when all-item-ids
                           (biffs/q conn*
-                                   {:select [[:reclist/user :user-item/user]
-                                             [:skip/item :user-item/item]
-                                             [[:count :skip._id] :user-item/skips]
+                                   {:select [[:reclist/user-id :user-item/user]
+                                             [:skip/item-id :user-item/item]
+                                             [[:count :skip/id] :user-item/skips]
                                              [[:max :reclist/created-at] :user-item/skipped-at]]
                                     :from :skip
-                                    :join [:reclist [:= :reclist._id :skip/reclist]]
-                                    :where [:in :skip/item all-item-ids]}))
+                                    :join [:reclist [:= :reclist/id :skip/reclist-id]]
+                                    :where [:in :skip/item-id all-item-ids]}))
                         (mapv dedupe-usit)
                         (group-by usit-key)
                         (vals)
@@ -289,8 +289,8 @@
    (into []
          (remove (comp nil? :item/id))
          (biffs/q conn*
-                  {:select [[:user-item/item :item/id]
-                            [[:count :xt/id] :item/n-likes]]
+                  {:select [[:user-item/item-id :item/id]
+                            [[:count :user-item/id] :item/n-likes]]
                    :from :user-item
                    :where [:is-not :user-item/favorited-at nil]
                    :order-by [[:item/n-likes :desc]]}))})

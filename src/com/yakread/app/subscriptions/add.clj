@@ -55,16 +55,16 @@
 (defn- subscribe-feeds-tx [{:keys [biff/conn* biff/now session]} feed-urls]
   (let [user-id (:uid session)
         results (biffs/q conn*
-                         {:select [[:feed._id :feed-id]
+                         {:select [[:feed/id :feed-id]
                                    :feed/url
-                                   [:sub._id :sub-id]]
+                                   [:sub/id :sub-id]]
                           :from :feed
-                          :left-join [:sub [:= :feed._id :sub.feed/feed]]
+                          :left-join [:sub [:= :feed/id :sub/feed-id]]
                           :where [:and
                                   [:in :feed/url feed-urls]
                                   [:or
-                                   [:is :sub/user nil]
-                                   [:= :sub/user user-id]]]})
+                                   [:is :sub/user-id nil]
+                                   [:= :sub/user-id user-id]]]})
         url->feed (into {} (map (juxt :feed/url :feed-id)) results)
         existing-sub-feed-ids (into #{}
                                     (comp (filter :sub-id)

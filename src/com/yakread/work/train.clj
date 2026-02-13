@@ -43,7 +43,7 @@
                                        :item/url
                                        {:select :item/url
                                         :from :item
-                                        :join [:user-item [:= :item._id :user-item/item]]
+                                        :join [:user-item [:= :item/id :user-item/item-id]]
                                         :where [:is-not :user-item/favorited-at nil]}]
                                :having [:not [:bool_or [:coalesce [:= :item/doc-type "item/direct"] false]]]}
                               (biffs/q conn*)

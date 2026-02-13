@@ -81,12 +81,12 @@
             [{user-id :user/id
               sub-id :sub/id}]
             (biffs/q conn*
-                     {:select [[:user._id :user/id]
-                               [:sub._id :sub/id]]
+                     {:select [[:user/id :user/id]
+                               [:sub/id :sub/id]]
                       :from :user
                       :left-join [:sub [:and
-                                        [:= :sub/user :user._id]
-                                        [:= :sub.email/from from]]]
+                                        [:= :sub/user-id :user/id]
+                                        [:= :sub/email-from from]]]
                       :where [:= :user/email-username (str/lower-case (:username message))]
                       :limit 1})
             new-sub (nil? sub-id)

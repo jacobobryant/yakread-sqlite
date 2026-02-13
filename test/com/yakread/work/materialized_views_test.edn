@@ -57,10 +57,10 @@
   {:doc
    "current-item: set new current item when no previous item exists",
    :eval
-   (t/with-node
-    [node {:user [{:xt/id (t/uuid 1)}]}]
+   (t/with-sqlite
+    [conn {:user [{:xt/id (t/uuid 1)}]}]
     (update-views
-     {:biff/conn* node,
+     {:biff/conn* conn,
       :biff/job
       {:user-item/user (t/uuid 1),
        :user-item/item (t/uuid 10),
@@ -102,19 +102,19 @@
   {:doc
    "current-item: update current item when new item is more recent",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:mv-user
       [{:xt/id (t/uuid 100),
-        :mv.user/user (t/uuid 1),
-        :mv.user/current-item (t/uuid 10)}],
+        :mv-user/user-id (t/uuid 1),
+        :mv-user/current-item-id (t/uuid 10)}],
       :user-item
       [{:xt/id (t/uuid 200),
-        :user-item/user (t/uuid 1),
-        :user-item/item (t/uuid 10),
+        :user-item/user-id (t/uuid 1),
+        :user-item/item-id (t/uuid 10),
         :user-item/viewed-at (t/zdt 2000)}]}]
     (update-views
-     {:biff/conn* node,
+     {:biff/conn* conn,
       :biff/job
       {:user-item/user (t/uuid 1),
        :user-item/item (t/uuid 11),
@@ -155,19 +155,19 @@
   _
   {:doc "current-item: do not update when new item is older",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:mv-user
       [{:xt/id (t/uuid 100),
-        :mv.user/user (t/uuid 1),
-        :mv.user/current-item (t/uuid 10)}],
+        :mv-user/user-id (t/uuid 1),
+        :mv-user/current-item-id (t/uuid 10)}],
       :user-item
       [{:xt/id (t/uuid 200),
-        :user-item/user (t/uuid 1),
-        :user-item/item (t/uuid 10),
+        :user-item/user-id (t/uuid 1),
+        :user-item/item-id (t/uuid 10),
         :user-item/viewed-at (t/zdt 2001)}]}]
     (update-views
-     {:biff/conn* node,
+     {:biff/conn* conn,
       :biff/job
       {:user-item/user (t/uuid 1),
        :user-item/item (t/uuid 11),
@@ -209,19 +209,19 @@
   {:doc
    "current-item: remove current item when viewed-at is nil and item matches",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:mv-user
       [{:xt/id (t/uuid 100),
-        :mv.user/user (t/uuid 1),
-        :mv.user/current-item (t/uuid 10)}],
+        :mv-user/user-id (t/uuid 1),
+        :mv-user/current-item-id (t/uuid 10)}],
       :user-item
       [{:xt/id (t/uuid 200),
-        :user-item/user (t/uuid 1),
-        :user-item/item (t/uuid 10),
+        :user-item/user-id (t/uuid 1),
+        :user-item/item-id (t/uuid 10),
         :user-item/viewed-at (t/zdt 2000)}]}]
     (update-views
-     {:biff/conn* node,
+     {:biff/conn* conn,
       :biff/job
       {:user-item/user (t/uuid 1),
        :user-item/item (t/uuid 10),
@@ -263,19 +263,19 @@
   {:doc
    "current-item: do not remove when viewed-at is nil but item doesn't match",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:mv-user
       [{:xt/id (t/uuid 100),
-        :mv.user/user (t/uuid 1),
-        :mv.user/current-item (t/uuid 10)}],
+        :mv-user/user-id (t/uuid 1),
+        :mv-user/current-item-id (t/uuid 10)}],
       :user-item
       [{:xt/id (t/uuid 200),
-        :user-item/user (t/uuid 1),
-        :user-item/item (t/uuid 10),
+        :user-item/user-id (t/uuid 1),
+        :user-item/item-id (t/uuid 10),
         :user-item/viewed-at (t/zdt 2000)}]}]
     (update-views
-     {:biff/conn* node,
+     {:biff/conn* conn,
       :biff/job
       {:user-item/user (t/uuid 1),
        :user-item/item (t/uuid 11),
@@ -317,10 +317,10 @@
   {:doc
    "on-tx: user-item record with email sub queues sub-affinity and current-item",
    :eval
-   (t/with-node
-    [node {:item [{:xt/id (t/uuid 1), :item.email/sub (t/uuid 100)}]}]
+   (t/with-sqlite
+    [conn {:item [{:xt/id (t/uuid 1), :item/email-sub-id (t/uuid 100)}]}]
     (on-tx
-     {:biff/conn* node,
+     {:biff/conn* conn,
       :record
       {:user-item/user (t/uuid 10),
        :user-item/item (t/uuid 1),
@@ -362,15 +362,15 @@
   {:doc
    "on-tx: user-item record with feed sub queues sub-affinity and current-item",
    :eval
-   (t/with-node
-    [node
-     {:item [{:xt/id (t/uuid 1), :item.feed/feed (t/uuid 50)}],
+   (t/with-sqlite
+    [conn
+     {:item [{:xt/id (t/uuid 1), :item/feed-id (t/uuid 50)}],
       :sub
       [{:xt/id (t/uuid 100),
-        :sub/user (t/uuid 10),
-        :sub.feed/feed (t/uuid 50)}]}]
+        :sub/user-id (t/uuid 10),
+        :sub/feed-id (t/uuid 50)}]}]
     (on-tx
-     {:biff/conn* node,
+     {:biff/conn* conn,
       :record
       {:user-item/user (t/uuid 10),
        :user-item/item (t/uuid 1),
@@ -412,10 +412,10 @@
   {:doc
    "on-tx: user-item record without sub still queues current-item",
    :eval
-   (t/with-node
-    [node {:item [{:xt/id (t/uuid 1)}]}]
+   (t/with-sqlite
+    [conn {:item [{:xt/id (t/uuid 1)}]}]
     (on-tx
-     {:biff/conn* node,
+     {:biff/conn* conn,
       :record
       {:user-item/user (t/uuid 10),
        :user-item/item (t/uuid 1),
@@ -456,12 +456,12 @@
   _
   {:doc "on-tx: skip record with email sub queues sub-affinity",
    :eval
-   (t/with-node
-    [node
-     {:reclist [{:xt/id (t/uuid 1), :reclist/user (t/uuid 10)}],
-      :item [{:xt/id (t/uuid 2), :item.email/sub (t/uuid 100)}]}]
+   (t/with-sqlite
+    [conn
+     {:reclist [{:xt/id (t/uuid 1), :reclist/user-id (t/uuid 10)}],
+      :item [{:xt/id (t/uuid 2), :item/email-sub-id (t/uuid 100)}]}]
     (on-tx
-     {:biff/conn* node,
+     {:biff/conn* conn,
       :record {:skip/item (t/uuid 2), :skip/reclist (t/uuid 1)}}
      :start)),
    :ex #error {
@@ -499,16 +499,16 @@
   _
   {:doc "on-tx: skip record with feed sub queues sub-affinity",
    :eval
-   (t/with-node
-    [node
-     {:reclist [{:xt/id (t/uuid 1), :reclist/user (t/uuid 10)}],
-      :item [{:xt/id (t/uuid 2), :item.feed/feed (t/uuid 50)}],
+   (t/with-sqlite
+    [conn
+     {:reclist [{:xt/id (t/uuid 1), :reclist/user-id (t/uuid 10)}],
+      :item [{:xt/id (t/uuid 2), :item/feed-id (t/uuid 50)}],
       :sub
       [{:xt/id (t/uuid 100),
-        :sub/user (t/uuid 10),
-        :sub.feed/feed (t/uuid 50)}]}]
+        :sub/user-id (t/uuid 10),
+        :sub/feed-id (t/uuid 50)}]}]
     (on-tx
-     {:biff/conn* node,
+     {:biff/conn* conn,
       :record {:skip/item (t/uuid 2), :skip/reclist (t/uuid 1)}}
      :start)),
    :ex #error {
@@ -546,12 +546,12 @@
   _
   {:doc "on-tx: skip record without matching sub returns nil jobs",
    :eval
-   (t/with-node
-    [node
-     {:reclist [{:xt/id (t/uuid 1), :reclist/user (t/uuid 10)}],
+   (t/with-sqlite
+    [conn
+     {:reclist [{:xt/id (t/uuid 1), :reclist/user-id (t/uuid 10)}],
       :item [{:xt/id (t/uuid 2)}]}]
     (on-tx
-     {:biff/conn* node,
+     {:biff/conn* conn,
       :record {:skip/item (t/uuid 2), :skip/reclist (t/uuid 1)}}
      :start)),
    :ex #error {
