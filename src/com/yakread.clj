@@ -124,7 +124,7 @@
           (str "Schema for " k " is invalid: " (pr-str (ex-data ex)))))
 
 (def pathom-env (pci/register (->> (mapcat :resolvers modules)
-                                   (concat (biffs/xtdb2-resolvers malli-opts))
+                                   (concat (lib.sqlite/sqlite-resolvers malli-opts*))
                                    (mapv lib.pathom/wrap-debug))))
 
 (defn merge-context [{:keys [yakread/model
