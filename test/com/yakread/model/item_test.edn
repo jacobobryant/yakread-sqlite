@@ -5,60 +5,60 @@
   [com.wsscode.pathom3.connect.operation :as pco]],
  :tests
  [{:eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:user-item
       [{:xt/id "user-item1",
-        :user-item/user "user1",
-        :user-item/item "item1",
+        :user-item/user-id "user1",
+        :user-item/item-id "item1",
         :user-item/favorited-at (t/zdt 2000)}
        {:xt/id "user-item2",
-        :user-item/user "user1",
-        :user-item/item "item2"}
+        :user-item/user-id "user1",
+        :user-item/item-id "item2"}
        {:xt/id "user-item3",
-        :user-item/user "user2",
-        :user-item/item "item3",
+        :user-item/user-id "user2",
+        :user-item/item-id "item3",
         :user-item/favorited-at (t/zdt 2000)}]}]
-    (user-favorites {:biff/conn* node} {:user/id "user1"})),
+    (user-favorites {:biff/conn* conn} {:user/id "user1"})),
    :result {:user/favorites [], :user/more-favorites false}}
   _
   {:eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:user-item
       [{:xt/id "user-item1",
-        :user-item/user "user1",
-        :user-item/item "item1",
+        :user-item/user-id "user1",
+        :user-item/item-id "item1",
         :user-item/bookmarked-at (t/zdt 2000)}
        {:xt/id "user-item2",
-        :user-item/user "user1",
-        :user-item/item "item2"}
+        :user-item/user-id "user1",
+        :user-item/item-id "item2"}
        {:xt/id "user-item3",
-        :user-item/user "user2",
-        :user-item/item "item3",
+        :user-item/user-id "user2",
+        :user-item/item-id "item3",
         :user-item/bookmarked-at (t/zdt 2000)}]}]
-    (user-bookmarks {:biff/conn* node} {:user/id "user1"})),
+    (user-bookmarks {:biff/conn* conn} {:user/id "user1"})),
    :result {:user/bookmarks [], :user/more-bookmarks false}}
   _
   {:eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:reclist
-      [{:xt/id "reclist1", :reclist/user "user1"}
-       {:xt/id "reclist2", :reclist/user "user1"}
-       {:xt/id "reclist3", :reclist/user "user2"}
-       {:xt/id "reclist4", :reclist/user "user1"}
-       {:xt/id "reclist5", :reclist/user "user1"}],
+      [{:xt/id "reclist1", :reclist/user-id "user1"}
+       {:xt/id "reclist2", :reclist/user-id "user1"}
+       {:xt/id "reclist3", :reclist/user-id "user2"}
+       {:xt/id "reclist4", :reclist/user-id "user1"}
+       {:xt/id "reclist5", :reclist/user-id "user1"}],
       :skip
-      [{:xt/id "skip1", :skip/reclist "reclist1", :skip/item "item1"}
-       {:xt/id "skip2", :skip/reclist "reclist2", :skip/item "item1"}
-       {:xt/id "skip3", :skip/reclist "reclist3", :skip/item "item1"}
-       {:xt/id "skip4", :skip/reclist "reclist4", :skip/item "item2"}
+      [{:xt/id "skip1", :skip/reclist-id "reclist1", :skip/item-id "item1"}
+       {:xt/id "skip2", :skip/reclist-id "reclist2", :skip/item-id "item1"}
+       {:xt/id "skip3", :skip/reclist-id "reclist3", :skip/item-id "item1"}
+       {:xt/id "skip4", :skip/reclist-id "reclist4", :skip/item-id "item2"}
        {:xt/id "skip5",
-        :skip/reclist "reclist5",
-        :skip/item "item3"}]}]
+        :skip/reclist-id "reclist5",
+        :skip/item-id "item3"}]}]
     (n-skipped
-     {:biff/conn* node, :session {:uid "user1"}}
+     {:biff/conn* conn, :session {:uid "user1"}}
      [{:xt/id "item1"} {:xt/id "item2"} {:xt/id "item4"}])),
    :result
    [{:xt/id "item1", :item/n-skipped 2}
@@ -66,20 +66,20 @@
     {:xt/id "item4", :item/n-skipped 0}]}
   _
   {:eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:user-item
       [{:xt/id "user-item1",
-        :user-item/user "user1",
-        :user-item/item "item1"}
+        :user-item/user-id "user1",
+        :user-item/item-id "item1"}
        {:xt/id "user-item2",
-        :user-item/user "user1",
-        :user-item/item "item2"}
+        :user-item/user-id "user1",
+        :user-item/item-id "item2"}
        {:xt/id "user-item3",
-        :user-item/user "user2",
-        :user-item/item "item3"}]}]
+        :user-item/user-id "user2",
+        :user-item/item-id "item3"}]}]
     (user-item
-     {:biff/conn* node, :session {:uid "user1"}}
+     {:biff/conn* conn, :session {:uid "user1"}}
      [{:xt/id "item1"} {:xt/id "item2"} {:xt/id "item3"}])),
    :result
    [{:xt/id "item1", :item/user-item {:xt/id "user-item1"}}
@@ -88,15 +88,15 @@
   _
   {:doc "image-from-feed",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:feed
       [{:xt/id "feed1", :feed/url "url1", :feed/image-url "image-url1"}
        {:xt/id "feed2",
         :feed/url "url2",
         :feed/image-url "image-url2"}]}]
     (image-from-feed
-     {:biff/conn* node}
+     {:biff/conn* conn}
      [{:item.feed/feed {:feed/image-url "image-url3"}}
       {:item.feed/feed {:feed/image-url "image-url4"},
        :item/feed-url "url1"}
@@ -110,29 +110,29 @@
   _
   {:doc "history-items",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:user-item
       [{:xt/id "user-item1",
-        :user-item/user "user1",
-        :user-item/item "item1",
+        :user-item/user-id "user1",
+        :user-item/item-id "item1",
         :user-item/viewed-at (t/zdt 2000)}
        {:xt/id "user-item2",
-        :user-item/user "user1",
-        :user-item/item "item2",
+        :user-item/user-id "user1",
+        :user-item/item-id "item2",
         :user-item/viewed-at (t/zdt 1999),
         :user-item/favorited-at (t/zdt 2001)}]}]
     {:all
      (history-items
-      {:biff/conn* node}
+      {:biff/conn* conn}
       {:session/user {:xt/id "user1"}}),
      :page-1
      (history-items
-      (pco/with-node-params {:biff/conn* node} {:batch-size 1})
+      (pco/with-node-params {:biff/conn* conn} {:batch-size 1})
       {:session/user {:xt/id "user1"}}),
      :page-2
      (history-items
-      {:biff/conn* node}
+      {:biff/conn* conn}
       {:session/user {:xt/id "user1"},
        :params/paginate-after "item2"})}),
    :result
@@ -149,13 +149,13 @@
   _
   {:doc "feed-sub",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:sub
-      [{:xt/id "sub1", :sub/user "user1", :sub.feed/feed "feed1"}
-       {:xt/id "sub2", :sub/user "user1", :sub.feed/feed "feed2"}]}]
+      [{:xt/id "sub1", :sub/user-id "user1", :sub/feed-id "feed1"}
+       {:xt/id "sub2", :sub/user-id "user1", :sub/feed-id "feed2"}]}]
     (feed-sub
-     {:biff/conn* node, :session {:uid "user1"}}
+     {:biff/conn* conn, :session {:uid "user1"}}
      [{:item.feed/feed {:xt/id "feed1"}}])),
    :result [{:item/sub {:xt/id "sub1"}}]}
   _
@@ -165,30 +165,30 @@
   _
   {:doc "digest-sends",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:digest
-      [{:xt/id "digest1", :digest/user "user1", :digest/ad "ad1"}
-       {:xt/id "digest2", :digest/user "user1", :digest/ad "ad1"}],
+      [{:xt/id "digest1", :digest/user-id "user1", :digest/ad-id "ad1"}
+       {:xt/id "digest2", :digest/user-id "user1", :digest/ad-id "ad1"}],
       :digest-item
       [{:xt/id "digest-item1",
-        :digest-item/digest "digest1",
-        :digest-item/item "item2",
+        :digest-item/digest-id "digest1",
+        :digest-item/item-id "item2",
         :digest-item/kind :icymi}
        {:xt/id "digest-item2",
-        :digest-item/digest "digest1",
-        :digest-item/item "item3",
+        :digest-item/digest-id "digest1",
+        :digest-item/item-id "item3",
         :digest-item/kind :discover}
        {:xt/id "digest-item3",
-        :digest-item/digest "digest1",
-        :digest-item/item "item4",
+        :digest-item/digest-id "digest1",
+        :digest-item/item-id "item4",
         :digest-item/kind :discover}
        {:xt/id "digest-item4",
-        :digest-item/digest "digest2",
-        :digest-item/item "item4",
+        :digest-item/digest-id "digest2",
+        :digest-item/item-id "item4",
         :digest-item/kind :discover}]}]
     (digest-sends
-     {:biff/conn* node, :session {:uid "user1"}}
+     {:biff/conn* conn, :session {:uid "user1"}}
      [{:xt/id "item1"}
       {:xt/id "item2"}
       {:xt/id "item3"}

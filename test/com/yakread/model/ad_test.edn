@@ -1,66 +1,60 @@
 {:require
  [[com.yakread.lib.test :as t]
   [clojure.data.generators :as gen]
-  [com.yakread.model.ad :refer :all]
-  [com.biffweb.experimental :as biffx]
-  [xtdb.api :as xt]
-  [xtdb.node :as xtn]],
+  [com.yakread.model.ad :refer :all]],
  :tests
  [{:eval
-   (with-open
-    [node
-     (t/start-test-node
-      {:user [{:xt/id "user1", :user/email "alice@example.com"}],
-       :ad [{:xt/id "ad1", :ad/user "user1"}]})]
-    (user-ad {:biff/conn* node} {:xt/id "user1"})),
+   (t/with-sqlite
+    [conn
+     {:user [{:xt/id "user1", :user/email "alice@example.com"}],
+      :ad [{:xt/id "ad1", :ad/user-id "user1"}]}]
+    (user-ad {:biff/conn* conn} {:xt/id "user1"})),
    :result {:user/ad {:xt/id "ad1"}}}
   _
   {:eval
-   (with-open
-    [node
-     (t/start-test-node
-      {:ad-click
-       [{:xt/id "ad-click1",
-         :ad.click/ad "ad1",
-         :ad.click/user "user1"}
-        {:xt/id "ad-click2",
-         :ad.click/ad "ad2",
-         :ad.click/user "user2"}
-        {:xt/id "ad-click3",
-         :ad.click/ad "ad2",
-         :ad.click/user "user2"}
-        {:xt/id "ad-click4",
-         :ad.click/ad "ad2",
-         :ad.click/user "user3"}
-        {:xt/id "ad-click5",
-         :ad.click/ad "ad2",
-         :ad.click/user "user4"}]})]
-    {:not-empty (n-clicks {:biff/conn* node} {:ad/id "ad2"}),
-     :empty (n-clicks {:biff/conn* node} {:ad/id "ad3"})}),
+   (t/with-sqlite
+    [conn
+     {:ad-click
+      [{:xt/id "ad-click1",
+        :ad-click/ad-id "ad1",
+        :ad-click/user-id "user1"}
+       {:xt/id "ad-click2",
+        :ad-click/ad-id "ad2",
+        :ad-click/user-id "user2"}
+       {:xt/id "ad-click3",
+        :ad-click/ad-id "ad2",
+        :ad-click/user-id "user2"}
+       {:xt/id "ad-click4",
+        :ad-click/ad-id "ad2",
+        :ad-click/user-id "user3"}
+       {:xt/id "ad-click5",
+        :ad-click/ad-id "ad2",
+        :ad-click/user-id "user4"}]}]
+    {:not-empty (n-clicks {:biff/conn* conn} {:ad/id "ad2"}),
+     :empty (n-clicks {:biff/conn* conn} {:ad/id "ad3"})}),
    :result {:not-empty {:ad/n-clicks 3}, :empty {:ad/n-clicks 0}}}
   _
   {:eval
-   (with-open
-    [node
-     (t/start-test-node
-      {:ad-click
-       [{:xt/id "ad-click1",
-         :ad.click/ad "ad1",
-         :ad.click/created-at (t/zdt 2000)}
-        {:xt/id "ad-click2",
-         :ad.click/ad "ad2",
-         :ad.click/created-at (t/zdt 2001)}
-        {:xt/id "ad-click3",
-         :ad.click/ad "ad2",
-         :ad.click/created-at (t/zdt 2002)}
-        {:xt/id "ad-click4",
-         :ad.click/ad "ad2",
-         :ad.click/created-at (t/zdt 2003)}
-        {:xt/id "ad-click5",
-         :ad.click/ad "ad2",
-         :ad.click/created-at (t/zdt 2004)}]})]
+   (t/with-sqlite
+    [conn
+     {:ad-click
+      [{:xt/id "ad-click1",
+        :ad-click/ad-id "ad1",
+        :ad-click/created-at (t/zdt 2000)}
+       {:xt/id "ad-click2",
+        :ad-click/ad-id "ad2",
+        :ad-click/created-at (t/zdt 2001)}
+       {:xt/id "ad-click3",
+        :ad-click/ad-id "ad2",
+        :ad-click/created-at (t/zdt 2002)}
+       {:xt/id "ad-click4",
+        :ad-click/ad-id "ad2",
+        :ad-click/created-at (t/zdt 2003)}
+       {:xt/id "ad-click5",
+        :ad-click/ad-id "ad2",
+        :ad-click/created-at (t/zdt 2004)}]}]
     (last-clicked
-     {:biff/conn* node}
+     {:biff/conn* conn}
      [{:xt/id "ad1"} {:xt/id "ad2"} {:xt/id "ad3"}])),
    :result
    [{:xt/id "ad1",
@@ -70,32 +64,31 @@
     {:xt/id "ad3"}]}
   _
   {:eval
-   (with-open
-    [node
-     (t/start-test-node
-      {:ad-credit
-       [{:xt/id "ad-credit1",
-         :ad.credit/ad "ad1",
-         :ad.credit/charge-status :pending,
-         :ad.credit/amount 100}
-        {:xt/id "ad-credit2",
-         :ad.credit/ad "ad1",
-         :ad.credit/charge-status :pending,
-         :ad.credit/amount 75}
-        {:xt/id "ad-credit3",
-         :ad.credit/ad "ad1",
-         :ad.credit/charge-status :confirmed,
-         :ad.credit/amount 125}
-        {:xt/id "ad-credit4",
-         :ad.credit/ad "ad2",
-         :ad.credit/charge-status :pending,
-         :ad.credit/amount 100}
-        {:xt/id "ad-credit5",
-         :ad.credit/ad "ad3",
-         :ad.credit/charge-status :pending,
-         :ad.credit/amount 100}]})]
+   (t/with-sqlite
+    [conn
+     {:ad-credit
+      [{:xt/id "ad-credit1",
+        :ad-credit/ad-id "ad1",
+        :ad-credit/charge-status :pending,
+        :ad-credit/amount 100}
+       {:xt/id "ad-credit2",
+        :ad-credit/ad-id "ad1",
+        :ad-credit/charge-status :pending,
+        :ad-credit/amount 75}
+       {:xt/id "ad-credit3",
+        :ad-credit/ad-id "ad1",
+        :ad-credit/charge-status :confirmed,
+        :ad-credit/amount 125}
+       {:xt/id "ad-credit4",
+        :ad-credit/ad-id "ad2",
+        :ad-credit/charge-status :pending,
+        :ad-credit/amount 100}
+       {:xt/id "ad-credit5",
+        :ad-credit/ad-id "ad3",
+        :ad-credit/charge-status :pending,
+        :ad-credit/amount 100}]}]
     (amount-pending
-     {:biff/conn* node}
+     {:biff/conn* conn}
      [{:xt/id "ad1"} {:xt/id "ad2"} {:xt/id "ad4"}])),
    :result
    [{:xt/id "ad1", :ad/amount-pending 175}
@@ -103,59 +96,57 @@
     {:xt/id "ad4"}]}
   _
   {:eval
-   (with-open
-    [node
-     (t/start-test-node
-      {:ad-credit
-       [{:xt/id "ad-credit1",
-         :ad.credit/ad "ad1",
-         :ad.credit/charge-status :pending,
-         :ad.credit/amount 100}
-        {:xt/id "ad-credit2",
-         :ad.credit/ad "ad1",
-         :ad.credit/charge-status :pending,
-         :ad.credit/amount 75}
-        {:xt/id "ad-credit3",
-         :ad.credit/ad "ad1",
-         :ad.credit/charge-status :confirmed,
-         :ad.credit/amount 125}
-        {:xt/id "ad-credit4",
-         :ad.credit/ad "ad2",
-         :ad.credit/charge-status :pending,
-         :ad.credit/amount 100}
-        {:xt/id "ad-credit5",
-         :ad.credit/ad "ad3",
-         :ad.credit/charge-status :pending,
-         :ad.credit/amount 100}]})]
-    (pending-charge {:biff/conn* node} {:xt/id "ad1"})),
+   (t/with-sqlite
+    [conn
+     {:ad-credit
+      [{:xt/id "ad-credit1",
+        :ad-credit/ad-id "ad1",
+        :ad-credit/charge-status :pending,
+        :ad-credit/amount 100}
+       {:xt/id "ad-credit2",
+        :ad-credit/ad-id "ad1",
+        :ad-credit/charge-status :pending,
+        :ad-credit/amount 75}
+       {:xt/id "ad-credit3",
+        :ad-credit/ad-id "ad1",
+        :ad-credit/charge-status :confirmed,
+        :ad-credit/amount 125}
+       {:xt/id "ad-credit4",
+        :ad-credit/ad-id "ad2",
+        :ad-credit/charge-status :pending,
+        :ad-credit/amount 100}
+       {:xt/id "ad-credit5",
+        :ad-credit/ad-id "ad3",
+        :ad-credit/charge-status :pending,
+        :ad-credit/amount 100}]}]
+    (pending-charge {:biff/conn* conn} {:xt/id "ad1"})),
    :result {:ad/pending-charge {:xt/id "ad-credit2"}}}
   _
   {:eval
-   (with-open
-    [node
-     (t/start-test-node
-      {:ad-credit
-       [{:xt/id "ad-credit1",
-         :ad.credit/ad "ad1",
-         :ad.credit/charge-status :pending,
-         :ad.credit/amount 100}
-        {:xt/id "ad-credit2",
-         :ad.credit/ad "ad1",
-         :ad.credit/charge-status :pending,
-         :ad.credit/amount 75}
-        {:xt/id "ad-credit3",
-         :ad.credit/ad "ad1",
-         :ad.credit/charge-status :confirmed,
-         :ad.credit/amount 125}
-        {:xt/id "ad-credit4",
-         :ad.credit/ad "ad2",
-         :ad.credit/charge-status :pending,
-         :ad.credit/amount 100}
-        {:xt/id "ad-credit5",
-         :ad.credit/ad "ad3",
-         :ad.credit/charge-status :pending,
-         :ad.credit/amount 100}]})]
-    (pending-charges {:biff/conn* node} nil)),
+   (t/with-sqlite
+    [conn
+     {:ad-credit
+      [{:xt/id "ad-credit1",
+        :ad-credit/ad-id "ad1",
+        :ad-credit/charge-status :pending,
+        :ad-credit/amount 100}
+       {:xt/id "ad-credit2",
+        :ad-credit/ad-id "ad1",
+        :ad-credit/charge-status :pending,
+        :ad-credit/amount 75}
+       {:xt/id "ad-credit3",
+        :ad-credit/ad-id "ad1",
+        :ad-credit/charge-status :confirmed,
+        :ad-credit/amount 125}
+       {:xt/id "ad-credit4",
+        :ad-credit/ad-id "ad2",
+        :ad-credit/charge-status :pending,
+        :ad-credit/amount 100}
+       {:xt/id "ad-credit5",
+        :ad-credit/ad-id "ad3",
+        :ad-credit/charge-status :pending,
+        :ad-credit/amount 100}]}]
+    (pending-charges {:biff/conn* conn} nil)),
    :result
    {:admin/pending-charges
     [{:xt/id "ad-credit5"}

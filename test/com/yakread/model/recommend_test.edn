@@ -31,30 +31,30 @@
    :result (1 2 3 :a :b 4 :c :d 5)}
   _
   {:eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:skip
-      [{:xt/id "skip1", :skip/reclist "reclist1", :skip/item "item1"}
-       {:xt/id "skip2", :skip/reclist "reclist1", :skip/item "item2"}
-       {:xt/id "skip3", :skip/reclist "reclist2", :skip/item "item4"}],
+      [{:xt/id "skip1", :skip/reclist-id "reclist1", :skip/item-id "item1"}
+       {:xt/id "skip2", :skip/reclist-id "reclist1", :skip/item-id "item2"}
+       {:xt/id "skip3", :skip/reclist-id "reclist2", :skip/item-id "item4"}],
       :reclist
       [{:xt/id "reclist1",
-        :reclist/user "user1",
+        :reclist/user-id "user1",
         :reclist/created-at (t/zdt 2000)}
        {:xt/id "reclist2",
-        :reclist/user "user1",
+        :reclist/user-id "user1",
         :reclist/created-at (t/zdt 2002)}],
       :user-item
       [{:xt/id "usit1",
-        :user-item/item "item3",
-        :user-item/user "user1",
+        :user-item/item-id "item3",
+        :user-item/user-id "user1",
         :user-item/favorited-at (t/zdt 2001)}
        {:xt/id "usit2",
-        :user-item/item "item5",
-        :user-item/user "user1",
+        :user-item/item-id "item5",
+        :user-item/user-id "user1",
         :user-item/viewed-at (t/zdt 2003)}]}]
     (sub-affinity*
-     {:biff/conn* node}
+     {:biff/conn* conn}
      [{:sub/id "sub1",
        :sub/title "my sub",
        :sub/user {:xt/id "user1"},
@@ -205,31 +205,31 @@
   _
   {:doc "read-urls",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:item
       [{:xt/id "item1", :item/url "url1"}
        {:xt/id "item2", :item/url "url2"}],
       :user-item
       [{:xt/id "user-item1",
-        :user-item/user "user1",
-        :user-item/item "item1"}
+        :user-item/user-id "user1",
+        :user-item/item-id "item1"}
        {:xt/id "user-item2",
-        :user-item/user "user1",
-        :user-item/item "item2",
+        :user-item/user-id "user1",
+        :user-item/item-id "item2",
         :user-item/viewed-at (t/zdt 2000)}]}]
-    (read-urls {:biff/conn* node} {:user/id "user1"})),
+    (read-urls {:biff/conn* conn} {:user/id "user1"})),
    :result {:user/read-urls #{"url2"}}}
   _
   {:doc "clicked-ads",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [conn
      {:ad-click
-      [{:xt/id "ad-click1", :ad.click/ad "ad1", :ad.click/user "user1"}
+      [{:xt/id "ad-click1", :ad-click/ad-id "ad1", :ad-click/user-id "user1"}
        {:xt/id "ad-click2",
-        :ad.click/ad "ad2",
-        :ad.click/user "user2"}]}]
-    (clicked-ads {:biff/conn* node} {:user/id "user1"})),
+        :ad-click/ad-id "ad2",
+        :ad-click/user-id "user2"}]}]
+    (clicked-ads {:biff/conn* conn} {:user/id "user1"})),
    :result {:user/clicked-ads #{"ad1"}}}
   _]}

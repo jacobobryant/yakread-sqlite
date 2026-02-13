@@ -102,23 +102,23 @@
         user+sub->skips      (into {}
                                    (map (fn [[k rows]]
                                           [k (mapv :created-at rows)]))
-                                   (group-by (juxt :reclist/user :sub/id)
+                                   (group-by (juxt :reclist/user-id :sub/id)
                                     (biffs/q conn*
                                              {:union-all
                                               (for [{:sub/keys [id user items]} subscriptions]
-                                                {:select [:reclist/user
+                                                {:select [:reclist/user-id
                                                           [[:inline id] :sub/id]
                                                           [:reclist/created-at :created-at]]
                                                  :from :reclist
-                                                 :join [:skip [:= :skip/reclist :reclist._id]]
+                                                 :join [:skip [:= :skip/reclist-id :reclist/id]]
                                                  :where [:and
-                                                         [:= :reclist/user (:xt/id user)]
-                                                         [:in :skip/item (mapv :xt/id items)]]})})))
-        user+sub->user-items (group-by (juxt :user-item/user :sub/id)
+                                                         [:= :reclist/user-id (:xt/id user)]
+                                                         [:in :skip/item-id (mapv :xt/id items)]]})})))
+        user+sub->user-items (group-by (juxt :user-item/user-id :sub/id)
                                        (biffs/q conn*
                                                 {:union-all
                                                  (for [{:sub/keys [id user items]} subscriptions]
-                                                   {:select [:user-item/user
+                                                   {:select [:user-item/user-id
                                                              [[:inline id] :sub/id]
                                                              :user-item/favorited-at
                                                              :user-item/reported-at
@@ -126,8 +126,8 @@
                                                              :user-item/viewed-at]
                                                     :from :user-item
                                                     :where [:and
-                                                            [:= :user-item/user (:xt/id user)]
-                                                            [:in :user-item/item (mapv :xt/id items)]]})}))]
+                                                            [:= :user-item/user-id (:xt/id user)]
+                                                            [:in :user-item/item-id (mapv :xt/id items)]]})}))]
     (mapv (fn [{:sub/keys [id user] :as sub}]
             (let [user-items   (get user+sub->user-items [(:xt/id user) id])
                   skips        (get user+sub->skips [(:xt/id user) id])
@@ -393,9 +393,9 @@
                          (biffs/q conn*
                                   {:select :item/url
                                    :from :item
-                                   :join [:user-item [:= :item._id :user-item/item]]
+                                   :join [:user-item [:= :item/id :user-item/item-id]]
                                    :where [:and
-                                           [:= :user-item/user id]
+                                           [:= :user-item/user-id id]
                                            [:is-not [:coalesce
                                                      :user-item/viewed-at
                                                      :user-item/skipped-at
@@ -466,11 +466,11 @@
 
 (defresolver clicked-ads [{:keys [biff/conn*]} {:keys [user/id]}]
   {:user/clicked-ads (into #{}
-                           (map :ad.click/ad)
+                           (map :ad-click/ad-id)
                            (biffs/q conn*
-                                    {:select :ad.click/ad
+                                    {:select :ad-click/ad-id
                                      :from :ad-click
-                                     :where [:= :ad.click/user id]}))})
+                                     :where [:= :ad-click/user-id id]}))})
 
 (defresolver ad-rec [{:user/keys [premium clicked-ads]
                       user-id :user/id

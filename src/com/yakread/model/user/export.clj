@@ -21,8 +21,8 @@
    (->> (biffs/q conn*
                  {:select :feed/url
                   :from :sub
-                  :join [:feed [:= :sub.feed/feed :feed._id]]
-                  :where [:= :sub/user id]})
+                  :join [:feed [:= :sub/feed-id :feed/id]]
+                  :where [:= :sub/user-id id]})
         (mapv :feed/url)
         sort
         generate-opml)})
@@ -34,7 +34,7 @@
 (defn- nest-one [join-key table columns]
   [[:nest_one {:select columns
                :from table
-               :where [:= :xt/id join-key]}]
+               :where [:= (keyword (name table) "id") join-key]}]
    join-key])
 
 (defn- item-resolver [op-name output-key query-key csv-label]
@@ -47,17 +47,17 @@
       (let [rows (->> (biffs/q conn*
                                {:select [query-key
                                          :user-item/viewed-at
-                                         (nest-one :user-item/item
+                                         (nest-one :user-item/item-id
                                                    :item
                                                    [:item/url :item/title :item/author-name])]
                                 :from :user-item
                                 :where [:and
-                                        [:= :user-item/user id]
+                                        [:= :user-item/user-id id]
                                         [:is-not query-key nil]]})
                       (sort-by query-key #(compare %2 %1))
-                      (mapv (juxt (comp :item/url :user-item/item)
-                                  (comp :item/title :user-item/item)
-                                  (comp :item/author-name :user-item/item)
+                      (mapv (juxt (comp :item/url :user-item/item-id)
+                                  (comp :item/title :user-item/item-id)
+                                  (comp :item/author-name :user-item/item-id)
                                   query-key
                                   :user-item/viewed-at))
                       (cons ["URL" "Title" "Author" csv-label "Read at"]))]

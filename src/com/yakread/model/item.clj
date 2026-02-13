@@ -25,14 +25,14 @@
                  now)
         page-size 200
         results (into []
-                      (map (fn [{:keys [xt/id user-item/item]}]
-                             {:item/id item
+                      (map (fn [{:keys [xt/id user-item/item-id]}]
+                             {:item/id item-id
                               :item/user-item {:xt/id id}}))
                       (biffs/q conn*
-                               {:select [:xt/id :user-item/item]
+                               {:select [:xt/id :user-item/item-id]
                                 :from :user-item
                                 :where [:and
-                                        [:= :user-item/user id]
+                                        [:= :user-item/user-id id]
                                         [:< :user-item/favorited-at before]]
                                 :order-by [[:user-item/favorited-at :desc]]
                                 :limit page-size}))]
@@ -50,14 +50,14 @@
                  now)
         page-size 200
         results (into []
-                      (map (fn [{:keys [xt/id user-item/item]}]
-                             {:item/id item
+                      (map (fn [{:keys [xt/id user-item/item-id]}]
+                             {:item/id item-id
                               :item/user-item {:xt/id id}}))
                       (biffs/q conn*
-                               {:select [:xt/id :user-item/item]
+                               {:select [:xt/id :user-item/item-id]
                                 :from :user-item
                                 :where [:and
-                                        [:= :user-item/user id]
+                                        [:= :user-item/user-id id]
                                         [:< :user-item/bookmarked-at before]]
                                 :order-by [[:user-item/bookmarked-at :desc]]
                                 :limit page-size}))]
@@ -75,13 +75,13 @@
          :output [:item/n-skipped]
          :batch? true}
   (let [results (biffs/q conn*
-                         {:select [[:skip/item :xt/id]
-                                   [[:count :skip._id] :item/n-skipped]]
+                         {:select [[:skip/item-id :xt/id]
+                                   [[:count :skip/id] :item/n-skipped]]
                           :from :skip
-                          :join [:reclist [:= :skip/reclist :reclist._id]]
+                          :join [:reclist [:= :skip/reclist-id :reclist/id]]
                           :where [:and
-                                  [:= :reclist/user (:uid session)]
-                                  [:in :skip/item (mapv :xt/id items)]]})]
+                                  [:= :reclist/user-id (:uid session)]
+                                  [:in :skip/item-id (mapv :xt/id items)]]})]
     (lib.core/restore-order items
                             :xt/id
                             results
@@ -95,13 +95,13 @@
          :batch? true}
   (let [item-ids (into #{} (map :xt/id items))
         results (into []
-                      (keep (fn [{:keys [xt/id user-item/item]}]
-                             (when (item-ids item)
-                               {:xt/id item :item/user-item {:xt/id id}})))
+                      (keep (fn [{:keys [xt/id user-item/item-id]}]
+                             (when (item-ids item-id)
+                               {:xt/id item-id :item/user-item {:xt/id id}})))
                       (biffs/q conn*
-                               {:select [:xt/id :user-item/item]
+                               {:select [:xt/id :user-item/item-id]
                                 :from :user-item
-                                :where [:= :user-item/user (:uid session)]}))]
+                                :where [:= :user-item/user-id (:uid session)]}))]
     (lib.core/restore-order items :xt/id results)))
 
 (defresolver image-from-feed [{:keys [biff/conn*]} items]
@@ -143,13 +143,13 @@
     {:user/history-items
      (->> (biffs/q conn*
                    {:select [:xt/id
-                             :user-item/item
+                             :user-item/item-id
                              :user-item/viewed-at
                              :user-item/favorited-at
                              :user-item/disliked-at
                              :user-item/reported-at]
                     :from :user-item
-                    :where [:= :user-item/user (:xt/id user)]})
+                    :where [:= :user-item/user-id (:xt/id user)]})
           (keep (fn [usit]
                   (when-some [t (some->> [:user-item/viewed-at
                                           :user-item/favorited-at
@@ -160,13 +160,13 @@
                                          (apply tick/max))]
                     (assoc usit :t t))))
           (sort-by :t #(compare %2 %1))
-          (drop-while (fn [{:keys [user-item/item]}]
+          (drop-while (fn [{:keys [user-item/item-id]}]
                         (and paginate-after
-                             (not= item paginate-after))))
-          (remove (comp #{paginate-after} :user-item/item))
+                             (not= item-id paginate-after))))
+          (remove (comp #{paginate-after} :user-item/item-id))
           (take batch-size)
-          (mapv (fn [{:keys [xt/id user-item/item]}]
-                  {:xt/id item
+          (mapv (fn [{:keys [xt/id user-item/item-id]}]
+                  {:xt/id item-id
                    :item/user-item {:xt/id id}})))}))
 
 ;; TODO why do I have to put ? in the input?
@@ -196,14 +196,14 @@
    ::pco/batch? true}
   (let [feed-ids (into [] (map (comp :xt/id :item.feed/feed)) inputs)
         feed->sub (into {}
-                        (map (juxt :sub.feed/feed :xt/id))
+                        (map (juxt :sub/feed-id :xt/id))
                         (when (not-empty feed-ids)
                           (biffs/q conn*
-                                   {:select [:xt/id :sub.feed/feed]
+                                   {:select [:xt/id :sub/feed-id]
                                     :from :sub
                                     :where [:and
-                                            [:= :sub/user (:uid session)]
-                                            [:in :sub.feed/feed feed-ids]]})))]
+                                            [:= :sub/user-id (:uid session)]
+                                            [:in :sub/feed-id feed-ids]]})))]
     (mapv (fn [{:keys [item.feed/feed]}]
             {:item/sub {:xt/id (get feed->sub (:xt/id feed))}})
           inputs)))
@@ -294,23 +294,23 @@
    ::pco/batch? true}
   (let [results (biffs/q conn*
                          {:union
-                          [{:select [[:digest/ad :xt/id]
+                          [{:select [[:digest/ad-id :xt/id]
                                      [[:count :xt/id]
                                       :item/n-digest-sends]]
                             :from :digest
                             :where [:and
-                                    [:= :digest/user (:uid session)]
-                                    [:in :digest/ad (mapv :xt/id items)]]}
-                           {:select [[:digest-item/item :xt/id]
-                                     [[:count :digest-item/digest]
+                                    [:= :digest/user-id (:uid session)]
+                                    [:in :digest/ad-id (mapv :xt/id items)]]}
+                           {:select [[:digest-item/item-id :xt/id]
+                                     [[:count :digest-item/digest-id]
                                       :item/n-digest-sends]]
                             :from :digest-item
-                            :join [:digest [:= :digest-item/digest :digest._id]]
+                            :join [:digest [:= :digest-item/digest-id :digest/id]]
                             :where [:and
-                                    [:= :digest/user (:uid session)]
+                                    [:= :digest/user-id (:uid session)]
                                     ;; TODO seems like it might be faster without this assuming #
                                     ;; digests is << # candidate items
-                                    [:in :digest-item/item (mapv :xt/id items)]]}]})]
+                                    [:in :digest-item/item-id (mapv :xt/id items)]]}]})]
     (lib.core/restore-order items
                             :xt/id
                             results
