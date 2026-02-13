@@ -20,24 +20,24 @@
     {:user/subscriptions (or subbed [])
      :user/unsubscribed (mapv #(select-keys % [:xt/id]) unsubbed)}))
 
-(defresolver email-title [{:keys [sub.email/from]}]
-  {:sub/title (str/replace from #"\s<.*>" "")})
+(defresolver email-title [{:keys [sub/email-from]}]
+  {:sub/title (str/replace email-from #"\s<.*>" "")})
 
-(defresolver feed-sub-title [{:keys [sub.feed/feed]}]
-  {::pco/input [{:sub.feed/feed [(? :feed/title)
-                                 :feed/url]}]}
+(defresolver feed-sub-title [{:keys [sub/feed]}]
+  {::pco/input [{:sub/feed [(? :feed/title)
+                             :feed/url]}]}
   {:sub/title ((some-fn :feed/title :feed/url) feed)})
 
-(defresolver email-subtitle [{:keys [sub.email/latest-item]}]
-  {::pco/input [{:sub.email/latest-item [:item.email/reply-to]}]}
-  {:sub/subtitle (:item.email/reply-to latest-item)})
+(defresolver email-subtitle [{:keys [sub/latest-item]}]
+  {::pco/input [{:sub/latest-item [:item/email-reply-to]}]}
+  {:sub/subtitle (:item/email-reply-to latest-item)})
 
-(defresolver feed-sub-subtitle [{:keys [sub.feed/feed]}]
-  #::pco{:input [{:sub.feed/feed [:feed/url]}]}
+(defresolver feed-sub-subtitle [{:keys [sub/feed]}]
+  #::pco{:input [{:sub/feed [:feed/url]}]}
   {:sub/subtitle (:feed/url feed)})
 
 (defresolver latest-email-item [{:keys [biff/conn*]} {:sub/keys [doc-type id]}]
-  {::pco/output [{:sub.email/latest-item [:xt/id]}]}
+  {::pco/output [{:sub/latest-item [:xt/id]}]}
   (when-some [item (when (= doc-type :sub/email)
                      (first (biffs/q conn*
                                      {:select :item/id
@@ -45,27 +45,27 @@
                                       :where [:= :item/email-sub-id id]
                                       :order-by [[:item/ingested-at :desc]]
                                       :limit 1})))]
-    {:sub.email/latest-item item}))
+    {:sub/latest-item item}))
 
 (defresolver sub-id->xt-id [{:keys [sub/id]}]
   {:xt/id id})
 
-(defresolver sub-info [{:keys [xt/id sub.feed/feed sub.email/from]}]
+(defresolver sub-info [{:keys [xt/id sub/feed sub/email-from]}]
   #::pco{:input [:xt/id
-                 {(? :sub.feed/feed) [:xt/id]}
-                 (? :sub.email/from)]
+                 {(? :sub/feed) [:feed/id]}
+                 (? :sub/email-from)]
          :output [:sub/id
                   :sub/source-id
                   :sub/doc-type]}
   (cond
-    from
+    email-from
     {:sub/id id
      :sub/source-id id
      :sub/doc-type :sub/email}
 
     feed
     {:sub/id id
-     :sub/source-id (:xt/id feed)
+     :sub/source-id (:feed/id feed)
      :sub/doc-type :sub/feed}))
 
 (defn- doc-type->source-key [doc-type]
