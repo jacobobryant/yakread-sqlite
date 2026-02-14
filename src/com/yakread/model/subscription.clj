@@ -26,10 +26,12 @@
   {:sub/user {:xt/id user-id}})
 
 (defresolver email-title [{:keys [sub/email-from]}]
+  {::pco/output [:sub/title]}
   {:sub/title (str/replace email-from #"\s<.*>" "")})
 
 (defresolver feed-sub-title [{:keys [biff/conn*]} {:keys [sub/feed-id]}]
-  {::pco/input [:sub/feed-id]}
+  {::pco/input [:sub/feed-id]
+   ::pco/output [:sub/title]}
   (when feed-id
     (let [feed (first (biffs/q conn*
                                {:select [:feed/title :feed/url]
