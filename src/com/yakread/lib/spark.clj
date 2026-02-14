@@ -1,5 +1,6 @@
 (ns com.yakread.lib.spark
   (:require
+   [clojure.set]
    [clojure.tools.logging :as log]
    [com.biffweb :refer [q]]
    [com.wsscode.pathom3.connect.indexes :as pci]
@@ -21,17 +22,19 @@
   {::pco/output [{::item-candidates [:xt/id
                                      :item/url]}]}
   {::item-candidates
-   (biffs/q conn*
-            {:select [:item/id :item/url]
-             :from :item
-             :where [:= :item/direct-candidate-status [:lift :approved]]})})
+   (->> (biffs/q conn*
+                 {:select [:item/id :item/url]
+                  :from :item
+                  :where [:= :item/direct-candidate-status [:lift :approved]]})
+        (mapv #(clojure.set/rename-keys % {:item/id :xt/id})))})
 
 
 (defresolver ads [{:biff/keys [conn* now]} _]
   {::pco/output [{::all-ads [:xt/id]}
                  {::ad-candidates [:xt/id]}]}
   (let [all-ads (into []
-                      (remove (comp nil? :xt/id))
+                      (comp (map #(clojure.set/rename-keys % {:ad/id :xt/id}))
+                            (remove (comp nil? :xt/id)))
                       (biffs/q conn*
                                {:select [:ad/id
                                          :ad/approve-state
@@ -97,7 +100,7 @@
    ::pco/output [::dedupe-item-id]}
   (let [candidate-urls (not-empty (mapv :item/url item-candidates))
         item-id->url (into {}
-                           (map (juxt :xt/id :item/url))
+                           (map (juxt :item/id :item/url))
                            (when candidate-urls
                              (biffs/q conn*
                                       {:select [:item/id :item/url]
@@ -119,7 +122,7 @@
   (let [candidate-urls (not-empty (mapv :item/url item-candidates))
         all-item-ids (when candidate-urls
                        (not-empty
-                        (mapv :xt/id
+                        (mapv :item/id
                               (biffs/q conn*
                                        {:select :item/id
                                         :from :item

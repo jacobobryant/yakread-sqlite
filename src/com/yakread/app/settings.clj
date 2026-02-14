@@ -68,7 +68,7 @@
           plan (if (= quarter-price-id price-id)
                  :quarter
                  :annual)
-          [{user-id :xt/id}] (biffs/q conn*
+          [{user-id :user/id}] (biffs/q conn*
                                       {:select :user/id
                                        :from :user
                                        :where [:= :user/customer-id customer]})]
@@ -84,7 +84,7 @@
   :delete-plan
   (fn [{:keys [biff/conn* body-params]}]
     (let [{:keys [customer]} (get-in body-params [:data :object])
-          [{user-id :xt/id}] (biffs/q conn*
+          [{user-id :user/id}] (biffs/q conn*
                                       {:select :user/id
                                        :from :user
                                        :where [:= :user/customer-id customer]})]

@@ -1,5 +1,6 @@
 (ns com.yakread.model.admin 
   (:require
+   [clojure.set]
    [com.yakread.util.biff-staging :as biffs]
    [com.wsscode.pathom3.connect.operation :as pco :refer [defresolver]])
   (:import
@@ -8,10 +9,11 @@
 (defresolver recent-users [{:biff/keys [conn* now]} _]
   {::pco/output [{:admin/recent-users [:xt/id]}]}
   {:admin/recent-users
-   (biffs/q conn*
-            {:select :user/id
-             :from :user
-             :where [:<= (.minusSeconds now (* 60 60 24 7)) :user/joined-at]})})
+   (->> (biffs/q conn*
+                 {:select :user/id
+                  :from :user
+                  :where [:<= (.minusSeconds now (* 60 60 24 7)) :user/joined-at]})
+        (mapv #(clojure.set/rename-keys % {:user/id :xt/id})))})
 
 (defresolver dau [{:biff/keys [conn* now]} _]
   {:admin/dau
@@ -40,7 +42,8 @@
 
 (defresolver ads [{:biff/keys [conn*]} _]
   {::pco/output [{:admin/ads [:xt/id]}]}
-  {:admin/ads (biffs/q conn* {:select :ad/id :from :ad})})
+  {:admin/ads (->> (biffs/q conn* {:select :ad/id :from :ad})
+                   (mapv #(clojure.set/rename-keys % {:ad/id :xt/id})))})
 
 (def module
   {:resolvers [recent-users

@@ -103,14 +103,14 @@
   (fn [{:keys [biff/conn* biff/job session ::email-ids]}]
     (let [{:keys [user/id]} job
           email-ids (or email-ids
-                        (->> {:select :item/id
+                        (->> {:select [[:item/id :item-id]]
                               :from :sub
                               :where [:and
                                       [:= :sub/user-id (:uid session)]
                                       [:is-not :sub/email-from nil]]
                               :join [:item [:= :item/email-sub-id :sub/id]]}
                              (biffs/q conn*)
-                             (mapv :xt/id)))
+                             (mapv :item-id)))
           batch (when (not-empty email-ids)
                   (biffs/q conn*
                            {:select [:item/id :item/content-key :item/email-raw-content-key]

@@ -25,7 +25,7 @@
                  now)
         page-size 200
         results (into []
-                      (map (fn [{:keys [xt/id user-item/item-id]}]
+                      (map (fn [{:keys [user-item/id user-item/item-id]}]
                              {:item/id item-id
                               :item/user-item {:xt/id id}}))
                       (biffs/q conn*
@@ -50,7 +50,7 @@
                  now)
         page-size 200
         results (into []
-                      (map (fn [{:keys [xt/id user-item/item-id]}]
+                      (map (fn [{:keys [user-item/id user-item/item-id]}]
                              {:item/id item-id
                               :item/user-item {:xt/id id}}))
                       (biffs/q conn*
@@ -96,7 +96,7 @@
          :batch? true}
   (let [item-ids (into #{} (map :xt/id items))
         results (into []
-                      (keep (fn [{:keys [xt/id user-item/item-id]}]
+                      (keep (fn [{:keys [user-item/id user-item/item-id]}]
                              (when (item-ids item-id)
                                {:xt/id item-id :item/user-item {:xt/id id}})))
                       (biffs/q conn*
@@ -107,7 +107,7 @@
 
 (defresolver image-from-feed [{:keys [biff/conn*]} items]
   #::pco{:input [(? :item/feed-url)
-                 {(? :item.feed/feed) [:feed/image-url]}]
+                 {(? :item/feed) [:feed/image-url]}]
          :output [:item/image-url]
          :batch? true}
   (let [feed-urls (keep :item/feed-url items)
@@ -118,7 +118,7 @@
                                     {:select [:feed/url :feed/image-url]
                                      :from :feed
                                      :where [:in :feed/url feed-urls]})))]
-    (mapv (fn [{:keys [item.feed/feed item/feed-url]}]
+    (mapv (fn [{:keys [item/feed item/feed-url]}]
             (if-some [image (or (:feed/image-url feed)
                                 (url->image feed-url))]
               {:item/image-url image}
@@ -166,7 +166,7 @@
                              (not= item-id paginate-after))))
           (remove (comp #{paginate-after} :user-item/item-id))
           (take batch-size)
-          (mapv (fn [{:keys [xt/id user-item/item-id]}]
+          (mapv (fn [{:keys [user-item/id user-item/item-id]}]
                   {:xt/id item-id
                    :item/user-item {:xt/id id}})))}))
 
@@ -179,25 +179,25 @@
      {:item/id id
       :item/rec-type :item.rec-type/current}}))
 
-(defresolver source [{:keys [item.email/sub item.feed/feed]}]
-  {::pco/input [{(? :item.email/sub) [:xt/id]}
-                {(? :item.feed/feed) [:xt/id]}]
+(defresolver source [{:keys [item/email-sub item/feed]}]
+  {::pco/input [{(? :item/email-sub) [:xt/id]}
+                {(? :item/feed) [:xt/id]}]
    ::pco/output [{:item/source [:xt/id]}]}
-  (when-some [source (or sub feed)]
+  (when-some [source (or email-sub feed)]
     {:item/source source}))
 
-(defresolver email-sub [{:keys [item.email/sub]}]
-  {::pco/input [{:item.email/sub [:xt/id]}]
+(defresolver email-sub-resolver [{:keys [item/email-sub]}]
+  {::pco/input [{:item/email-sub [:xt/id]}]
    ::pco/output [{:item/sub [:xt/id]}]}
-  {:item/sub sub})
+  {:item/sub email-sub})
 
 (defresolver feed-sub [{:keys [biff/conn* session]} inputs]
-  {::pco/input [{:item.feed/feed [:xt/id]}]
+  {::pco/input [{:item/feed [:xt/id]}]
    ::pco/output [{:item/sub [:xt/id]}]
    ::pco/batch? true}
-  (let [feed-ids (into [] (map (comp :xt/id :item.feed/feed)) inputs)
+  (let [feed-ids (into [] (map (comp :xt/id :item/feed)) inputs)
         feed->sub (into {}
-                        (map (juxt :sub/feed-id :xt/id))
+                        (map (juxt :sub/feed-id :sub/id))
                         (when (not-empty feed-ids)
                           (biffs/q conn*
                                    {:select [:sub/id :sub/feed-id]
@@ -205,7 +205,7 @@
                                     :where [:and
                                             [:= :sub/user-id (:uid session)]
                                             [:in :sub/feed-id feed-ids]]})))]
-    (mapv (fn [{:keys [item.feed/feed]}]
+    (mapv (fn [{:keys [item/feed]}]
             {:item/sub {:xt/id (get feed->sub (:xt/id feed))}})
           inputs)))
 
@@ -262,14 +262,14 @@
                                      "https://")))
      (.outerHtml doc))})
 
-(defresolver doc-type [{:keys [item.feed/feed
-                               item.email/sub]}]
-  #::pco{:input [{(? :item.feed/feed) [:xt/id]}
-                 {(? :item.email/sub) [:xt/id]}]
+(defresolver doc-type [{:keys [item/feed
+                               item/email-sub]}]
+  #::pco{:input [{(? :item/feed) [:xt/id]}
+                 {(? :item/email-sub) [:xt/id]}]
          :output [:item/doc-type]}
   (cond
     feed {:item/doc-type :item/feed}
-    sub {:item/doc-type :item/email}))
+    email-sub {:item/doc-type :item/email}))
 
 (defresolver digest-url [{:biff/keys [base-url href-safe]} {:item/keys [id url rec-type]}]
   {::pco/input [:item/id
@@ -331,7 +331,7 @@
                from-params-unsafe
                image-from-feed
                item-id
-               email-sub
+               email-sub-resolver
                feed-sub
                unread
                user-item

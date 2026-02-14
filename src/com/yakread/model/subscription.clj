@@ -45,7 +45,7 @@
                                       :where [:= :item/email-sub-id id]
                                       :order-by [[:item/ingested-at :desc]]
                                       :limit 1})))]
-    {:sub/latest-item item}))
+    {:sub/latest-item (clojure.set/rename-keys item {:item/id :xt/id})}))
 
 (defresolver sub-id->xt-id [{:keys [sub/id]}]
   {:xt/id id})
@@ -242,7 +242,7 @@
     (when (and (= (count sub-ids) (count subs*))
                (every? #(= (:uid session) (:user-id %)) subs*))
       {:params.checked/subscriptions
-       (mapv (fn [{:keys [xt/id user-id]}]
+       (mapv (fn [{:keys [sub/id user-id]}]
                {:sub/id id
                 :sub/user {:xt/id user-id}})
              subs*)})))

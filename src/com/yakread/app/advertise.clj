@@ -58,7 +58,7 @@
   :get
   (fn [{:keys [biff/conn* biff/secret params]}]
     (let [{:keys [session-id]} params
-          [{ad-id :xt/id}] (biffs/q conn*
+          [{ad-id :ad/id}] (biffs/q conn*
                                     {:select :ad/id
                                      :from :ad
                                      :where [:= :ad/session-id session-id]})]

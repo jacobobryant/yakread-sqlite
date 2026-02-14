@@ -22,7 +22,7 @@
                                 :where [:and
                                         [:= :reclist/user-id user-id]
                                         [:= :reclist/created-at t]]}
-                     :skips {:select [:skip/id :skip/item-id]
+                     :skips {:select [[:skip/id :skip-id] [:skip/item-id :skip-item-id]]
                              :from :reclist
                              :join [:skip [:= :skip/reclist-id :reclist/id]]
                              :where [:and
@@ -32,13 +32,13 @@
           old-clicked (:reclist/clicked reclist #{})
           new-clicked (conj old-clicked rec-id)
           delete-skips (into []
-                             (comp (filter (comp new-clicked :skip/item-id))
-                                   (map :xt/id))
+                             (comp (filter (comp new-clicked :skip-item-id))
+                                   (map :skip-id))
                              existing-skips)
           create-skips-for (into []
-                                 (remove (into new-clicked (map :skip/item-id) existing-skips))
+                                 (remove (into new-clicked (map :skip-item-id) existing-skips))
                                  new-skips)
-          reclist-id (or (:xt/id reclist)
+          reclist-id (or (:reclist/id reclist)
                          (biffs/gen-uuid user-id))]
       (when (not= old-clicked new-clicked)
         (concat

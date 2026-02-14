@@ -801,7 +801,7 @@
 (defn- coerce-result-row
   "Coerce a single result row from SQLite.
    Applies schema-aware read coercions (bytes->UUID, int->enum, epoch-ms->Instant).
-   Maps :id -> :xt/id for Pathom compatibility.
+   Maps :id -> :table/id (e.g. :sub/id) for Pathom compatibility.
    Only table-qualifies keys that are known schema columns; aliases stay unqualified.
    Removes nil values to match XTDB behavior (missing fields are absent, not nil)."
   [row table read-coerce-fns known-columns]
@@ -814,9 +814,11 @@
                           is-schema-col (and known-columns (contains? known-columns col-name))
                           sqlite-key (when (and table is-schema-col)
                                       (keyword (name table) col-name))
-                          ;; Map :id -> :xt/id
+                          ;; Map :id -> :table/id (e.g. :sub/id)
                           out-key (cond
-                                    (= k :id) :xt/id
+                                    (= k :id) (if table
+                                                (keyword (name table) "id")
+                                                :xt/id)
                                     sqlite-key sqlite-key
                                     :else k)
                           ;; Apply schema-aware coercion

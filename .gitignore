@@ -28,3 +28,5 @@ linux-install.sh
 test-results/
 playwright-report/
 package-lock.json
+config.env
+storage/

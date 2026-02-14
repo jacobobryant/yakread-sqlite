@@ -39,7 +39,7 @@
       (let [user-ids (active-user-ids conn* now)
             t0 (tick/<< now (tick/of-hours 12))
             feeds (biffs/q conn*
-                           {:select :feed/id
+                           {:select [[:feed/id :feed-id]]
                             :from :sub
                             :join [:feed [:= :sub/feed-id :feed/id]]
                             :where [:and
@@ -48,8 +48,8 @@
                                      [:is :feed/synced-at nil]
                                      [:< :feed/synced-at t0]]]})]
         (log/info "Syncing" (count feeds) "feeds")
-        {:biff.fx/queue {:jobs (for [{:keys [xt/id]} feeds]
-                                 [:work.subscription/sync-feed {:feed/id id}])}}))))
+        {:biff.fx/queue {:jobs (for [{:keys [feed-id]} feeds]
+                                 [:work.subscription/sync-feed {:feed/id feed-id}])}}))))
 
 (defn- entry->html [entry]
   (->> (concat (:contents entry) [(:description entry)])
