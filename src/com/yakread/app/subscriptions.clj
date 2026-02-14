@@ -85,14 +85,19 @@
      :status 204
      :headers {"HX-Redirect" (href `unsubs-page)}}))
 
-(defresolver sub-card [{:sub/keys [id title unread pinned-at]
-                        :keys [sub/feed sub/email-from]}]
+(defresolver sub-card [{:keys [biff/conn*]}
+                      {:sub/keys [id title unread pinned-at feed-id email-from]}]
   #::pco{:input [:sub/id
                  :sub/title
                  :sub/unread
-                 {(? :sub/feed) [:feed/url]}
+                 (? :sub/feed-id)
                  (? :sub/email-from)
                  (? :sub/pinned-at)]}
+  (let [feed-url (when feed-id
+                   (:feed/url (first (biffs/q conn*
+                                              {:select [:feed/url]
+                                               :from :feed
+                                               :where [:= :feed/id feed-id]}))))]
   {:sub.view/card
    [:.relative
     [:div {:class '[absolute top-1.5 right-4 sm:right-0]}
@@ -124,9 +129,8 @@
       ui/interpunct
       [:span.underline
        (cond
-         feed "rss"
-         email-from "email")]]]]})
-
+         feed-id "rss"
+         email-from "email")]]]]}))
 (defn- empty-state []
   (ui/empty-page-state {:icons ["envelope-regular-sharp"
                                 "square-rss-regular-sharp"]

@@ -50,13 +50,15 @@
            (when (= record-type :direct)
              (some-> url uri/uri :host str/trim not-empty))
            (let [;; TODO get timezone for user
-                 zdt (or published-at ingested-at)
-                 same-year (= (tick/year zdt)
-                              (tick/year (tick/in (tick/instant) "UTC")))]
-             (tick/format (if same-year
-                            "d MMM"
-                            "d MMM yyyy")
-                          zdt))
+                 zdt (some-> (or published-at ingested-at)
+                             (tick/in "UTC"))
+                 same-year (and zdt (= (tick/year zdt)
+                                      (tick/year (tick/in (tick/instant) "UTC"))))]
+             (when zdt
+               (tick/format (if same-year
+                              "d MMM"
+                              "d MMM yyyy")
+                            zdt)))
            (when (and show-reading-time length)
              (ui/pluralize (reading-minutes length) "minute"))
            (when-some [label (case rec-type

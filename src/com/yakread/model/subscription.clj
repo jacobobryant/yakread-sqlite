@@ -23,18 +23,27 @@
 (defresolver email-title [{:keys [sub/email-from]}]
   {:sub/title (str/replace email-from #"\s<.*>" "")})
 
-(defresolver feed-sub-title [{:keys [sub/feed]}]
-  {::pco/input [{:sub/feed [(? :feed/title)
-                             :feed/url]}]}
-  {:sub/title ((some-fn :feed/title :feed/url) feed)})
+(defresolver feed-sub-title [{:keys [biff/conn*]} {:keys [sub/feed-id]}]
+  {::pco/input [:sub/feed-id]}
+  (when feed-id
+    (let [feed (first (biffs/q conn*
+                               {:select [:feed/title :feed/url]
+                                :from :feed
+                                :where [:= :feed/id feed-id]}))]
+      {:sub/title ((some-fn :feed/title :feed/url) feed)})))
 
 (defresolver email-subtitle [{:keys [sub/latest-item]}]
   {::pco/input [{:sub/latest-item [:item/email-reply-to]}]}
   {:sub/subtitle (:item/email-reply-to latest-item)})
 
-(defresolver feed-sub-subtitle [{:keys [sub/feed]}]
-  #::pco{:input [{:sub/feed [:feed/url]}]}
-  {:sub/subtitle (:feed/url feed)})
+(defresolver feed-sub-subtitle [{:keys [biff/conn*]} {:keys [sub/feed-id]}]
+  #::pco{:input [:sub/feed-id]}
+  (when feed-id
+    (let [feed (first (biffs/q conn*
+                               {:select [:feed/url]
+                                :from :feed
+                                :where [:= :feed/id feed-id]}))]
+      {:sub/subtitle (:feed/url feed)})))
 
 (defresolver latest-email-item [{:keys [biff/conn*]} {:sub/keys [doc-type id]}]
   {::pco/output [{:sub/latest-item [:xt/id]}]}
@@ -218,7 +227,7 @@
                             results)))
 
 (defresolver from-params [{:keys [biff/conn* session path-params params]} _]
-  {::pco/output [{:params/sub [:xt/id {:sub/user [:xt/id]}]}]}
+  {::pco/output [{:params/sub [:sub/id {:sub/user [:user/id]}]}]}
   (let [sub-id (or (:sub/id params)
                    (lib.serialize/url->uuid (:sub-id path-params)))
         [sub] (when (some? sub-id)
@@ -227,7 +236,7 @@
                           :from :sub
                           :where [:= :sub/id sub-id]}))]
     (when (and sub (= (:uid session) (:user-id sub)))
-      {:params/sub (-> sub (assoc :sub/user (array-map :xt/id (:user-id sub)))
+      {:params/sub (-> sub (assoc :sub/user (array-map :user/id (:user-id sub)))
                            (dissoc :user-id))})))
 
 ;; TODO turn from-params into a batch resolver and delete this
@@ -245,7 +254,7 @@
       {:params.checked/subscriptions
        (mapv (fn [{:keys [sub/id user-id]}]
                {:sub/id id
-                :sub/user {:xt/id user-id}})
+                :sub/user {:user/id user-id}})
              subs*)})))
 
 (defresolver unread-items [{:keys [biff/conn*]} subscriptions]
