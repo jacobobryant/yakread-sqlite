@@ -672,7 +672,10 @@
                                       (when sqlite-val [sqlite-val])))))
                         resolved)]
     (submit-sqlite-tx! (:biff/conn* ctx) sqlite-tx)
-    (biffx/submit-tx ctx xt-tx)))
+    (try
+      (biffx/submit-tx ctx xt-tx)
+      (catch Exception e
+        (log/warn e "Error in XTDB submit-tx (continuing with SQLite-only write)")))))
 
 (defn bundle [& {:as k->query}]
   {:select (mapv (fn [[k query]]

@@ -498,6 +498,15 @@
                                                         {:builder-fn (rs/builder-adapter
                                                                       rs/as-unqualified-kebab-maps
                                                                       column-reader)})
+                             ;; Re-qualify keys: :id -> :sub/id, :feed-id -> :sub/feed-id, etc.
+                             qualify-row (fn [row]
+                                           (into {}
+                                                 (map (fn [[k v]]
+                                                        [(if (= k :id)
+                                                           id-key
+                                                           (keyword (name table-key) (name k)))
+                                                         v]))
+                                                 row))
                              ;; Post-process to add join keys
                              process-row (fn [row]
                                            (reduce
@@ -509,7 +518,7 @@
                                                                       {target-id-key ref-val}))))
                                             row
                                             ref-attrs))
-                             results (mapv process-row raw-results)
+                             results (mapv (comp process-row qualify-row) raw-results)
                              id->result (into {} (map (juxt id-key identity)) results)]
                          (mapv (fn [input]
                                  (let [id (get input id-key)]
