@@ -53,19 +53,20 @@
 (defresolver xt-id->sub-id [{:keys [xt/id]}]
   {:sub/id id})
 
-(defresolver sub-info [{:keys [xt/id sub/feed sub/email-from]}]
-  #::pco{:input [:xt/id
-                 {(? :sub/feed) [:feed/id]}
-                 (? :sub/email-from)]
+(defresolver sub-info [{:keys [sub/id sub/feed-id sub/email-from sub/record-type]}]
+  #::pco{:input [:sub/id
+                 (? :sub/feed-id)
+                 (? :sub/email-from)
+                 :sub/record-type]
          :output [:sub/source-id
                   :sub/doc-type]}
   (cond
-    email-from
+    (= record-type :email)
     {:sub/source-id id
      :sub/doc-type :sub/email}
 
-    feed
-    {:sub/source-id (:feed/id feed)
+    feed-id
+    {:sub/source-id feed-id
      :sub/doc-type :sub/feed}))
 
 (defn- doc-type->source-key [doc-type]
@@ -282,18 +283,18 @@
           subscriptions)))
 
 (defresolver mv [{:keys [biff/conn*]} subs*]
-  {::pco/input  [:xt/id]
-   ::pco/output [{:sub/mv [:xt/id]}]
+  {::pco/input  [:sub/id]
+   ::pco/output [{:sub/mv [:mv-sub/id]}]
    ::pco/batch?  true}
   (let [results (mapv (fn [{:keys [mv-id sub-id]}]
-                        {:xt/id sub-id
-                         :sub/mv {:xt/id mv-id}})
+                        {:sub/id sub-id
+                         :sub/mv {:mv-sub/id mv-id}})
                       (biffs/q conn*
                                {:select [[:mv-sub/id :mv-id]
                                          [:mv-sub/sub-id :sub-id]]
                                 :from :mv-sub
-                                :where [:in :mv-sub/sub-id (mapv :xt/id subs*)]}))]
-    (lib.core/restore-order subs* :xt/id results)))
+                                :where [:in :mv-sub/sub-id (mapv :sub/id subs*)]}))]
+    (lib.core/restore-order subs* :sub/id results)))
 
 (def module {:resolvers [user-subs
                          sub-info

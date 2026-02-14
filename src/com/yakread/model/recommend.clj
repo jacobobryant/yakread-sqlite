@@ -176,21 +176,21 @@
        (rerank 0.1)))
 
 (defresolver unread-subs [{:user/keys [subscriptions]}]
-  {::pco/input [{:user/subscriptions [:xt/id :sub/unread]}]
-   ::pco/output [{:user/unread-subscriptions [:xt/id]}]}
+  {::pco/input [{:user/subscriptions [:sub/id :sub/unread]}]
+   ::pco/output [{:user/unread-subscriptions [:sub/id]}]}
   {:user/unread-subscriptions (filterv #(not= 0 (:sub/unread %)) subscriptions)})
 
 (defresolver selected-subs [{:user/keys [unread-subscriptions]}]
-  {::pco/input [{:user/unread-subscriptions [:xt/id
+  {::pco/input [{:user/unread-subscriptions [:sub/id
                                              :sub/doc-type
-                                             {(? :sub/mv) [(? :mv.sub/affinity-low)
-                                                           (? :mv.sub/affinity-high)]}
+                                             {(? :sub/mv) [(? :mv-sub/affinity-low)
+                                                           (? :mv-sub/affinity-high)]}
                                              (? :sub/pinned-at)
                                              (? :sub/published-at)]}]
-   ::pco/output [{:user/selected-subs [:xt/id
+   ::pco/output [{:user/selected-subs [:sub/id
                                        :item/rec-type]}]}
   (let [new? (fn [sub] (and (= (:sub/doc-type sub) :sub/email)
-                            (nil? (get-in sub [:sub/mv :mv.sub/affinity-low]))))
+                            (nil? (get-in sub [:sub/mv :mv-sub/affinity-low]))))
         {new-subs true old-subs false} (group-by new? (gen/shuffle unread-subscriptions))
         ;; We'll always show new subs first e.g. so the user will see any confirmation emails.
         new-subs (sort-by :sub/published-at #(compare %2 %1) new-subs)
@@ -200,8 +200,8 @@
                       (mapv #(assoc % :item/rec-type :item.rec-type/new-subscription)))
         {pinned true unpinned false} (->> (interleave-uniform
                                            ;; Do a mix of explore and exploit
-                                           (sort-by #(get-in % [:sub/mv :mv.sub/affinity-low] 0.0) > old-subs)
-                                           (sort-by #(get-in % [:sub/mv :mv.sub/affinity-high] 1.0) > old-subs))
+                                           (sort-by #(get-in % [:sub/mv :mv-sub/affinity-low] 0.0) > old-subs)
+                                           (sort-by #(get-in % [:sub/mv :mv-sub/affinity-high] 1.0) > old-subs))
                                           distinct
                                           (map-indexed (fn [i sub]
                                                          (assoc sub ::rank i)))
