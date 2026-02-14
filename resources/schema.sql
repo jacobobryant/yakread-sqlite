@@ -212,6 +212,14 @@ CREATE TABLE deleted_user (
   email_username_hash TEXT NOT NULL
 ) STRICT;
 
+CREATE TABLE biff_auth_code (
+  id BLOB PRIMARY KEY NOT NULL,
+  email TEXT NOT NULL,
+  code TEXT NOT NULL,
+  created_at INT,
+  failed_attempts INT NOT NULL
+) STRICT;
+
 CREATE INDEX idx_user_email ON user(email);
 CREATE INDEX idx_user_item_user_id ON user_item(user_id);
 

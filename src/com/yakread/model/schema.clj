@@ -197,7 +197,14 @@
 
    :deleted-user [:map {:closed true}
                   [:deleted-user/id                    :uuid]
-                  [:deleted-user/email-username-hash   :string]]})
+                  [:deleted-user/email-username-hash   :string]]
+
+   :biff-auth-code [:map {:closed true}
+                    [:biff-auth-code/id              :uuid]
+                    [:biff-auth-code/email           :string]
+                    [:biff-auth-code/code            :string]
+                    [:biff-auth-code/created-at    ? inst?]
+                    [:biff-auth-code/failed-attempts :int]]})
 
 (def module
   {})

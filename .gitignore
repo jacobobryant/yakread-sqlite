@@ -30,3 +30,4 @@ playwright-report/
 package-lock.json
 config.env
 storage/
+config.env

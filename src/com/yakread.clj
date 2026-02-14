@@ -25,10 +25,12 @@
    [com.yakread.routes :as routes]
    [com.yakread.smtp :as smtp]
    [com.yakread.util.biff-staging :as biffs]
+   [honey.sql :as sql]
    [malli.core :as malli]
    [malli.experimental.time :as malli.t]
    [malli.registry :as malr]
    [malli.util :as malli.u]
+   [next.jdbc :as jdbc]
    [nrepl.cmdline :as nrepl-cmd]
    [reitit.ring :as reitit-ring]
    [taoensso.telemere :as tel]
@@ -56,6 +58,16 @@
     (-> ctx
         (assoc :biff/conn datasource)
         (update :biff/stop conj #(.close datasource)))))
+
+(defn sqlite-get-user-id
+  "Look up user ID by email from SQLite. The first argument is ignored
+   (the auth module passes the XTDB node, but we use conn* instead)."
+  [conn* _node email]
+  (-> (jdbc/execute-one! conn*
+        (sql/format {:select :user/id
+                     :from :user
+                     :where [:= :user/email email]}))
+      :user/id))
 
 (def modules
   (concat modules/modules
@@ -182,6 +194,30 @@
       (tel/add-handler! :biff/error-reporting (fn [signal] (handle-error ctx signal)))
       (update ctx :biff/stop conj #(tel/remove-handler! :biff/error-reporting)))))
 
+(defn use-sqlite-auth
+  "Biff component that overrides biffx/submit-tx and biffx/q to use SQLite,
+   and provides a SQLite-based get-user-id for the auth module.
+   This ensures the auth module (which hardcodes biffx/submit-tx and biffx/q)
+   writes to and reads from SQLite instead of XTDB."
+  [{:keys [biff/conn*] :as ctx}]
+  (let [original-submit-tx biffx/submit-tx
+        original-q biffx/q]
+    ;; Override biffx/submit-tx to route through our SQLite submit-tx
+    (alter-var-root #'biffx/submit-tx
+      (constantly (fn [ctx & [tx]]
+                    (biffs/submit-tx ctx tx))))
+    ;; Override biffx/q to route through our SQLite q
+    (alter-var-root #'biffx/q
+      (constantly (fn [_conn query]
+                    (biffs/q conn* query))))
+    ;; Provide SQLite-based get-user-id
+    (-> ctx
+        (assoc :biff.auth/get-user-id (partial sqlite-get-user-id conn*))
+        (update :biff/stop conj
+                (fn []
+                  (alter-var-root #'biffx/submit-tx (constantly original-submit-tx))
+                  (alter-var-root #'biffx/q (constantly original-q)))))))
+
 (defonce system (atom {}))
 
 (def components
@@ -189,6 +225,7 @@
    use-error-reporting
    biffx/use-xtdb2
    lib.sqlite/use-sqlite
+   use-sqlite-auth
    lib.spark/use-spark
    biff/use-queues
    ;biffx/use-xtdb2-listener
