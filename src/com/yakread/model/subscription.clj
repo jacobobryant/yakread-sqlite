@@ -239,12 +239,12 @@
                    (lib.serialize/url->uuid (:sub-id path-params)))
         [sub] (when (some? sub-id)
                 (biffs/q conn*
-                         {:select [:sub/id [:sub/user-id :user-id]]
+                         {:select [:sub/id :sub/user-id]
                           :from :sub
                           :where [:= :sub/id sub-id]}))]
-    (when (and sub (= (:uid session) (:user-id sub)))
-      {:params/sub (-> sub (assoc :sub/user (array-map :user/id (:user-id sub)))
-                           (dissoc :user-id))})))
+    (when (and sub (= (:uid session) (:sub/user-id sub)))
+      {:params/sub (-> sub (assoc :sub/user (array-map :user/id (:sub/user-id sub)))
+                           (dissoc :sub/user-id))})))
 
 ;; TODO turn from-params into a batch resolver and delete this
 (defresolver params-checked [{:keys [biff/conn* session params]} _]
@@ -252,14 +252,14 @@
   (let [sub-ids (mapv #(some-> % name parse-uuid) (keys (:subs params)))
         subs* (when (not-empty sub-ids)
                 (biffs/q conn*
-                         {:select [:sub/id [:sub/user-id :user-id]]
+                         {:select [:sub/id :sub/user-id]
                           :from :sub
                           :where [:in :sub/id sub-ids]}))]
 
     (when (and (= (count sub-ids) (count subs*))
-               (every? #(= (:uid session) (:user-id %)) subs*))
+               (every? #(= (:uid session) (:sub/user-id %)) subs*))
       {:params.checked/subscriptions
-       (mapv (fn [{:keys [sub/id user-id]}]
+       (mapv (fn [{:keys [sub/id sub/user-id]}]
                {:sub/id id
                 :sub/user {:user/id user-id}})
              subs*)})))

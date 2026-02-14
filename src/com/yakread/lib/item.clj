@@ -21,9 +21,9 @@
                                          [:or
                                           [:= :item/url url]
                                           [:= :redirect/url url]]
-                                         [:= :item/doc-type "item/direct"]]
+                                         [:= :item/record-type :direct]]
                                  :limit 1}))]
-         (on-success ctx {:item/id (:xt/id item) :item/url (:item/url item)})
+         (on-success ctx {:item/id (:item/id item) :item/url (:item/url item)})
          {:biff.fx/http {:url url
                          :method  :get
                          :headers {"User-Agent" base-url}
@@ -73,7 +73,7 @@
                         [[:put-docs :item
                           (lib.core/some-vals
                            {:xt/id item-id
-                            :item/doc-type :item/direct
+                            :item/record-type :direct
                             :item/ingested-at now
                             :item/title title
                             :item/url final-url
