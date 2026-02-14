@@ -192,10 +192,11 @@
 (defn uuid->bytes
   "Convert a UUID to a 16-byte array for SQLite BLOB storage."
   [^UUID uuid]
-  (let [bb (ByteBuffer/allocate 16)]
-    (.putLong bb (.getMostSignificantBits uuid))
-    (.putLong bb (.getLeastSignificantBits uuid))
-    (.array bb)))
+  (when uuid
+    (let [bb (ByteBuffer/allocate 16)]
+      (.putLong bb (.getMostSignificantBits uuid))
+      (.putLong bb (.getLeastSignificantBits uuid))
+      (.array bb))))
 
 (defn- inst->epoch-ms
   "Convert an Instant or ZonedDateTime to epoch milliseconds."
