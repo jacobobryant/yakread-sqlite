@@ -20,7 +20,7 @@
         (mapv #(vector :span.inline-block %))
         (biff/join ui/interpunct))])
 
-(defresolver details* [{:item/keys [doc-type
+(defresolver details* [{:item/keys [record-type
                                     byline
                                     author-name
                                     url
@@ -32,7 +32,7 @@
   {::pco/input [:item/id
                 :item/title
                 :item/ingested-at
-                :item/doc-type
+                :item/record-type
                 (? :item/byline)
                 (? :item/author-name)
                 (? :item/site-name)
@@ -47,7 +47,7 @@
               label-type :html}}]
      (->> [(when show-author
              (some-> (or (:source/title source) author-name byline) str/trim not-empty))
-           (when (= doc-type :item/direct)
+           (when (= record-type :direct)
              (some-> url uri/uri :host str/trim not-empty))
            (let [;; TODO get timezone for user
                  zdt (or published-at ingested-at)

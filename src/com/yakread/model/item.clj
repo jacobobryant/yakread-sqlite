@@ -262,14 +262,17 @@
                                      "https://")))
      (.outerHtml doc))})
 
-(defresolver doc-type [{:keys [item/feed
-                               item/email-sub]}]
-  #::pco{:input [{(? :item/feed) [:xt/id]}
-                 {(? :item/email-sub) [:xt/id]}]
+(defresolver doc-type [{:keys [item/feed-id
+                               item/email-sub-id
+                               item/record-type]}]
+  #::pco{:input [(? :item/feed-id)
+                 (? :item/email-sub-id)
+                 (? :item/record-type)]
          :output [:item/doc-type]}
   (cond
-    feed {:item/doc-type :item/feed}
-    email-sub {:item/doc-type :item/email}))
+    record-type {:item/doc-type (keyword "item" (name record-type))}
+    feed-id {:item/doc-type :item/feed}
+    email-sub-id {:item/doc-type :item/email}))
 
 (defresolver digest-url [{:biff/keys [base-url href-safe]} {:item/keys [id url rec-type]}]
   {::pco/input [:item/id
