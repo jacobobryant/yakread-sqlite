@@ -2,13 +2,12 @@
   (:require
    [cld.core :as cld]
    [clojure.data.generators :as gen]
-   [clojure.set :as set]
    [clojure.string :as str]
    [clojure.tools.logging :as log]
    [clojure.tools.namespace.repl :as tn-repl]
    [com.biffweb :as biff]
    [com.biffweb.experimental :as biffx]
-   [com.biffweb.experimental.auth :as biffx-auth]
+   [com.yakread.lib.auth :as yakread-auth]
    [com.wsscode.pathom3.connect.indexes :as pci]
    [com.wsscode.pathom3.connect.planner :as pcp]
    [com.yakread.lib.core :as lib.core]
@@ -26,12 +25,10 @@
    [com.yakread.routes :as routes]
    [com.yakread.smtp :as smtp]
    [com.yakread.util.biff-staging :as biffs]
-   [honey.sql :as sql]
    [malli.core :as malli]
    [malli.experimental.time :as malli.t]
    [malli.registry :as malr]
    [malli.util :as malli.u]
-   [next.jdbc :as jdbc]
    [nrepl.cmdline :as nrepl-cmd]
    [reitit.ring :as reitit-ring]
    [taoensso.telemere :as tel]
@@ -60,20 +57,10 @@
         (assoc :biff/conn datasource)
         (update :biff/stop conj #(.close datasource)))))
 
-(defn sqlite-get-user-id
-  "Look up user ID by email from SQLite. The first argument is ignored
-   (the auth module passes the XTDB node, but we use conn* instead)."
-  [conn* _node email]
-  (-> (biffs/q conn*
-        {:select :user/id
-         :from :user
-         :where [:= :user/email email]})
-      first
-      :user/id))
 
 (def modules
   (concat modules/modules
-          [(biffx-auth/module
+          [(yakread-auth/module
             #:biff.auth{:app-path (href routes/for-you)
                         :check-state false})]))
 
@@ -196,87 +183,6 @@
       (tel/add-handler! :biff/error-reporting (fn [signal] (handle-error ctx signal)))
       (update ctx :biff/stop conj #(tel/remove-handler! :biff/error-reporting)))))
 
-(defn- translate-xtdb-query-for-sqlite
-  "Translate an XTDB-style query (used by external modules like biff auth)
-   to SQLite-native format. Handles table renaming, column renaming, and
-   value coercion."
-  [query]
-  (let [;; Translate :from — symbol or keyword
-        from-raw (:from query)
-        from-kw (cond
-                  (symbol? from-raw) (keyword from-raw)
-                  (keyword? from-raw) from-raw
-                  :else from-raw)
-        sqlite-tbl (biffs/sqlite-table from-kw)
-        ;; Translate :select
-        translate-key (fn [k]
-                        (if (keyword? k)
-                          (biffs/rename-key k from-kw)
-                          k))
-        new-select (cond
-                     (keyword? (:select query)) (translate-key (:select query))
-                     (vector? (:select query)) (mapv translate-key (:select query))
-                     :else (:select query))
-        ;; Translate :where
-        translate-where (fn translate-where [clause]
-                          (if (vector? clause)
-                            (mapv (fn [x]
-                                    (cond
-                                      (keyword? x) (translate-key x)
-                                      (vector? x) (translate-where x)
-                                      (uuid? x) (biffs/coerce-sqlite-value x)
-                                      :else x))
-                                  clause)
-                            clause))
-        new-where (when (:where query) (translate-where (:where query)))]
-    (cond-> (assoc query :from sqlite-tbl :select new-select)
-      new-where (assoc :where new-where))))
-
-(defn- untranslate-result-keys
-  "Map SQLite result keys back to XTDB-style keys for external modules."
-  [table-kw row]
-  (let [sqlite->xt (set/map-invert biffs/xt->sqlite-key)
-        sqlite-tbl (biffs/sqlite-table table-kw)
-        id-key (keyword (name sqlite-tbl) "id")]
-    (into {}
-          (map (fn [[k v]]
-                 (let [xt-k (cond
-                              (= k id-key) :xt/id
-                              (contains? sqlite->xt k) (get sqlite->xt k)
-                              :else k)]
-                   [xt-k v])))
-          row)))
-
-(defn use-sqlite-auth
-  "Biff component that overrides biffx/submit-tx and biffx/q to use SQLite,
-   and provides a SQLite-based get-user-id for the auth module.
-   This ensures the auth module (which hardcodes biffx/submit-tx and biffx/q)
-   writes to and reads from SQLite instead of XTDB."
-  [{:keys [biff/conn*] :as ctx}]
-  (let [original-submit-tx biffx/submit-tx
-        original-q biffx/q]
-    ;; Override biffx/submit-tx to route through our SQLite submit-tx
-    (alter-var-root #'biffx/submit-tx
-      (constantly (fn [ctx & [tx]]
-                    (biffs/submit-tx ctx tx))))
-    ;; Override biffx/q to route through our SQLite q, translating XTDB-style queries
-    (alter-var-root #'biffx/q
-      (constantly (fn [_conn query]
-                    (let [from-raw (:from query)
-                          from-kw (cond (symbol? from-raw) (keyword from-raw)
-                                        (keyword? from-raw) from-raw
-                                        :else from-raw)
-                          translated (translate-xtdb-query-for-sqlite query)
-                          results (biffs/q conn* translated)]
-                      (mapv (partial untranslate-result-keys from-kw) results)))))
-    ;; Provide SQLite-based get-user-id
-    (-> ctx
-        (assoc :biff.auth/get-user-id (partial sqlite-get-user-id conn*))
-        (update :biff/stop conj
-                (fn []
-                  (alter-var-root #'biffx/submit-tx (constantly original-submit-tx))
-                  (alter-var-root #'biffx/q (constantly original-q)))))))
-
 (defonce system (atom {}))
 
 (def components
@@ -284,7 +190,6 @@
    use-error-reporting
    biffx/use-xtdb2
    lib.sqlite/use-sqlite
-   use-sqlite-auth
    lib.spark/use-spark
    biff/use-queues
    ;biffx/use-xtdb2-listener
