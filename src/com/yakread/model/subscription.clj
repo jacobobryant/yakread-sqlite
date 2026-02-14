@@ -20,6 +20,11 @@
     {:user/subscriptions (or subbed [])
      :user/unsubscribed (mapv #(select-keys % [:sub/id]) unsubbed)}))
 
+(defresolver sub-user [{:sub/keys [user-id]}]
+  {::pco/input [:sub/user-id]
+   ::pco/output [{:sub/user [:xt/id]}]}
+  {:sub/user {:xt/id user-id}})
+
 (defresolver email-title [{:keys [sub/email-from]}]
   {:sub/title (str/replace email-from #"\s<.*>" "")})
 
@@ -205,7 +210,7 @@
    ::pco/batch? true}
   (let [doc-type->subs (group-by :sub/doc-type inputs)
         results (into []
-                      (map (fn [{:keys [source-id xt/id]}]
+                      (map (fn [{:keys [source-id item/id]}]
                              {:sub/source-id source-id
                               :sub/latest-item {:xt/id id}}))
                       (biffs/q conn*

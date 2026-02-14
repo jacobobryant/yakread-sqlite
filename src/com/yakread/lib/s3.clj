@@ -29,7 +29,10 @@
                             (secret k)))})))
 
 (defn request [ctx input]
-  (biff/s3-request (translate-config (merge ctx (biff/select-ns-as input nil 'biff.s3)))))
+  (let [merged (translate-config (merge ctx (biff/select-ns-as input nil 'biff.s3)))]
+    (if (:biff.s3/origin merged)
+      (biff/s3-request merged)
+      (mock-request ctx input))))
 
 (defn presigned-url*
   "Generate a presigned S3 URL using Signature V2"
