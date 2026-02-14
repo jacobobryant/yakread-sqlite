@@ -570,7 +570,10 @@
            (#{:put-docs :patch-docs :delete-docs :erase-docs} (first tx-op)))
       (and (map? tx-op)
            (or (contains? tx-op :update)
-               (contains? tx-op :delete)))))
+               (contains? tx-op :delete)))
+      ;; Raw SQL assertion vectors from biffx/assert-unique
+      (and (vector? tx-op)
+           (string? (first tx-op)))))
 
 (defn- dual-write-op? [tx-op]
   (and (map? tx-op)
@@ -599,7 +602,13 @@
    Returns a vector of HoneySQL operations (may be empty or multiple).
    Handles both vector-style [:put-docs table ...] and map-style {:update table ...} ops."
   [tx-op]
-  (if (map? tx-op)
+  (cond
+    ;; Raw SQL assertion vectors from biffx/assert-unique — skip for SQLite
+    ;; (uniqueness is handled by UNIQUE constraints in the schema)
+    (and (vector? tx-op) (string? (first tx-op)))
+    []
+
+    (map? tx-op)
     ;; Map-style XTQL ops: {:update table :set {...} :where [...]}
     ;; or {:delete table :where [...]}
     (let [table-sym (or (:update tx-op) (:delete tx-op))
@@ -653,6 +662,8 @@
             :where renamed-where}])
 
         :else []))
+
+    :else
     ;; Vector-style XTQL ops: [:put-docs table ...]
     (let [[op table-or-opts & args] tx-op
           table (if (keyword? table-or-opts) table-or-opts (:into table-or-opts))
