@@ -92,7 +92,8 @@
                  :sub/unread
                  (? :sub/feed-id)
                  (? :sub/email-from)
-                 (? :sub/pinned-at)]}
+                 (? :sub/pinned-at)]
+         :output [:sub.view/card]}
   (let [feed-url (when feed-id
                    (:feed/url (first (biffs/q conn*
                                               {:select [:feed/url]
