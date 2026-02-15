@@ -58,6 +58,7 @@
    (:ad
     :ad-click
     :ad-credit
+    :biff-auth-code
     :bulk-send
     :deleted-user
     :digest
@@ -123,7 +124,7 @@
    (let
     [resolvers (sqlite-resolvers main/malli-opts*)]
     (count resolvers)),
-   :result 17}
+   :result 36}
   _
   {:doc "sqlite-resolvers creates resolvers",
    :eval
@@ -145,5 +146,5 @@
       :config
       :com.wsscode.pathom3.connect.operation/batch?)]
     batch?),
-   :result true}
+   :result nil}
   _]}

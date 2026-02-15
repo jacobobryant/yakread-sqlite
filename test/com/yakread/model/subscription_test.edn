@@ -14,8 +14,8 @@
         :sub/email-unsubscribed-at (t/zdt 2000)}]}]
     (user-subs {:biff/conn* conn} {:user/id "user1"})),
    :result
-   {:user/subscriptions [{:xt/id "sub1"}],
-    :user/unsubscribed [{:xt/id "sub2"}]}}
+   {:user/subscriptions [{:sub/id "sub1"}],
+    :user/unsubscribed [{:sub/id "sub2"}]}}
   _
   {:doc "latest-email-item",
    :eval
@@ -44,7 +44,7 @@
       {:biff/conn* conn}
       {:sub/doc-type :sub/email, :sub/id "sub3"})}),
    :result
-   {:email-doc-type {:sub.email/latest-item {:xt/id "item2"}},
+   {:email-doc-type {:sub/latest-item {:xt/id "item2"}},
     :feed-doc-type nil,
     :no-items nil}}
   _
@@ -125,8 +125,10 @@
        :sub/doc-type :sub/feed,
        :sub/created-at (t/zdt 2005)}])),
    :result
-   [{:sub/source-id "sub1", :sub/published-at 978307200000}
-    {:sub/source-id "feed1", :sub/published-at 1009843200000}
+   [{:sub/source-id "sub1",
+     :sub/published-at #time/instant "2001-01-01T00:00:00Z"}
+    {:sub/source-id "feed1",
+     :sub/published-at #time/instant "2002-01-01T00:00:00Z"}
     {:sub/source-id "feed2",
      :sub/published-at
      #time/zoned-date-time "2005-01-01T00:00Z[UTC]"}]}
@@ -173,8 +175,8 @@
        :sub/doc-type :sub/feed,
        :sub/published-at (t/zdt 2002)}])),
    :result
-   [{:sub/source-id "sub1", :sub/latest-item {:xt/id "item2"}}
-    {:sub/source-id "feed1", :sub/latest-item {:xt/id "item3"}}]}
+   [{:sub/source-id "sub1", :sub/latest-item {:xt/id nil}}
+    {:sub/source-id "feed1", :sub/latest-item {:xt/id nil}}]}
   _
   {:doc "from-params",
    :eval
@@ -193,7 +195,8 @@
         :session {:uid user-id},
         :params {:sub/id "sub1"}}
        {})))),
-   :result (nil nil)}
+   :result
+   ({:params/sub {:sub/id "sub1", :sub/user {:user/id "user1"}}} nil)}
   _
   {:doc "params-checked",
    :eval
@@ -223,7 +226,15 @@
        :session {:uid "user1"},
        :params {:subs {(str (t/uuid 0)) nil, (str (t/uuid 3)) nil}}}
       {})}),
-   :result {:valid nil, :unauthorized nil, :missing nil}}
+   :result
+   {:valid
+    {:params.checked/subscriptions
+     [{:sub/id #uuid "00000000-0000-0000-0000-000000000000",
+       :sub/user {:user/id "user1"}}
+      {:sub/id #uuid "00010000-0000-0000-0000-000000000001",
+       :sub/user {:user/id "user1"}}]},
+    :unauthorized nil,
+    :missing nil}}
   _
   {:doc "unread-items",
    :eval

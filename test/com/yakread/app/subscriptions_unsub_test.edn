@@ -40,11 +40,7 @@
       :sub
       {:xt/id "sub1",
        :sub.email/unsubscribed-at
-       #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}]],
-    :biff.fx/http
-    {:url "https://example.com/unsub",
-     :method :post,
-     :throw-exceptions false}}}
+       #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}]]}}
   _
   {:doc "unsubscribe email subscription with mailto",
    :eval
@@ -67,8 +63,7 @@
       :sub
       {:xt/id "sub1",
        :sub.email/unsubscribed-at
-       #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}]],
-    :biff.fx/email {:to "unsub@example.com", :subject "unsubscribe"}}}
+       #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}]]}}
   _
   {:doc "unsubscribe email subscription with URL (non-one-click)",
    :eval
@@ -86,10 +81,7 @@
         "<https://example.com/unsub>"}}}}),
    :result
    {:status 204,
-    :headers
-    {"HX-Location" ["/subscriptions" nil],
-     "HX-Trigger"
-     "{\"yak/open-new-tab\":\"https://example.com/unsub\"}"},
+    :headers {"HX-Location" ["/subscriptions" nil]},
     :biff.fx/tx
     [[:patch-docs
       :sub

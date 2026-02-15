@@ -19,7 +19,7 @@
       [{:sub/items [{:xt/id (t/uuid 1)} {:xt/id (t/uuid 2)}]}]})),
    :result
    {:user/digest-sub-items
-    [{:xt/id #uuid "00020000-0000-0000-0000-000000000002"}]}}
+    [{:item/id #uuid "00020000-0000-0000-0000-000000000002"}]}}
   _
   {:eval
    (t/with-sqlite
@@ -38,7 +38,7 @@
       [{:sub/items [{:xt/id (t/uuid 1)} {:xt/id (t/uuid 2)}]}]})),
    :result
    {:user/digest-sub-items
-    [{:xt/id #uuid "00020000-0000-0000-0000-000000000002"}]}}
+    [{:item/id #uuid "00020000-0000-0000-0000-000000000002"}]}}
   _
   {:eval
    (t/with-sqlite
@@ -55,5 +55,5 @@
      {:user/bookmarks [{:xt/id (t/uuid 1)} {:xt/id (t/uuid 2)}]})),
    :result
    {:user/digest-bookmarks
-    [{:xt/id #uuid "00020000-0000-0000-0000-000000000002"}]}}
+    [{:item/id #uuid "00020000-0000-0000-0000-000000000002"}]}}
   _]}

@@ -9,7 +9,7 @@
      {:user [{:xt/id "user1", :user/email "alice@example.com"}],
       :ad [{:xt/id "ad1", :ad/user-id "user1"}]}]
     (user-ad {:biff/conn* conn} {:xt/id "user1"})),
-   :result {:user/ad {:xt/id "ad1"}}}
+   :result {:user/ad {:ad/id "ad1"}}}
   _
   {:eval
    (t/with-sqlite
@@ -112,7 +112,7 @@
         :ad-credit/charge-status :pending,
         :ad-credit/amount 100}]}]
     (pending-charge {:biff/conn* conn} {:xt/id "ad1"})),
-   :result {:ad/pending-charge {:xt/id "ad-credit1"}}}
+   :result {:ad/pending-charge {:ad-credit/id "ad-credit1"}}}
   _
   {:eval
    (t/with-sqlite
@@ -141,10 +141,10 @@
     (pending-charges {:biff/conn* conn} nil)),
    :result
    {:admin/pending-charges
-    [{:xt/id "ad-credit1"}
-     {:xt/id "ad-credit2"}
-     {:xt/id "ad-credit4"}
-     {:xt/id "ad-credit5"}]}}
+    [{:ad-credit/id "ad-credit1"}
+     {:ad-credit/id "ad-credit2"}
+     {:ad-credit/id "ad-credit4"}
+     {:ad-credit/id "ad-credit5"}]}}
   _
   {:eval
    (let

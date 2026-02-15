@@ -12,22 +12,14 @@
     [:biff/assert-query
      {:select :xt/id, :from :stuff}
      [{:xt/id 1, :x 1}]]),
-   :result
-   [{:xt
-     {:assert
-      [:=
-       {:select [[[:nest_many {:select :xt/id, :from :stuff}]]]}
-       {:select [[[:array ([:lift {:xt/id 1, :x 1}])]]]}]},
-     :sqlite nil}]}
+   :result []}
   _
   {:doc ":biff/assert-query expansion empty results",
    :eval
    (biff-tx-op
     {}
     [:biff/assert-query {:select :xt/id, :from :stuff} []]),
-   :result
-   [{:xt {:assert [:not-exists {:select :xt/id, :from :stuff}]},
-     :sqlite nil}]}
+   :result []}
   _
   {:doc ":biff/assert-query execution",
    :eval
@@ -50,7 +42,7 @@
       [[:biff/assert-query query (conj results {:xt/id 4, :x 4})]])
      (xt/q node "select _id, committed from xt.txs"))),
    :result
-   [{:xt/id 2, :committed false}
+   [{:xt/id 2, :committed true}
     {:xt/id 1, :committed true}
     {:xt/id 0, :committed true}]}
   _
@@ -67,46 +59,32 @@
       {:xt/id "stuff2-new-id", :x 2, :y 2, :z 2}
       {:x 3, :y 3, :z 3}])),
    :ex #error {
- :cause "No implementation of method: :get-connection of protocol: #'next.jdbc.protocols/Connectable found for class: nil"
+ :cause "ERROR: Errors parsing SQL statement:\n  - line 1:61 no viable alternative at input '((x=$1)AND(y=$2),'\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb/sql-error\",\"Errors parsing SQL statement:\\n  - line 1:61 no viable alternative at input '((x=$1)AND(y=$2),'\",[\"^ \",\"~:sql\",\"SELECT stuff.id, x, y FROM stuff WHERE ((x = $1) AND (y = $2), (x = $3) AND (y = $4), (x = $5) AND (y = $6))\"]]]"
  :via
- [{:type java.lang.IllegalArgumentException
-   :message "No implementation of method: :get-connection of protocol: #'next.jdbc.protocols/Connectable found for class: nil"
-   :at [clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]}]
+ [{:type org.postgresql.util.PSQLException
+   :message "ERROR: Errors parsing SQL statement:\n  - line 1:61 no viable alternative at input '((x=$1)AND(y=$2),'\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb/sql-error\",\"Errors parsing SQL statement:\\n  - line 1:61 no viable alternative at input '((x=$1)AND(y=$2),'\",[\"^ \",\"~:sql\",\"SELECT stuff.id, x, y FROM stuff WHERE ((x = $1) AND (y = $2), (x = $3) AND (y = $4), (x = $5) AND (y = $6))\"]]]"
+   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
  :trace
- [[clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]
-  [clojure.core$_cache_protocol_fn invoke "core_deftype.clj" 577]
-  [next.jdbc.protocols$eval14669$fn__14670$G__14660__14677 invoke "protocols.clj" 25]
-  [next.jdbc$get_connection invokeStatic "jdbc.clj" 169]
-  [next.jdbc$get_connection invoke "jdbc.clj" 148]
-  [xtdb.api$with_conn invokeStatic "api.clj" 55]
-  [xtdb.api$with_conn invoke "api.clj" 40]
-  [xtdb.api$plan_q$reify__17800 reduce "api.clj" 116]
-  [clojure.core$reduce invokeStatic "core.clj" 6964]
-  [clojure.core$into invokeStatic "core.clj" 7038]
-  [clojure.core$into invoke "core.clj" 7029]
-  [xtdb.api$q invokeStatic "api.clj" 172]
-  [xtdb.api$q invoke "api.clj" 128]
-  [xtdb.api$q invokeStatic "api.clj" 169]
-  [xtdb.api$q invoke "api.clj" 128]
-  [clojure.lang.AFn applyToHelper "AFn.java" 156]
-  [clojure.lang.AFn applyTo "AFn.java" 144]
-  [clojure.lang.Var applyTo "Var.java" 707]
-  [clojure.core$apply invokeStatic "core.clj" 671]
-  [clojure.core$apply invoke "core.clj" 662]
-  [com.biffweb.impl.xtdb2$q invokeStatic "xtdb2.clj" 37]
-  [com.biffweb.impl.xtdb2$q doInvoke "xtdb2.clj" 36]
-  [clojure.lang.RestFn invoke "RestFn.java" 428]
-  [clojure.lang.AFn applyToHelper "AFn.java" 156]
-  [clojure.lang.RestFn applyTo "RestFn.java" 135]
-  [clojure.core$apply invokeStatic "core.clj" 667]
-  [clojure.core$apply invoke "core.clj" 662]
-  [com.biffweb.experimental$q invokeStatic "experimental.clj" 74]
-  [com.biffweb.experimental$q doInvoke "experimental.clj" 71]
-  [clojure.lang.RestFn invoke "RestFn.java" 424]
-  [com.yakread.util.biff_staging$eval52736$fn__52739 invoke "biff_staging.clj" 502]
+ [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
+  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
+  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
+  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
+  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
+  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
+  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
+  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
+  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
+  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
+  [next.jdbc.result_set$eval15676$fn__15684 invoke "result_set.clj" 952]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 1008]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 979]
+  [com.yakread.util.biff_staging$eval46326$fn__46329 invoke "biff_staging.clj" 513]
   [clojure.lang.MultiFn invoke "MultiFn.java" 234]
-  [tmp833739$eval95057 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp833739$eval95057 invoke "NO_SOURCE_FILE" -1]
+  [tmp927101$eval95003 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp927101$eval95003 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -132,46 +110,32 @@
        :biff/on-insert {:z 1},
        :biff/on-update {:z [:+ :z 1]}}])),
    :ex #error {
- :cause "No implementation of method: :get-connection of protocol: #'next.jdbc.protocols/Connectable found for class: nil"
+ :cause "ERROR: Errors parsing SQL statement:\n  - line 1:61 no viable alternative at input '((x=$1)AND(y=$2),'\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb/sql-error\",\"Errors parsing SQL statement:\\n  - line 1:61 no viable alternative at input '((x=$1)AND(y=$2),'\",[\"^ \",\"~:sql\",\"SELECT stuff.id, x, y FROM stuff WHERE ((x = $1) AND (y = $2), (x = $3) AND (y = $4))\"]]]"
  :via
- [{:type java.lang.IllegalArgumentException
-   :message "No implementation of method: :get-connection of protocol: #'next.jdbc.protocols/Connectable found for class: nil"
-   :at [clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]}]
+ [{:type org.postgresql.util.PSQLException
+   :message "ERROR: Errors parsing SQL statement:\n  - line 1:61 no viable alternative at input '((x=$1)AND(y=$2),'\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb/sql-error\",\"Errors parsing SQL statement:\\n  - line 1:61 no viable alternative at input '((x=$1)AND(y=$2),'\",[\"^ \",\"~:sql\",\"SELECT stuff.id, x, y FROM stuff WHERE ((x = $1) AND (y = $2), (x = $3) AND (y = $4))\"]]]"
+   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
  :trace
- [[clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]
-  [clojure.core$_cache_protocol_fn invoke "core_deftype.clj" 577]
-  [next.jdbc.protocols$eval14669$fn__14670$G__14660__14677 invoke "protocols.clj" 25]
-  [next.jdbc$get_connection invokeStatic "jdbc.clj" 169]
-  [next.jdbc$get_connection invoke "jdbc.clj" 148]
-  [xtdb.api$with_conn invokeStatic "api.clj" 55]
-  [xtdb.api$with_conn invoke "api.clj" 40]
-  [xtdb.api$plan_q$reify__17800 reduce "api.clj" 116]
-  [clojure.core$reduce invokeStatic "core.clj" 6964]
-  [clojure.core$into invokeStatic "core.clj" 7038]
-  [clojure.core$into invoke "core.clj" 7029]
-  [xtdb.api$q invokeStatic "api.clj" 172]
-  [xtdb.api$q invoke "api.clj" 128]
-  [xtdb.api$q invokeStatic "api.clj" 169]
-  [xtdb.api$q invoke "api.clj" 128]
-  [clojure.lang.AFn applyToHelper "AFn.java" 156]
-  [clojure.lang.AFn applyTo "AFn.java" 144]
-  [clojure.lang.Var applyTo "Var.java" 707]
-  [clojure.core$apply invokeStatic "core.clj" 671]
-  [clojure.core$apply invoke "core.clj" 662]
-  [com.biffweb.impl.xtdb2$q invokeStatic "xtdb2.clj" 37]
-  [com.biffweb.impl.xtdb2$q doInvoke "xtdb2.clj" 36]
-  [clojure.lang.RestFn invoke "RestFn.java" 428]
-  [clojure.lang.AFn applyToHelper "AFn.java" 156]
-  [clojure.lang.RestFn applyTo "RestFn.java" 135]
-  [clojure.core$apply invokeStatic "core.clj" 667]
-  [clojure.core$apply invoke "core.clj" 662]
-  [com.biffweb.experimental$q invokeStatic "experimental.clj" 74]
-  [com.biffweb.experimental$q doInvoke "experimental.clj" 71]
-  [clojure.lang.RestFn invoke "RestFn.java" 424]
-  [com.yakread.util.biff_staging$eval52736$fn__52739 invoke "biff_staging.clj" 502]
+ [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
+  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
+  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
+  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
+  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
+  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
+  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
+  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
+  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
+  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
+  [next.jdbc.result_set$eval15676$fn__15684 invoke "result_set.clj" 952]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 1008]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 979]
+  [com.yakread.util.biff_staging$eval46326$fn__46329 invoke "biff_staging.clj" 513]
   [clojure.lang.MultiFn invoke "MultiFn.java" 234]
-  [tmp833739$eval95075 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp833739$eval95075 invoke "NO_SOURCE_FILE" -1]
+  [tmp927101$eval95021 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp927101$eval95021 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]

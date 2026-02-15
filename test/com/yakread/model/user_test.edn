@@ -11,6 +11,7 @@
      :not-exists (mv {:biff/conn* conn} {:user/id (t/uuid 20)})}),
    :result
    {:exists
-    {:user/mv {:xt/id #uuid "00010000-0000-0000-0000-000000000001"}},
+    {:user/mv
+     {:mv-user/id #uuid "00010000-0000-0000-0000-000000000001"}},
     :not-exists nil}}
   _]}

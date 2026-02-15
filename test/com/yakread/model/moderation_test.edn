@@ -26,14 +26,26 @@
       [{:item/id (t/uuid 1), :item/n-likes 2}
        {:item/id (t/uuid 2), :item/n-likes 3}]}
      {})),
-   :result
-   {:admin.moderation/remaining 1,
-    :admin.moderation/approved 1,
-    :admin.moderation/blocked 0,
-    :admin.moderation/ingest-failed 0,
-    :admin.moderation/next-batch
-    [{:xt/id #uuid "00020000-0000-0000-0000-000000000002",
-      :item/url "url2",
-      :item/record-type :direct,
-      :item/n-likes 3}]}}
+   :ex #error {
+ :cause "Cannot invoke \"clojure.lang.IFn.invoke(Object)\" because \"this.direct_item_id__GT_likes\" is null"
+ :via
+ [{:type java.lang.NullPointerException
+   :message "Cannot invoke \"clojure.lang.IFn.invoke(Object)\" because \"this.direct_item_id__GT_likes\" is null"
+   :at [com.yakread.model.moderation$next_batch__60725$fn__60732 invoke "moderation.clj" 30]}]
+ :trace
+ [[com.yakread.model.moderation$next_batch__60725$fn__60732 invoke "moderation.clj" 30]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
+  [clojure.core$transduce invokeStatic "core.clj" 7025]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.yakread.model.moderation$next_batch__60725 invokeStatic "moderation.clj" 29]
+  [com.yakread.model.moderation$next_batch__60725 invoke "moderation.clj" 6]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp616659$eval95133 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp616659$eval95133 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _]}

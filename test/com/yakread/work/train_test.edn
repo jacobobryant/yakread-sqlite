@@ -32,7 +32,7 @@
  [{:type clojure.lang.ExceptionInfo
    :message "Exception while running biff.fx machine"
    :data {:machine :com.yakread.work.train/queue-add-candidate, :state :start, :trace []}
-   :at [com.yakread.lib.fx$machine$run__52953$fn__52955 invoke "fx.clj" 90]}
+   :at [com.yakread.lib.fx$machine$run__53024$fn__53026 invoke "fx.clj" 90]}
   {:type org.sqlite.SQLiteException
    :message "[SQLITE_ERROR] SQL error or missing database (HAVING clause on a non-aggregate query)"
    :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
@@ -55,22 +55,22 @@
   [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
   [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
   [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 900]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 881]
-  [com.yakread.work.train$fn__65054 invokeStatic "train.clj" 49]
-  [com.yakread.work.train$fn__65054 invoke "train.clj" 37]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 1008]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 979]
+  [com.yakread.work.train$fn__65161 invokeStatic "train.clj" 49]
+  [com.yakread.work.train$fn__65161 invoke "train.clj" 37]
   [com.yakread.lib.fx$step invokeStatic "fx.clj" 34]
   [com.yakread.lib.fx$step invoke "fx.clj" 27]
-  [com.yakread.lib.fx$machine$run__52953$fn__52955 invoke "fx.clj" 85]
-  [com.yakread.lib.fx$machine$run__52953 invoke "fx.clj" 84]
-  [tmp527484$eval71168 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp527484$eval71168 invoke "NO_SOURCE_FILE" -1]
+  [com.yakread.lib.fx$machine$run__53024$fn__53026 invoke "fx.clj" 85]
+  [com.yakread.lib.fx$machine$run__53024 invoke "fx.clj" 84]
+  [tmp870440$eval71279 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp870440$eval71279 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
   [clojure.core$eval invoke "core.clj" 3228]
-  [com.yakread.lib.test$eval_STAR_$fn__69974$fn__69975 invoke "test.clj" 200]
-  [com.yakread.lib.test$eval_STAR_$fn__69974 invoke "test.clj" 199]
+  [com.yakread.lib.test$eval_STAR_$fn__70081$fn__70082 invoke "test.clj" 200]
+  [com.yakread.lib.test$eval_STAR_$fn__70081 invoke "test.clj" 199]
   [com.yakread.lib.test$tapped_STAR_ invokeStatic "test.clj" 183]
   [com.yakread.lib.test$tapped_STAR_ invoke "test.clj" 172]
   [com.yakread.lib.test$eval_STAR_ invokeStatic "test.clj" 197]
@@ -87,7 +87,7 @@
   [clojure.core$reduce invokeStatic "core.clj" 6965]
   [clojure.core$mapv invokeStatic "core.clj" 7050]
   [clojure.core$mapv invoke "core.clj" 7050]
-  [com.yakread.lib.test$run_examples_BANG_$fn__70016 invoke "test.clj" 259]
+  [com.yakread.lib.test$run_examples_BANG_$fn__70123 invoke "test.clj" 259]
   [com.yakread.lib.test$run_examples_BANG_ invokeStatic "test.clj" 252]
   [com.yakread.lib.test$run_examples_BANG_ doInvoke "test.clj" 247]
   [clojure.lang.RestFn invoke "RestFn.java" 411]

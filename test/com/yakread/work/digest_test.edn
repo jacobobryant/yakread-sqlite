@@ -50,7 +50,7 @@
    {:biff.fx/queue
     {:jobs
      ([:work.digest/prepare-digest
-       {:xt/id #uuid "00010000-0000-0000-0000-000000000001",
+       {:user/id #uuid "00010000-0000-0000-0000-000000000001",
         :user/email "user1@example.com"}])}}}
   _
   {:eval

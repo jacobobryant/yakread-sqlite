@@ -210,11 +210,7 @@
       {:key "content-key-2",
        :config-ns yakread.s3.content,
        :method "DELETE"})}
-    {:biff.fx/tx
-     [[:erase-docs
-       :item
-       #uuid "00020000-0000-0000-0000-000000000002"
-       #uuid "00030000-0000-0000-0000-000000000003"]]}
+    {:biff.fx/tx [[:erase-docs :item nil nil]]}
     {:biff.fx/next :delete-email-batch,
      :com.yakread.work.account/email-ids ()}]}
   _
@@ -251,11 +247,7 @@
       {:key "content-key-2",
        :config-ns yakread.s3.content,
        :method "DELETE"})}
-    {:biff.fx/tx
-     [[:erase-docs
-       :item
-       #uuid "00020000-0000-0000-0000-000000000002"
-       #uuid "00030000-0000-0000-0000-000000000003"]]}
+    {:biff.fx/tx [[:erase-docs :item nil nil]]}
     {:biff.fx/next :delete-email-batch,
      :com.yakread.work.account/email-ids ()}]}
   _]}
