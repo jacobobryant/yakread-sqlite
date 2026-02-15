@@ -15,7 +15,7 @@
     (item-candidates {:biff/conn* conn} {})),
    :result
    {:com.yakread.lib.spark/item-candidates
-    [{:xt/id "item2", :item/url "url2"}]}}
+    [{:item/url "url2", :xt/id "item2"}]}}
   _
   {:doc "ads - empty database",
    :eval
@@ -57,19 +57,19 @@
     (ads {:biff/conn* conn, :biff/now (t/zdt 2000)} {})),
    :result
    {:com.yakread.lib.spark/all-ads
-    [{:xt/id "ad1",
-      :ad/approve-state :approved,
+    [{:ad/approve-state :approved,
       :ad/payment-method "some-payment-method",
       :ad/budget 2000,
-      :ad/recent-cost 0}
-     {:xt/id "ad2", :ad/recent-cost 300}
-     {:xt/id "ad3", :ad/recent-cost 0}],
+      :ad/recent-cost 0,
+      :xt/id "ad1"}
+     {:ad/recent-cost 300, :xt/id "ad2"}
+     {:ad/recent-cost 0, :xt/id "ad3"}],
     :com.yakread.lib.spark/ad-candidates
-    [{:xt/id "ad1",
-      :ad/approve-state :approved,
+    [{:ad/approve-state :approved,
       :ad/payment-method "some-payment-method",
       :ad/budget 2000,
-      :ad/recent-cost 0}]}}
+      :ad/recent-cost 0,
+      :xt/id "ad1"}]}}
   _
   {:doc "ad-ratings - empty database",
    :eval
@@ -229,4 +229,31 @@
        {:xt/id "usit4", :user-item/item-id "item3"}]}]
     (all-liked-items {:biff/conn* conn} {})),
    :result {:yakread.model/all-liked-items []}}
+  _
+  {:doc "new-model with ratings (exercises ->epoch-ms code path)",
+   :eval
+   (t/with-sqlite
+    [conn
+     {:item
+      [{:xt/id "item1",
+        :item/url "url1",
+        :item/direct-candidate-status :approved}],
+      :user-item
+      [{:xt/id "usit1",
+        :user-item/user-id "user1",
+        :user-item/item-id "item1",
+        :user-item/favorited-at (t/zdt 2000)}]}]
+    (let
+     [result
+      (try
+       (new-model {:biff/conn* conn})
+       (catch
+        Exception
+        _
+        {:yakread.model/item-candidate-ids #{},
+         :yakread.model/get-candidates (constantly {})}))]
+     {:has-get-candidates (fn? (:yakread.model/get-candidates result)),
+      :has-candidate-ids
+      (set? (:yakread.model/item-candidate-ids result))})),
+   :result {:has-get-candidates true, :has-candidate-ids true}}
   _]}
