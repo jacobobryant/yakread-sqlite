@@ -843,19 +843,46 @@
       (UUID. (.getLong bb) (.getLong bb)))))
 
 (defn- infer-table-from-query
-  "Infer the table name from a HoneySQL query map."
+  "Infer the primary table name from a HoneySQL query map."
   [query]
   (cond
     (keyword? (:from query)) (:from query)
     (vector? (:from query)) (first (:from query))
     :else nil))
 
+(defn- all-tables-from-query
+  "Extract all table references from a HoneySQL query (FROM + JOINs + unions)."
+  [query]
+  (let [from-table (infer-table-from-query query)
+        join-tables (when-let [joins (:join query)]
+                      (->> (partition 2 joins)
+                           (map first)
+                           (filter keyword?)))
+        left-join-tables (when-let [joins (:left-join query)]
+                           (->> (partition 2 joins)
+                                (map first)
+                                (filter keyword?)))
+        union-tables (when-let [unions (:union query)]
+                       (mapcat all-tables-from-query unions))]
+    (distinct (remove nil? (concat [from-table] join-tables left-join-tables union-tables)))))
+
+(defn- timestamp-column?
+  "Returns true if the column name looks like a timestamp (ends in '-at' or starts with 'last-')."
+  [col-name]
+  (or (str/ends-with? col-name "-at")
+      (str/starts-with? col-name "last-")))
+
 (defn- coerce-result-value
-  "Coerce a SQLite result value. Converts byte arrays to UUIDs."
-  [v]
-  (cond
-    (instance? (Class/forName "[B") v) (bytes->uuid v)
-    :else v))
+  "Coerce a SQLite result value. Converts byte arrays to UUIDs.
+   If col-name is provided and looks like a timestamp, coerces Longs to Instants."
+  ([v]
+   (coerce-result-value v nil))
+  ([v col-name]
+   (cond
+     (instance? (Class/forName "[B") v) (bytes->uuid v)
+     (and (instance? Long v) col-name (timestamp-column? col-name))
+     (sqlite/epoch-ms->inst v)
+     :else v)))
 
 (defn- table-column-names
   "Get the set of column names (unqualified, kebab-case) for a table from schema."
@@ -896,8 +923,8 @@
                           coerced-v (cond
                                       (and coerce-fn (some? v))
                                       (try (coerce-fn v)
-                                           (catch Exception _ (coerce-result-value v)))
-                                      :else (coerce-result-value v))]
+                                           (catch Exception _ (coerce-result-value v col-name)))
+                                      :else (coerce-result-value v col-name))]
                       [out-key coerced-v]))))
           row)))
 
@@ -958,12 +985,22 @@
   ;; instead of using requiring-resolve. We can do that after the migration is finished.
   [conn query]
   (let [table (infer-table-from-query query)
-        malli-opts (when table @(requiring-resolve 'com.yakread/malli-opts*))
-        read-fns (when table
-                   (sqlite/read-coercions malli-opts table))
-        write-fns (when table
+        all-tables (all-tables-from-query query)
+        malli-opts (when (seq all-tables) @(requiring-resolve 'com.yakread/malli-opts*))
+        ;; Merge read coercions from ALL referenced tables (FROM + JOINs + unions)
+        read-fns (when malli-opts
+                   (reduce (fn [acc t]
+                             (merge acc (sqlite/read-coercions malli-opts t)))
+                           {}
+                           all-tables))
+        write-fns (when (and malli-opts table)
                     (sqlite/write-coercions malli-opts table))
-        known-cols (table-column-names malli-opts table)
+        ;; Merge known columns from ALL referenced tables
+        known-cols (when malli-opts
+                     (reduce (fn [acc t]
+                               (into (or acc #{}) (table-column-names malli-opts t)))
+                             nil
+                             all-tables))
         query (coerce-where-enum-values query write-fns)
         coerced-query (coerce-query-values query)
         formatted (sql/format coerced-query)

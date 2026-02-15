@@ -18,11 +18,6 @@
 (defn- median [xs]
   (first (take (/ (count xs) 2) xs)))
 
-(defn- ->epoch-ms [x]
-  (if (instance? Long x)
-    x
-    (inst-ms x)))
-
 (defresolver item-candidates [{:keys [biff/conn*]} _]
   {::pco/output [{::item-candidates [:xt/id
                                      :item/url]}]}
@@ -269,7 +264,7 @@
                                                           (when (< 0.5 value)
                                                             created-at)))
                                                   (apply max-key
-                                                         ->epoch-ms
+                                                         inst-ms
                                                          (Instant/ofEpochMilli 0)))))]
     (log/info "done")
     {:yakread.model/get-candidates
@@ -288,7 +283,7 @@
                                                      (Instant/ofEpochMilli 0))
                           :candidate/n-ratings (get candidate->n-ratings id 0)})
                        (sort-by (juxt :candidate/n-ratings
-                                      (comp - ->epoch-ms :candidate/last-liked)))
+                                      (comp - inst-ms :candidate/last-liked)))
                        vec)]))))}))
 
 (defresolver item-candidate-ids [{::keys [item-candidates]}]
