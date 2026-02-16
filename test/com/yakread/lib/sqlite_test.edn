@@ -47,9 +47,10 @@
   {:doc "make-enum-reader creates reader that converts int to keyword",
    :eval
    (let
-    [reader (make-enum-reader {0 :user.plan/quarter, 1 :user.plan/annual})]
+    [reader
+     (make-enum-reader {0 :user.plan/quarter, 1 :user.plan/annual})]
     [(reader 0) (reader 1)]),
-   :result [:quarter :annual]}
+   :result [:user.plan/quarter :user.plan/annual]}
   _
   {:doc "schema-info extracts tables from malli schema",
    :eval
