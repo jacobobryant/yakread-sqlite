@@ -583,17 +583,17 @@
   "Infer the record_type value for tables that use discriminated unions.
    In XTDB, the type is determined by which subtype attributes are present.
    In SQLite, it's stored as an integer in the record_type column.
-   Returns the unqualified keyword enum value (e.g. :feed, :email, :direct)."
+   Returns the namespaced keyword enum value (e.g. :sub.record-type/feed)."
   [doc table]
   (case table
     :sub (cond
-           (contains? doc :sub.feed/feed)   :feed
-           (contains? doc :sub.email/from)  :email
+           (contains? doc :sub.feed/feed)   :sub.record-type/feed
+           (contains? doc :sub.email/from)  :sub.record-type/email
            :else nil)
     :item (cond
             (contains? doc :item/doc-type)       nil  ;; already has doc-type, will be coerced
-            (contains? doc :item.feed/feed)       :feed
-            (contains? doc :item.email/sub)       :email
+            (contains? doc :item.feed/feed)       :item.record-type/feed
+            (contains? doc :item.email/sub)       :item.record-type/email
             :else nil)
     nil))
 
