@@ -11,6 +11,7 @@
    [clojure.walk :as walk]
    [com.biffweb :as biff]
    [com.biffweb.experimental :as biffx]
+   [com.biffweb.sqlite :as biff-sqlite]
    [com.yakread.lib.sqlite :as sqlite]
    [com.wsscode.pathom3.connect.operation :as pco]
    [com.wsscode.pathom3.connect.planner :as-alias pcp]
@@ -20,7 +21,6 @@
    [malli.core :as malli]
    [malli.registry :as malr]
    [next.jdbc :as jdbc]
-   [next.jdbc.result-set :as rs]
    [taoensso.nippy :as nippy])
   (:import
    [java.nio ByteBuffer]
@@ -837,174 +837,18 @@
 ;; SQLite query function (XTDB-compatible interface)
 ;; ============================================================================
 
-(defn- bytes->uuid [^bytes byte-array]
-  (when byte-array
-    (let [bb (ByteBuffer/wrap byte-array)]
-      (UUID. (.getLong bb) (.getLong bb)))))
-
-(defn- infer-table-from-query
-  "Infer the primary table name from a HoneySQL query map."
-  [query]
-  (cond
-    (keyword? (:from query)) (:from query)
-    (vector? (:from query)) (first (:from query))
-    :else nil))
-
-(defn- all-tables-from-query
-  "Extract all table references from a HoneySQL query (FROM + JOINs + unions)."
-  [query]
-  (let [from-table (infer-table-from-query query)
-        join-tables (when-let [joins (:join query)]
-                      (->> (partition 2 joins)
-                           (map first)
-                           (filter keyword?)))
-        left-join-tables (when-let [joins (:left-join query)]
-                           (->> (partition 2 joins)
-                                (map first)
-                                (filter keyword?)))
-        union-tables (when-let [unions (:union query)]
-                       (mapcat all-tables-from-query unions))]
-    (distinct (remove nil? (concat [from-table] join-tables left-join-tables union-tables)))))
-
-(defn- timestamp-column?
-  "Returns true if the column name looks like a timestamp (ends in '-at' or starts with 'last-')."
-  [col-name]
-  (or (str/ends-with? col-name "-at")
-      (str/starts-with? col-name "last-")))
-
-(defn- coerce-result-value
-  "Coerce a SQLite result value. Converts byte arrays to UUIDs.
-   If col-name is provided and looks like a timestamp, coerces Longs to Instants."
-  ([v]
-   (coerce-result-value v nil))
-  ([v col-name]
-   (cond
-     (instance? (Class/forName "[B") v) (bytes->uuid v)
-     (and (instance? Long v) col-name (timestamp-column? col-name))
-     (sqlite/epoch-ms->inst v)
-     :else v)))
-
-(defn- table-column-names
-  "Get the set of column names (unqualified, kebab-case) for a table from schema."
-  [malli-opts table]
-  (when (and malli-opts table)
-    (when-let [attrs (get (sqlite/schema-info malli-opts) table)]
-      (into #{"id"} ;; always include :id
-            (map (fn [[attr _]]
-                   (name attr)))
-            attrs))))
-
-(defn- coerce-result-row
-  "Coerce a single result row from SQLite.
-   Applies schema-aware read coercions (bytes->UUID, int->enum, epoch-ms->Instant).
-   Maps :id -> :table/id (e.g. :sub/id) for Pathom compatibility.
-   Only table-qualifies keys that are known schema columns; aliases stay unqualified.
-   Removes nil values to match XTDB behavior (missing fields are absent, not nil)."
-  [row table read-coerce-fns known-columns]
-  (when row
-    (into {}
-          (keep (fn [[k v]]
-                  (when (some? v)
-                    (let [col-name (str/replace (name k) "_" "-")
-                          ;; Only namespace if it's a known schema column
-                          is-schema-col (and known-columns (contains? known-columns col-name))
-                          sqlite-key (when (and table is-schema-col)
-                                      (keyword (name table) col-name))
-                          ;; Map :id -> :table/id (e.g. :sub/id)
-                          out-key (cond
-                                    (= k :id) (if table
-                                                (keyword (name table) "id")
-                                                :xt/id)
-                                    sqlite-key sqlite-key
-                                    :else k)
-                          ;; Apply schema-aware coercion
-                          coerce-fn (when sqlite-key
-                                      (get read-coerce-fns sqlite-key))
-                          coerced-v (cond
-                                      (and coerce-fn (some? v))
-                                      (try (coerce-fn v)
-                                           (catch Exception _ (coerce-result-value v col-name)))
-                                      :else (coerce-result-value v col-name))]
-                      [out-key coerced-v]))))
-          row)))
-
-(defn- coerce-query-values
-  "Walk a HoneySQL query and coerce Clojure values to SQLite-compatible values.
-   Converts UUIDs to byte arrays, Instants/ZonedDateTimes to epoch-ms."
-  [query]
-  (walk/postwalk
-   (fn [x]
-     (cond
-       (uuid? x) (uuid->bytes x)
-       (instance? Instant x) (.toEpochMilli ^Instant x)
-       (instance? ZonedDateTime x) (.toEpochMilli (.toInstant ^ZonedDateTime x))
-       :else x))
-   query))
-
-(defn- coerce-where-enum-values
-  "Coerce enum string/keyword values in WHERE clauses using schema-aware write coercions.
-   Walks :where vectors looking for [:= :column value] patterns where the column
-   has an enum write coercion. Also handles [:lift val] wrappers."
-  [query write-fns]
-  (if (or (nil? write-fns) (nil? (:where query)))
-    query
-    (update query :where
-            (fn walk-where [clause]
-              (cond
-                ;; [:= :col val] or [:!= :col val] etc.
-                (and (vector? clause)
-                     (>= (count clause) 3)
-                     (keyword? (second clause)))
-                (let [col (second clause)]
-                  (if-let [coerce-fn (get write-fns col)]
-                    (into [(first clause) col]
-                          (map (fn [v]
-                                 (cond
-                                   ;; Handle [:lift val] wrappers
-                                   (and (vector? v) (= :lift (first v)))
-                                   (let [inner (second v)]
-                                     (if (or (string? inner) (keyword? inner))
-                                       (try (coerce-fn inner) (catch Exception _ v))
-                                       v))
-                                   (or (string? v) (keyword? v))
-                                   (try (coerce-fn v) (catch Exception _ v))
-                                   :else v))
-                               (drop 2 clause)))
-                    ;; Recurse into sub-clauses (e.g. [:and ...])
-                    (mapv walk-where clause)))
-                ;; Recursive case for :and/:or
-                (vector? clause) (mapv walk-where clause)
-                :else clause)))))
-
 (defn q
   "Query SQLite. conn must be a JDBC/SQLite connection.
    Queries should use native SQLite column/table names.
-   Automatically coerces UUID/Instant values in the query and
-   applies schema-aware read coercions on results."
+   Delegates to com.biffweb.sqlite/execute for schema-aware coercion.
+   Strips nil values from results to match XTDB behavior."
   ;; TODO: restructure so that malli-opts can be passed as a regular parameter
   ;; instead of using requiring-resolve. We can do that after the migration is finished.
   [conn query]
-  (let [table (infer-table-from-query query)
-        all-tables (all-tables-from-query query)
-        malli-opts (when (seq all-tables) @(requiring-resolve 'com.yakread/malli-opts*))
-        ;; Merge read coercions from ALL referenced tables (FROM + JOINs + unions)
-        read-fns (when malli-opts
-                   (reduce (fn [acc t]
-                             (merge acc (sqlite/read-coercions malli-opts t)))
-                           {}
-                           all-tables))
-        write-fns (when (and malli-opts table)
-                    (sqlite/write-coercions malli-opts table))
-        ;; Merge known columns from ALL referenced tables
-        known-cols (when malli-opts
-                     (reduce (fn [acc t]
-                               (into (or acc #{}) (table-column-names malli-opts t)))
-                             nil
-                             all-tables))
-        query (coerce-where-enum-values query write-fns)
-        coerced-query (coerce-query-values query)
-        formatted (sql/format coerced-query)
-        _ (log/debug "biffs/q SQL:" (first formatted))
-        results (jdbc/execute! conn formatted
-                               {:builder-fn rs/as-unqualified-kebab-maps})]
-    (mapv #(coerce-result-row % table read-fns known-cols) results)))
+  (let [malli-opts @(requiring-resolve 'com.yakread/malli-opts*)
+        sql-vec (sql/format query)
+        _ (log/debug "biffs/q SQL:" (first sql-vec))
+        results (biff-sqlite/execute {:biff/conn conn :biff/malli-opts malli-opts} sql-vec)]
+    (mapv (fn [row]
+            (into {} (remove (fn [[_ v]] (nil? v))) row))
+          results)))

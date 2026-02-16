@@ -4,6 +4,7 @@
    [clojure.java.io :as io]
    [clojure.string :as str]
    [clojure.java.process :as proc]
+   [com.biffweb.sqlite :as biff-sqlite]
    [com.stuartsierra.dependency :as dep]
    [com.wsscode.pathom3.connect.operation :as pco]
    [com.wsscode.pathom3.connect.planner :as-alias pcp]
@@ -453,9 +454,6 @@
      ;; Generate table data resolvers
      (for [[table-key attrs] tables
            :let [id-key (table-id-key table-key)
-                 coercions (build-coercions attrs)
-                 read-coercions (:read coercions)
-                 column-reader (make-column-reader table-key read-coercions)
 
                  ;; Find reference attrs
                  ref-attrs (into {}
@@ -485,8 +483,9 @@
                      {::pco/input [id-key]
                       ::pco/output output
                       ::pco/batch? true}
-                     (fn [{:keys [biff/conn*]} inputs]
+                     (fn [{:keys [biff/conn* biff/malli-opts*]} inputs]
                        (let [ids (mapv id-key inputs)
+                             coercions (build-coercions attrs)
                              id-write-fn (get-in coercions [:write id-key])
                              db-ids (if id-write-fn
                                       (mapv id-write-fn ids)
@@ -494,20 +493,9 @@
                              sql-map {:select :*
                                       :from table-key
                                       :where [:in :id db-ids]}
-                             raw-results (jdbc/execute! conn*
-                                                        (sql/format sql-map)
-                                                        {:builder-fn (rs/builder-adapter
-                                                                      rs/as-unqualified-kebab-maps
-                                                                      column-reader)})
-                             ;; Re-qualify keys: :id -> :sub/id, :feed-id -> :sub/feed-id, etc.
-                             qualify-row (fn [row]
-                                           (into {}
-                                                 (map (fn [[k v]]
-                                                        [(if (= k :id)
-                                                           id-key
-                                                           (keyword (name table-key) (name k)))
-                                                         v]))
-                                                 row))
+                             results (biff-sqlite/execute
+                                      {:biff/conn conn* :biff/malli-opts malli-opts*}
+                                      (sql/format sql-map))
                              ;; Post-process to add join keys
                              process-row (fn [row]
                                            (reduce
@@ -519,7 +507,7 @@
                                                                       {target-id-key ref-val}))))
                                             row
                                             ref-attrs))
-                             results (mapv (comp process-row qualify-row) raw-results)
+                             results (mapv process-row results)
                              id->result (into {} (map (juxt id-key identity)) results)]
                          (mapv (fn [input]
                                  (let [id (get input id-key)]

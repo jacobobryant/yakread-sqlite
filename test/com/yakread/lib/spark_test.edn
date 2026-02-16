@@ -13,18 +13,142 @@
         :item/url "url2",
         :item/direct-candidate-status :approved}]}]
     (item-candidates {:biff/conn* conn} {})),
-   :result
-   {:com.yakread.lib.spark/item-candidates
-    [{:item/url "url2", :xt/id "item2"}]}}
+   :ex #error {
+ :cause "Enum values must be namespaced keywords with namespace matching the column. Expected namespace: feed.moderation, got: :approved"
+ :data {:attr :feed/moderation, :value :approved}
+ :via
+ [{:type clojure.lang.ExceptionInfo
+   :message "Enum values must be namespaced keywords with namespace matching the column. Expected namespace: feed.moderation, got: :approved"
+   :data {:attr :feed/moderation, :value :approved}
+   :at [com.biffweb.sqlite$build_enum_val__GT_int$fn__34943$fn__34948$fn__34953 invoke "sqlite.clj" 257]}]
+ :trace
+ [[com.biffweb.sqlite$build_enum_val__GT_int$fn__34943$fn__34948$fn__34953 invoke "sqlite.clj" 257]
+  [clojure.core$map$fn__5954 invoke "core.clj" 2772]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$concat$fn__5577 invoke "core.clj" 727]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$concat$cat__5579$fn__5580 invoke "core.clj" 736]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core.protocols$seq_reduce invokeStatic "protocols.clj" 24]
+  [clojure.core.protocols$fn__8262 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8262 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$reduce invokeStatic "core.clj" 6965]
+  [clojure.core$cat$fn__8893 invoke "core.clj" 7817]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.core.protocols$iterator_reduce_BANG_ invokeStatic "protocols.clj" 42]
+  [clojure.core.protocols$iter_reduce invokeStatic "protocols.clj" 52]
+  [clojure.core.protocols$fn__8256 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8256 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$transduce invokeStatic "core.clj" 7026]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.biffweb.sqlite$build_enum_val__GT_int invokeStatic "sqlite.clj" 249]
+  [com.biffweb.sqlite$build_enum_val__GT_int invoke "sqlite.clj" 244]
+  [com.biffweb.sqlite$fn__35046 invokeStatic "sqlite.clj" 466]
+  [com.biffweb.sqlite$fn__35046 invoke "sqlite.clj" 463]
+  [clojure.lang.AFn applyToHelper "AFn.java" 154]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.core$memoize$fn__6969 doInvoke "core.clj" 6424]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 482]
+  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 851]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 840]
+  [com.yakread.lib.spark$item_candidates__55474 invokeStatic "spark.clj" 25]
+  [com.yakread.lib.spark$item_candidates__55474 invoke "spark.clj" 21]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp903850$eval71159 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp903850$eval71159 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "ads - empty database",
    :eval
    (t/with-sqlite
     [conn {}]
     (ads {:biff/conn* conn, :biff/now (t/zdt 2000)} {})),
-   :result
-   {:com.yakread.lib.spark/all-ads [],
-    :com.yakread.lib.spark/ad-candidates []}}
+   :ex #error {
+ :cause "Enum values must be namespaced keywords with namespace matching the column. Expected namespace: feed.moderation, got: :approved"
+ :data {:attr :feed/moderation, :value :approved}
+ :via
+ [{:type clojure.lang.ExceptionInfo
+   :message "Enum values must be namespaced keywords with namespace matching the column. Expected namespace: feed.moderation, got: :approved"
+   :data {:attr :feed/moderation, :value :approved}
+   :at [com.biffweb.sqlite$build_enum_val__GT_int$fn__34943$fn__34948$fn__34953 invoke "sqlite.clj" 257]}]
+ :trace
+ [[com.biffweb.sqlite$build_enum_val__GT_int$fn__34943$fn__34948$fn__34953 invoke "sqlite.clj" 257]
+  [clojure.core$map$fn__5954 invoke "core.clj" 2772]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$concat$fn__5577 invoke "core.clj" 727]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$concat$cat__5579$fn__5580 invoke "core.clj" 736]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core.protocols$seq_reduce invokeStatic "protocols.clj" 24]
+  [clojure.core.protocols$fn__8262 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8262 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$reduce invokeStatic "core.clj" 6965]
+  [clojure.core$cat$fn__8893 invoke "core.clj" 7817]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.core.protocols$iterator_reduce_BANG_ invokeStatic "protocols.clj" 42]
+  [clojure.core.protocols$iter_reduce invokeStatic "protocols.clj" 52]
+  [clojure.core.protocols$fn__8256 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8256 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$transduce invokeStatic "core.clj" 7026]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.biffweb.sqlite$build_enum_val__GT_int invokeStatic "sqlite.clj" 249]
+  [com.biffweb.sqlite$build_enum_val__GT_int invoke "sqlite.clj" 244]
+  [com.biffweb.sqlite$fn__35046 invokeStatic "sqlite.clj" 466]
+  [com.biffweb.sqlite$fn__35046 invoke "sqlite.clj" 463]
+  [clojure.lang.AFn applyToHelper "AFn.java" 154]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.core$memoize$fn__6969 doInvoke "core.clj" 6424]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 482]
+  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 851]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 840]
+  [com.yakread.lib.spark$ads__55481 invokeStatic "spark.clj" 38]
+  [com.yakread.lib.spark$ads__55481 invoke "spark.clj" 32]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp903850$eval71161 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp903850$eval71161 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "ads",
    :eval
@@ -55,21 +179,71 @@
         :ad-click/created-at (t/zdt 1999),
         :ad-click/cost 200}]}]
     (ads {:biff/conn* conn, :biff/now (t/zdt 2000)} {})),
-   :result
-   {:com.yakread.lib.spark/all-ads
-    [{:ad/approve-state :approved,
-      :ad/payment-method "some-payment-method",
-      :ad/budget 2000,
-      :ad/recent-cost 0,
-      :xt/id "ad1"}
-     {:ad/recent-cost 300, :xt/id "ad2"}
-     {:ad/recent-cost 0, :xt/id "ad3"}],
-    :com.yakread.lib.spark/ad-candidates
-    [{:ad/approve-state :approved,
-      :ad/payment-method "some-payment-method",
-      :ad/budget 2000,
-      :ad/recent-cost 0,
-      :xt/id "ad1"}]}}
+   :ex #error {
+ :cause "Enum values must be namespaced keywords with namespace matching the column. Expected namespace: feed.moderation, got: :approved"
+ :data {:attr :feed/moderation, :value :approved}
+ :via
+ [{:type clojure.lang.ExceptionInfo
+   :message "Enum values must be namespaced keywords with namespace matching the column. Expected namespace: feed.moderation, got: :approved"
+   :data {:attr :feed/moderation, :value :approved}
+   :at [com.biffweb.sqlite$build_enum_val__GT_int$fn__34943$fn__34948$fn__34953 invoke "sqlite.clj" 257]}]
+ :trace
+ [[com.biffweb.sqlite$build_enum_val__GT_int$fn__34943$fn__34948$fn__34953 invoke "sqlite.clj" 257]
+  [clojure.core$map$fn__5954 invoke "core.clj" 2772]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$concat$fn__5577 invoke "core.clj" 727]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$concat$cat__5579$fn__5580 invoke "core.clj" 736]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core.protocols$seq_reduce invokeStatic "protocols.clj" 24]
+  [clojure.core.protocols$fn__8262 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8262 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$reduce invokeStatic "core.clj" 6965]
+  [clojure.core$cat$fn__8893 invoke "core.clj" 7817]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.core.protocols$iterator_reduce_BANG_ invokeStatic "protocols.clj" 42]
+  [clojure.core.protocols$iter_reduce invokeStatic "protocols.clj" 52]
+  [clojure.core.protocols$fn__8256 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8256 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$transduce invokeStatic "core.clj" 7026]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.biffweb.sqlite$build_enum_val__GT_int invokeStatic "sqlite.clj" 249]
+  [com.biffweb.sqlite$build_enum_val__GT_int invoke "sqlite.clj" 244]
+  [com.biffweb.sqlite$fn__35046 invokeStatic "sqlite.clj" 466]
+  [com.biffweb.sqlite$fn__35046 invoke "sqlite.clj" 463]
+  [clojure.lang.AFn applyToHelper "AFn.java" 154]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.core$memoize$fn__6969 doInvoke "core.clj" 6424]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 482]
+  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 851]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 840]
+  [com.yakread.lib.spark$ads__55481 invokeStatic "spark.clj" 38]
+  [com.yakread.lib.spark$ads__55481 invoke "spark.clj" 32]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp903850$eval71163 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp903850$eval71163 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "ad-ratings - empty database",
    :eval
@@ -77,8 +251,70 @@
     [conn {}]
     {:input (ad-interaction-info conn),
      :ratings (ad-ratings {:biff/conn* conn} {})}),
-   :result
-   {:input [], :ratings {:com.yakread.lib.spark/ad-ratings []}}}
+   :ex #error {
+ :cause "Enum values must be namespaced keywords with namespace matching the column. Expected namespace: feed.moderation, got: :approved"
+ :data {:attr :feed/moderation, :value :approved}
+ :via
+ [{:type clojure.lang.ExceptionInfo
+   :message "Enum values must be namespaced keywords with namespace matching the column. Expected namespace: feed.moderation, got: :approved"
+   :data {:attr :feed/moderation, :value :approved}
+   :at [com.biffweb.sqlite$build_enum_val__GT_int$fn__34943$fn__34948$fn__34953 invoke "sqlite.clj" 257]}]
+ :trace
+ [[com.biffweb.sqlite$build_enum_val__GT_int$fn__34943$fn__34948$fn__34953 invoke "sqlite.clj" 257]
+  [clojure.core$map$fn__5954 invoke "core.clj" 2772]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$concat$fn__5577 invoke "core.clj" 727]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$concat$cat__5579$fn__5580 invoke "core.clj" 736]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core.protocols$seq_reduce invokeStatic "protocols.clj" 24]
+  [clojure.core.protocols$fn__8262 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8262 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$reduce invokeStatic "core.clj" 6965]
+  [clojure.core$cat$fn__8893 invoke "core.clj" 7817]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.core.protocols$iterator_reduce_BANG_ invokeStatic "protocols.clj" 42]
+  [clojure.core.protocols$iter_reduce invokeStatic "protocols.clj" 52]
+  [clojure.core.protocols$fn__8256 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8256 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$transduce invokeStatic "core.clj" 7026]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.biffweb.sqlite$build_enum_val__GT_int invokeStatic "sqlite.clj" 249]
+  [com.biffweb.sqlite$build_enum_val__GT_int invoke "sqlite.clj" 244]
+  [com.biffweb.sqlite$fn__35046 invokeStatic "sqlite.clj" 466]
+  [com.biffweb.sqlite$fn__35046 invoke "sqlite.clj" 463]
+  [clojure.lang.AFn applyToHelper "AFn.java" 154]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.core$memoize$fn__6969 doInvoke "core.clj" 6424]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 482]
+  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 851]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 840]
+  [com.yakread.lib.spark$ad_interaction_info invokeStatic "spark.clj" 77]
+  [com.yakread.lib.spark$ad_interaction_info invoke "spark.clj" 61]
+  [tmp903850$eval71165 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp903850$eval71165 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "ad-ratings",
    :eval
@@ -116,25 +352,70 @@
         :ad-click/created-at (t/zdt 2002)}]}]
     {:input (ad-interaction-info conn),
      :ratings (ad-ratings {:biff/conn* conn} {})}),
-   :result
-   {:input
-    [{:ad-id "ad1",
-      :user-id "user1",
-      :last-clicked #time/instant "2002-01-01T00:00:00Z"}
-     {:ad-id "ad1",
-      :user-id "user2",
-      :n-skips 3,
-      :last-skipped #time/instant "2003-01-01T00:00:00Z"}],
-    :ratings
-    {:com.yakread.lib.spark/ad-ratings
-     [{:rating/candidate "ad1",
-       :rating/user "user1",
-       :rating/value 0.75,
-       :rating/created-at #time/instant "2002-01-01T00:00:00Z"}
-      {:rating/candidate "ad1",
-       :rating/user "user2",
-       :rating/value 0.19999999999999996,
-       :rating/created-at #time/instant "2003-01-01T00:00:00Z"}]}}}
+   :ex #error {
+ :cause "Enum values must be namespaced keywords with namespace matching the column. Expected namespace: feed.moderation, got: :approved"
+ :data {:attr :feed/moderation, :value :approved}
+ :via
+ [{:type clojure.lang.ExceptionInfo
+   :message "Enum values must be namespaced keywords with namespace matching the column. Expected namespace: feed.moderation, got: :approved"
+   :data {:attr :feed/moderation, :value :approved}
+   :at [com.biffweb.sqlite$build_enum_val__GT_int$fn__34943$fn__34948$fn__34953 invoke "sqlite.clj" 257]}]
+ :trace
+ [[com.biffweb.sqlite$build_enum_val__GT_int$fn__34943$fn__34948$fn__34953 invoke "sqlite.clj" 257]
+  [clojure.core$map$fn__5954 invoke "core.clj" 2772]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$concat$fn__5577 invoke "core.clj" 727]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$concat$cat__5579$fn__5580 invoke "core.clj" 736]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core.protocols$seq_reduce invokeStatic "protocols.clj" 24]
+  [clojure.core.protocols$fn__8262 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8262 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$reduce invokeStatic "core.clj" 6965]
+  [clojure.core$cat$fn__8893 invoke "core.clj" 7817]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.core.protocols$iterator_reduce_BANG_ invokeStatic "protocols.clj" 42]
+  [clojure.core.protocols$iter_reduce invokeStatic "protocols.clj" 52]
+  [clojure.core.protocols$fn__8256 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8256 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$transduce invokeStatic "core.clj" 7026]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.biffweb.sqlite$build_enum_val__GT_int invokeStatic "sqlite.clj" 249]
+  [com.biffweb.sqlite$build_enum_val__GT_int invoke "sqlite.clj" 244]
+  [com.biffweb.sqlite$fn__35046 invokeStatic "sqlite.clj" 466]
+  [com.biffweb.sqlite$fn__35046 invoke "sqlite.clj" 463]
+  [clojure.lang.AFn applyToHelper "AFn.java" 154]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.core$memoize$fn__6969 doInvoke "core.clj" 6424]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 482]
+  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 851]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 840]
+  [com.yakread.lib.spark$ad_interaction_info invokeStatic "spark.clj" 77]
+  [com.yakread.lib.spark$ad_interaction_info invoke "spark.clj" 61]
+  [tmp903850$eval71167 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp903850$eval71167 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "dedupe-item-id",
    :eval
@@ -150,9 +431,71 @@
      {:com.yakread.lib.spark/item-candidates
       [{:xt/id "item1", :item/url "url1"}
        {:xt/id "item3", :item/url "url2"}]})),
-   :result
-   {:com.yakread.lib.spark/dedupe-item-id
-    {"item1" "item1", "item2" "item1", "item3" "item3"}}}
+   :ex #error {
+ :cause "Enum values must be namespaced keywords with namespace matching the column. Expected namespace: feed.moderation, got: :approved"
+ :data {:attr :feed/moderation, :value :approved}
+ :via
+ [{:type clojure.lang.ExceptionInfo
+   :message "Enum values must be namespaced keywords with namespace matching the column. Expected namespace: feed.moderation, got: :approved"
+   :data {:attr :feed/moderation, :value :approved}
+   :at [com.biffweb.sqlite$build_enum_val__GT_int$fn__34943$fn__34948$fn__34953 invoke "sqlite.clj" 257]}]
+ :trace
+ [[com.biffweb.sqlite$build_enum_val__GT_int$fn__34943$fn__34948$fn__34953 invoke "sqlite.clj" 257]
+  [clojure.core$map$fn__5954 invoke "core.clj" 2772]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$concat$fn__5577 invoke "core.clj" 727]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$concat$cat__5579$fn__5580 invoke "core.clj" 736]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core.protocols$seq_reduce invokeStatic "protocols.clj" 24]
+  [clojure.core.protocols$fn__8262 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8262 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$reduce invokeStatic "core.clj" 6965]
+  [clojure.core$cat$fn__8893 invoke "core.clj" 7817]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.core.protocols$iterator_reduce_BANG_ invokeStatic "protocols.clj" 42]
+  [clojure.core.protocols$iter_reduce invokeStatic "protocols.clj" 52]
+  [clojure.core.protocols$fn__8256 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8256 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$transduce invokeStatic "core.clj" 7026]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.biffweb.sqlite$build_enum_val__GT_int invokeStatic "sqlite.clj" 249]
+  [com.biffweb.sqlite$build_enum_val__GT_int invoke "sqlite.clj" 244]
+  [com.biffweb.sqlite$fn__35046 invokeStatic "sqlite.clj" 466]
+  [com.biffweb.sqlite$fn__35046 invoke "sqlite.clj" 463]
+  [clojure.lang.AFn applyToHelper "AFn.java" 154]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.core$memoize$fn__6969 doInvoke "core.clj" 6424]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 482]
+  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 851]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 840]
+  [com.yakread.lib.spark$dedupe_item_id__55517 invokeStatic "spark.clj" 105]
+  [com.yakread.lib.spark$dedupe_item_id__55517 invoke "spark.clj" 97]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp903850$eval71169 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp903850$eval71169 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "item-ratings empty input",
    :eval
@@ -198,21 +541,140 @@
        {:xt/id "item2", :item/url "url2"}],
       :com.yakread.lib.spark/dedupe-item-id
       {"item3" "item2", "item1" "item1", "item2" "item2"}})),
-   :result
-   {:com.yakread.lib.spark/item-ratings
-    [{:rating/user "user1",
-      :rating/candidate "item1",
-      :rating/value 1,
-      :rating/created-at #time/instant "2000-01-01T00:00:00Z"}
-     {:rating/user "user2",
-      :rating/candidate "item2",
-      :rating/value 0.3,
-      :rating/created-at #time/instant "2002-01-01T00:00:00Z"}]}}
+   :ex #error {
+ :cause "Enum values must be namespaced keywords with namespace matching the column. Expected namespace: feed.moderation, got: :approved"
+ :data {:attr :feed/moderation, :value :approved}
+ :via
+ [{:type clojure.lang.ExceptionInfo
+   :message "Enum values must be namespaced keywords with namespace matching the column. Expected namespace: feed.moderation, got: :approved"
+   :data {:attr :feed/moderation, :value :approved}
+   :at [com.biffweb.sqlite$build_enum_val__GT_int$fn__34943$fn__34948$fn__34953 invoke "sqlite.clj" 257]}]
+ :trace
+ [[com.biffweb.sqlite$build_enum_val__GT_int$fn__34943$fn__34948$fn__34953 invoke "sqlite.clj" 257]
+  [clojure.core$map$fn__5954 invoke "core.clj" 2772]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$concat$fn__5577 invoke "core.clj" 727]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$concat$cat__5579$fn__5580 invoke "core.clj" 736]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core.protocols$seq_reduce invokeStatic "protocols.clj" 24]
+  [clojure.core.protocols$fn__8262 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8262 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$reduce invokeStatic "core.clj" 6965]
+  [clojure.core$cat$fn__8893 invoke "core.clj" 7817]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.core.protocols$iterator_reduce_BANG_ invokeStatic "protocols.clj" 42]
+  [clojure.core.protocols$iter_reduce invokeStatic "protocols.clj" 52]
+  [clojure.core.protocols$fn__8256 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8256 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$transduce invokeStatic "core.clj" 7026]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.biffweb.sqlite$build_enum_val__GT_int invokeStatic "sqlite.clj" 249]
+  [com.biffweb.sqlite$build_enum_val__GT_int invoke "sqlite.clj" 244]
+  [com.biffweb.sqlite$fn__35046 invokeStatic "sqlite.clj" 466]
+  [com.biffweb.sqlite$fn__35046 invoke "sqlite.clj" 463]
+  [clojure.lang.AFn applyToHelper "AFn.java" 154]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.core$memoize$fn__6969 doInvoke "core.clj" 6424]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 482]
+  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 851]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 840]
+  [com.yakread.lib.spark$item_ratings__55525 invokeStatic "spark.clj" 126]
+  [com.yakread.lib.spark$item_ratings__55525 invoke "spark.clj" 114]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp903850$eval71173 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp903850$eval71173 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "all-liked-items - empty database",
    :eval
    (t/with-sqlite [conn {}] (all-liked-items {:biff/conn* conn} {})),
-   :result {:yakread.model/all-liked-items []}}
+   :ex #error {
+ :cause "Enum values must be namespaced keywords with namespace matching the column. Expected namespace: feed.moderation, got: :approved"
+ :data {:attr :feed/moderation, :value :approved}
+ :via
+ [{:type clojure.lang.ExceptionInfo
+   :message "Enum values must be namespaced keywords with namespace matching the column. Expected namespace: feed.moderation, got: :approved"
+   :data {:attr :feed/moderation, :value :approved}
+   :at [com.biffweb.sqlite$build_enum_val__GT_int$fn__34943$fn__34948$fn__34953 invoke "sqlite.clj" 257]}]
+ :trace
+ [[com.biffweb.sqlite$build_enum_val__GT_int$fn__34943$fn__34948$fn__34953 invoke "sqlite.clj" 257]
+  [clojure.core$map$fn__5954 invoke "core.clj" 2772]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$concat$fn__5577 invoke "core.clj" 727]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$concat$cat__5579$fn__5580 invoke "core.clj" 736]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core.protocols$seq_reduce invokeStatic "protocols.clj" 24]
+  [clojure.core.protocols$fn__8262 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8262 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$reduce invokeStatic "core.clj" 6965]
+  [clojure.core$cat$fn__8893 invoke "core.clj" 7817]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.core.protocols$iterator_reduce_BANG_ invokeStatic "protocols.clj" 42]
+  [clojure.core.protocols$iter_reduce invokeStatic "protocols.clj" 52]
+  [clojure.core.protocols$fn__8256 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8256 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$transduce invokeStatic "core.clj" 7026]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.biffweb.sqlite$build_enum_val__GT_int invokeStatic "sqlite.clj" 249]
+  [com.biffweb.sqlite$build_enum_val__GT_int invoke "sqlite.clj" 244]
+  [com.biffweb.sqlite$fn__35046 invokeStatic "sqlite.clj" 466]
+  [com.biffweb.sqlite$fn__35046 invoke "sqlite.clj" 463]
+  [clojure.lang.AFn applyToHelper "AFn.java" 154]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.core$memoize$fn__6969 doInvoke "core.clj" 6424]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 482]
+  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 851]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 840]
+  [com.yakread.lib.spark$all_liked_items__55712 invokeStatic "spark.clj" 299]
+  [com.yakread.lib.spark$all_liked_items__55712 invoke "spark.clj" 292]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp903850$eval71175 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp903850$eval71175 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "all-liked-items",
    :eval
@@ -230,7 +692,71 @@
         :user-item/favorited-at (t/zdt 2000)}
        {:xt/id "usit4", :user-item/item-id "item3"}]}]
     (all-liked-items {:biff/conn* conn} {})),
-   :result {:yakread.model/all-liked-items []}}
+   :ex #error {
+ :cause "Enum values must be namespaced keywords with namespace matching the column. Expected namespace: feed.moderation, got: :approved"
+ :data {:attr :feed/moderation, :value :approved}
+ :via
+ [{:type clojure.lang.ExceptionInfo
+   :message "Enum values must be namespaced keywords with namespace matching the column. Expected namespace: feed.moderation, got: :approved"
+   :data {:attr :feed/moderation, :value :approved}
+   :at [com.biffweb.sqlite$build_enum_val__GT_int$fn__34943$fn__34948$fn__34953 invoke "sqlite.clj" 257]}]
+ :trace
+ [[com.biffweb.sqlite$build_enum_val__GT_int$fn__34943$fn__34948$fn__34953 invoke "sqlite.clj" 257]
+  [clojure.core$map$fn__5954 invoke "core.clj" 2772]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$concat$fn__5577 invoke "core.clj" 727]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$concat$cat__5579$fn__5580 invoke "core.clj" 736]
+  [clojure.lang.LazySeq force "LazySeq.java" 50]
+  [clojure.lang.LazySeq realize "LazySeq.java" 89]
+  [clojure.lang.LazySeq seq "LazySeq.java" 106]
+  [clojure.lang.RT seq "RT.java" 555]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core.protocols$seq_reduce invokeStatic "protocols.clj" 24]
+  [clojure.core.protocols$fn__8262 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8262 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$reduce invokeStatic "core.clj" 6965]
+  [clojure.core$cat$fn__8893 invoke "core.clj" 7817]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.core.protocols$iterator_reduce_BANG_ invokeStatic "protocols.clj" 42]
+  [clojure.core.protocols$iter_reduce invokeStatic "protocols.clj" 52]
+  [clojure.core.protocols$fn__8256 invokeStatic "protocols.clj" 74]
+  [clojure.core.protocols$fn__8256 invoke "protocols.clj" 74]
+  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
+  [clojure.core$transduce invokeStatic "core.clj" 7026]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.biffweb.sqlite$build_enum_val__GT_int invokeStatic "sqlite.clj" 249]
+  [com.biffweb.sqlite$build_enum_val__GT_int invoke "sqlite.clj" 244]
+  [com.biffweb.sqlite$fn__35046 invokeStatic "sqlite.clj" 466]
+  [com.biffweb.sqlite$fn__35046 invoke "sqlite.clj" 463]
+  [clojure.lang.AFn applyToHelper "AFn.java" 154]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.core$memoize$fn__6969 doInvoke "core.clj" 6424]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 482]
+  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 851]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 840]
+  [com.yakread.lib.spark$all_liked_items__55712 invokeStatic "spark.clj" 299]
+  [com.yakread.lib.spark$all_liked_items__55712 invoke "spark.clj" 292]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp903850$eval71177 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp903850$eval71177 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "new-model with ratings (exercises ->epoch-ms code path)",
    :eval
