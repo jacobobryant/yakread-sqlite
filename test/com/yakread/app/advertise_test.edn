@@ -384,7 +384,7 @@
       :ad/title "Title",
       :ad/description "Description",
       :ad/image-url "https://example.com/image.png",
-      :ad/approve-state :approved,
+      :ad/approve-state :ad.approve-state/approved,
       :ad/bid 350,
       :ad/budget 2000},
      :biff/now (t/zdt 2000),
@@ -396,7 +396,7 @@
         :ad/title "Title",
         :ad/description "Description",
         :ad/image-url "https://example.com/image.png",
-        :ad/approve-state :approved}}}}),
+        :ad/approve-state :ad.approve-state/approved}}}}),
    :result
    {:status 303,
     :headers {"Location" ["/advertise" {:saved true}]},

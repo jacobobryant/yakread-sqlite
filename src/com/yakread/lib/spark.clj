@@ -25,7 +25,7 @@
    (->> (biffs/q conn*
                  {:select [:item/id :item/url]
                   :from :item
-                  :where [:= :item/direct-candidate-status [:lift :approved]]})
+                  :where [:= :item/direct-candidate-status [:lift :item.direct-candidate-status/approved]]})
         (mapv #(clojure.set/rename-keys % {:item/id :xt/id})))})
 
 

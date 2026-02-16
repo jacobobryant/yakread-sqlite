@@ -765,15 +765,16 @@
 
 ;; Mapping of keyword enum values to SQLite integer values.
 (def xt-enum-kw->sqlite-int
-  {:feed 0, :email 1, :direct 2
-   :icymi 0, :discover 1
-   :pending 0, :approved 1, :rejected 2
-   :web 0
-   :charge 0, :manual 1
-   :confirmed 1, :failed 2
-   :blocked 1
-   :ingest-failed 0
-   :quarter 0, :annual 1})
+  {:sub.record-type/feed 0, :sub.record-type/email 1
+   :item.record-type/feed 0, :item.record-type/email 1, :item.record-type/direct 2
+   :digest-item.kind/icymi 0, :digest-item.kind/discover 1
+   :ad.approve-state/pending 0, :ad.approve-state/approved 1, :ad.approve-state/rejected 2
+   :ad-click.source/web 0, :ad-click.source/email 1
+   :ad-credit.source/charge 0, :ad-credit.source/manual 1
+   :ad-credit.charge-status/pending 0, :ad-credit.charge-status/confirmed 1, :ad-credit.charge-status/failed 2
+   :feed.moderation/approved 0, :feed.moderation/blocked 1
+   :item.direct-candidate-status/ingest-failed 0, :item.direct-candidate-status/blocked 1, :item.direct-candidate-status/approved 2
+   :user.plan/quarter 0, :user.plan/annual 1})
 
 (defn- coerce-where-clause
   "Recursively walk a where clause, renaming keys and coercing values for SQLite."

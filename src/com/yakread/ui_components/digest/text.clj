@@ -37,7 +37,7 @@
           "\n"
           title " (" host ")\n"
           description "\n"
-          (recording-url {:ad.click/source :email
+          (recording-url {:ad.click/source :ad-click.source/email
                           :user/id id}) "\n")}))
 
 (defn compact-section [title op-name input-key output-key]

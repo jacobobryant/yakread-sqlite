@@ -205,7 +205,7 @@
       :skip #{},
       :ad/id (t/uuid 1),
       :ad/click-cost 50,
-      :ad.click/source :email,
+      :ad.click/source :ad-click.source/email,
       :user/id (t/uuid 0)},
      :biff/now (t/zdt 2000)}),
    :ex #error {

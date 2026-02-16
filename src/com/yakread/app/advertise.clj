@@ -120,7 +120,7 @@
                       :ad/customer-id customer-id
                       :ad/updated-at now
                       :biff/on-insert {:xt/id (biffs/gen-uuid (:uid session))
-                                       :ad/approve-state :pending
+                                       :ad/approve-state :ad.approve-state/pending
                                        :ad/balance 0
                                        :ad/recent-cost 0}}]]
        :biff.fx/next :create-session
@@ -182,8 +182,8 @@
                               {:ad/url (lib.content/add-protocol url)})))
           state (if (every? #(= (% old-ad) (% new-ad))
                             [:ad/url :ad/title :ad/description :ad/image-url])
-                  (:ad/approve-state old-ad :pending)
-                  :pending)
+                  (:ad/approve-state old-ad :ad.approve-state/pending)
+                  :ad.approve-state/pending)
           tx [[:biff/upsert :ad [:ad/user]
                (merge {:ad/user (:xt/id user)
                        :ad/approve-state state

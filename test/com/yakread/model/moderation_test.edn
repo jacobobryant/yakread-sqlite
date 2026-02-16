@@ -9,16 +9,16 @@
      {:item
       [{:xt/id (t/uuid 1),
         :item/url "url1",
-        :item/record-type :direct,
-        :item/direct-candidate-status :approved,
+        :item/record-type :item.record-type/direct,
+        :item/direct-candidate-status :item.direct-candidate-status/approved,
         :item/ingested-at (t/zdt 2000)}
        {:xt/id (t/uuid 2),
         :item/url "url2",
-        :item/record-type :direct,
+        :item/record-type :item.record-type/direct,
         :item/ingested-at (t/zdt 2000)}
        {:xt/id (t/uuid 3),
         :item/url "url3",
-        :item/record-type :direct,
+        :item/record-type :item.record-type/direct,
         :item/ingested-at (t/zdt 2000)}]}]
     (next-batch
      {:biff/conn* conn,

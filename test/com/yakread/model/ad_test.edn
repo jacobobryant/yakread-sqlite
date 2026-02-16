@@ -256,23 +256,23 @@
      {:ad-credit
       [{:xt/id "ad-credit1",
         :ad-credit/ad-id "ad1",
-        :ad-credit/charge-status :pending,
+        :ad-credit/charge-status :ad-credit.charge-status/pending,
         :ad-credit/amount 100}
        {:xt/id "ad-credit2",
         :ad-credit/ad-id "ad1",
-        :ad-credit/charge-status :pending,
+        :ad-credit/charge-status :ad-credit.charge-status/pending,
         :ad-credit/amount 75}
        {:xt/id "ad-credit3",
         :ad-credit/ad-id "ad1",
-        :ad-credit/charge-status :confirmed,
+        :ad-credit/charge-status :ad-credit.charge-status/confirmed,
         :ad-credit/amount 125}
        {:xt/id "ad-credit4",
         :ad-credit/ad-id "ad2",
-        :ad-credit/charge-status :pending,
+        :ad-credit/charge-status :ad-credit.charge-status/pending,
         :ad-credit/amount 100}
        {:xt/id "ad-credit5",
         :ad-credit/ad-id "ad3",
-        :ad-credit/charge-status :pending,
+        :ad-credit/charge-status :ad-credit.charge-status/pending,
         :ad-credit/amount 100}]}]
     (amount-pending
      {:biff/conn* conn}
@@ -349,23 +349,23 @@
      {:ad-credit
       [{:xt/id "ad-credit1",
         :ad-credit/ad-id "ad1",
-        :ad-credit/charge-status :pending,
+        :ad-credit/charge-status :ad-credit.charge-status/pending,
         :ad-credit/amount 100}
        {:xt/id "ad-credit2",
         :ad-credit/ad-id "ad1",
-        :ad-credit/charge-status :pending,
+        :ad-credit/charge-status :ad-credit.charge-status/pending,
         :ad-credit/amount 75}
        {:xt/id "ad-credit3",
         :ad-credit/ad-id "ad1",
-        :ad-credit/charge-status :confirmed,
+        :ad-credit/charge-status :ad-credit.charge-status/confirmed,
         :ad-credit/amount 125}
        {:xt/id "ad-credit4",
         :ad-credit/ad-id "ad2",
-        :ad-credit/charge-status :pending,
+        :ad-credit/charge-status :ad-credit.charge-status/pending,
         :ad-credit/amount 100}
        {:xt/id "ad-credit5",
         :ad-credit/ad-id "ad3",
-        :ad-credit/charge-status :pending,
+        :ad-credit/charge-status :ad-credit.charge-status/pending,
         :ad-credit/amount 100}]}]
     (pending-charge {:biff/conn* conn} {:xt/id "ad1"})),
    :ex #error {
@@ -440,23 +440,23 @@
      {:ad-credit
       [{:xt/id "ad-credit1",
         :ad-credit/ad-id "ad1",
-        :ad-credit/charge-status :pending,
+        :ad-credit/charge-status :ad-credit.charge-status/pending,
         :ad-credit/amount 100}
        {:xt/id "ad-credit2",
         :ad-credit/ad-id "ad1",
-        :ad-credit/charge-status :pending,
+        :ad-credit/charge-status :ad-credit.charge-status/pending,
         :ad-credit/amount 75}
        {:xt/id "ad-credit3",
         :ad-credit/ad-id "ad1",
-        :ad-credit/charge-status :confirmed,
+        :ad-credit/charge-status :ad-credit.charge-status/confirmed,
         :ad-credit/amount 125}
        {:xt/id "ad-credit4",
         :ad-credit/ad-id "ad2",
-        :ad-credit/charge-status :pending,
+        :ad-credit/charge-status :ad-credit.charge-status/pending,
         :ad-credit/amount 100}
        {:xt/id "ad-credit5",
         :ad-credit/ad-id "ad3",
-        :ad-credit/charge-status :pending,
+        :ad-credit/charge-status :ad-credit.charge-status/pending,
         :ad-credit/amount 100}]}]
     (pending-charges {:biff/conn* conn} nil)),
    :ex #error {

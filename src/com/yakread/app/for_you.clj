@@ -115,7 +115,7 @@
                            :ad.click/ad ad-id
                            :ad.click/created-at now
                            :ad.click/cost click-cost
-                           :ad.click/source (or source :web)}]]))}))))
+                           :ad.click/source (or source :ad-click.source/web)}]]))}))))
 
 (fx/defroute-pathom page-content-route "/for-you/content"
   [{(? :session/user)

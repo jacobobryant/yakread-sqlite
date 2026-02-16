@@ -71,9 +71,9 @@
                  payment-failed :payment-failed
                  paused :paused
                  (not-empty incomplete-fields) :incomplete
-                 (= approve-state :approved) :running
-                 (= approve-state :rejected) :rejected
-                 (= approve-state :pending) :pending)
+                 (= approve-state :ad.approve-state/approved) :running
+                 (= approve-state :ad.approve-state/rejected) :rejected
+                 (= approve-state :ad.approve-state/pending) :pending)
      :ad/incomplete-fields incomplete-fields}))
 
 (defresolver n-clicks [{:keys [biff/conn*]} {:keys [ad/id]}]
@@ -111,7 +111,7 @@
                  :from :ad-credit
                  :where [:and
                          [:in :ad-credit/ad-id (mapv :xt/id ads)]
-                         [:= :ad-credit/charge-status [:lift :pending]]]
+                         [:= :ad-credit/charge-status [:lift :ad-credit.charge-status/pending]]]
                  :group-by [:ad-credit/ad-id]})
        (map #(assoc % :xt/id (:ad-id %) :ad/amount-pending (:amount-pending %)))
        (wss-coll/restore-order ads :xt/id)))
@@ -175,7 +175,7 @@
                 :ad.credit/created-at
                 :ad.credit/charge-status]
    ::pco/output [:ad.credit/stripe-status]}
-  (when (= charge-status :pending)
+  (when (= charge-status :ad-credit.charge-status/pending)
     (get-stripe-status (assoc ctx :biff.fx/pathom credit))))
 
 (defresolver pending-charge [{:keys [biff/conn*]} {:keys [xt/id]}]
@@ -185,7 +185,7 @@
                                       :from :ad-credit
                                       :where [:and
                                               [:= :ad-credit/ad-id id]
-                                              [:= :ad-credit/charge-status [:lift :pending]]]}))]
+                                              [:= :ad-credit/charge-status [:lift :ad-credit.charge-status/pending]]]}))]
     {:ad/pending-charge credit}))
 
 (defresolver pending-charges [{:keys [biff/conn*]} _]
@@ -194,7 +194,7 @@
    (biffs/q conn*
             {:select :ad-credit/id
              :from :ad-credit
-             :where [:= :ad-credit/charge-status [:lift :pending]]})})
+             :where [:= :ad-credit/charge-status [:lift :ad-credit.charge-status/pending]]})})
 
 (def module {:resolvers [ad-id
                          xt-id

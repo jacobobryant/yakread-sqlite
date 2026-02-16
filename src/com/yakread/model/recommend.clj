@@ -493,7 +493,7 @@
     (let [[first-ad second-ad] (->> candidates
                                     (remove (fn [{:keys [xt/id] :ad/keys [user paused approve-state]}]
                                               (or (contains? clicked-ads id)
-                                                  (not= approve-state :approved)
+                                                  (not= approve-state :ad.approve-state/approved)
                                                 (= user-id (:xt/id user))
                                                 paused
                                                 ;; Apparently when people requested to have their

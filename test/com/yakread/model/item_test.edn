@@ -679,19 +679,19 @@
       [{:xt/id "digest-item1",
         :digest-item/digest-id "digest1",
         :digest-item/item-id "item2",
-        :digest-item/kind :icymi}
+        :digest-item/kind :digest-item.kind/icymi}
        {:xt/id "digest-item2",
         :digest-item/digest-id "digest1",
         :digest-item/item-id "item3",
-        :digest-item/kind :discover}
+        :digest-item/kind :digest-item.kind/discover}
        {:xt/id "digest-item3",
         :digest-item/digest-id "digest1",
         :digest-item/item-id "item4",
-        :digest-item/kind :discover}
+        :digest-item/kind :digest-item.kind/discover}
        {:xt/id "digest-item4",
         :digest-item/digest-id "digest2",
         :digest-item/item-id "item4",
-        :digest-item/kind :discover}]}]
+        :digest-item/kind :digest-item.kind/discover}]}]
     (digest-sends
      {:biff/conn* conn, :session {:uid "user1"}}
      [{:xt/id "item1"}

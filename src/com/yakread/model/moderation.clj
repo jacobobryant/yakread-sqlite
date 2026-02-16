@@ -12,7 +12,7 @@
   (let [direct-items (biffs/q conn*
                               {:select [:item/id :item/url :item/record-type :item/direct-candidate-status]
                                :from :item
-                               :where [:= :item/record-type "direct"]})
+                               :where [:= :item/record-type :item.record-type/direct]})
         url->direct-item (into {} (map (juxt :item/url identity)) direct-items)
         item->url (into {}
                         (map (juxt :xt/id :item/url))
@@ -43,9 +43,9 @@
                                  :where [:is-not :item/direct-candidate-status nil]
                                  :group-by [:item/direct-candidate-status]}))]
     {:admin.moderation/remaining (count liked-direct-items)
-     :admin.moderation/approved (get statuses :approved 0)
-     :admin.moderation/blocked (get statuses :blocked 0)
-     :admin.moderation/ingest-failed (get statuses :ingest-failed 0)
+     :admin.moderation/approved (get statuses :item.direct-candidate-status/approved 0)
+     :admin.moderation/blocked (get statuses :item.direct-candidate-status/blocked 0)
+     :admin.moderation/ingest-failed (get statuses :item.direct-candidate-status/ingest-failed 0)
      :admin.moderation/next-batch (vec (take 50 liked-direct-items))}))
 
 (def module {:resolvers [next-batch]})

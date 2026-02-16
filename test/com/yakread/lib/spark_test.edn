@@ -11,7 +11,7 @@
       [{:xt/id "item1", :item/url "url1"}
        {:xt/id "item2",
         :item/url "url2",
-        :item/direct-candidate-status :approved}]}]
+        :item/direct-candidate-status :item.direct-candidate-status/approved}]}]
     (item-candidates {:biff/conn* conn} {})),
    :ex #error {
  :cause "Enum values must be namespaced keywords with namespace matching the column. Expected namespace: feed.moderation, got: :approved"
@@ -156,7 +156,7 @@
     [conn
      {:ad
       [{:xt/id "ad1",
-        :ad/approve-state :approved,
+        :ad/approve-state :ad.approve-state/approved,
         :ad/payment-method "some-payment-method",
         :ad/budget 2000}
        {:xt/id "ad2"}
@@ -765,7 +765,7 @@
      {:item
       [{:xt/id "item1",
         :item/url "url1",
-        :item/direct-candidate-status :approved}],
+        :item/direct-candidate-status :item.direct-candidate-status/approved}],
       :user-item
       [{:xt/id "usit1",
         :user-item/user-id "user1",

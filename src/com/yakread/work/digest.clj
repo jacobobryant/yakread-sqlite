@@ -82,8 +82,8 @@
   (fn [{:keys [biff.fx/pathom biff/now] user :biff/job}]
     (when (:digest/payload pathom)
       (let [digest-id (biffs/gen-uuid (:xt/id user))
-            digest-items (for [[k kind] [[:user/icymi-recs :icymi]
-                                         [:user/digest-discover-recs :discover]]
+            digest-items (for [[k kind] [[:user/icymi-recs :digest-item.kind/icymi]
+                                         [:user/digest-discover-recs :digest-item.kind/discover]]
                                item (get pathom k)]
                            {:xt/id (biffs/gen-uuid (:item/id item))
                             :digest-item/digest digest-id

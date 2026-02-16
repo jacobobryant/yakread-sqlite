@@ -66,8 +66,8 @@
     (let [{:keys [customer items cancel_at]} (get-in body-params [:data :object])
           price-id (get-in items [:data 0 :price :id])
           plan (if (= quarter-price-id price-id)
-                 :quarter
-                 :annual)
+                 :user.plan/quarter
+                 :user.plan/annual)
           [{user-id :user/id}] (biffs/q conn*
                                       {:select :user/id
                                        :from :user
@@ -277,8 +277,8 @@
              [:<>
               "You're on the "
               (case plan
-                :quarter "$30 / 3 months"
-                :annual "$60 / 12 months"
+                :user.plan/quarter "$30 / 3 months"
+                :user.plan/annual "$60 / 12 months"
                 "premium")
               " plan. "])
            (biff/form

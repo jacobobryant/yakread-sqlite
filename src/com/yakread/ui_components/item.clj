@@ -47,7 +47,7 @@
               label-type :html}}]
      (->> [(when show-author
              (some-> (or (:source/title source) author-name byline) str/trim not-empty))
-           (when (= record-type :direct)
+           (when (= record-type :item.record-type/direct)
              (some-> url uri/uri :host str/trim not-empty))
            (let [;; TODO get timezone for user
                  zdt (some-> (or published-at ingested-at)
@@ -202,7 +202,7 @@
      (ad-card-base {:href (recording-url
                            {:params on-click-params
                             :user/id (:uid session)
-                            :ad.click/source :web})
+                            :ad.click/source :ad-click.source/web})
                     :ad/url-with-protocol url-with-protocol
                     :ad/title title
                     :ad/description description

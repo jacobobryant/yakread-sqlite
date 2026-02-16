@@ -29,7 +29,7 @@
                                        :item/url url
                                        :item/ingested-at now
                                        :item/doc-type :item/direct
-                                       :item.direct/candidate-status :ingest-failed}]]}
+                                       :item.direct/candidate-status :item.direct-candidate-status/ingest-failed}]]}
                        {:biff.fx/sleep 2000}])))}))
 
 (fx/defmachine queue-add-candidate

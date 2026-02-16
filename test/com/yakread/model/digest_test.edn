@@ -9,10 +9,10 @@
      {:item
       [{:xt/id (t/uuid 1),
         :item/ingested-at (t/zdt 2001),
-        :item/record-type :feed}
+        :item/record-type :item.record-type/feed}
        {:xt/id (t/uuid 2),
         :item/ingested-at (t/zdt 2003),
-        :item/record-type :feed}]}]
+        :item/record-type :item.record-type/feed}]}]
     (digest-sub-items
      {:biff/conn* conn, :biff/now (t/zdt 2003 1 10)}
      {:user/subscriptions
@@ -91,10 +91,10 @@
      {:item
       [{:xt/id (t/uuid 1),
         :item/ingested-at (t/zdt 2003 1 4),
-        :item/record-type :feed}
+        :item/record-type :item.record-type/feed}
        {:xt/id (t/uuid 2),
         :item/ingested-at (t/zdt 2003 1 6),
-        :item/record-type :feed}]}]
+        :item/record-type :item.record-type/feed}]}]
     (digest-sub-items
      {:biff/conn* conn, :biff/now (t/zdt 2003 1 10)}
      {:user/digest-last-sent (t/zdt 2003 1 5),
@@ -174,10 +174,10 @@
      {:item
       [{:xt/id (t/uuid 1),
         :item/ingested-at (t/zdt 2001),
-        :item/record-type :feed}
+        :item/record-type :item.record-type/feed}
        {:xt/id (t/uuid 2),
         :item/ingested-at (t/zdt 2003),
-        :item/record-type :feed}]}]
+        :item/record-type :item.record-type/feed}]}]
     (digest-bookmarks
      {:biff/conn* conn, :biff/now (t/zdt 2003 1 10)}
      {:user/bookmarks [{:xt/id (t/uuid 1)} {:xt/id (t/uuid 2)}]})),

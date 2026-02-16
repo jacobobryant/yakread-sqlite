@@ -54,7 +54,7 @@
                      ;; record succeeded payment
                      (for [{:keys [xt/id] :ad.credit/keys [amount ad]} succeeded
                            :let [{ad-id :xt/id} ad]]
-                       [[:patch-docs :ad-credit {:xt/id id :ad.credit/charge-status :confirmed}]
+                       [[:patch-docs :ad-credit {:xt/id id :ad.credit/charge-status :ad-credit.charge-status/confirmed}]
                         (biffs/dual-write
                          {:update :ad
                           :set {:ad/balance [:- :ad/balance amount]}
@@ -63,7 +63,7 @@
                      ;; record failed payment
                      (for [{:keys [xt/id] :ad.credit/keys [ad]} failed
                            :let [{ad-id :xt/id} ad]]
-                       [[:patch-docs :ad-credit {:xt/id id :ad.credit/charge-status :failed}]
+                       [[:patch-docs :ad-credit {:xt/id id :ad.credit/charge-status :ad-credit.charge-status/failed}]
                         [:patch-docs :ad {:xt/id ad-id :ad/payment-failed true}]]))}
 
        ;; create payment intent
@@ -97,8 +97,8 @@
       (for [{:ad/keys [ui-preview-card] id :xt/id} pending]
         [:.pending-ad.flex.flex-col.gap-4.mb-8.mr-8
          [:.flex.gap-2
-          (for [[state label icon] [[:approved "Approve" "check-solid"]
-                                    [:rejected "Reject" "xmark-solid"]]]
+          (for [[state label icon] [[:ad.approve-state/approved "Approve" "check-solid"]
+                                    [:ad.approve-state/rejected "Reject" "xmark-solid"]]]
             (ui/button {:hx-post (href update-ad {:ad {:xt/id id :ad/approve-state state}})
                         :hx-target "closest .pending-ad"
                         :hx-swap "outerHTML"
@@ -126,10 +126,10 @@
                          :when chargeable]
                      {:db/doc-type :ad.credit
                       :ad.credit/ad id
-                      :ad.credit/source :charge
+                      :ad.credit/source :ad-credit.source/charge
                       :ad.credit/amount balance
                       :ad.credit/created-at :db/now
-                      :ad.credit/charge-status :pending})]
+                      :ad.credit/charge-status :ad-credit.charge-status/pending})]
      (ui/wide-page-well
       [:div.flex.gap-4
        (ui/button {:hx-post (href create-pending-charges {:tx charge-tx})

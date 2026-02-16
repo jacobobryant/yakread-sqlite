@@ -87,7 +87,7 @@
     {::sponsored
      [:<>
       (section-title "Sponsored")
-      (ui-item {:url (recording-url {:ad.click/source :email
+      (ui-item {:url (recording-url {:ad.click/source :ad-click.source/email
                                      :user/id id})
                 :title title
                 :image image-url

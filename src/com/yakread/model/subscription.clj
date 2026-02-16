@@ -77,7 +77,7 @@
          :output [:sub/source-id
                   :sub/doc-type]}
   (cond
-    (= record-type :email)
+    (= record-type :sub.record-type/email)
     {:sub/source-id id
      :sub/doc-type :sub/email}
 

@@ -32,7 +32,7 @@
           [:user/suppressed-at       ? inst?]
           [:user/email-username      ? ::string]
           [:user/customer-id         ? :string]
-          [:user/plan                ? [:enum :quarter :annual]]
+          [:user/plan                ? [:enum :user.plan/quarter :user.plan/annual]]
           [:user/cancel-at           ? inst?]]
 
    :feed [:map {:closed true}
@@ -45,14 +45,14 @@
           [:feed/etag            ? ::string]
           [:feed/last-modified   ? ::string]
           [:feed/failed-syncs    ? :int]
-          [:feed/moderation      ? [:enum :approved :blocked]]]
+          [:feed/moderation      ? [:enum :feed.moderation/approved :feed.moderation/blocked]]]
 
    :sub [:map {:closed true}
          [:sub/id                     :uuid]
          [:sub/user-id      (r :user) :uuid]
          [:sub/created-at             inst?]
          [:sub/pinned-at    ?         inst?]
-         [:sub/record-type            [:enum :feed :email]]
+         [:sub/record-type            [:enum :sub.record-type/feed :sub.record-type/email]]
          ;; feed sub fields
          [:sub/feed-id      (?r :feed) :uuid]
          ;; email sub fields
@@ -78,7 +78,7 @@
           [:item/length            ? :int]
           [:item/image-url         ? ::string]
           [:item/paywalled         ? :boolean]
-          [:item/record-type         [:enum :feed :email :direct]]
+          [:item/record-type         [:enum :item.record-type/feed :item.record-type/email :item.record-type/direct]]
           ;; feed item fields
           [:item/feed-id           (?r :feed) :uuid]
           [:item/feed-guid         ? ::string]
@@ -90,7 +90,7 @@
           [:item/email-reply-to    ? ::string]
           [:item/email-maybe-confirmation ? :boolean]
           ;; direct item fields
-          [:item/direct-candidate-status ? [:enum :ingest-failed :blocked :approved]]]
+          [:item/direct-candidate-status ? [:enum :item.direct-candidate-status/ingest-failed :item.direct-candidate-status/blocked :item.direct-candidate-status/approved]]]
 
    :redirect [:map {:closed true}
               [:redirect/id       :uuid]
@@ -121,7 +121,7 @@
                  [:digest-item/id                  :uuid]
                  [:digest-item/digest-id (r :digest) :uuid]
                  [:digest-item/item-id   (r :item)   :uuid]
-                 [:digest-item/kind      [:enum :icymi :discover]]]
+                 [:digest-item/kind      [:enum :digest-item.kind/icymi :digest-item.kind/discover]]]
 
    :bulk-send [:map {:closed true}
                [:bulk-send/id              :uuid]
@@ -144,7 +144,7 @@
    :ad [:map {:closed true}
         [:ad/id                     :uuid]
         [:ad/user-id      (r :user) :uuid]
-        [:ad/approve-state          [:enum :pending :approved :rejected]]
+        [:ad/approve-state          [:enum :ad.approve-state/pending :ad.approve-state/approved :ad.approve-state/rejected]]
         [:ad/updated-at             inst?]
         [:ad/balance                :int]
         [:ad/recent-cost            :int]
@@ -171,15 +171,15 @@
               [:ad-click/ad-id         (r :ad)   :uuid]
               [:ad-click/created-at              inst?]
               [:ad-click/cost                    :int]
-              [:ad-click/source                  [:enum :web :email]]]
+              [:ad-click/source                  [:enum :ad-click.source/web :ad-click.source/email]]]
 
    :ad-credit [:map {:closed true}
                [:ad-credit/id                     :uuid]
                [:ad-credit/ad-id         (r :ad) :uuid]
-               [:ad-credit/source                 [:enum :charge :manual]]
+               [:ad-credit/source                 [:enum :ad-credit.source/charge :ad-credit.source/manual]]
                [:ad-credit/amount                 :int]
                [:ad-credit/created-at             inst?]
-               [:ad-credit/charge-status ?        [:enum :pending :confirmed :failed]]]
+               [:ad-credit/charge-status ?        [:enum :ad-credit.charge-status/pending :ad-credit.charge-status/confirmed :ad-credit.charge-status/failed]]]
 
    :mv-sub [:map {:closed true}
             [:mv-sub/id                     :uuid]

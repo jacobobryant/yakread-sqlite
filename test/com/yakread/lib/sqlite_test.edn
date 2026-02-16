@@ -47,7 +47,7 @@
   {:doc "make-enum-reader creates reader that converts int to keyword",
    :eval
    (let
-    [reader (make-enum-reader {0 :quarter, 1 :annual})]
+    [reader (make-enum-reader {0 :user.plan/quarter, 1 :user.plan/annual})]
     [(reader 0) (reader 1)]),
    :result [:quarter :annual]}
   _
