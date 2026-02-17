@@ -17,27 +17,29 @@
    (t/with-sqlite
     [conn
      {:user
-      [{:xt/id "user1", :user/joined-at (t/zdt 2000)}
-       {:xt/id "user2", :user/joined-at (t/zdt 2001)}],
+      [{:xt/id (t/uuid 15), :user/joined-at (t/zdt 2000)}
+       {:xt/id (t/uuid 16), :user/joined-at (t/zdt 2001)}],
       :user-item
-      [{:xt/id "user-item1",
+      [{:xt/id (t/uuid 13),
         :user-item/viewed-at (t/zdt 2000),
-        :user-item/user-id "user3"}
-       {:xt/id "user-item2",
+        :user-item/user-id (t/uuid 17)}
+       {:xt/id (t/uuid 14),
         :user-item/viewed-at (t/zdt 2001),
-        :user-item/user-id "user4"}],
+        :user-item/user-id (t/uuid 18)}],
       :ad
-      [{:xt/id "ad1", :ad/updated-at (t/zdt 2000), :ad/user-id "user5"}
-       {:xt/id "ad2",
+      [{:xt/id (t/uuid 3),
+        :ad/updated-at (t/zdt 2000),
+        :ad/user-id (t/uuid 19)}
+       {:xt/id (t/uuid 4),
         :ad/updated-at (t/zdt 2001),
-        :ad/user-id "user6"}],
+        :ad/user-id (t/uuid 20)}],
       :ad-click
-      [{:xt/id "ad-click1",
+      [{:xt/id (t/uuid 1),
         :ad-click/created-at (t/zdt 2000),
-        :ad-click/user-id "user7"}
-       {:xt/id "ad-click2",
+        :ad-click/user-id (t/uuid 21)}
+       {:xt/id (t/uuid 2),
         :ad-click/created-at (t/zdt 2001),
-        :ad-click/user-id "user8"}]}]
+        :ad-click/user-id (t/uuid 22)}]}]
     (active-user-ids conn (t/zdt 2001 3))),
    :result []}
   _
@@ -45,15 +47,23 @@
    :eval
    (t/with-sqlite
     [conn
-     {:user [{:xt/id "user1", :user/joined-at (t/zdt 2020)}],
+     {:user [{:xt/id (t/uuid 15), :user/joined-at (t/zdt 2020)}],
       :sub
-      [{:xt/id "sub1", :sub/user-id "user1", :sub/feed-id "feed1"}
-       {:xt/id "sub2", :sub/user-id "user1", :sub/feed-id "feed2"}
-       {:xt/id "sub3", :sub/user-id "user1", :sub/feed-id "feed3"}],
+      [{:xt/id (t/uuid 10),
+        :sub/user-id (t/uuid 15),
+        :sub/feed-id (t/uuid 5)}
+       {:xt/id (t/uuid 11),
+        :sub/user-id (t/uuid 15),
+        :sub/feed-id (t/uuid 6)}
+       {:xt/id (t/uuid 12),
+        :sub/user-id (t/uuid 15),
+        :sub/feed-id (t/uuid 7)}],
       :feed
-      [{:xt/id "feed1", :feed/url "url1"}
-       {:xt/id "feed2", :feed/url "url2", :feed/synced-at (t/zdt 2020)}
-       {:xt/id "feed3",
+      [{:xt/id (t/uuid 5), :feed/url "url1"}
+       {:xt/id (t/uuid 6),
+        :feed/url "url2",
+        :feed/synced-at (t/zdt 2020)}
+       {:xt/id (t/uuid 7),
         :feed/url "url3",
         :feed/synced-at (t/zdt 2019 12 31)}]}]
     (sync-all-feeds!
@@ -71,8 +81,8 @@
    (t/with-sqlite
     [conn
      {:feed
-      [{:xt/id "feed1", :feed/url "url1"}
-       {:xt/id "feed2",
+      [{:xt/id (t/uuid 5), :feed/url "url1"}
+       {:xt/id (t/uuid 6),
         :feed/url "url2",
         :feed/etag "abc123",
         :feed/last-modified "2000",
@@ -86,8 +96,8 @@
          :biff/base-url "https://example.com",
          :biff/job {:feed/id feed-id}}
         :start))]
-     {:without-metadata (start "feed1"),
-      :with-metadata (start "feed2")})),
+     {:without-metadata (start (t/uuid 5)),
+      :with-metadata (start (t/uuid 6))})),
    :result
    {:without-metadata
     {:biff.fx/next :parse,
@@ -120,16 +130,16 @@
    (t/with-sqlite
     [conn
      {:item
-      [{:xt/id "item1",
-        :item/feed-id "feed1",
+      [{:xt/id (t/uuid 8),
+        :item/feed-id (t/uuid 5),
         :item/title "Speeding up page loads with secondary indexes"}
-       {:xt/id "item2",
-        :item/feed-id "feed1",
+       {:xt/id (t/uuid 9),
+        :item/feed-id (t/uuid 5),
         :item/feed-guid "https://biffweb.com/p/removing-effects/"}]}]
     (t/truncate
      (sync-feed!
       {:biff/conn* conn,
-       :biff/job {:feed/id "feed1"},
+       :biff/job {:feed/id (t/uuid 5)},
        :biff.fx/http
        (update
         biffweb-com-feed
@@ -142,7 +152,7 @@
    [{:biff.fx/tx
      [[:patch-docs
        :feed
-       {:xt/id "feed1",
+       {:xt/id #uuid "00050000-0000-0000-0000-000000000005",
         :feed/synced-at #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
         :feed/failed-syncs 0,
         :feed/title "Biff"}]]}
@@ -191,9 +201,9 @@
         :item/lang "en",
         :item/author-name "Jacob O'Bryant",
         :item.feed/guid "https://biffweb.com/p/xtdb2-prerelease/",
-        :xt/id #uuid "feedc9f6-4f1d-f03a-8ce9-70b71df42503",
+        :xt/id #uuid "0005c9f6-4f1d-f03a-8ce9-70b71df42503",
         :item/title "Biff support for XTDB v2 is in pre-release",
-        :item.feed/feed "feed1",
+        :item.feed/feed #uuid "00050000-0000-0000-0000-000000000005",
         :item/author-url "https://obryant.dev",
         :item/ingested-at
         #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}
@@ -208,9 +218,9 @@
         :item/lang "en",
         :item/author-name "Jacob O'Bryant",
         :item.feed/guid "https://biffweb.com/p/yakread-relaunch/",
-        :xt/id #uuid "feedc222-9cef-e94d-fc1e-932efb9a0f58",
+        :xt/id #uuid "0005c222-9cef-e94d-fc1e-932efb9a0f58",
         :item/title "Relaunching Yakread: an algorithmic reading app",
-        :item.feed/feed "feed1",
+        :item.feed/feed #uuid "00050000-0000-0000-0000-000000000005",
         :item/author-url "https://obryant.dev",
         :item/ingested-at
         #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}
@@ -225,9 +235,9 @@
         :item/lang "en",
         :item/author-name "Jacob O'Bryant",
         :item.feed/guid "https://biffweb.com/p/edn-tests/",
-        :xt/id #uuid "feed620f-501c-9270-20ff-67585e33a8f6",
+        :xt/id #uuid "0005620f-501c-9270-20ff-67585e33a8f6",
         :item/title "Writing your tests in EDN files",
-        :item.feed/feed "feed1",
+        :item.feed/feed #uuid "00050000-0000-0000-0000-000000000005",
         :item/author-url "https://obryant.dev",
         :item/ingested-at
         #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}
@@ -242,9 +252,9 @@
         :item/lang "en",
         :item/author-name "Jacob O'Bryant",
         :item.feed/guid "https://biffweb.com/p/edn-html-forms/",
-        :xt/id #uuid "feed2308-025c-8f5f-f6e8-9c42901d787a",
+        :xt/id #uuid "00052308-025c-8f5f-f6e8-9c42901d787a",
         :item/title "EDN-infused plain html forms",
-        :item.feed/feed "feed1",
+        :item.feed/feed #uuid "00050000-0000-0000-0000-000000000005",
         :item/author-url "https://obryant.dev",
         :item/ingested-at
         #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}
@@ -260,9 +270,9 @@
         :item/author-name "Jacob O'Bryant",
         :item.feed/guid
         "https://biffweb.com/p/structuring-large-codebases/",
-        :xt/id #uuid "feedf09b-03d2-42ca-c6bc-66e4fa08de96",
+        :xt/id #uuid "0005f09b-03d2-42ca-c6bc-66e4fa08de96",
         :item/title "Structuring large Clojure codebases with Biff",
-        :item.feed/feed "feed1",
+        :item.feed/feed #uuid "00050000-0000-0000-0000-000000000005",
         :item/author-url "https://obryant.dev",
         :item/ingested-at
         #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}
@@ -278,9 +288,9 @@
         :item/lang "en",
         :item/author-name "Jacob O'Bryant",
         :item.feed/guid "https://biffweb.com/p/yakread-pathom/",
-        :xt/id #uuid "feed0200-b030-232e-7cbb-4a95de203044",
+        :xt/id #uuid "00050200-b030-232e-7cbb-4a95de203044",
         :item/title "Yakread + Pathom [video]",
-        :item.feed/feed "feed1",
+        :item.feed/feed #uuid "00050000-0000-0000-0000-000000000005",
         :item/author-url "https://obryant.dev",
         :item/ingested-at
         #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}
@@ -296,9 +306,9 @@
         :item/lang "en",
         :item/author-name "Jacob O'Bryant",
         :item.feed/guid "https://biffweb.com/p/yakread-schema/",
-        :xt/id #uuid "feedad1b-fb1f-38d6-bbaf-da9391edc490",
+        :xt/id #uuid "0005ad1b-fb1f-38d6-bbaf-da9391edc490",
         :item/title "Yakread schema [video]",
-        :item.feed/feed "feed1",
+        :item.feed/feed #uuid "00050000-0000-0000-0000-000000000005",
         :item/author-url "https://obryant.dev",
         :item/ingested-at
         #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}
@@ -314,10 +324,10 @@
         :item/author-name "Jacob O'Bryant",
         :item.feed/guid
         "https://biffweb.com/p/rocksdb-indexes-yakread/",
-        :xt/id #uuid "feedd907-4e8f-1ba9-b8ec-6571abcba715",
+        :xt/id #uuid "0005d907-4e8f-1ba9-b8ec-6571abcba715",
         :item/title
         "RocksDB indexes are done, open-sourcing Yakread n…",
-        :item.feed/feed "feed1",
+        :item.feed/feed #uuid "00050000-0000-0000-0000-000000000005",
         :item/author-url "https://obryant.dev",
         :item/ingested-at
         #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}]]}]}

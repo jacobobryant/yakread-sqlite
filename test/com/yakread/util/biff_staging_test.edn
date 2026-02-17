@@ -26,14 +26,14 @@
    (t/with-node
     [node
      {:stuff
-      [{:xt/id "stuff1", :x 1}
-       {:xt/id "stuff2", :x 2}
-       {:xt/id "stuff3", :x 3}]}]
+      [{:xt/id (t/uuid 1), :x 1}
+       {:xt/id (t/uuid 3), :x 2}
+       {:xt/id (t/uuid 5), :x 3}]}]
     (let
      [query
       {:select :*,
        :from :stuff,
-       :where [:in :xt/id ["stuff1" "stuff2"]]}
+       :where [:in :xt/id [(t/uuid 1) (t/uuid 3)]]}
       results
       (biffx/q node query)]
      (t/submit-tx node [[:biff/assert-query query results]])
@@ -49,14 +49,14 @@
   {:doc ":biff/upsert expansion",
    :eval
    (t/with-node
-    [node {:stuff [{:xt/id "stuff1", :x 1, :y 1}]}]
+    [node {:stuff [{:xt/id (t/uuid 1), :x 1, :y 1}]}]
     (biff-tx-op
      {:biff/conn* node}
      [:biff/upsert
       :stuff
       [:x :y]
-      {:xt/id "stuff1-new-id", :x 1, :y 1, :z 1}
-      {:xt/id "stuff2-new-id", :x 2, :y 2, :z 2}
+      {:xt/id (t/uuid 2), :x 1, :y 1, :z 1}
+      {:xt/id (t/uuid 4), :x 2, :y 2, :z 2}
       {:x 3, :y 3, :z 3}])),
    :ex #error {
  :cause "ERROR: Errors parsing SQL statement:\n  - line 1:61 no viable alternative at input '((x=$1)AND(y=$2),'\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb/sql-error\",\"Errors parsing SQL statement:\\n  - line 1:61 no viable alternative at input '((x=$1)AND(y=$2),'\",[\"^ \",\"~:sql\",\"SELECT stuff.id, x, y FROM stuff WHERE ((x = $1) AND (y = $2), (x = $3) AND (y = $4), (x = $5) AND (y = $6))\"]]]"
@@ -86,8 +86,8 @@
   [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 841]
   [com.yakread.util.biff_staging$eval46912$fn__46915 invoke "biff_staging.clj" 513]
   [clojure.lang.MultiFn invoke "MultiFn.java" 234]
-  [tmp109640$eval95541 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp109640$eval95541 invoke "NO_SOURCE_FILE" -1]
+  [tmp529163$eval95541 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp529163$eval95541 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -96,18 +96,18 @@
   {:doc ":biff/upsert :on-insert / :on-delete",
    :eval
    (t/with-node
-    [node {:stuff [{:xt/id "stuff1", :x 1, :y 1}]}]
+    [node {:stuff [{:xt/id (t/uuid 1), :x 1, :y 1}]}]
     (biff-tx-op
      {:biff/conn* node}
      [:biff/upsert
       :stuff
       [:x :y]
-      {:xt/id "stuff1-new-id",
+      {:xt/id (t/uuid 2),
        :x 1,
        :y 1,
        :biff/on-insert {:z 1},
        :biff/on-update {:z [:+ :z 1]}}
-      {:xt/id "stuff2-new-id",
+      {:xt/id (t/uuid 4),
        :x 2,
        :y 2,
        :biff/on-insert {:z 1},
@@ -140,8 +140,8 @@
   [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 841]
   [com.yakread.util.biff_staging$eval46912$fn__46915 invoke "biff_staging.clj" 513]
   [clojure.lang.MultiFn invoke "MultiFn.java" 234]
-  [tmp109640$eval95559 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp109640$eval95559 invoke "NO_SOURCE_FILE" -1]
+  [tmp529163$eval95559 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp529163$eval95559 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]

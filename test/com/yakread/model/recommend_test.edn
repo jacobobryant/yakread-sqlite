@@ -34,41 +34,41 @@
    (t/with-sqlite
     [conn
      {:skip
-      [{:xt/id "skip1",
+      [{:xt/id (t/uuid 3),
         :skip/reclist-id "reclist1",
         :skip/item-id "item1"}
-       {:xt/id "skip2",
+       {:xt/id (t/uuid 4),
         :skip/reclist-id "reclist1",
         :skip/item-id "item2"}
-       {:xt/id "skip3",
+       {:xt/id (t/uuid 5),
         :skip/reclist-id "reclist2",
         :skip/item-id "item4"}],
       :reclist
-      [{:xt/id "reclist1",
+      [{:xt/id (t/uuid 6),
         :reclist/user-id "user1",
         :reclist/created-at (t/zdt 2000)}
-       {:xt/id "reclist2",
+       {:xt/id (t/uuid 7),
         :reclist/user-id "user1",
         :reclist/created-at (t/zdt 2002)}],
       :user-item
-      [{:xt/id "usit1",
+      [{:xt/id (t/uuid 8),
         :user-item/item-id "item3",
         :user-item/user-id "user1",
         :user-item/favorited-at (t/zdt 2001)}
-       {:xt/id "usit2",
+       {:xt/id (t/uuid 9),
         :user-item/item-id "item5",
         :user-item/user-id "user1",
         :user-item/viewed-at (t/zdt 2003)}]}]
     (sub-affinity*
      {:biff/conn* conn}
-     [{:sub/id "sub1",
+     [{:sub/id (t/uuid 1),
        :sub/title "my sub",
-       :sub/user {:xt/id "user1"},
-       :sub/items [{:xt/id "item1"} {:xt/id "item2"} {:xt/id "item3"}]}
-      {:sub/id "sub2",
+       :sub/user {:xt/id (t/uuid 10)},
+       :sub/items [{:xt/id (t/uuid 11)} {:xt/id (t/uuid 12)} {:xt/id (t/uuid 13)}]}
+      {:sub/id (t/uuid 2),
        :sub/title "my other sub",
-       :sub/user {:xt/id "user1"},
-       :sub/items [{:xt/id "item4"} {:xt/id "item5"}]}])),
+       :sub/user {:xt/id (t/uuid 10)},
+       :sub/items [{:xt/id (t/uuid 14)} {:xt/id (t/uuid 15)}]}])),
    :ex #error {
  :cause "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
  :via
@@ -115,10 +115,10 @@
       [{:item/rec-type :item.rec-type/subscription,
         :sub/title "sub1",
         :sub/unread-items
-        [{:item/id "item1",
+        [{:item/id (t/uuid 11),
           :item/ingested-at (t/instant 2000),
           :item/n-skipped 10}
-         {:item/id "item2",
+         {:item/id (t/uuid 12),
           :item/ingested-at (t/instant 2001),
           :item/n-skipped 1}]}
        {:item/rec-type :item.rec-type/subscription,
@@ -126,7 +126,7 @@
         :sub/unread-items []}]})),
    :result
    {:user/for-you-sub-recs
-    [{:item/id "item1",
+    [{:item/id (t/uuid 11),
       :item/ingested-at #time/instant "2000-01-01T00:00:00Z",
       :item/n-skipped 10,
       :item/rec-type :item.rec-type/subscription}]}}
@@ -139,19 +139,19 @@
       [{:item/rec-type :item.rec-type/subscription,
         :sub/title "sub1",
         :sub/unread-items
-        [{:item/id "item1",
+        [{:item/id (t/uuid 11),
           :item/ingested-at (t/instant 2000),
           :item/n-skipped 10}
-         {:item/id "item2",
+         {:item/id (t/uuid 12),
           :item/ingested-at (t/instant 2001),
           :item/n-skipped 1}]}
        {:item/rec-type :item.rec-type/subscription,
         :sub/title "sub2",
         :sub/unread-items []}],
-      :user/digest-sub-items [{:xt/id "item1"}]})),
+      :user/digest-sub-items [{:xt/id (t/uuid 11)}]})),
    :result
    {:user/icymi-sub-recs
-    [{:item/id "item2",
+    [{:item/id (t/uuid 12),
       :item/ingested-at #time/instant "2001-01-01T00:00:00Z",
       :item/n-skipped 1,
       :item/rec-type :item.rec-type/subscription}]}}
@@ -160,25 +160,25 @@
    (binding
     [gen/*rnd* (java.util.Random. 0)]
     (icymi-bookmark-recs
-     {:user/digest-bookmarks [{:xt/id "item1"} {:xt/id "item2"}],
+     {:user/digest-bookmarks [{:xt/id (t/uuid 11)} {:xt/id (t/uuid 12)}],
       :user/unread-bookmarks
-      [{:item/id "item1",
+      [{:item/id (t/uuid 11),
         :item/ingested-at (t/instant 2000),
         :item/n-skipped-with-digests 0}
-       {:item/id "item2",
+       {:item/id (t/uuid 12),
         :item/ingested-at (t/instant 2000),
         :item/n-skipped-with-digests 0}
-       {:item/id "item3",
+       {:item/id (t/uuid 13),
         :item/ingested-at (t/instant 2000),
         :item/n-skipped-with-digests 0,
         :item/url "https://example.com/article1"}
-       {:item/id "item4",
+       {:item/id (t/uuid 14),
         :item/ingested-at (t/instant 2000),
         :item/n-skipped-with-digests 0,
         :item/url "https://example.com/article2"}]})),
    :result
    {:user/icymi-bookmark-recs
-    [{:item/id "item4",
+    [{:item/id (t/uuid 14),
       :item/ingested-at #time/instant "2000-01-01T00:00:00Z",
       :item/n-skipped-with-digests 0,
       :item/url "https://example.com/article2",
@@ -199,19 +199,19 @@
        :user/icymi-bookmark-recs (mapv item (range 4 7))}))),
    :result
    {:user/icymi-recs
-    [{:item/id "item4",
+    [{:item/id (t/uuid 14),
       :item/ingested-at #time/instant "2004-01-01T00:00:00Z",
       :item/n-skipped 4}
-     {:item/id "item2",
+     {:item/id (t/uuid 12),
       :item/ingested-at #time/instant "2002-01-01T00:00:00Z",
       :item/n-skipped 2}
-     {:item/id "item3",
+     {:item/id (t/uuid 13),
       :item/ingested-at #time/instant "2003-01-01T00:00:00Z",
       :item/n-skipped 3}
-     {:item/id "item5",
+     {:item/id (t/uuid 15),
       :item/ingested-at #time/instant "2005-01-01T00:00:00Z",
       :item/n-skipped 5}
-     {:item/id "item1",
+     {:item/id (t/uuid 11),
       :item/ingested-at #time/instant "2001-01-01T00:00:00Z",
       :item/n-skipped 1}]}}
   _
@@ -220,13 +220,13 @@
    (t/with-sqlite
     [conn
      {:item
-      [{:xt/id "item1", :item/url "url1"}
-       {:xt/id "item2", :item/url "url2"}],
+      [{:xt/id (t/uuid 11), :item/url "url1"}
+       {:xt/id (t/uuid 12), :item/url "url2"}],
       :user-item
-      [{:xt/id "user-item1",
+      [{:xt/id (t/uuid 16),
         :user-item/user-id "user1",
         :user-item/item-id "item1"}
-       {:xt/id "user-item2",
+       {:xt/id (t/uuid 17),
         :user-item/user-id "user1",
         :user-item/item-id "item2",
         :user-item/viewed-at (t/zdt 2000)}]}]
@@ -238,10 +238,10 @@
    (t/with-sqlite
     [conn
      {:ad-click
-      [{:xt/id "ad-click1",
+      [{:xt/id (t/uuid 18),
         :ad-click/ad-id "ad1",
         :ad-click/user-id "user1"}
-       {:xt/id "ad-click2",
+       {:xt/id (t/uuid 19),
         :ad-click/ad-id "ad2",
         :ad-click/user-id "user2"}]}]
     (clicked-ads {:biff/conn* conn} {:user/id "user1"})),

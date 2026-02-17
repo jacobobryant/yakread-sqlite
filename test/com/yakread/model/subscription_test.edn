@@ -8,222 +8,99 @@
    (t/with-sqlite
     [conn
      {:sub
-      [{:xt/id "sub1", :sub/user-id "user1"}
-       {:xt/id "sub2",
-        :sub/user-id "user1",
+      [{:xt/id (t/uuid 6), :sub/user-id (t/uuid 9)}
+       {:xt/id (t/uuid 7),
+        :sub/user-id (t/uuid 9),
         :sub/email-unsubscribed-at (t/zdt 2000)}]}]
-    (user-subs {:biff/conn* conn} {:user/id "user1"})),
-   :ex #error {
- :cause "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
-   :at [com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]}]
- :trace
- [[com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]
-  [com.biffweb.sqlite$bytes__GT_uuid invoke "sqlite.clj" 134]
-  [com.biffweb.sqlite$make_column_reader$fn__34963 invoke "sqlite.clj" 282]
-  [next.jdbc.result_set$builder_adapter$fn$reify__15405 with_column "result_set.clj" 193]
-  [next.jdbc.result_set$row_builder$fn__15516 invoke "result_set.clj" 447]
-  [clojure.lang.LongRange reduce "LongRange.java" 170]
-  [clojure.core$reduce invokeStatic "core.clj" 6964]
-  [clojure.core$reduce invoke "core.clj" 6947]
-  [next.jdbc.result_set$row_builder invokeStatic "result_set.clj" 447]
-  [next.jdbc.result_set$row_builder invoke "result_set.clj" 443]
-  [next.jdbc.result_set$datafiable_result_set invokeStatic "result_set.clj" 663]
-  [next.jdbc.result_set$datafiable_result_set invoke "result_set.clj" 639]
-  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 905]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 852]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 841]
-  [com.yakread.model.subscription$user_subs__64262 invokeStatic "subscription.clj" 15]
-  [com.yakread.model.subscription$user_subs__64262 invoke "subscription.clj" 11]
-  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp904609$eval95627 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp904609$eval95627 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+    (user-subs {:biff/conn* conn} {:user/id (t/uuid 9)})),
+   :result
+   {:user/subscriptions
+    [{:sub/id #uuid "00060000-0000-0000-0000-000000000006"}],
+    :user/unsubscribed
+    [{:sub/id #uuid "00070000-0000-0000-0000-000000000007"}]}}
   _
   {:doc "latest-email-item",
    :eval
    (t/with-sqlite
     [conn
      {:item
-      [{:xt/id "item1",
-        :item/email-sub-id "sub1",
+      [{:xt/id (t/uuid 2),
+        :item/email-sub-id (t/uuid 6),
         :item/ingested-at (t/zdt 2000)}
-       {:xt/id "item2",
-        :item/email-sub-id "sub1",
+       {:xt/id (t/uuid 3),
+        :item/email-sub-id (t/uuid 6),
         :item/ingested-at (t/zdt 2001)}
-       {:xt/id "item3",
-        :item/email-sub-id "sub2",
+       {:xt/id (t/uuid 4),
+        :item/email-sub-id (t/uuid 7),
         :item/ingested-at (t/zdt 2002)}]}]
     {:email-doc-type
      (latest-email-item
       {:biff/conn* conn}
-      {:sub/doc-type :sub/email, :sub/id "sub1"}),
+      {:sub/doc-type :sub/email, :sub/id (t/uuid 6)}),
      :feed-doc-type
      (latest-email-item
       {:biff/conn* conn}
-      {:sub/doc-type :sub/feed, :sub/id "sub1"}),
+      {:sub/doc-type :sub/feed, :sub/id (t/uuid 6)}),
      :no-items
      (latest-email-item
       {:biff/conn* conn}
       {:sub/doc-type :sub/email, :sub/id "sub3"})}),
-   :ex #error {
- :cause "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
-   :at [com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]}]
- :trace
- [[com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]
-  [com.biffweb.sqlite$bytes__GT_uuid invoke "sqlite.clj" 134]
-  [com.biffweb.sqlite$make_column_reader$fn__34963 invoke "sqlite.clj" 282]
-  [next.jdbc.result_set$builder_adapter$fn$reify__15405 with_column "result_set.clj" 193]
-  [next.jdbc.result_set$row_builder$fn__15516 invoke "result_set.clj" 447]
-  [clojure.lang.LongRange reduce "LongRange.java" 170]
-  [clojure.core$reduce invokeStatic "core.clj" 6964]
-  [clojure.core$reduce invoke "core.clj" 6947]
-  [next.jdbc.result_set$row_builder invokeStatic "result_set.clj" 447]
-  [next.jdbc.result_set$row_builder invoke "result_set.clj" 443]
-  [next.jdbc.result_set$datafiable_result_set invokeStatic "result_set.clj" 663]
-  [next.jdbc.result_set$datafiable_result_set invoke "result_set.clj" 639]
-  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 905]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 852]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 841]
-  [com.yakread.model.subscription$latest_email_item__64296 invokeStatic "subscription.clj" 58]
-  [com.yakread.model.subscription$latest_email_item__64296 invoke "subscription.clj" 55]
-  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp904609$eval95629 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp904609$eval95629 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   {:email-doc-type
+    {:sub/latest-item
+     {:xt/id #uuid "00030000-0000-0000-0000-000000000003"}},
+    :feed-doc-type nil,
+    :no-items nil}}
   _
   {:doc "total",
    :eval
    (t/with-sqlite
     [conn
      {:item
-      [{:xt/id "item1", :item/email-sub-id "sub1"}
-       {:xt/id "item2", :item/email-sub-id "sub1"}
-       {:xt/id "item3", :item/feed-id "feed1"}]}]
+      [{:xt/id (t/uuid 2), :item/email-sub-id (t/uuid 6)}
+       {:xt/id (t/uuid 3), :item/email-sub-id (t/uuid 6)}
+       {:xt/id (t/uuid 4), :item/feed-id (t/uuid 1)}]}]
     (total
      {:biff/conn* conn}
-     [{:sub/source-id "sub1", :sub/doc-type :sub/email}
-      {:sub/source-id "feed1", :sub/doc-type :sub/feed}
-      {:sub/source-id "feed2", :sub/doc-type :sub/feed}])),
-   :ex #error {
- :cause "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
-   :at [com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]}]
- :trace
- [[com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]
-  [com.biffweb.sqlite$bytes__GT_uuid invoke "sqlite.clj" 134]
-  [com.biffweb.sqlite$make_column_reader$fn__34963 invoke "sqlite.clj" 282]
-  [next.jdbc.result_set$builder_adapter$fn$reify__15405 with_column "result_set.clj" 193]
-  [next.jdbc.result_set$row_builder$fn__15516 invoke "result_set.clj" 447]
-  [clojure.lang.LongRange reduce "LongRange.java" 170]
-  [clojure.core$reduce invokeStatic "core.clj" 6964]
-  [clojure.core$reduce invoke "core.clj" 6947]
-  [next.jdbc.result_set$row_builder invokeStatic "result_set.clj" 447]
-  [next.jdbc.result_set$row_builder invoke "result_set.clj" 443]
-  [next.jdbc.result_set$datafiable_result_set invokeStatic "result_set.clj" 663]
-  [next.jdbc.result_set$datafiable_result_set invoke "result_set.clj" 639]
-  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 905]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 852]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 841]
-  [com.yakread.model.subscription$total__64317 invokeStatic "subscription.clj" 98]
-  [com.yakread.model.subscription$total__64317 invoke "subscription.clj" 93]
-  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp904609$eval95631 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp904609$eval95631 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+     [{:sub/source-id (t/uuid 6), :sub/doc-type :sub/email}
+      {:sub/source-id (t/uuid 1), :sub/doc-type :sub/feed}
+      {:sub/source-id (t/uuid 10), :sub/doc-type :sub/feed}])),
+   :result
+   [{:sub/source-id #uuid "00060000-0000-0000-0000-000000000006",
+     :sub/total 0}
+    {:sub/source-id #uuid "00010000-0000-0000-0000-000000000001",
+     :sub/total 0}
+    {:sub/source-id #uuid "00100000-0000-0000-0000-000000000010",
+     :sub/total 0}]}
   _
   {:doc "items-read",
    :eval
    (t/with-sqlite
     [conn
      {:item
-      [{:xt/id "item1", :item/email-sub-id "sub1"}
-       {:xt/id "item2", :item/email-sub-id "sub1"}
-       {:xt/id "item3", :item/feed-id "feed1"}],
+      [{:xt/id (t/uuid 2), :item/email-sub-id (t/uuid 6)}
+       {:xt/id (t/uuid 3), :item/email-sub-id (t/uuid 6)}
+       {:xt/id (t/uuid 4), :item/feed-id (t/uuid 1)}],
       :user-item
-      [{:xt/id "user-item1",
-        :user-item/user-id "user1",
-        :user-item/item-id "item1",
+      [{:xt/id (t/uuid 8),
+        :user-item/user-id (t/uuid 9),
+        :user-item/item-id (t/uuid 2),
         :user-item/viewed-at (t/zdt 2000)}]}]
     (items-read
      {:biff/conn* conn}
-     [{:sub/source-id "sub1",
+     [{:sub/source-id (t/uuid 6),
        :sub/doc-type :sub/email,
-       :sub/user {:xt/id "user1"}}
-      {:sub/source-id "feed1",
+       :sub/user {:xt/id (t/uuid 9)}}
+      {:sub/source-id (t/uuid 1),
        :sub/doc-type :sub/feed,
-       :sub/user {:xt/id "user1"}}])),
-   :ex #error {
- :cause "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
-   :at [com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]}]
- :trace
- [[com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]
-  [com.biffweb.sqlite$bytes__GT_uuid invoke "sqlite.clj" 134]
-  [com.biffweb.sqlite$make_column_reader$fn__34963 invoke "sqlite.clj" 282]
-  [next.jdbc.result_set$builder_adapter$fn$reify__15405 with_column "result_set.clj" 193]
-  [next.jdbc.result_set$row_builder$fn__15516 invoke "result_set.clj" 447]
-  [clojure.lang.LongRange reduce "LongRange.java" 170]
-  [clojure.core$reduce invokeStatic "core.clj" 6964]
-  [clojure.core$reduce invoke "core.clj" 6947]
-  [next.jdbc.result_set$row_builder invokeStatic "result_set.clj" 447]
-  [next.jdbc.result_set$row_builder invoke "result_set.clj" 443]
-  [next.jdbc.result_set$datafiable_result_set invokeStatic "result_set.clj" 663]
-  [next.jdbc.result_set$datafiable_result_set invoke "result_set.clj" 639]
-  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 905]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 852]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 841]
-  [com.yakread.model.subscription$items_read__64347 invokeStatic "subscription.clj" 122]
-  [com.yakread.model.subscription$items_read__64347 invoke "subscription.clj" 116]
-  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp904609$eval95633 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp904609$eval95633 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+       :sub/user {:xt/id (t/uuid 9)}}])),
+   :result
+   [{:sub/user {:xt/id #uuid "00090000-0000-0000-0000-000000000009"},
+     :sub/source-id #uuid "00060000-0000-0000-0000-000000000006",
+     :sub/items-read 0}
+    {:sub/user {:xt/id #uuid "00090000-0000-0000-0000-000000000009"},
+     :sub/source-id #uuid "00010000-0000-0000-0000-000000000001",
+     :sub/items-read 0}]}
   _
   {:doc "items-unread",
    :eval (items-unread {:sub/total 5, :sub/items-read 2}),
@@ -234,135 +111,76 @@
    (t/with-sqlite
     [conn
      {:item
-      [{:xt/id "item1",
-        :item/email-sub-id "sub1",
+      [{:xt/id (t/uuid 2),
+        :item/email-sub-id (t/uuid 6),
         :item/ingested-at (t/zdt 2000)}
-       {:xt/id "item2",
-        :item/email-sub-id "sub1",
+       {:xt/id (t/uuid 3),
+        :item/email-sub-id (t/uuid 6),
         :item/published-at (t/zdt 2001)}
-       {:xt/id "item3",
-        :item/feed-id "feed1",
+       {:xt/id (t/uuid 4),
+        :item/feed-id (t/uuid 1),
         :item/ingested-at (t/zdt 2002)}]}]
     (published-at
      {:biff/conn* conn}
-     [{:sub/source-id "sub1",
+     [{:sub/source-id (t/uuid 6),
        :sub/doc-type :sub/email,
        :sub/created-at (t/zdt 2003)}
-      {:sub/source-id "feed1",
+      {:sub/source-id (t/uuid 1),
        :sub/doc-type :sub/feed,
        :sub/created-at (t/zdt 2004)}
-      {:sub/source-id "feed2",
+      {:sub/source-id (t/uuid 10),
        :sub/doc-type :sub/feed,
        :sub/created-at (t/zdt 2005)}])),
-   :ex #error {
- :cause "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
-   :at [com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]}]
- :trace
- [[com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]
-  [com.biffweb.sqlite$bytes__GT_uuid invoke "sqlite.clj" 134]
-  [com.biffweb.sqlite$make_column_reader$fn__34963 invoke "sqlite.clj" 282]
-  [next.jdbc.result_set$builder_adapter$fn$reify__15405 with_column "result_set.clj" 193]
-  [next.jdbc.result_set$row_builder$fn__15516 invoke "result_set.clj" 447]
-  [clojure.lang.LongRange reduce "LongRange.java" 170]
-  [clojure.core$reduce invokeStatic "core.clj" 6964]
-  [clojure.core$reduce invoke "core.clj" 6947]
-  [next.jdbc.result_set$row_builder invokeStatic "result_set.clj" 447]
-  [next.jdbc.result_set$row_builder invoke "result_set.clj" 443]
-  [next.jdbc.result_set$datafiable_result_set invokeStatic "result_set.clj" 663]
-  [next.jdbc.result_set$datafiable_result_set invoke "result_set.clj" 639]
-  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 905]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 852]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 841]
-  [com.yakread.model.subscription$published_at__64396 invokeStatic "subscription.clj" 166]
-  [com.yakread.model.subscription$published_at__64396 invoke "subscription.clj" 161]
-  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp904609$eval95637 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp904609$eval95637 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   [{:sub/source-id #uuid "00060000-0000-0000-0000-000000000006",
+     :sub/published-at #time/zoned-date-time "2003-01-01T00:00Z[UTC]"}
+    {:sub/source-id #uuid "00010000-0000-0000-0000-000000000001",
+     :sub/published-at #time/zoned-date-time "2004-01-01T00:00Z[UTC]"}
+    {:sub/source-id #uuid "00100000-0000-0000-0000-000000000010",
+     :sub/published-at
+     #time/zoned-date-time "2005-01-01T00:00Z[UTC]"}]}
   _
   {:doc "items",
    :eval
    (t/with-sqlite
     [conn
      {:item
-      [{:xt/id "item1", :item/email-sub-id "sub1"}
-       {:xt/id "item2", :item/email-sub-id "sub1"}
-       {:xt/id "item3", :item/feed-id "feed1"}]}]
+      [{:xt/id (t/uuid 2), :item/email-sub-id (t/uuid 6)}
+       {:xt/id (t/uuid 3), :item/email-sub-id (t/uuid 6)}
+       {:xt/id (t/uuid 4), :item/feed-id (t/uuid 1)}]}]
     (items
      {:biff/conn* conn}
-     [{:sub/source-id "sub1", :sub/doc-type :sub/email}
-      {:sub/source-id "feed1", :sub/doc-type :sub/feed}
-      {:sub/source-id "feed2", :sub/doc-type :sub/feed}])),
-   :ex #error {
- :cause "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
-   :at [com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]}]
- :trace
- [[com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]
-  [com.biffweb.sqlite$bytes__GT_uuid invoke "sqlite.clj" 134]
-  [com.biffweb.sqlite$make_column_reader$fn__34963 invoke "sqlite.clj" 282]
-  [next.jdbc.result_set$builder_adapter$fn$reify__15405 with_column "result_set.clj" 193]
-  [next.jdbc.result_set$row_builder$fn__15516 invoke "result_set.clj" 447]
-  [clojure.lang.LongRange reduce "LongRange.java" 170]
-  [clojure.core$reduce invokeStatic "core.clj" 6964]
-  [clojure.core$reduce invoke "core.clj" 6947]
-  [next.jdbc.result_set$row_builder invokeStatic "result_set.clj" 447]
-  [next.jdbc.result_set$row_builder invoke "result_set.clj" 443]
-  [next.jdbc.result_set$datafiable_result_set invokeStatic "result_set.clj" 663]
-  [next.jdbc.result_set$datafiable_result_set invoke "result_set.clj" 639]
-  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 905]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 852]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 841]
-  [com.yakread.model.subscription$items__64427 invokeStatic "subscription.clj" 190]
-  [com.yakread.model.subscription$items__64427 invoke "subscription.clj" 185]
-  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp904609$eval95639 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp904609$eval95639 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+     [{:sub/source-id (t/uuid 6), :sub/doc-type :sub/email}
+      {:sub/source-id (t/uuid 1), :sub/doc-type :sub/feed}
+      {:sub/source-id (t/uuid 10), :sub/doc-type :sub/feed}])),
+   :result
+   [{:sub/source-id #uuid "00060000-0000-0000-0000-000000000006",
+     :sub/items []}
+    {:sub/source-id #uuid "00010000-0000-0000-0000-000000000001",
+     :sub/items []}
+    {:sub/source-id #uuid "00100000-0000-0000-0000-000000000010",
+     :sub/items []}]}
   _
   {:doc "latest-item",
    :eval
    (t/with-sqlite
     [conn
      {:item
-      [{:xt/id "item1",
-        :item/email-sub-id "sub1",
+      [{:xt/id (t/uuid 2),
+        :item/email-sub-id (t/uuid 6),
         :item/ingested-at (t/zdt 2000)}
-       {:xt/id "item2",
-        :item/email-sub-id "sub1",
+       {:xt/id (t/uuid 3),
+        :item/email-sub-id (t/uuid 6),
         :item/published-at (t/zdt 2001)}
-       {:xt/id "item3",
-        :item/feed-id "feed1",
+       {:xt/id (t/uuid 4),
+        :item/feed-id (t/uuid 1),
         :item/ingested-at (t/zdt 2002)}]}]
     (latest-item
      {:biff/conn* conn}
-     [{:sub/source-id "sub1",
+     [{:sub/source-id (t/uuid 6),
        :sub/doc-type :sub/email,
        :sub/published-at (t/zdt 2001)}
-      {:sub/source-id "feed1",
+      {:sub/source-id (t/uuid 1),
        :sub/doc-type :sub/feed,
        :sub/published-at (t/zdt 2002)}])),
    :result [{} {}]}
@@ -372,195 +190,97 @@
    (t/with-sqlite
     [conn
      {:sub
-      [{:xt/id "sub1", :sub/user-id "user1"}
-       {:xt/id "sub2",
-        :sub/user-id "user1",
+      [{:xt/id (t/uuid 6), :sub/user-id (t/uuid 9)}
+       {:xt/id (t/uuid 7),
+        :sub/user-id (t/uuid 9),
         :sub/email-unsubscribed-at (t/zdt 2000)}]}]
     (doall
      (for
-      [user-id ["user1" "user2"]]
+      [user-id [(t/uuid 9) (t/uuid 11)]]
       (from-params
        {:biff/conn* conn,
         :session {:uid user-id},
-        :params {:sub/id "sub1"}}
+        :params {:sub/id (t/uuid 6)}}
        {})))),
-   :ex #error {
- :cause "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
-   :at [com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]}]
- :trace
- [[com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]
-  [com.biffweb.sqlite$bytes__GT_uuid invoke "sqlite.clj" 134]
-  [com.biffweb.sqlite$make_column_reader$fn__34963 invoke "sqlite.clj" 282]
-  [next.jdbc.result_set$builder_adapter$fn$reify__15405 with_column "result_set.clj" 193]
-  [next.jdbc.result_set$row_builder$fn__15516 invoke "result_set.clj" 447]
-  [clojure.lang.LongRange reduce "LongRange.java" 170]
-  [clojure.core$reduce invokeStatic "core.clj" 6964]
-  [clojure.core$reduce invoke "core.clj" 6947]
-  [next.jdbc.result_set$row_builder invokeStatic "result_set.clj" 447]
-  [next.jdbc.result_set$row_builder invoke "result_set.clj" 443]
-  [next.jdbc.result_set$datafiable_result_set invokeStatic "result_set.clj" 663]
-  [next.jdbc.result_set$datafiable_result_set invoke "result_set.clj" 639]
-  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 905]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 852]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 841]
-  [com.yakread.model.subscription$from_params__64523 invokeStatic "subscription.clj" 241]
-  [com.yakread.model.subscription$from_params__64523 invoke "subscription.clj" 236]
-  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp904609$eval95643$iter__95644__95648$fn__95649$fn__95650 invoke "NO_SOURCE_FILE" 0]
-  [tmp904609$eval95643$iter__95644__95648$fn__95649 invoke "NO_SOURCE_FILE" 0]
-  [clojure.lang.LazySeq force "LazySeq.java" 50]
-  [clojure.lang.LazySeq realize "LazySeq.java" 89]
-  [clojure.lang.LazySeq seq "LazySeq.java" 106]
-  [clojure.lang.RT seq "RT.java" 555]
-  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
-  [clojure.core$dorun invokeStatic "core.clj" 3141]
-  [clojure.core$doall invokeStatic "core.clj" 3156]
-  [clojure.core$doall invoke "core.clj" 3156]
-  [tmp904609$eval95643 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp904609$eval95643 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   ({:params/sub
+     {:sub/id #uuid "00060000-0000-0000-0000-000000000006",
+      :sub/user
+      {:user/id #uuid "00090000-0000-0000-0000-000000000009"}}}
+    nil)}
   _
   {:doc "params-checked",
    :eval
    (t/with-sqlite
     [conn
      {:sub
-      [{:xt/id (t/uuid 0), :sub/user-id "user1"}
+      [{:xt/id (t/uuid 0), :sub/user-id (t/uuid 9)}
        {:xt/id (t/uuid 1),
-        :sub/user-id "user1",
+        :sub/user-id (t/uuid 9),
         :sub/email-unsubscribed-at (t/zdt 2000)}
-       {:xt/id (t/uuid 2), :sub/user-id "user2"}]}]
+       {:xt/id (t/uuid 2), :sub/user-id (t/uuid 11)}]}]
     {:valid
      (params-checked
       {:biff/conn* conn,
-       :session {:uid "user1"},
+       :session {:uid (t/uuid 9)},
        :params {:subs {(str (t/uuid 0)) nil, (str (t/uuid 1)) nil}}}
       {}),
      :unauthorized
      (params-checked
       {:biff/conn* conn,
-       :session {:uid "user1"},
+       :session {:uid (t/uuid 9)},
        :params {:subs {(str (t/uuid 0)) nil, (str (t/uuid 2)) nil}}}
       {}),
      :missing
      (params-checked
       {:biff/conn* conn,
-       :session {:uid "user1"},
+       :session {:uid (t/uuid 9)},
        :params {:subs {(str (t/uuid 0)) nil, (str (t/uuid 3)) nil}}}
       {})}),
-   :ex #error {
- :cause "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
-   :at [com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]}]
- :trace
- [[com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]
-  [com.biffweb.sqlite$bytes__GT_uuid invoke "sqlite.clj" 134]
-  [com.biffweb.sqlite$make_column_reader$fn__34963 invoke "sqlite.clj" 282]
-  [next.jdbc.result_set$builder_adapter$fn$reify__15405 with_column "result_set.clj" 193]
-  [next.jdbc.result_set$row_builder$fn__15516 invoke "result_set.clj" 447]
-  [clojure.lang.LongRange reduce "LongRange.java" 170]
-  [clojure.core$reduce invokeStatic "core.clj" 6964]
-  [clojure.core$reduce invoke "core.clj" 6947]
-  [next.jdbc.result_set$row_builder invokeStatic "result_set.clj" 447]
-  [next.jdbc.result_set$row_builder invoke "result_set.clj" 443]
-  [next.jdbc.result_set$datafiable_result_set invokeStatic "result_set.clj" 663]
-  [next.jdbc.result_set$datafiable_result_set invoke "result_set.clj" 639]
-  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 905]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 852]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 841]
-  [com.yakread.model.subscription$params_checked__64534 invokeStatic "subscription.clj" 254]
-  [com.yakread.model.subscription$params_checked__64534 invoke "subscription.clj" 250]
-  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp904609$eval95659 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp904609$eval95659 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   {:valid
+    {:params.checked/subscriptions
+     [{:sub/id #uuid "00000000-0000-0000-0000-000000000000",
+       :sub/user
+       {:user/id #uuid "00090000-0000-0000-0000-000000000009"}}
+      {:sub/id #uuid "00010000-0000-0000-0000-000000000001",
+       :sub/user
+       {:user/id #uuid "00090000-0000-0000-0000-000000000009"}}]},
+    :unauthorized nil,
+    :missing nil}}
   _
   {:doc "unread-items",
    :eval
    (t/with-sqlite
     [conn
      {:item
-      [{:xt/id "item1", :item/email-sub-id "sub1"}
-       {:xt/id "item2", :item/email-sub-id "sub1"}
-       {:xt/id "item3", :item/feed-id "feed1"}],
+      [{:xt/id (t/uuid 2), :item/email-sub-id (t/uuid 6)}
+       {:xt/id (t/uuid 3), :item/email-sub-id (t/uuid 6)}
+       {:xt/id (t/uuid 4), :item/feed-id (t/uuid 1)}],
       :sub
-      [{:xt/id "sub1", :sub/user-id "user1"}
-       {:xt/id "feed1", :sub/user-id "user1"}],
+      [{:xt/id (t/uuid 6), :sub/user-id (t/uuid 9)}
+       {:xt/id (t/uuid 1), :sub/user-id (t/uuid 9)}],
       :user-item
-      [{:xt/id "user-item1",
-        :user-item/user-id "user1",
-        :user-item/item-id "item1",
+      [{:xt/id (t/uuid 8),
+        :user-item/user-id (t/uuid 9),
+        :user-item/item-id (t/uuid 2),
         :user-item/viewed-at (t/zdt 2000)}]}]
     (unread-items
      {:biff/conn* conn}
-     [{:sub/user {:xt/id "user1"},
-       :sub/items [{:xt/id "item1"} {:xt/id "item2"}]}
-      {:sub/user {:xt/id "user1"}, :sub/items [{:xt/id "item3"}]}])),
-   :ex #error {
- :cause "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
-   :at [com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]}]
- :trace
- [[com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]
-  [com.biffweb.sqlite$bytes__GT_uuid invoke "sqlite.clj" 134]
-  [com.biffweb.sqlite$make_column_reader$fn__34963 invoke "sqlite.clj" 282]
-  [next.jdbc.result_set$builder_adapter$fn$reify__15405 with_column "result_set.clj" 193]
-  [next.jdbc.result_set$row_builder$fn__15516 invoke "result_set.clj" 447]
-  [clojure.lang.LongRange reduce "LongRange.java" 170]
-  [clojure.core$reduce invokeStatic "core.clj" 6964]
-  [clojure.core$reduce invoke "core.clj" 6947]
-  [next.jdbc.result_set$row_builder invokeStatic "result_set.clj" 447]
-  [next.jdbc.result_set$row_builder invoke "result_set.clj" 443]
-  [next.jdbc.result_set$datafiable_result_set invokeStatic "result_set.clj" 663]
-  [next.jdbc.result_set$datafiable_result_set invoke "result_set.clj" 639]
-  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 905]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 852]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 841]
-  [com.yakread.model.subscription$unread_items__64548 invokeStatic "subscription.clj" 275]
-  [com.yakread.model.subscription$unread_items__64548 invoke "subscription.clj" 267]
-  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp904609$eval95661 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp904609$eval95661 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+     [{:sub/user {:xt/id (t/uuid 9)},
+       :sub/items [{:xt/id (t/uuid 2)} {:xt/id (t/uuid 3)}]}
+      {:sub/user {:xt/id (t/uuid 9)},
+       :sub/items [{:xt/id (t/uuid 4)}]}])),
+   :result
+   [{:sub/unread-items
+     [{:xt/id #uuid "00030000-0000-0000-0000-000000000003"}]}
+    {:sub/unread-items
+     [{:xt/id #uuid "00040000-0000-0000-0000-000000000004"}]}]}
   _
   {:doc :mv,
    :eval
    (t/with-sqlite
-    [conn {:mv-sub [{:xt/id "mv-sub1", :mv-sub/sub-id "sub1"}]}]
-    (mv {:biff/conn* conn} [{:xt/id "sub1"}])),
+    [conn {:mv-sub [{:xt/id (t/uuid 5), :mv-sub/sub-id (t/uuid 6)}]}]
+    (mv {:biff/conn* conn} [{:xt/id (t/uuid 6)}])),
    :result [{}]}
   _]}

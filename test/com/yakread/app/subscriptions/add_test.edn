@@ -8,9 +8,9 @@
    (t/test-route
     set-username
     :post
-    {:session {:uid "user1"},
+    {:session {:uid (t/uuid 2)},
      :params {:username "123"},
-     :db {:user [{:xt/id "user1", :user/email-username "abc"}]}}),
+     :db {:user [{:xt/id (t/uuid 2), :user/email-username "abc"}]}}),
    :ex #error {
  :cause "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
  :via
@@ -39,8 +39,8 @@
   [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
   [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
   [clojure.lang.RestFn invoke "RestFn.java" 445]
-  [tmp376588$eval95303 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp376588$eval95303 invoke "NO_SOURCE_FILE" -1]
+  [tmp755677$eval95303 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp755677$eval95303 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -80,8 +80,8 @@
   [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
   [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
   [clojure.lang.RestFn invoke "RestFn.java" 445]
-  [tmp376588$eval95321 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp376588$eval95321 invoke "NO_SOURCE_FILE" -1]
+  [tmp755677$eval95321 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp755677$eval95321 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -123,8 +123,8 @@
   [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
   [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
   [clojure.lang.RestFn invoke "RestFn.java" 445]
-  [tmp376588$eval95339 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp376588$eval95339 invoke "NO_SOURCE_FILE" -1]
+  [tmp755677$eval95339 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp755677$eval95339 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -164,8 +164,8 @@
   [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
   [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
   [clojure.lang.RestFn invoke "RestFn.java" 445]
-  [tmp376588$eval95357 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp376588$eval95357 invoke "NO_SOURCE_FILE" -1]
+  [tmp755677$eval95357 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp755677$eval95357 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -247,8 +247,8 @@
   [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
   [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
   [clojure.lang.RestFn invoke "RestFn.java" 467]
-  [tmp376588$eval95395 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp376588$eval95395 invoke "NO_SOURCE_FILE" -1]
+  [tmp755677$eval95395 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp755677$eval95395 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -297,8 +297,8 @@
   [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
   [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
   [clojure.lang.RestFn invoke "RestFn.java" 467]
-  [tmp376588$eval95413 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp376588$eval95413 invoke "NO_SOURCE_FILE" -1]
+  [tmp755677$eval95413 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp755677$eval95413 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -313,7 +313,7 @@
     {:session {:uid #uuid "12340000-0000-0000-0000-000000000000"},
      :db
      {:feed
-      [{:xt/id "feed1", :feed/url "https://obryant.dev/feed.xml"}]},
+      [{:xt/id (t/uuid 1), :feed/url "https://obryant.dev/feed.xml"}]},
      :biff/now (t/zdt 2000),
      :biff.fx/http
      {:url "https://obryant.dev",
@@ -349,8 +349,8 @@
   [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
   [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
   [clojure.lang.RestFn invoke "RestFn.java" 467]
-  [tmp376588$eval95431 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp376588$eval95431 invoke "NO_SOURCE_FILE" -1]
+  [tmp755677$eval95431 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp755677$eval95431 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -406,8 +406,8 @@
   [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
   [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
   [clojure.lang.RestFn invoke "RestFn.java" 467]
-  [tmp376588$eval95451 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp376588$eval95451 invoke "NO_SOURCE_FILE" -1]
+  [tmp755677$eval95451 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp755677$eval95451 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]

@@ -9,14 +9,16 @@
    (t/with-sqlite
     [conn
      {:item
-      [{:xt/id "item1", :item/url "url1", :item/doc-type :item/direct}
-       {:xt/id "item2",
+      [{:xt/id (t/uuid 1),
+        :item/url "url1",
+        :item/doc-type :item/direct}
+       {:xt/id (t/uuid 2),
         :item/url "url2",
         :item/doc-type :item/direct}],
       :redirect
-      [{:xt/id "redirect1",
+      [{:xt/id (t/uuid 3),
         :redirect/url "url3",
-        :redirect/item-id "item2"}]}]
+        :redirect/item-id (t/uuid 2)}]}]
     (let
      [{:keys [start]}
       (add-item-machine*
@@ -67,9 +69,9 @@
   [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 852]
   [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 841]
   [com.yakread.lib.item$add_item_machine_STAR_$fn__59550 invoke "item.clj" 16]
-  [tmp782449$eval71739$start_STAR___71743 invoke "NO_SOURCE_FILE" 0]
-  [tmp782449$eval71739 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp782449$eval71739 invoke "NO_SOURCE_FILE" -1]
+  [tmp820906$eval71739$start_STAR___71743 invoke "NO_SOURCE_FILE" 0]
+  [tmp820906$eval71739 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp820906$eval71739 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -156,7 +158,7 @@
        (fn
         [ctx params]
         {:on-success {:ctx ctx, :params params},
-         :biff.fx/tx [[:put-docs :stuff {:xt/id "stuff1"}]]})})]
+         :biff.fx/tx [[:put-docs :stuff {:xt/id (t/uuid 4)}]]})})]
     {:error (handle-readability {:com.yakread.lib.item/url "url"}),
      :success
      (t/truncate
@@ -195,7 +197,9 @@
         {:xt/id #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
          :redirect/url "url",
          :redirect/item #uuid "0000c9f6-4f1d-f03a-8ce9-70b71df42503"}]
-       [:put-docs :stuff {:xt/id "stuff1"}]],
+       [:put-docs
+        :stuff
+        {:xt/id #uuid "00040000-0000-0000-0000-000000000004"}]],
       :on-success
       {:ctx
        {:com.yakread.lib.item/url "url",

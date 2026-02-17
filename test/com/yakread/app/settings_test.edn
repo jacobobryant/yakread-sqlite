@@ -6,7 +6,7 @@
    (t/test-route
     save-settings
     :post
-    {:session {:uid "user1"},
+    {:session {:uid (t/uuid 1)},
      :biff.form/params
      {:user/digest-days #{:wednesday :friday :monday},
       :user/send-digest-at 8,
@@ -16,7 +16,7 @@
    {:biff.fx/tx
     [[:patch-docs
       :user
-      {:xt/id "user1",
+      {:xt/id #uuid "00010000-0000-0000-0000-000000000001",
        :user/use-original-links true,
        :user/digest-days #{:wednesday :friday :monday},
        :user/send-digest-at 8,
@@ -29,7 +29,7 @@
    (t/test-route
     save-settings
     :post
-    {:session {:uid "user1"},
+    {:session {:uid (t/uuid 1)},
      :biff.form/params
      {:user/digest-days #{:tuesday},
       :user/send-digest-at 14,
@@ -38,7 +38,7 @@
    {:biff.fx/tx
     [[:patch-docs
       :user
-      {:xt/id "user1",
+      {:xt/id #uuid "00010000-0000-0000-0000-000000000001",
        :user/use-original-links false,
        :user/digest-days #{:tuesday},
        :user/send-digest-at 14,
@@ -51,12 +51,13 @@
    (t/test-route
     set-timezone
     :post
-    {:session {:uid "user1"},
+    {:session {:uid (t/uuid 1)},
      :biff.form/params {:user/timezone* "Europe/London"}}),
    :result
    {:biff.fx/tx
     [[:patch-docs
       :user
-      {:xt/id "user1", :user/timezone* "Europe/London"}]],
+      {:xt/id #uuid "00010000-0000-0000-0000-000000000001",
+       :user/timezone* "Europe/London"}]],
     :status 204}}
   _]}

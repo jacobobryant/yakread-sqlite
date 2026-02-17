@@ -485,14 +485,9 @@
                       ::pco/batch? true}
                      (fn [{:keys [biff/conn* biff/malli-opts*]} inputs]
                        (let [ids (mapv id-key inputs)
-                             coercions (build-coercions attrs)
-                             id-write-fn (get-in coercions [:write id-key])
-                             db-ids (if id-write-fn
-                                      (mapv id-write-fn ids)
-                                      ids)
                              sql-map {:select :*
                                       :from table-key
-                                      :where [:in :id db-ids]}
+                                      :where [:in :id ids]}
                              results (biff-sqlite/execute
                                       {:biff/conn conn* :biff/malli-opts malli-opts*}
                                       (sql/format sql-map))

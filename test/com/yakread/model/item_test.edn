@@ -8,165 +8,112 @@
    (t/with-sqlite
     [conn
      {:user-item
-      [{:xt/id "user-item1",
-        :user-item/user-id "user1",
-        :user-item/item-id "item1",
+      [{:xt/id (t/uuid 29),
+        :user-item/user-id (t/uuid 32),
+        :user-item/item-id (t/uuid 11),
         :user-item/favorited-at (t/zdt 2000)}
-       {:xt/id "user-item2",
-        :user-item/user-id "user1",
-        :user-item/item-id "item2"}
-       {:xt/id "user-item3",
-        :user-item/user-id "user2",
-        :user-item/item-id "item3",
+       {:xt/id (t/uuid 30),
+        :user-item/user-id (t/uuid 32),
+        :user-item/item-id (t/uuid 12)}
+       {:xt/id (t/uuid 31),
+        :user-item/user-id (t/uuid 33),
+        :user-item/item-id (t/uuid 13),
         :user-item/favorited-at (t/zdt 2000)}]}]
-    (user-favorites {:biff/conn* conn} {:user/id "user1"})),
+    (user-favorites {:biff/conn* conn} {:user/id (t/uuid 32)})),
    :result {:user/favorites [], :user/more-favorites false}}
   _
   {:eval
    (t/with-sqlite
     [conn
      {:user-item
-      [{:xt/id "user-item1",
-        :user-item/user-id "user1",
-        :user-item/item-id "item1",
+      [{:xt/id (t/uuid 29),
+        :user-item/user-id (t/uuid 32),
+        :user-item/item-id (t/uuid 11),
         :user-item/bookmarked-at (t/zdt 2000)}
-       {:xt/id "user-item2",
-        :user-item/user-id "user1",
-        :user-item/item-id "item2"}
-       {:xt/id "user-item3",
-        :user-item/user-id "user2",
-        :user-item/item-id "item3",
+       {:xt/id (t/uuid 30),
+        :user-item/user-id (t/uuid 32),
+        :user-item/item-id (t/uuid 12)}
+       {:xt/id (t/uuid 31),
+        :user-item/user-id (t/uuid 33),
+        :user-item/item-id (t/uuid 13),
         :user-item/bookmarked-at (t/zdt 2000)}]}]
-    (user-bookmarks {:biff/conn* conn} {:user/id "user1"})),
+    (user-bookmarks {:biff/conn* conn} {:user/id (t/uuid 32)})),
    :result {:user/bookmarks [], :user/more-bookmarks false}}
   _
   {:eval
    (t/with-sqlite
     [conn
      {:reclist
-      [{:xt/id "reclist1", :reclist/user-id "user1"}
-       {:xt/id "reclist2", :reclist/user-id "user1"}
-       {:xt/id "reclist3", :reclist/user-id "user2"}
-       {:xt/id "reclist4", :reclist/user-id "user1"}
-       {:xt/id "reclist5", :reclist/user-id "user1"}],
+      [{:xt/id (t/uuid 16), :reclist/user-id (t/uuid 32)}
+       {:xt/id (t/uuid 17), :reclist/user-id (t/uuid 32)}
+       {:xt/id (t/uuid 18), :reclist/user-id (t/uuid 33)}
+       {:xt/id (t/uuid 19), :reclist/user-id (t/uuid 32)}
+       {:xt/id (t/uuid 20), :reclist/user-id (t/uuid 32)}],
       :skip
-      [{:xt/id "skip1",
-        :skip/reclist-id "reclist1",
-        :skip/item-id "item1"}
-       {:xt/id "skip2",
-        :skip/reclist-id "reclist2",
-        :skip/item-id "item1"}
-       {:xt/id "skip3",
-        :skip/reclist-id "reclist3",
-        :skip/item-id "item1"}
-       {:xt/id "skip4",
-        :skip/reclist-id "reclist4",
-        :skip/item-id "item2"}
-       {:xt/id "skip5",
-        :skip/reclist-id "reclist5",
-        :skip/item-id "item3"}]}]
+      [{:xt/id (t/uuid 21),
+        :skip/reclist-id (t/uuid 16),
+        :skip/item-id (t/uuid 11)}
+       {:xt/id (t/uuid 22),
+        :skip/reclist-id (t/uuid 17),
+        :skip/item-id (t/uuid 11)}
+       {:xt/id (t/uuid 23),
+        :skip/reclist-id (t/uuid 18),
+        :skip/item-id (t/uuid 11)}
+       {:xt/id (t/uuid 24),
+        :skip/reclist-id (t/uuid 19),
+        :skip/item-id (t/uuid 12)}
+       {:xt/id (t/uuid 25),
+        :skip/reclist-id (t/uuid 20),
+        :skip/item-id (t/uuid 13)}]}]
     (n-skipped
-     {:biff/conn* conn, :session {:uid "user1"}}
-     [{:xt/id "item1"} {:xt/id "item2"} {:xt/id "item4"}])),
-   :ex #error {
- :cause "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
-   :at [com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]}]
- :trace
- [[com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]
-  [com.biffweb.sqlite$bytes__GT_uuid invoke "sqlite.clj" 134]
-  [com.biffweb.sqlite$make_column_reader$fn__34963 invoke "sqlite.clj" 282]
-  [next.jdbc.result_set$builder_adapter$fn$reify__15405 with_column "result_set.clj" 193]
-  [next.jdbc.result_set$row_builder$fn__15516 invoke "result_set.clj" 447]
-  [clojure.lang.LongRange reduce "LongRange.java" 170]
-  [clojure.core$reduce invokeStatic "core.clj" 6964]
-  [clojure.core$reduce invoke "core.clj" 6947]
-  [next.jdbc.result_set$row_builder invokeStatic "result_set.clj" 447]
-  [next.jdbc.result_set$row_builder invoke "result_set.clj" 443]
-  [next.jdbc.result_set$datafiable_result_set invokeStatic "result_set.clj" 663]
-  [next.jdbc.result_set$datafiable_result_set invoke "result_set.clj" 639]
-  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 905]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 852]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 841]
-  [com.yakread.model.item$n_skipped__61108 invokeStatic "item.clj" 77]
-  [com.yakread.model.item$n_skipped__61108 invoke "item.clj" 73]
-  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp49145$eval95695 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp49145$eval95695 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+     {:biff/conn* conn, :session {:uid (t/uuid 32)}}
+     [{:xt/id (t/uuid 11)}
+      {:xt/id (t/uuid 12)}
+      {:xt/id (t/uuid 14)}])),
+   :result
+   [{:xt/id #uuid "00110000-0000-0000-0000-000000000011",
+     :item/n-skipped 0}
+    {:xt/id #uuid "00120000-0000-0000-0000-000000000012",
+     :item/n-skipped 0}
+    {:xt/id #uuid "00140000-0000-0000-0000-000000000014",
+     :item/n-skipped 0}]}
   _
   {:eval
    (t/with-sqlite
     [conn
      {:user-item
-      [{:xt/id "user-item1",
-        :user-item/user-id "user1",
-        :user-item/item-id "item1"}
-       {:xt/id "user-item2",
-        :user-item/user-id "user1",
-        :user-item/item-id "item2"}
-       {:xt/id "user-item3",
-        :user-item/user-id "user2",
-        :user-item/item-id "item3"}]}]
+      [{:xt/id (t/uuid 29),
+        :user-item/user-id (t/uuid 32),
+        :user-item/item-id (t/uuid 11)}
+       {:xt/id (t/uuid 30),
+        :user-item/user-id (t/uuid 32),
+        :user-item/item-id (t/uuid 12)}
+       {:xt/id (t/uuid 31),
+        :user-item/user-id (t/uuid 33),
+        :user-item/item-id (t/uuid 13)}]}]
     (user-item
-     {:biff/conn* conn, :session {:uid "user1"}}
-     [{:xt/id "item1"} {:xt/id "item2"} {:xt/id "item3"}])),
-   :ex #error {
- :cause "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
-   :at [com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]}]
- :trace
- [[com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]
-  [com.biffweb.sqlite$bytes__GT_uuid invoke "sqlite.clj" 134]
-  [com.biffweb.sqlite$make_column_reader$fn__34963 invoke "sqlite.clj" 282]
-  [next.jdbc.result_set$builder_adapter$fn$reify__15405 with_column "result_set.clj" 193]
-  [next.jdbc.result_set$row_builder$fn__15516 invoke "result_set.clj" 447]
-  [clojure.lang.LongRange reduce "LongRange.java" 170]
-  [clojure.core$reduce invokeStatic "core.clj" 6964]
-  [clojure.core$reduce invoke "core.clj" 6947]
-  [next.jdbc.result_set$row_builder invokeStatic "result_set.clj" 447]
-  [next.jdbc.result_set$row_builder invoke "result_set.clj" 443]
-  [next.jdbc.result_set$datafiable_result_set invokeStatic "result_set.clj" 663]
-  [next.jdbc.result_set$datafiable_result_set invoke "result_set.clj" 639]
-  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 905]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 852]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 841]
-  [com.yakread.model.item$user_item__61118 invokeStatic "item.clj" 102]
-  [com.yakread.model.item$user_item__61118 invoke "item.clj" 93]
-  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp49145$eval95697 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp49145$eval95697 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+     {:biff/conn* conn, :session {:uid (t/uuid 32)}}
+     [{:xt/id (t/uuid 11)}
+      {:xt/id (t/uuid 12)}
+      {:xt/id (t/uuid 13)}])),
+   :result
+   [{:xt/id #uuid "00110000-0000-0000-0000-000000000011",
+     :item/user-item
+     {:xt/id #uuid "00290000-0000-0000-0000-000000000029"}}
+    {:xt/id #uuid "00120000-0000-0000-0000-000000000012",
+     :item/user-item
+     {:xt/id #uuid "00300000-0000-0000-0000-000000000030"}}
+    {}]}
   _
   {:doc "image-from-feed",
    :eval
    (t/with-sqlite
     [conn
      {:feed
-      [{:xt/id "feed1", :feed/url "url1", :feed/image-url "image-url1"}
-       {:xt/id "feed2",
+      [{:xt/id (t/uuid 9),
+        :feed/url "url1",
+        :feed/image-url "image-url1"}
+       {:xt/id (t/uuid 10),
         :feed/url "url2",
         :feed/image-url "image-url2"}]}]
     (image-from-feed
@@ -187,80 +134,66 @@
    (t/with-sqlite
     [conn
      {:user-item
-      [{:xt/id "user-item1",
-        :user-item/user-id "user1",
-        :user-item/item-id "item1",
+      [{:xt/id (t/uuid 29),
+        :user-item/user-id (t/uuid 32),
+        :user-item/item-id (t/uuid 11),
         :user-item/viewed-at (t/zdt 2000)}
-       {:xt/id "user-item2",
-        :user-item/user-id "user1",
-        :user-item/item-id "item2",
+       {:xt/id (t/uuid 30),
+        :user-item/user-id (t/uuid 32),
+        :user-item/item-id (t/uuid 12),
         :user-item/viewed-at (t/zdt 1999),
         :user-item/favorited-at (t/zdt 2001)}]}]
     {:all
      (history-items
       {:biff/conn* conn}
-      {:session/user {:xt/id "user1"}}),
+      {:session/user {:xt/id (t/uuid 32)}}),
      :page-1
      (history-items
       (pco/with-node-params {:biff/conn* conn} {:batch-size 1})
-      {:session/user {:xt/id "user1"}}),
+      {:session/user {:xt/id (t/uuid 32)}}),
      :page-2
      (history-items
       {:biff/conn* conn}
-      {:session/user {:xt/id "user1"},
-       :params/paginate-after "item2"})}),
-   :ex #error {
- :cause "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
-   :at [com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]}]
- :trace
- [[com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]
-  [com.biffweb.sqlite$bytes__GT_uuid invoke "sqlite.clj" 134]
-  [com.biffweb.sqlite$make_column_reader$fn__34963 invoke "sqlite.clj" 282]
-  [next.jdbc.result_set$builder_adapter$fn$reify__15405 with_column "result_set.clj" 193]
-  [next.jdbc.result_set$row_builder$fn__15516 invoke "result_set.clj" 447]
-  [clojure.lang.LongRange reduce "LongRange.java" 170]
-  [clojure.core$reduce invokeStatic "core.clj" 6964]
-  [clojure.core$reduce invoke "core.clj" 6947]
-  [next.jdbc.result_set$row_builder invokeStatic "result_set.clj" 447]
-  [next.jdbc.result_set$row_builder invoke "result_set.clj" 443]
-  [next.jdbc.result_set$datafiable_result_set invokeStatic "result_set.clj" 663]
-  [next.jdbc.result_set$datafiable_result_set invoke "result_set.clj" 639]
-  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 905]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 852]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 841]
-  [com.yakread.model.item$history_items__61143 invokeStatic "item.clj" 145]
-  [com.yakread.model.item$history_items__61143 invoke "item.clj" 136]
-  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp49145$eval95701 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp49145$eval95701 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+      {:session/user {:xt/id (t/uuid 32)},
+       :params/paginate-after (t/uuid 12)})}),
+   :result
+   {:all
+    {:user/history-items
+     [{:xt/id #uuid "00120000-0000-0000-0000-000000000012",
+       :item/user-item
+       {:xt/id #uuid "00300000-0000-0000-0000-000000000030"}}
+      {:xt/id #uuid "00110000-0000-0000-0000-000000000011",
+       :item/user-item
+       {:xt/id #uuid "00290000-0000-0000-0000-000000000029"}}]},
+    :page-1
+    {:user/history-items
+     [{:xt/id #uuid "00120000-0000-0000-0000-000000000012",
+       :item/user-item
+       {:xt/id #uuid "00300000-0000-0000-0000-000000000030"}}]},
+    :page-2
+    {:user/history-items
+     [{:xt/id #uuid "00110000-0000-0000-0000-000000000011",
+       :item/user-item
+       {:xt/id #uuid "00290000-0000-0000-0000-000000000029"}}]}}}
   _
   {:doc "feed-sub",
    :eval
    (t/with-sqlite
     [conn
      {:sub
-      [{:xt/id "sub1", :sub/user-id "user1", :sub/feed-id "feed1"}
-       {:xt/id "sub2", :sub/user-id "user1", :sub/feed-id "feed2"}]}]
+      [{:xt/id (t/uuid 26),
+        :sub/user-id (t/uuid 32),
+        :sub/feed-id (t/uuid 9)}
+       {:xt/id (t/uuid 27),
+        :sub/user-id (t/uuid 32),
+        :sub/feed-id (t/uuid 10)}]}]
     (feed-sub
-     {:biff/conn* conn, :session {:uid "user1"}}
-     [{:item.feed/feed {:xt/id "feed1"}}])),
+     {:biff/conn* conn, :session {:uid (t/uuid 32)}}
+     [{:item.feed/feed {:xt/id (t/uuid 9)}}])),
    :result [{:item/sub {:xt/id nil}}]}
   _
   {:doc "email-sub",
-   :eval (email-sub {:item.email/sub {:xt/id "sub3"}}),
+   :eval (email-sub-resolver {:item/email-sub {:xt/id (t/uuid 28)}}),
    :ex #error {
  :cause "Unable to resolve symbol: email-sub in this context"
  :via
@@ -335,71 +268,51 @@
    (t/with-sqlite
     [conn
      {:digest
-      [{:xt/id "digest1", :digest/user-id "user1", :digest/ad-id "ad1"}
-       {:xt/id "digest2",
-        :digest/user-id "user1",
-        :digest/ad-id "ad1"}],
+      [{:xt/id (t/uuid 7),
+        :digest/user-id (t/uuid 32),
+        :digest/ad-id (t/uuid 1)}
+       {:xt/id (t/uuid 8),
+        :digest/user-id (t/uuid 32),
+        :digest/ad-id (t/uuid 1)}],
       :digest-item
-      [{:xt/id "digest-item1",
-        :digest-item/digest-id "digest1",
-        :digest-item/item-id "item2",
+      [{:xt/id (t/uuid 3),
+        :digest-item/digest-id (t/uuid 7),
+        :digest-item/item-id (t/uuid 12),
         :digest-item/kind :digest-item.kind/icymi}
-       {:xt/id "digest-item2",
-        :digest-item/digest-id "digest1",
-        :digest-item/item-id "item3",
+       {:xt/id (t/uuid 4),
+        :digest-item/digest-id (t/uuid 7),
+        :digest-item/item-id (t/uuid 13),
         :digest-item/kind :digest-item.kind/discover}
-       {:xt/id "digest-item3",
-        :digest-item/digest-id "digest1",
-        :digest-item/item-id "item4",
+       {:xt/id (t/uuid 5),
+        :digest-item/digest-id (t/uuid 7),
+        :digest-item/item-id (t/uuid 14),
         :digest-item/kind :digest-item.kind/discover}
-       {:xt/id "digest-item4",
-        :digest-item/digest-id "digest2",
-        :digest-item/item-id "item4",
+       {:xt/id (t/uuid 6),
+        :digest-item/digest-id (t/uuid 8),
+        :digest-item/item-id (t/uuid 14),
         :digest-item/kind :digest-item.kind/discover}]}]
     (digest-sends
-     {:biff/conn* conn, :session {:uid "user1"}}
-     [{:xt/id "item1"}
-      {:xt/id "item2"}
-      {:xt/id "item3"}
-      {:xt/id "item4"}
-      {:xt/id "item5"}
-      {:xt/id "ad1"}
-      {:xt/id "ad2"}])),
-   :ex #error {
- :cause "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
-   :at [com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]}]
- :trace
- [[com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]
-  [com.biffweb.sqlite$bytes__GT_uuid invoke "sqlite.clj" 134]
-  [com.biffweb.sqlite$make_column_reader$fn__34963 invoke "sqlite.clj" 282]
-  [next.jdbc.result_set$builder_adapter$fn$reify__15405 with_column "result_set.clj" 193]
-  [next.jdbc.result_set$row_builder$fn__15516 invoke "result_set.clj" 447]
-  [clojure.lang.LongRange reduce "LongRange.java" 170]
-  [clojure.core$reduce invokeStatic "core.clj" 6964]
-  [clojure.core$reduce invoke "core.clj" 6947]
-  [next.jdbc.result_set$row_builder invokeStatic "result_set.clj" 447]
-  [next.jdbc.result_set$row_builder invoke "result_set.clj" 443]
-  [next.jdbc.result_set$datafiable_result_set invokeStatic "result_set.clj" 663]
-  [next.jdbc.result_set$datafiable_result_set invoke "result_set.clj" 639]
-  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 905]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 852]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 841]
-  [com.yakread.model.item$digest_sends__61242 invokeStatic "item.clj" 299]
-  [com.yakread.model.item$digest_sends__61242 invoke "item.clj" 295]
-  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp49145$eval95706 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp49145$eval95706 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+     {:biff/conn* conn, :session {:uid (t/uuid 32)}}
+     [{:xt/id (t/uuid 11)}
+      {:xt/id (t/uuid 12)}
+      {:xt/id (t/uuid 13)}
+      {:xt/id (t/uuid 14)}
+      {:xt/id (t/uuid 15)}
+      {:xt/id (t/uuid 1)}
+      {:xt/id (t/uuid 2)}])),
+   :result
+   [{:xt/id #uuid "00110000-0000-0000-0000-000000000011",
+     :item/n-digest-sends 0}
+    {:xt/id #uuid "00120000-0000-0000-0000-000000000012",
+     :item/n-digest-sends 0}
+    {:xt/id #uuid "00130000-0000-0000-0000-000000000013",
+     :item/n-digest-sends 0}
+    {:xt/id #uuid "00140000-0000-0000-0000-000000000014",
+     :item/n-digest-sends 0}
+    {:xt/id #uuid "00150000-0000-0000-0000-000000000015",
+     :item/n-digest-sends 0}
+    {:xt/id #uuid "00010000-0000-0000-0000-000000000001",
+     :item/n-digest-sends 0}
+    {:xt/id #uuid "00020000-0000-0000-0000-000000000002",
+     :item/n-digest-sends 0}]}
   _]}

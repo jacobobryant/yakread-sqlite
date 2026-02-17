@@ -21,7 +21,7 @@
                                          [:or
                                           [:= :item/url url]
                                           [:= :redirect/url url]]
-                                         [:= :item/record-type :item.record-type/direct]]
+                                         [:= :item/record-type [:lift :item.record-type/direct]]]
                                  :limit 1}))]
          (on-success ctx {:item/id (:item/id item) :item/url (:item/url item)})
          {:biff.fx/http {:url url

@@ -67,8 +67,5 @@ jobs:
       - name: Download vendored JS dependencies
         run: ./download-vendor-deps.sh
 
-      - name: Install and start MinIO
-        run: ./setup-minio.sh
-
       - name: Install sqlite3def
         run: ./setup-sqlite3def.sh

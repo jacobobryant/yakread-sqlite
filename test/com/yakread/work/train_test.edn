@@ -7,18 +7,18 @@
    (t/with-sqlite
     [conn
      {:item
-      [{:xt/id "item1", :item/url "https://example.com/1"}
-       {:xt/id "item2", :item/url "https://example.com/2"}
-       {:xt/id "item3",
+      [{:xt/id (t/uuid 1), :item/url "https://example.com/1"}
+       {:xt/id (t/uuid 2), :item/url "https://example.com/2"}
+       {:xt/id (t/uuid 3),
         :item/url "https://example.com/2",
         :item/doc-type :item/direct}
-       {:xt/id "item4", :item/url "https://example.com/4"}],
+       {:xt/id (t/uuid 4), :item/url "https://example.com/4"}],
       :user-item
-      [{:xt/id "user-item1",
-        :user-item/item-id "item1",
+      [{:xt/id (t/uuid 5),
+        :user-item/item-id (t/uuid 1),
         :user-item/favorited-at (t/zdt 2000)}
-       {:xt/id "user-item2",
-        :user-item/item-id "item2",
+       {:xt/id (t/uuid 6),
+        :user-item/item-id (t/uuid 2),
         :user-item/favorited-at (t/zdt 2000)}]}]
     (queue-add-candidate
      {:biff/conn* conn,
@@ -66,8 +66,8 @@
   [com.yakread.lib.fx$step invoke "fx.clj" 27]
   [com.yakread.lib.fx$machine$run__53562$fn__53564 invoke "fx.clj" 85]
   [com.yakread.lib.fx$machine$run__53562 invoke "fx.clj" 84]
-  [tmp146473$eval71817 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp146473$eval71817 invoke "NO_SOURCE_FILE" -1]
+  [tmp205861$eval71817 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp205861$eval71817 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]

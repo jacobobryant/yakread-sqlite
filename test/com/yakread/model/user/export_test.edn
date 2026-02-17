@@ -8,9 +8,11 @@
    (t/with-sqlite
     [conn
      {:sub
-      [{:xt/id "sub1", :sub/user-id "user1", :sub/feed-id "feed1"}],
-      :feed [{:xt/id "feed1", :feed/url "url1"}]}]
-    (feed-subs {:biff/conn* conn} {:user/id "user1"})),
+      [{:xt/id (t/uuid 2),
+        :sub/user-id (t/uuid 11),
+        :sub/feed-id (t/uuid 1)}],
+      :feed [{:xt/id (t/uuid 1), :feed/url "url1"}]}]
+    (feed-subs {:biff/conn* conn} {:user/id (t/uuid 11)})),
    :result
    {:user.export/feed-subs
     "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<opml version=\"1.0\">\n  <head><title>Yakread RSS subscriptions</title></head>\n  <body>\n    <outline type=\"rss\" xmlUrl=\"url1\"></outline>\n</body></opml>"}}
@@ -20,25 +22,25 @@
    (t/with-sqlite
     [conn
      {:user-item
-      [{:xt/id "user-item1",
-        :user-item/user-id "user1",
+      [{:xt/id (t/uuid 3),
+        :user-item/user-id (t/uuid 11),
         :user-item/bookmarked-at (t/zdt 2000),
         :user-item/viewed-at (t/zdt 2001),
-        :user-item/item-id "item1"}
-       {:xt/id "user-item2",
-        :user-item/user-id "user1",
+        :user-item/item-id (t/uuid 7)}
+       {:xt/id (t/uuid 4),
+        :user-item/user-id (t/uuid 11),
         :user-item/bookmarked-at (t/zdt 2002),
         :user-item/viewed-at (t/zdt 2003),
-        :user-item/item-id "item2"}
-       {:xt/id "user-item3",
-        :user-item/user-id "user2",
+        :user-item/item-id (t/uuid 8)}
+       {:xt/id (t/uuid 5),
+        :user-item/user-id (t/uuid 12),
         :user-item/bookmarked-at (t/zdt 2002),
         :user-item/viewed-at (t/zdt 2003),
-        :user-item/item-id "item3"}
-       {:xt/id "user-item4",
-        :user-item/user-id "user1",
+        :user-item/item-id (t/uuid 9)}
+       {:xt/id (t/uuid 6),
+        :user-item/user-id (t/uuid 11),
         :user-item/viewed-at (t/zdt 2000),
-        :user-item/item-id "item4"}],
+        :user-item/item-id (t/uuid 10)}],
       :item
       (for
        [i [1 2 3 4]]
@@ -46,7 +48,7 @@
         :item/url (str "url" i),
         :item/title (str "title" i),
         :item/author-name (str "author-name" i)})}]
-    (bookmarks {:biff/conn* conn} {:user/id "user1"})),
+    (bookmarks {:biff/conn* conn} {:user/id (t/uuid 11)})),
    :ex #error {
  :cause "[SQLITE_ERROR] SQL error or missing database (near \"SELECT\": syntax error)"
  :via
@@ -79,8 +81,8 @@
   [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 841]
   [com.yakread.model.user.export$item_resolver$fn__64806 invoke "export.clj" 47]
   [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp58170$eval95675 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp58170$eval95675 invoke "NO_SOURCE_FILE" -1]
+  [tmp503312$eval95675 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp503312$eval95675 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]

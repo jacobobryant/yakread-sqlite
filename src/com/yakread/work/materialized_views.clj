@@ -36,11 +36,11 @@
   (fn [{:biff/keys [conn* job]}]
     (let [{:user-item/keys [user item viewed-at]} job
 
-          {current-item :user-item/item
+          {current-item :user-item/item-id
            current-item-viewed-at :user-item/viewed-at}
           (first
            (biffs/q conn*
-                    {:select [:user-item/item :user-item/viewed-at]
+                    {:select [:user-item/item-id :user-item/viewed-at]
                      :from :mv-user
                      :join [:user-item [:= :user-item/item-id :mv-user/current-item-id]]
                      :where [:= :mv-user/user-id user]}))
@@ -69,18 +69,18 @@
       (for [job
             (distinct
              (cond
-               (:user-item/user record)
+               (:user-item/user-id record)
                (concat
                 (when-some [sub-id (-> (biffs/q
                                         conn*
                                         {:select [[[:coalesce :item/email-sub-id :sub/id]
                                                    :sub-id]]
                                          :from :item
-                                         :where [:= :item/id (:user-item/item record)]
+                                         :where [:= :item/id (:user-item/item-id record)]
                                          :left-join [:sub [:and
                                                            [:is-not :item/feed-id nil]
                                                            [:= :sub/feed-id :item/feed-id]
-                                                           [:= :sub/user-id (:user-item/user record)]]]
+                                                           [:= :sub/user-id (:user-item/user-id record)]]]
                                          :limit 1})
                                        first
                                        :sub-id)]

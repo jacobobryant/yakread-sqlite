@@ -110,10 +110,10 @@
       #time/zoned-date-time "2025-07-13T03:44:57Z[UTC]"}}),
    :result false}
   _
-  {:eval (prepare-digest {:biff/job {:xt/id "user1"}} :start),
+  {:eval (prepare-digest {:biff/job {:xt/id (t/uuid 3)}} :start),
    :result
    {:biff.fx/pathom
-    {:entity {:user/id "user1"},
+    {:entity {:user/id #uuid "00030000-0000-0000-0000-000000000003"},
      :query
      [(:digest/payload
        {:com.wsscode.pathom3.connect.operation/optional? true})
@@ -130,7 +130,7 @@
         {:com.wsscode.pathom3.connect.operation/optional? true})
        [:item/id]}]},
     :biff.fx/next :end,
-    :session {:uid "user1"}}}
+    :session {:uid #uuid "00030000-0000-0000-0000-000000000003"}}}
   _
   {:eval
    (binding
@@ -232,8 +232,8 @@
     {:biff/secret {:mailersend/api-key "12345"},
      :com.yakread.work.digest/payload-size-limit 25,
      :biff/jobs
-     [{:digest/id "digest1", :digest/payload {:a 1}}
-      {:digest/id "digest2", :digest/payload {:b 2}}
+     [{:digest/id (t/uuid 1), :digest/payload {:a 1}}
+      {:digest/id (t/uuid 2), :digest/payload {:b 2}}
       {:digest/id "digest3", :digest/payload {:c 3}}
       {:digest/id "digest4", :digest/payload {:d 4}}
       {:digest/id "digest5", :digest/payload {:e 5}}]}
@@ -255,15 +255,17 @@
     :biff.fx/next :record-bulk-send,
     :com.yakread.work.digest/payload-size 25,
     :com.yakread.work.digest/digest-ids
-    ["digest1" "digest2" "digest3"]}}
+    [#uuid "00010000-0000-0000-0000-000000000001"
+     #uuid "00020000-0000-0000-0000-000000000002"
+     "digest3"]}}
   _
   {:eval
    (send-digest
     {:biff/secret {:mailersend/api-key "12345"},
      :com.yakread.work.digest/n-emails-limit 2,
      :biff/jobs
-     [{:digest/id "digest1", :digest/payload {:a 1}}
-      {:digest/id "digest2", :digest/payload {:b 2}}
+     [{:digest/id (t/uuid 1), :digest/payload {:a 1}}
+      {:digest/id (t/uuid 2), :digest/payload {:b 2}}
       {:digest/id "digest3", :digest/payload {:c 3}}
       {:digest/id "digest4", :digest/payload {:d 4}}
       {:digest/id "digest5", :digest/payload {:e 5}}]}
@@ -286,14 +288,16 @@
      :body "[{\"a\":1},{\"b\":2}]"},
     :biff.fx/next :record-bulk-send,
     :com.yakread.work.digest/payload-size 17,
-    :com.yakread.work.digest/digest-ids ["digest1" "digest2"]}}
+    :com.yakread.work.digest/digest-ids
+    [#uuid "00010000-0000-0000-0000-000000000001"
+     #uuid "00020000-0000-0000-0000-000000000002"]}}
   _
   {:eval
    (send-digest
     {:biff/now (t/zdt 2000),
      :biff.fx/http {:body {:bulk_email_id "abc123"}},
      :com.yakread.work.digest/payload-size 11,
-     :com.yakread.work.digest/digest-ids ["digest1" "digest2"]}
+     :com.yakread.work.digest/digest-ids [(t/uuid 1) (t/uuid 2)]}
     :record-bulk-send),
    :result
    [{:biff.fx/tx
@@ -306,9 +310,9 @@
         :bulk-send/mailersend-id "abc123"}]
       [:patch-docs
        :digest
-       {:xt/id "digest1",
+       {:xt/id #uuid "00010000-0000-0000-0000-000000000001",
         :digest/bulk-send #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"}
-       {:xt/id "digest2",
+       {:xt/id #uuid "00020000-0000-0000-0000-000000000002",
         :digest/bulk-send
         #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"}]]}
     {:biff.fx/sleep 7666}]}

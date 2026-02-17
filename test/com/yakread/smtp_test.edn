@@ -15,7 +15,7 @@
  [{:doc "deliver* invalid domain",
    :eval
    (t/with-sqlite
-    [conn {:user [{:xt/id "user1", :user/email-username "hello"}]}]
+    [conn {:user [{:xt/id (t/uuid 1), :user/email-username "hello"}]}]
     (let
      [f
       (fn
@@ -93,8 +93,8 @@
   [com.yakread.smtp$fn__65758 invokeStatic "smtp.clj" 93]
   [com.yakread.smtp$fn__65758 invoke "smtp.clj" 57]
   [com.yakread.lib.fx$machine$run__53562 invoke "fx.clj" 76]
-  [tmp972307$eval71155 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp972307$eval71155 invoke "NO_SOURCE_FILE" -1]
+  [tmp851203$eval71155 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp851203$eval71155 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -138,8 +138,8 @@
   [com.yakread.smtp$fn__65758 invokeStatic "smtp.clj" 93]
   [com.yakread.smtp$fn__65758 invoke "smtp.clj" 57]
   [com.yakread.lib.fx$machine$run__53562 invoke "fx.clj" 76]
-  [tmp972307$eval71157 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp972307$eval71157 invoke "NO_SOURCE_FILE" -1]
+  [tmp851203$eval71157 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp851203$eval71157 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]

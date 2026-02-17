@@ -12,7 +12,7 @@
   (let [direct-items (biffs/q conn*
                               {:select [:item/id :item/url :item/record-type :item/direct-candidate-status]
                                :from :item
-                               :where [:= :item/record-type :item.record-type/direct]})
+                               :where [:= :item/record-type [:lift :item.record-type/direct]]})
         url->direct-item (into {} (map (juxt :item/url identity)) direct-items)
         item->url (into {}
                         (map (juxt :xt/id :item/url))

@@ -79,10 +79,10 @@
      :download-url "example.com"}}}
   _
   {:doc "delete-account: start state queries user data",
-   :eval (delete-account {:biff/job {:user/id "user123"}} :start),
+   :eval (delete-account {:biff/job {:user/id (t/uuid 11)}} :start),
    :result
    {:biff.fx/pathom
-    {:entity {:user/id "user123"},
+    {:entity {:user/id (t/uuid 11)},
      :query
      [:user/id
       (:user/email-username
@@ -105,12 +105,12 @@
    :eval
    (delete-account
     {:biff.fx/pathom
-     {:user/id "user123",
+     {:user/id (t/uuid 11),
       :user/customer-id "cus_user123",
       :user/subscriptions
-      [{:xt/id "sub1", :sub.feed/feed "feed1"}
-       {:xt/id "sub2", :sub.feed/feed nil}],
-      :user/ad {:xt/id "ad1", :ad/customer-id "cus_ad123"},
+      [{:xt/id (t/uuid 2), :sub.feed/feed (t/uuid 12)}
+       {:xt/id (t/uuid 3), :sub.feed/feed nil}],
+      :user/ad {:xt/id (t/uuid 1), :ad/customer-id "cus_ad123"},
       :user/email-username "user@example.com"},
      :biff/secret {:stripe/api-key "sk_test_123"}}
     :delete),
@@ -127,9 +127,9 @@
        :socket-timeout 10000,
        :connection-timeout 10000})}
     {:biff.fx/tx
-     ([:erase-docs :user "user123"]
-      [:erase-docs :ad "ad1"]
-      [:delete-docs :sub "sub1"]
+     ([:erase-docs :user (t/uuid 11)]
+      [:erase-docs :ad #uuid "00010000-0000-0000-0000-000000000001"]
+      [:delete-docs :sub #uuid "00020000-0000-0000-0000-000000000002"]
       [:put-docs
        :deleted-user
        {:xt/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
@@ -141,7 +141,7 @@
    :eval
    (delete-account
     {:biff.fx/pathom
-     {:user/id "user123",
+     {:user/id (t/uuid 11),
       :user/customer-id "cus_user123",
       :user/subscriptions [],
       :user/ad nil,
@@ -155,14 +155,14 @@
        :basic-auth ["sk_test_123"],
        :socket-timeout 10000,
        :connection-timeout 10000})}
-    {:biff.fx/tx ([:erase-docs :user "user123"]),
+    {:biff.fx/tx ([:erase-docs :user (t/uuid 11)]),
      :biff.fx/next :delete-email-batch}]}
   _
   {:doc "delete-account: delete state with no customer ids",
    :eval
    (delete-account
     {:biff.fx/pathom
-     {:user/id "user123",
+     {:user/id (t/uuid 11),
       :user/customer-id nil,
       :user/subscriptions [],
       :user/ad nil,
@@ -171,15 +171,15 @@
     :delete),
    :result
    [{:biff.fx/http ()}
-    {:biff.fx/tx ([:erase-docs :user "user123"]),
+    {:biff.fx/tx ([:erase-docs :user (t/uuid 11)]),
      :biff.fx/next :delete-email-batch}]}
   _
   {:doc "delete-account: delete-email-batch with no emails",
    :eval
    (delete-account
     {:biff/conn* nil,
-     :biff/job {:user/id "user123"},
-     :session {:uid "user123"},
+     :biff/job {:user/id (t/uuid 11)},
+     :session {:uid (t/uuid 11)},
      :com.yakread.work.account/email-ids []}
     :delete-email-batch),
    :result nil}
@@ -230,8 +230,8 @@
   [com.yakread.work.account$fn__65312 invokeStatic "account.clj" 115]
   [com.yakread.work.account$fn__65312 invoke "account.clj" 103]
   [com.yakread.lib.fx$machine$run__53562 invoke "fx.clj" 76]
-  [tmp392586$eval71887 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp392586$eval71887 invoke "NO_SOURCE_FILE" -1]
+  [tmp763941$eval71887 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp763941$eval71887 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]

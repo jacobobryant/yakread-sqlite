@@ -8,7 +8,7 @@
    (t/test-route
     record-item-click
     :post
-    {:db {},
+    {:sqlite-db {},
      :biff/safe-params
      {:action :action/click-item,
       :t (t/zdt 2000),
@@ -46,8 +46,8 @@
   [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
   [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
   [clojure.lang.RestFn invoke "RestFn.java" 445]
-  [tmp271929$eval71969 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp271929$eval71969 invoke "NO_SOURCE_FILE" -1]
+  [tmp160201$eval71969 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp160201$eval71969 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -65,10 +65,10 @@
         :reclist/user (t/uuid 5),
         :reclist/created-at (t/zdt 2000)}],
       :skip
-      [{:xt/id "skip1",
+      [{:xt/id (t/uuid 1),
         :skip/reclist (t/uuid 0),
         :skip/item (t/uuid 2)}
-       {:xt/id "skip2",
+       {:xt/id (t/uuid 2),
         :skip/reclist (t/uuid 0),
         :skip/item (t/uuid 3)}]},
      :biff/safe-params
@@ -108,8 +108,8 @@
   [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
   [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
   [clojure.lang.RestFn invoke "RestFn.java" 445]
-  [tmp271929$eval95267 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp271929$eval95267 invoke "NO_SOURCE_FILE" -1]
+  [tmp160201$eval95267 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp160201$eval95267 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -120,7 +120,7 @@
    (t/test-route
     record-ad-click
     :post
-    {:db {},
+    {:sqlite-db {},
      :biff/safe-params
      {:action :action/click-ad,
       :t (t/zdt 2000),
@@ -160,8 +160,8 @@
   [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
   [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
   [clojure.lang.RestFn invoke "RestFn.java" 445]
-  [tmp271929$eval95285 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp271929$eval95285 invoke "NO_SOURCE_FILE" -1]
+  [tmp160201$eval95285 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp160201$eval95285 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
