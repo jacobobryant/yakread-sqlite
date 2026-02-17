@@ -36,40 +36,17 @@
     {:email-doc-type
      (latest-email-item
       {:biff/conn* conn}
-      {:sub/record-type :sub.record-type/email, :sub/id (t/uuid 6)}),
+      {:sub/doc-type :sub/email, :sub/id (t/uuid 6)}),
      :feed-doc-type
      (latest-email-item
       {:biff/conn* conn}
-      {:sub/record-type :sub.record-type/feed, :sub/id (t/uuid 6)}),
+      {:sub/doc-type :sub/feed, :sub/id (t/uuid 6)}),
      :no-items
      (latest-email-item
       {:biff/conn* conn}
-      {:sub/record-type :sub.record-type/email, :sub/id (t/uuid 12)})}),
-   :ex #error {
- :cause "Don't know how to create ISeq from: clojure.lang.Keyword"
- :via
- [{:type java.lang.IllegalArgumentException
-   :message "Don't know how to create ISeq from: clojure.lang.Keyword"
-   :at [clojure.lang.RT seqFrom "RT.java" 577]}]
- :trace
- [[clojure.lang.RT seqFrom "RT.java" 577]
-  [clojure.lang.RT seq "RT.java" 557]
-  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
-  [clojure.core$some invokeStatic "core.clj" 2709]
-  [clojure.core$some invoke "core.clj" 2709]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invokeStatic "biff_staging.clj" 846]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invoke "biff_staging.clj" 841]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 878]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
-  [com.yakread.model.subscription$latest_email_item__64322 invokeStatic "subscription.clj" 58]
-  [com.yakread.model.subscription$latest_email_item__64322 invoke "subscription.clj" 55]
-  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp531221$eval95623 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp531221$eval95623 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+      {:sub/record-type :sub.record-type/email,
+       :sub/id (t/uuid 12)})}),
+   :result {:email-doc-type nil, :feed-doc-type nil, :no-items nil}}
   _
   {:doc "total",
    :eval
@@ -81,9 +58,9 @@
        {:xt/id (t/uuid 4), :item/feed-id (t/uuid 1)}]}]
     (total
      {:biff/conn* conn}
-     [{:sub/source-id (t/uuid 6), :sub/record-type :sub.record-type/email}
-      {:sub/source-id (t/uuid 1), :sub/record-type :sub.record-type/feed}
-      {:sub/source-id (t/uuid 10), :sub/record-type :sub.record-type/feed}])),
+     [{:sub/source-id (t/uuid 6), :sub/doc-type :sub/email}
+      {:sub/source-id (t/uuid 1), :sub/doc-type :sub/feed}
+      {:sub/source-id (t/uuid 10), :sub/doc-type :sub/feed}])),
    :result
    [{:sub/source-id #uuid "00060000-0000-0000-0000-000000000006",
      :sub/total 0}
@@ -108,10 +85,10 @@
     (items-read
      {:biff/conn* conn}
      [{:sub/source-id (t/uuid 6),
-       :sub/record-type :sub.record-type/email,
+       :sub/doc-type :sub/email,
        :sub/user {:xt/id (t/uuid 9)}}
       {:sub/source-id (t/uuid 1),
-       :sub/record-type :sub.record-type/feed,
+       :sub/doc-type :sub/feed,
        :sub/user {:xt/id (t/uuid 9)}}])),
    :result
    [{:sub/user {:xt/id #uuid "00090000-0000-0000-0000-000000000009"},
@@ -142,13 +119,13 @@
     (published-at
      {:biff/conn* conn}
      [{:sub/source-id (t/uuid 6),
-       :sub/record-type :sub.record-type/email,
+       :sub/doc-type :sub/email,
        :sub/created-at (t/zdt 2003)}
       {:sub/source-id (t/uuid 1),
-       :sub/record-type :sub.record-type/feed,
+       :sub/doc-type :sub/feed,
        :sub/created-at (t/zdt 2004)}
       {:sub/source-id (t/uuid 10),
-       :sub/record-type :sub.record-type/feed,
+       :sub/doc-type :sub/feed,
        :sub/created-at (t/zdt 2005)}])),
    :result
    [{:sub/source-id #uuid "00060000-0000-0000-0000-000000000006",
@@ -169,9 +146,9 @@
        {:xt/id (t/uuid 4), :item/feed-id (t/uuid 1)}]}]
     (items
      {:biff/conn* conn}
-     [{:sub/source-id (t/uuid 6), :sub/record-type :sub.record-type/email}
-      {:sub/source-id (t/uuid 1), :sub/record-type :sub.record-type/feed}
-      {:sub/source-id (t/uuid 10), :sub/record-type :sub.record-type/feed}])),
+     [{:sub/source-id (t/uuid 6), :sub/doc-type :sub/email}
+      {:sub/source-id (t/uuid 1), :sub/doc-type :sub/feed}
+      {:sub/source-id (t/uuid 10), :sub/doc-type :sub/feed}])),
    :result
    [{:sub/source-id #uuid "00060000-0000-0000-0000-000000000006",
      :sub/items []}
@@ -197,10 +174,10 @@
     (latest-item
      {:biff/conn* conn}
      [{:sub/source-id (t/uuid 6),
-       :sub/record-type :sub.record-type/email,
+       :sub/doc-type :sub/email,
        :sub/published-at (t/zdt 2001)}
       {:sub/source-id (t/uuid 1),
-       :sub/record-type :sub.record-type/feed,
+       :sub/doc-type :sub/feed,
        :sub/published-at (t/zdt 2002)}])),
    :result [{} {}]}
   _

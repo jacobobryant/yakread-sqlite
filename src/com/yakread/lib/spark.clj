@@ -33,7 +33,8 @@
   {::pco/output [{::all-ads [:xt/id]}
                  {::ad-candidates [:xt/id]}]}
   (let [all-ads (into []
-                      (comp (map #(clojure.set/rename-keys % {:ad/id :xt/id}))
+                      (comp (map #(clojure.set/rename-keys % {:ad/id :xt/id
+                                                              :recent-cost :ad/recent-cost}))
                             (remove (comp nil? :xt/id)))
                       (biffs/q conn*
                                {:select [:ad/id

@@ -16,46 +16,42 @@
       :item/id (t/uuid 1),
       :user/id (t/uuid 0)},
      :biff/now (t/zdt 2000)}),
-   :ex #error {
- :cause "Don't know how to create ISeq from: java.lang.Long"
- :via
- [{:type java.lang.IllegalArgumentException
-   :message "Don't know how to create ISeq from: java.lang.Long"
-   :at [clojure.lang.RT seqFrom "RT.java" 577]}]
- :trace
- [[clojure.lang.RT seqFrom "RT.java" 577]
-  [clojure.lang.RT seq "RT.java" 557]
-  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
-  [clojure.core$some invokeStatic "core.clj" 2709]
-  [clojure.core$some invoke "core.clj" 2709]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invokeStatic "biff_staging.clj" 846]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invoke "biff_staging.clj" 841]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 878]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
-  [com.yakread.app.for_you$fn__59689$fn__59691 invoke "for_you.clj" 76]
-  [clojure.lang.AFn applyToHelper "AFn.java" 154]
-  [clojure.lang.AFn applyTo "AFn.java" 144]
-  [clojure.core$apply invokeStatic "core.clj" 667]
-  [clojure.core$apply invoke "core.clj" 662]
-  [com.yakread.lib.fx$wrap_hiccup$fn__53614 doInvoke "fx.clj" 125]
-  [clojure.lang.RestFn invoke "RestFn.java" 411]
-  [com.yakread.lib.fx$machine$run__53588 invoke "fx.clj" 76]
-  [com.yakread.lib.test$test_route invokeStatic "test.clj" 140]
-  [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
-  [clojure.lang.RestFn invoke "RestFn.java" 445]
-  [tmp765539$eval71995 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp765539$eval71995 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   {:status 204,
+    :biff.fx/tx
+    ([:biff/upsert
+      :reclist
+      [:reclist/user :reclist/created-at]
+      {:reclist/user #uuid "00000000-0000-0000-0000-000000000000",
+       :reclist/created-at
+       #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
+       :reclist/clicked
+       #{#uuid "00010000-0000-0000-0000-000000000001"},
+       :xt/id #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be"}]
+     [:biff/upsert
+      :skip
+      [:skip/reclist :skip/item]
+      {:skip/reclist #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
+       :skip/item #uuid "00020000-0000-0000-0000-000000000002",
+       :xt/id #uuid "0000c9f6-4f1d-f03a-8ce9-70b71df42503"}
+      {:skip/reclist #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
+       :skip/item #uuid "00030000-0000-0000-0000-000000000003",
+       :xt/id #uuid "0000ba3d-c812-a76d-554d-cd2b40b5f04b"}]
+     [:biff/upsert
+      :user-item
+      [:user-item/user :user-item/item]
+      {:user-item/user #uuid "00000000-0000-0000-0000-000000000000",
+       :user-item/item #uuid "00010000-0000-0000-0000-000000000001",
+       :user-item/viewed-at
+       #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
+       :xt/id #uuid "0000c222-9cef-e94d-fc1e-932efb9a0f58"}])}}
   _
   {:doc "record-item-click with existing skips",
    :eval
    (t/test-route
     record-item-click
     :post
-    {:db
+    {:sqlite-db
      {:reclist
       [{:xt/id (t/uuid 0),
         :reclist/clicked #{(t/uuid 1) (t/uuid 4)},
@@ -111,8 +107,8 @@
   [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
   [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
   [clojure.lang.RestFn invoke "RestFn.java" 445]
-  [tmp765539$eval71997 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp765539$eval71997 invoke "NO_SOURCE_FILE" -1]
+  [tmp820220$eval71997 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp820220$eval71997 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -133,37 +129,25 @@
       :ad.click/source :ad-click.source/email,
       :user/id (t/uuid 0)},
      :biff/now (t/zdt 2000)}),
-   :ex #error {
- :cause "Don't know how to create ISeq from: java.lang.Long"
- :via
- [{:type java.lang.IllegalArgumentException
-   :message "Don't know how to create ISeq from: java.lang.Long"
-   :at [clojure.lang.RT seqFrom "RT.java" 577]}]
- :trace
- [[clojure.lang.RT seqFrom "RT.java" 577]
-  [clojure.lang.RT seq "RT.java" 557]
-  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
-  [clojure.core$some invokeStatic "core.clj" 2709]
-  [clojure.core$some invoke "core.clj" 2709]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invokeStatic "biff_staging.clj" 846]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invoke "biff_staging.clj" 841]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 878]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
-  [com.yakread.app.for_you$fn__59705$fn__59707 invoke "for_you.clj" 106]
-  [clojure.lang.AFn applyToHelper "AFn.java" 154]
-  [clojure.lang.AFn applyTo "AFn.java" 144]
-  [clojure.core$apply invokeStatic "core.clj" 667]
-  [clojure.core$apply invoke "core.clj" 662]
-  [com.yakread.lib.fx$wrap_hiccup$fn__53614 doInvoke "fx.clj" 125]
-  [clojure.lang.RestFn invoke "RestFn.java" 411]
-  [com.yakread.lib.fx$machine$run__53588 invoke "fx.clj" 76]
-  [com.yakread.lib.test$test_route invokeStatic "test.clj" 140]
-  [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
-  [clojure.lang.RestFn invoke "RestFn.java" 445]
-  [tmp765539$eval95295 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp765539$eval95295 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   {:status 204,
+    :biff.fx/tx
+    ([:biff/upsert
+      :reclist
+      [:reclist/user :reclist/created-at]
+      {:reclist/user #uuid "00000000-0000-0000-0000-000000000000",
+       :reclist/created-at
+       #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
+       :reclist/clicked
+       #{#uuid "00010000-0000-0000-0000-000000000001"},
+       :xt/id #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be"}]
+     [:biff/upsert
+      :ad-click
+      [:ad.click/user :ad.click/ad]
+      {:ad.click/user #uuid "00000000-0000-0000-0000-000000000000",
+       :ad.click/ad #uuid "00010000-0000-0000-0000-000000000001",
+       :ad.click/created-at
+       #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
+       :ad.click/cost 50,
+       :ad.click/source :ad-click.source/email}])}}
   _]}

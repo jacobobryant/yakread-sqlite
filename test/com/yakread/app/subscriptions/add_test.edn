@@ -12,20 +12,21 @@
      :params {:username "123"},
      :db {:user [{:xt/id (t/uuid 2), :user/email-username "abc"}]}}),
    :ex #error {
- :cause "Don't know how to create ISeq from: java.lang.Long"
+ :cause "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
  :via
  [{:type java.lang.IllegalArgumentException
-   :message "Don't know how to create ISeq from: java.lang.Long"
-   :at [clojure.lang.RT seqFrom "RT.java" 577]}]
+   :message "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
+   :at [clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]}]
  :trace
- [[clojure.lang.RT seqFrom "RT.java" 577]
-  [clojure.lang.RT seq "RT.java" 557]
-  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
-  [clojure.core$some invokeStatic "core.clj" 2709]
-  [clojure.core$some invoke "core.clj" 2709]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invokeStatic "biff_staging.clj" 846]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invoke "biff_staging.clj" 841]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 878]
+ [[clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]
+  [clojure.core$_cache_protocol_fn invoke "core_deftype.clj" 577]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
+  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
+  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 882]
   [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
   [com.yakread.app.subscriptions.add$eval60570$fn__60578 invoke "add.clj" 27]
   [clojure.lang.AFn applyToHelper "AFn.java" 154]
@@ -38,8 +39,8 @@
   [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
   [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
   [clojure.lang.RestFn invoke "RestFn.java" 445]
-  [tmp642252$eval95297 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp642252$eval95297 invoke "NO_SOURCE_FILE" -1]
+  [tmp508853$eval95297 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp508853$eval95297 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -52,20 +53,21 @@
     :post
     {:db {}, :session {:uid 1}, :params {:username "admin"}}),
    :ex #error {
- :cause "Don't know how to create ISeq from: java.lang.Long"
+ :cause "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
  :via
  [{:type java.lang.IllegalArgumentException
-   :message "Don't know how to create ISeq from: java.lang.Long"
-   :at [clojure.lang.RT seqFrom "RT.java" 577]}]
+   :message "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
+   :at [clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]}]
  :trace
- [[clojure.lang.RT seqFrom "RT.java" 577]
-  [clojure.lang.RT seq "RT.java" 557]
-  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
-  [clojure.core$some invokeStatic "core.clj" 2709]
-  [clojure.core$some invoke "core.clj" 2709]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invokeStatic "biff_staging.clj" 846]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invoke "biff_staging.clj" 841]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 878]
+ [[clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]
+  [clojure.core$_cache_protocol_fn invoke "core_deftype.clj" 577]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
+  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
+  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 882]
   [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
   [com.yakread.app.subscriptions.add$eval60570$fn__60578 invoke "add.clj" 27]
   [clojure.lang.AFn applyToHelper "AFn.java" 154]
@@ -78,8 +80,8 @@
   [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
   [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
   [clojure.lang.RestFn invoke "RestFn.java" 445]
-  [tmp642252$eval95315 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp642252$eval95315 invoke "NO_SOURCE_FILE" -1]
+  [tmp508853$eval95315 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp508853$eval95315 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -94,20 +96,21 @@
      :session {:uid 1},
      :params {:username "abc"}}),
    :ex #error {
- :cause "Don't know how to create ISeq from: java.lang.Long"
+ :cause "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
  :via
  [{:type java.lang.IllegalArgumentException
-   :message "Don't know how to create ISeq from: java.lang.Long"
-   :at [clojure.lang.RT seqFrom "RT.java" 577]}]
+   :message "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
+   :at [clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]}]
  :trace
- [[clojure.lang.RT seqFrom "RT.java" 577]
-  [clojure.lang.RT seq "RT.java" 557]
-  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
-  [clojure.core$some invokeStatic "core.clj" 2709]
-  [clojure.core$some invoke "core.clj" 2709]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invokeStatic "biff_staging.clj" 846]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invoke "biff_staging.clj" 841]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 878]
+ [[clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]
+  [clojure.core$_cache_protocol_fn invoke "core_deftype.clj" 577]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
+  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
+  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 882]
   [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
   [com.yakread.app.subscriptions.add$eval60570$fn__60578 invoke "add.clj" 27]
   [clojure.lang.AFn applyToHelper "AFn.java" 154]
@@ -120,8 +123,8 @@
   [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
   [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
   [clojure.lang.RestFn invoke "RestFn.java" 445]
-  [tmp642252$eval95333 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp642252$eval95333 invoke "NO_SOURCE_FILE" -1]
+  [tmp508853$eval95333 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp508853$eval95333 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -134,20 +137,21 @@
     :post
     {:db {}, :session {:uid 1}, :params {:username "abc"}}),
    :ex #error {
- :cause "Don't know how to create ISeq from: java.lang.Long"
+ :cause "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
  :via
  [{:type java.lang.IllegalArgumentException
-   :message "Don't know how to create ISeq from: java.lang.Long"
-   :at [clojure.lang.RT seqFrom "RT.java" 577]}]
+   :message "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
+   :at [clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]}]
  :trace
- [[clojure.lang.RT seqFrom "RT.java" 577]
-  [clojure.lang.RT seq "RT.java" 557]
-  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
-  [clojure.core$some invokeStatic "core.clj" 2709]
-  [clojure.core$some invoke "core.clj" 2709]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invokeStatic "biff_staging.clj" 846]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invoke "biff_staging.clj" 841]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 878]
+ [[clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]
+  [clojure.core$_cache_protocol_fn invoke "core_deftype.clj" 577]
+  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
+  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
+  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 882]
   [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
   [com.yakread.app.subscriptions.add$eval60570$fn__60578 invoke "add.clj" 27]
   [clojure.lang.AFn applyToHelper "AFn.java" 154]
@@ -160,8 +164,8 @@
   [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
   [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
   [clojure.lang.RestFn invoke "RestFn.java" 445]
-  [tmp642252$eval95351 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp642252$eval95351 invoke "NO_SOURCE_FILE" -1]
+  [tmp508853$eval95351 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp508853$eval95351 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -243,8 +247,8 @@
   [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
   [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
   [clojure.lang.RestFn invoke "RestFn.java" 467]
-  [tmp642252$eval95389 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp642252$eval95389 invoke "NO_SOURCE_FILE" -1]
+  [tmp508853$eval95389 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp508853$eval95389 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -293,8 +297,8 @@
   [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
   [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
   [clojure.lang.RestFn invoke "RestFn.java" 467]
-  [tmp642252$eval95407 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp642252$eval95407 invoke "NO_SOURCE_FILE" -1]
+  [tmp508853$eval95407 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp508853$eval95407 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -345,8 +349,8 @@
   [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
   [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
   [clojure.lang.RestFn invoke "RestFn.java" 467]
-  [tmp642252$eval95425 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp642252$eval95425 invoke "NO_SOURCE_FILE" -1]
+  [tmp508853$eval95425 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp508853$eval95425 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -402,8 +406,8 @@
   [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
   [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
   [clojure.lang.RestFn invoke "RestFn.java" 467]
-  [tmp642252$eval95445 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp642252$eval95445 invoke "NO_SOURCE_FILE" -1]
+  [tmp508853$eval95445 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp508853$eval95445 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]

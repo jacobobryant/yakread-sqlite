@@ -17,33 +17,7 @@
      {:biff/conn* conn, :biff/now (t/zdt 2003 1 10)}
      {:user/subscriptions
       [{:sub/items [{:xt/id (t/uuid 1)} {:xt/id (t/uuid 2)}]}]})),
-   :ex #error {
- :cause "Don't know how to create ISeq from: clojure.lang.Keyword"
- :via
- [{:type java.lang.IllegalArgumentException
-   :message "Don't know how to create ISeq from: clojure.lang.Keyword"
-   :at [clojure.lang.RT seqFrom "RT.java" 577]}]
- :trace
- [[clojure.lang.RT seqFrom "RT.java" 577]
-  [clojure.lang.RT seq "RT.java" 557]
-  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
-  [clojure.core$some invokeStatic "core.clj" 2709]
-  [clojure.core$some invoke "core.clj" 2709]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invokeStatic "biff_staging.clj" 846]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invoke "biff_staging.clj" 841]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 878]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
-  [com.yakread.model.digest$recent_items invokeStatic "digest.clj" 17]
-  [com.yakread.model.digest$recent_items invoke "digest.clj" 11]
-  [com.yakread.model.digest$digest_sub_items__61030 invokeStatic "digest.clj" 31]
-  [com.yakread.model.digest$digest_sub_items__61030 invoke "digest.clj" 26]
-  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp140780$eval95659 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp140780$eval95659 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result {:user/digest-sub-items []}}
   _
   {:eval
    (t/with-sqlite
@@ -60,33 +34,7 @@
      {:user/digest-last-sent (t/zdt 2003 1 5),
       :user/subscriptions
       [{:sub/items [{:xt/id (t/uuid 1)} {:xt/id (t/uuid 2)}]}]})),
-   :ex #error {
- :cause "Don't know how to create ISeq from: clojure.lang.Keyword"
- :via
- [{:type java.lang.IllegalArgumentException
-   :message "Don't know how to create ISeq from: clojure.lang.Keyword"
-   :at [clojure.lang.RT seqFrom "RT.java" 577]}]
- :trace
- [[clojure.lang.RT seqFrom "RT.java" 577]
-  [clojure.lang.RT seq "RT.java" 557]
-  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
-  [clojure.core$some invokeStatic "core.clj" 2709]
-  [clojure.core$some invoke "core.clj" 2709]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invokeStatic "biff_staging.clj" 846]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invoke "biff_staging.clj" 841]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 878]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
-  [com.yakread.model.digest$recent_items invokeStatic "digest.clj" 17]
-  [com.yakread.model.digest$recent_items invoke "digest.clj" 11]
-  [com.yakread.model.digest$digest_sub_items__61030 invokeStatic "digest.clj" 31]
-  [com.yakread.model.digest$digest_sub_items__61030 invoke "digest.clj" 26]
-  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp140780$eval95661 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp140780$eval95661 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result {:user/digest-sub-items []}}
   _
   {:eval
    (t/with-sqlite
@@ -101,31 +49,5 @@
     (digest-bookmarks
      {:biff/conn* conn, :biff/now (t/zdt 2003 1 10)}
      {:user/bookmarks [{:xt/id (t/uuid 1)} {:xt/id (t/uuid 2)}]})),
-   :ex #error {
- :cause "Don't know how to create ISeq from: clojure.lang.Keyword"
- :via
- [{:type java.lang.IllegalArgumentException
-   :message "Don't know how to create ISeq from: clojure.lang.Keyword"
-   :at [clojure.lang.RT seqFrom "RT.java" 577]}]
- :trace
- [[clojure.lang.RT seqFrom "RT.java" 577]
-  [clojure.lang.RT seq "RT.java" 557]
-  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
-  [clojure.core$some invokeStatic "core.clj" 2709]
-  [clojure.core$some invoke "core.clj" 2709]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invokeStatic "biff_staging.clj" 846]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invoke "biff_staging.clj" 841]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 878]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
-  [com.yakread.model.digest$recent_items invokeStatic "digest.clj" 17]
-  [com.yakread.model.digest$recent_items invoke "digest.clj" 11]
-  [com.yakread.model.digest$digest_bookmarks__61036 invokeStatic "digest.clj" 43]
-  [com.yakread.model.digest$digest_bookmarks__61036 invoke "digest.clj" 37]
-  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp140780$eval95663 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp140780$eval95663 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result {:user/digest-bookmarks []}}
   _]}

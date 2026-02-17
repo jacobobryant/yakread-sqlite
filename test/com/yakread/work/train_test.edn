@@ -26,74 +26,10 @@
       {:work.train/add-candidate
        (java.util.concurrent.ConcurrentLinkedQueue.)},
       :yakread.work.queue-add-candidate/enabled true})),
-   :ex #error {
- :cause "Don't know how to create ISeq from: clojure.lang.Keyword"
- :via
- [{:type clojure.lang.ExceptionInfo
-   :message "Exception while running biff.fx machine"
-   :data {:machine :com.yakread.work.train/queue-add-candidate, :state :start, :trace []}
-   :at [com.yakread.lib.fx$machine$run__53588$fn__53590 invoke "fx.clj" 90]}
-  {:type java.lang.IllegalArgumentException
-   :message "Don't know how to create ISeq from: clojure.lang.Keyword"
-   :at [clojure.lang.RT seqFrom "RT.java" 577]}]
- :trace
- [[clojure.lang.RT seqFrom "RT.java" 577]
-  [clojure.lang.RT seq "RT.java" 557]
-  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
-  [clojure.core$some invokeStatic "core.clj" 2709]
-  [clojure.core$some invoke "core.clj" 2709]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invokeStatic "biff_staging.clj" 846]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invoke "biff_staging.clj" 841]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 878]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
-  [com.yakread.work.train$fn__65725 invokeStatic "train.clj" 52]
-  [com.yakread.work.train$fn__65725 invoke "train.clj" 37]
-  [com.yakread.lib.fx$step invokeStatic "fx.clj" 34]
-  [com.yakread.lib.fx$step invoke "fx.clj" 27]
-  [com.yakread.lib.fx$machine$run__53588$fn__53590 invoke "fx.clj" 85]
-  [com.yakread.lib.fx$machine$run__53588 invoke "fx.clj" 84]
-  [tmp134119$eval71843 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp134119$eval71843 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]
-  [com.yakread.lib.test$eval_STAR_$fn__70645$fn__70646 invoke "test.clj" 200]
-  [com.yakread.lib.test$eval_STAR_$fn__70645 invoke "test.clj" 199]
-  [com.yakread.lib.test$tapped_STAR_ invokeStatic "test.clj" 183]
-  [com.yakread.lib.test$tapped_STAR_ invoke "test.clj" 172]
-  [com.yakread.lib.test$eval_STAR_ invokeStatic "test.clj" 197]
-  [com.yakread.lib.test$eval_STAR_ invoke "test.clj" 195]
-  [clojure.core$mapv$fn__8565 invoke "core.clj" 7059]
-  [clojure.lang.ArrayChunk reduce "ArrayChunk.java" 60]
-  [clojure.core.protocols$fn__8270 invokeStatic "protocols.clj" 135]
-  [clojure.core.protocols$fn__8270 invoke "protocols.clj" 123]
-  [clojure.core.protocols$fn__8229$G__8224__8238 invoke "protocols.clj" 19]
-  [clojure.core.protocols$seq_reduce invokeStatic "protocols.clj" 31]
-  [clojure.core.protocols$fn__8262 invokeStatic "protocols.clj" 74]
-  [clojure.core.protocols$fn__8262 invoke "protocols.clj" 74]
-  [clojure.core.protocols$fn__8203$G__8198__8216 invoke "protocols.clj" 13]
-  [clojure.core$reduce invokeStatic "core.clj" 6965]
-  [clojure.core$mapv invokeStatic "core.clj" 7050]
-  [clojure.core$mapv invoke "core.clj" 7050]
-  [com.yakread.lib.test$run_examples_BANG_$fn__70687 invoke "test.clj" 259]
-  [com.yakread.lib.test$run_examples_BANG_ invokeStatic "test.clj" 252]
-  [com.yakread.lib.test$run_examples_BANG_ doInvoke "test.clj" 247]
-  [clojure.lang.RestFn invoke "RestFn.java" 411]
-  [clojure.lang.Var invoke "Var.java" 386]
-  [clojure.run.exec$exec invokeStatic "exec.clj" 88]
-  [clojure.run.exec$exec invoke "exec.clj" 78]
-  [clojure.run.exec$_main$fn__218 invoke "exec.clj" 227]
-  [clojure.run.exec$_main invokeStatic "exec.clj" 223]
-  [clojure.run.exec$_main doInvoke "exec.clj" 191]
-  [clojure.lang.RestFn applyTo "RestFn.java" 140]
-  [clojure.lang.Var applyTo "Var.java" 707]
-  [clojure.core$apply invokeStatic "core.clj" 667]
-  [clojure.main$main_opt invokeStatic "main.clj" 515]
-  [clojure.main$main_opt invoke "main.clj" 511]
-  [clojure.main$main invokeStatic "main.clj" 665]
-  [clojure.main$main doInvoke "main.clj" 617]
-  [clojure.lang.RestFn applyTo "RestFn.java" 140]
-  [clojure.lang.Var applyTo "Var.java" 707]
-  [clojure.main main "main.java" 40]]}}
+   :result
+   {:biff.fx/queue
+    {:jobs
+     ([:work.train/add-candidate {:item/url "https://example.com/1"}]
+      [:work.train/add-candidate
+       {:item/url "https://example.com/2"}])}}}
   _]}

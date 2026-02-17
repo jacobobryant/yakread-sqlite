@@ -53,7 +53,7 @@
       {:sub/subtitle (:feed/url feed)})))
 
 (defresolver latest-email-item [{:keys [biff/conn*]} {:sub/keys [record-type id]}]
-  {::pco/output [{:sub/latest-item [:xt/id]}]}
+  {::pco/output [{:sub/latest-item [:item/id]}]}
   (when-some [item (when (= record-type :sub.record-type/email)
                      (first (biffs/q conn*
                                      {:select :item/id
@@ -61,7 +61,7 @@
                                       :where [:= :item/email-sub-id id]
                                       :order-by [[:item/ingested-at :desc]]
                                       :limit 1})))]
-    {:sub/latest-item (clojure.set/rename-keys item {:item/id :xt/id})}))
+    {:sub/latest-item item}))
 
 (defresolver sub-id->xt-id [{:keys [sub/id]}]
   {:xt/id id})
@@ -198,7 +198,7 @@
                      (group-by :source-id)
                      (mapv (fn [[source-id items]]
                              {:sub/source-id source-id
-                              :sub/items (mapv #(select-keys % [:xt/id]) items)})))]
+                              :sub/items (mapv #(select-keys % [:item/id]) items)})))]
     (lib.core/restore-order inputs
                             :sub/source-id
                             results
@@ -214,7 +214,7 @@
         results (into []
                       (map (fn [{:keys [source-id item/id]}]
                              {:sub/source-id source-id
-                              :sub/latest-item {:xt/id id}}))
+                              :sub/latest-item {:item/id id}}))
                       (biffs/q conn*
                                ;; TODO try [:coalesce :item/feed-id :item/email-sub-id]
                                {:union-all

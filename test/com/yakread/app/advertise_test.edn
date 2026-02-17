@@ -56,39 +56,17 @@
      {:ad [{:xt/id (t/uuid 2), :ad/session-id "my-session-id"}]},
      :biff/secret {:stripe/api-key "abc123"},
      :params {:session-id "my-session-id"}}),
-   :ex #error {
- :cause "Don't know how to create ISeq from: clojure.lang.Keyword"
- :via
- [{:type java.lang.IllegalArgumentException
-   :message "Don't know how to create ISeq from: clojure.lang.Keyword"
-   :at [clojure.lang.RT seqFrom "RT.java" 577]}]
- :trace
- [[clojure.lang.RT seqFrom "RT.java" 577]
-  [clojure.lang.RT seq "RT.java" 557]
-  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
-  [clojure.core$some invokeStatic "core.clj" 2709]
-  [clojure.core$some invoke "core.clj" 2709]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invokeStatic "biff_staging.clj" 846]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invoke "biff_staging.clj" 841]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 878]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
-  [com.yakread.app.advertise$fn__56678$fn__56680 invoke "advertise.clj" 61]
-  [clojure.lang.AFn applyToHelper "AFn.java" 154]
-  [clojure.lang.AFn applyTo "AFn.java" 144]
-  [clojure.core$apply invokeStatic "core.clj" 667]
-  [clojure.core$apply invoke "core.clj" 662]
-  [com.yakread.lib.fx$wrap_hiccup$fn__53614 doInvoke "fx.clj" 125]
-  [clojure.lang.RestFn invoke "RestFn.java" 411]
-  [com.yakread.lib.fx$machine$run__53588 invoke "fx.clj" 76]
-  [com.yakread.lib.test$test_route invokeStatic "test.clj" 140]
-  [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
-  [clojure.lang.RestFn invoke "RestFn.java" 445]
-  [tmp571713$eval71967 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp571713$eval71967 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   {:biff.fx/http
+    {:method :get,
+     :url "https://api.stripe.com/v1/checkout/sessions/my-session-id",
+     :basic-auth ["abc123"],
+     :multi-param-style :array,
+     :as :json,
+     :query-params
+     {:expand ["setup_intent" "setup_intent.payment_method"]}},
+    :ad/id #uuid "00020000-0000-0000-0000-000000000002",
+    :biff.fx/next :save-payment-method}}
   _
   {:doc "receive-payment-method :get invalid session",
    :eval
@@ -98,39 +76,7 @@
     {:sqlite-db {},
      :biff/secret {:stripe/api-key "abc123"},
      :params {:session-id "my-session-id"}}),
-   :ex #error {
- :cause "Don't know how to create ISeq from: clojure.lang.Keyword"
- :via
- [{:type java.lang.IllegalArgumentException
-   :message "Don't know how to create ISeq from: clojure.lang.Keyword"
-   :at [clojure.lang.RT seqFrom "RT.java" 577]}]
- :trace
- [[clojure.lang.RT seqFrom "RT.java" 577]
-  [clojure.lang.RT seq "RT.java" 557]
-  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
-  [clojure.core$some invokeStatic "core.clj" 2709]
-  [clojure.core$some invoke "core.clj" 2709]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invokeStatic "biff_staging.clj" 846]
-  [com.yakread.util.biff_staging$bundle_query_QMARK_ invoke "biff_staging.clj" 841]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 878]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
-  [com.yakread.app.advertise$fn__56678$fn__56680 invoke "advertise.clj" 61]
-  [clojure.lang.AFn applyToHelper "AFn.java" 154]
-  [clojure.lang.AFn applyTo "AFn.java" 144]
-  [clojure.core$apply invokeStatic "core.clj" 667]
-  [clojure.core$apply invoke "core.clj" 662]
-  [com.yakread.lib.fx$wrap_hiccup$fn__53614 doInvoke "fx.clj" 125]
-  [clojure.lang.RestFn invoke "RestFn.java" 411]
-  [com.yakread.lib.fx$machine$run__53588 invoke "fx.clj" 76]
-  [com.yakread.lib.test$test_route invokeStatic "test.clj" 140]
-  [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
-  [clojure.lang.RestFn invoke "RestFn.java" 445]
-  [tmp571713$eval71969 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp571713$eval71969 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result {:biff.fx/next :redirect}}
   _
   {:doc "receive-payment-method :save-payment-method",
    :eval
