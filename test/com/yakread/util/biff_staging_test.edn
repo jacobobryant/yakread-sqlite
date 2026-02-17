@@ -64,32 +64,20 @@
        :feed/url "https://example.com/feed2",
        :feed/title "Feed 2"}
       {:feed/url "https://example.com/feed3", :feed/title "Feed 3"}])),
-   :ex #error {
- :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
-   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
- :trace
- [[clojure.core$name invokeStatic "core.clj" 1610]
-  [clojure.core$name invoke "core.clj" 1604]
-  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
-  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
-  [clojure.core$transduce invokeStatic "core.clj" 7025]
-  [clojure.core$into invokeStatic "core.clj" 7042]
-  [clojure.core$into invoke "core.clj" 7029]
-  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
-  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
-  [com.yakread.util.biff_staging$eval46912$fn__46915 invoke "biff_staging.clj" 513]
-  [clojure.lang.MultiFn invoke "MultiFn.java" 234]
-  [tmp419727$eval95454 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp419727$eval95454 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   [[:put-docs
+     :feed
+     {:xt/id #uuid "00040000-0000-0000-0000-000000000004",
+      :feed/url "https://example.com/feed2",
+      :feed/title "Feed 2"}
+     {:xt/id #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503",
+      :feed/url "https://example.com/feed3",
+      :feed/title "Feed 3"}]
+    {:xt nil,
+     :sqlite
+     {:update :feed,
+      :set {:feed/title "New Title"},
+      :where [:= :id #bytes "00010000000000000000000000000001"]}}]}
   _
   {:doc ":biff/upsert :on-insert / :on-update",
    :eval
@@ -110,30 +98,15 @@
        :feed/url "https://example.com/feed2",
        :biff/on-insert {:feed/title "New Feed"},
        :biff/on-update {:feed/title "Existing"}}])),
-   :ex #error {
- :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
-   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
- :trace
- [[clojure.core$name invokeStatic "core.clj" 1610]
-  [clojure.core$name invoke "core.clj" 1604]
-  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
-  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
-  [clojure.core$transduce invokeStatic "core.clj" 7025]
-  [clojure.core$into invokeStatic "core.clj" 7042]
-  [clojure.core$into invoke "core.clj" 7029]
-  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
-  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
-  [com.yakread.util.biff_staging$eval46912$fn__46915 invoke "biff_staging.clj" 513]
-  [clojure.lang.MultiFn invoke "MultiFn.java" 234]
-  [tmp419727$eval95456 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp419727$eval95456 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   [[:put-docs
+     :feed
+     {:xt/id #uuid "00040000-0000-0000-0000-000000000004",
+      :feed/url "https://example.com/feed2",
+      :feed/title "New Feed"}]
+    {:xt nil,
+     :sqlite
+     {:update :feed,
+      :set {:feed/title "Updated"},
+      :where [:= :id #bytes "00010000000000000000000000000001"]}}]}
   _]}

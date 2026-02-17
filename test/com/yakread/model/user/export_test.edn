@@ -13,33 +13,9 @@
         :sub/feed-id (t/uuid 1)}],
       :feed [{:xt/id (t/uuid 1), :feed/url "url1"}]}]
     (feed-subs {:biff/conn* conn} {:user/id (t/uuid 11)})),
-   :ex #error {
- :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
-   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
- :trace
- [[clojure.core$name invokeStatic "core.clj" 1610]
-  [clojure.core$name invoke "core.clj" 1604]
-  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
-  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
-  [clojure.core$transduce invokeStatic "core.clj" 7025]
-  [clojure.core$into invokeStatic "core.clj" 7042]
-  [clojure.core$into invoke "core.clj" 7029]
-  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
-  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
-  [com.yakread.model.user.export$feed_subs__64886 invokeStatic "export.clj" 21]
-  [com.yakread.model.user.export$feed_subs__64886 invoke "export.clj" 18]
-  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp772857$eval95554 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp772857$eval95554 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   {:user.export/feed-subs
+    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<opml version=\"1.0\">\n  <head><title>Yakread RSS subscriptions</title></head>\n  <body>\n    <outline type=\"rss\" xmlUrl=\"url1\"></outline>\n</body></opml>"}}
   _
   {:doc "bookmarks",
    :eval

@@ -97,33 +97,14 @@
        :user-item/item (t/uuid 11),
        :user-item/viewed-at (t/zdt 2001)}}
      :current-item)),
-   :ex #error {
- :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
-   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
- :trace
- [[clojure.core$name invokeStatic "core.clj" 1610]
-  [clojure.core$name invoke "core.clj" 1604]
-  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
-  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
-  [clojure.core$transduce invokeStatic "core.clj" 7025]
-  [clojure.core$into invokeStatic "core.clj" 7042]
-  [clojure.core$into invoke "core.clj" 7029]
-  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
-  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
-  [com.yakread.work.materialized_views$fn__65609 invokeStatic "materialized_views.clj" 42]
-  [com.yakread.work.materialized_views$fn__65609 invoke "materialized_views.clj" 36]
-  [com.yakread.lib.fx$machine$run__53651 invoke "fx.clj" 76]
-  [tmp979851$eval71992 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp979851$eval71992 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   {:biff.fx/tx
+    [{:biff/upsert :mv-user,
+      [:mv.user/user]
+      {:xt/id #uuid "0001b45f-d4d9-5138-3d93-cb799b3970be",
+       :mv.user/user #uuid "00010000-0000-0000-0000-000000000001",
+       :mv.user/current-item
+       #uuid "00110000-0000-0000-0000-000000000011"}}]}}
   _
   {:doc "current-item: do not update when new item is older",
    :eval
@@ -145,33 +126,7 @@
        :user-item/item (t/uuid 11),
        :user-item/viewed-at (t/zdt 2000)}}
      :current-item)),
-   :ex #error {
- :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
-   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
- :trace
- [[clojure.core$name invokeStatic "core.clj" 1610]
-  [clojure.core$name invoke "core.clj" 1604]
-  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
-  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
-  [clojure.core$transduce invokeStatic "core.clj" 7025]
-  [clojure.core$into invokeStatic "core.clj" 7042]
-  [clojure.core$into invoke "core.clj" 7029]
-  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
-  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
-  [com.yakread.work.materialized_views$fn__65609 invokeStatic "materialized_views.clj" 42]
-  [com.yakread.work.materialized_views$fn__65609 invoke "materialized_views.clj" 36]
-  [com.yakread.lib.fx$machine$run__53651 invoke "fx.clj" 76]
-  [tmp979851$eval71994 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp979851$eval71994 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result nil}
   _
   {:doc
    "current-item: remove current item when viewed-at is nil and item matches",
@@ -194,33 +149,13 @@
        :user-item/item (t/uuid 10),
        :user-item/viewed-at nil}}
      :current-item)),
-   :ex #error {
- :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
-   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
- :trace
- [[clojure.core$name invokeStatic "core.clj" 1610]
-  [clojure.core$name invoke "core.clj" 1604]
-  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
-  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
-  [clojure.core$transduce invokeStatic "core.clj" 7025]
-  [clojure.core$into invokeStatic "core.clj" 7042]
-  [clojure.core$into invoke "core.clj" 7029]
-  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
-  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
-  [com.yakread.work.materialized_views$fn__65609 invokeStatic "materialized_views.clj" 42]
-  [com.yakread.work.materialized_views$fn__65609 invoke "materialized_views.clj" 36]
-  [com.yakread.lib.fx$machine$run__53651 invoke "fx.clj" 76]
-  [tmp979851$eval71996 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp979851$eval71996 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   {:biff.fx/tx
+    [{:biff/upsert :mv-user,
+      [:mv.user/user]
+      {:xt/id #uuid "0001b45f-d4d9-5138-3d93-cb799b3970be",
+       :mv.user/user #uuid "00010000-0000-0000-0000-000000000001",
+       :mv.user/current-item nil}}]}}
   _
   {:doc
    "current-item: do not remove when viewed-at is nil but item doesn't match",
@@ -243,33 +178,7 @@
        :user-item/item (t/uuid 11),
        :user-item/viewed-at nil}}
      :current-item)),
-   :ex #error {
- :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
-   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
- :trace
- [[clojure.core$name invokeStatic "core.clj" 1610]
-  [clojure.core$name invoke "core.clj" 1604]
-  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
-  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
-  [clojure.core$transduce invokeStatic "core.clj" 7025]
-  [clojure.core$into invokeStatic "core.clj" 7042]
-  [clojure.core$into invoke "core.clj" 7029]
-  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
-  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
-  [com.yakread.work.materialized_views$fn__65609 invokeStatic "materialized_views.clj" 42]
-  [com.yakread.work.materialized_views$fn__65609 invoke "materialized_views.clj" 36]
-  [com.yakread.lib.fx$machine$run__53651 invoke "fx.clj" 76]
-  [tmp979851$eval71998 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp979851$eval71998 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result nil}
   _
   {:doc
    "on-tx: user-item record with email sub queues sub-affinity and current-item",
@@ -329,33 +238,12 @@
      {:biff/conn* conn,
       :record {:skip/item (t/uuid 2), :skip/reclist (t/uuid 1)}}
      :start)),
-   :ex #error {
- :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
-   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
- :trace
- [[clojure.core$name invokeStatic "core.clj" 1610]
-  [clojure.core$name invoke "core.clj" 1604]
-  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
-  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
-  [clojure.core$transduce invokeStatic "core.clj" 7025]
-  [clojure.core$into invokeStatic "core.clj" 7042]
-  [clojure.core$into invoke "core.clj" 7029]
-  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
-  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
-  [com.yakread.work.materialized_views$fn__65618 invokeStatic "materialized_views.clj" 91]
-  [com.yakread.work.materialized_views$fn__65618 invoke "materialized_views.clj" 66]
-  [com.yakread.lib.fx$machine$run__53651 invoke "fx.clj" 76]
-  [tmp979851$eval72006 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp979851$eval72006 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   {:biff.fx/queue
+    {:jobs
+     ([:work.materialized-views/update
+       {:view :sub-affinity,
+        :sub/id #uuid "01000000-0000-0000-0000-000000000100"}])}}}
   _
   {:doc "on-tx: skip record with feed sub queues sub-affinity",
    :eval
@@ -371,33 +259,12 @@
      {:biff/conn* conn,
       :record {:skip/item (t/uuid 2), :skip/reclist (t/uuid 1)}}
      :start)),
-   :ex #error {
- :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
-   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
- :trace
- [[clojure.core$name invokeStatic "core.clj" 1610]
-  [clojure.core$name invoke "core.clj" 1604]
-  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
-  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
-  [clojure.core$transduce invokeStatic "core.clj" 7025]
-  [clojure.core$into invokeStatic "core.clj" 7042]
-  [clojure.core$into invoke "core.clj" 7029]
-  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
-  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
-  [com.yakread.work.materialized_views$fn__65618 invokeStatic "materialized_views.clj" 91]
-  [com.yakread.work.materialized_views$fn__65618 invoke "materialized_views.clj" 66]
-  [com.yakread.lib.fx$machine$run__53651 invoke "fx.clj" 76]
-  [tmp979851$eval72008 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp979851$eval72008 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   {:biff.fx/queue
+    {:jobs
+     ([:work.materialized-views/update
+       {:view :sub-affinity,
+        :sub/id #uuid "01000000-0000-0000-0000-000000000100"}])}}}
   _
   {:doc "on-tx: skip record without matching sub returns nil jobs",
    :eval
@@ -409,31 +276,5 @@
      {:biff/conn* conn,
       :record {:skip/item (t/uuid 2), :skip/reclist (t/uuid 1)}}
      :start)),
-   :ex #error {
- :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
-   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
- :trace
- [[clojure.core$name invokeStatic "core.clj" 1610]
-  [clojure.core$name invoke "core.clj" 1604]
-  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
-  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
-  [clojure.core$transduce invokeStatic "core.clj" 7025]
-  [clojure.core$into invokeStatic "core.clj" 7042]
-  [clojure.core$into invoke "core.clj" 7029]
-  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
-  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
-  [com.yakread.work.materialized_views$fn__65618 invokeStatic "materialized_views.clj" 91]
-  [com.yakread.work.materialized_views$fn__65618 invoke "materialized_views.clj" 66]
-  [com.yakread.lib.fx$machine$run__53651 invoke "fx.clj" 76]
-  [tmp979851$eval72010 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp979851$eval72010 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result {:biff.fx/queue {:jobs ()}}}
   _]}

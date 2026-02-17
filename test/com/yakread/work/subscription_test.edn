@@ -41,7 +41,7 @@
         :ad-click/created-at (t/zdt 2001),
         :ad-click/user-id (t/uuid 22)}]}]
     (active-user-ids conn (t/zdt 2001 3))),
-   :result [nil]}
+   :result []}
   _
   {:doc "sync-all-feeds! skip feeds synced in the past 12 hours",
    :eval
@@ -74,9 +74,7 @@
       {:work.subscription/sync-feed
        (java.util.concurrent.ConcurrentLinkedQueue.)}}
      :start)),
-   :result
-   {:biff.fx/queue
-    {:jobs ([:work.subscription/sync-feed {:feed/id nil}])}}}
+   :result {:biff.fx/queue {:jobs ()}}}
   _
   {:doc "sync-feed! start without metadata",
    :eval
@@ -100,34 +98,32 @@
         :start))]
      {:without-metadata (start (t/uuid 5)),
       :with-metadata (start (t/uuid 6))})),
-   :ex #error {
- :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
-   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
- :trace
- [[clojure.core$name invokeStatic "core.clj" 1610]
-  [clojure.core$name invoke "core.clj" 1604]
-  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
-  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
-  [clojure.core$transduce invokeStatic "core.clj" 7025]
-  [clojure.core$into invokeStatic "core.clj" 7042]
-  [clojure.core$into invoke "core.clj" 7029]
-  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
-  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
-  [com.yakread.work.subscription$fn__65683 invokeStatic "subscription.clj" 72]
-  [com.yakread.work.subscription$fn__65683 invoke "subscription.clj" 70]
-  [com.yakread.lib.fx$machine$run__53651 invoke "fx.clj" 76]
-  [tmp621828$eval71912$start__71913 invoke "NO_SOURCE_FILE" 0]
-  [tmp621828$eval71912 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp621828$eval71912 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   {:without-metadata
+    {:biff.fx/next :parse,
+     :biff.fx/http
+     {:method :get,
+      :url "url1",
+      :headers {"User-Agent" "https://example.com"},
+      :socket-timeout 5000,
+      :connection-timeout 5000,
+      :throw-exceptions false,
+      :as :stream},
+     :feed/failed-syncs nil},
+    :with-metadata
+    {:biff.fx/next :parse,
+     :biff.fx/http
+     {:method :get,
+      :url "url2",
+      :headers
+      {"User-Agent" "https://example.com",
+       "If-None-Match" "abc123",
+       "If-Modified-Since" "2000"},
+      :socket-timeout 5000,
+      :connection-timeout 5000,
+      :throw-exceptions false,
+      :as :stream},
+     :feed/failed-syncs 2}}}
   _
   {:doc "sync-feed! :parse",
    :eval
@@ -152,31 +148,187 @@
        :biff/now (t/zdt 2000),
        :feed/failed-syncs 2}
       :parse))),
-   :ex #error {
- :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
-   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
- :trace
- [[clojure.core$name invokeStatic "core.clj" 1610]
-  [clojure.core$name invoke "core.clj" 1604]
-  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
-  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
-  [clojure.core$transduce invokeStatic "core.clj" 7025]
-  [clojure.core$into invokeStatic "core.clj" 7042]
-  [clojure.core$into invoke "core.clj" 7029]
-  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
-  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
-  [com.yakread.work.subscription$fn__65692 invokeStatic "subscription.clj" 162]
-  [com.yakread.work.subscription$fn__65692 invoke "subscription.clj" 93]
-  [com.yakread.lib.fx$machine$run__53651 invoke "fx.clj" 76]
-  [tmp621828$eval71916 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp621828$eval71916 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   [{:biff.fx/tx
+     [[:patch-docs
+       :feed
+       {:xt/id #uuid "00050000-0000-0000-0000-000000000005",
+        :feed/synced-at #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
+        :feed/failed-syncs 0,
+        :feed/title "Biff"}]]}
+    {:biff.fx/s3
+     [{:config-ns yakread.s3.content,
+       :method "PUT",
+       :key "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+       :body "<p>I've been working on/preparing for migrating B…",
+       :headers {"x-amz-acl" "private", "content-type" "text/html"}}
+      {:config-ns yakread.s3.content,
+       :method "PUT",
+       :key "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
+       :body "<p>I've recently finished a year-long rewrite of …",
+       :headers {"x-amz-acl" "private", "content-type" "text/html"}}
+      {:config-ns yakread.s3.content,
+       :method "PUT",
+       :key "e1121b08-05e8-b107-f0f5-b4f22d0cd0f1",
+       :body "<p>I've <a href=\"https://biffweb.com/p/structurin…",
+       :headers {"x-amz-acl" "private", "content-type" "text/html"}}
+      {:config-ns yakread.s3.content,
+       :method "PUT",
+       :key "2587af97-b486-5538-05f2-ef1f005ae0b4",
+       :body "<p>Merry solstice. After about a year, I'm roughl…",
+       :headers {"x-amz-acl" "private", "content-type" "text/html"}}
+      {:config-ns yakread.s3.content,
+       :method "PUT",
+       :key "1abfe6cb-40bc-f2e7-a009-97a449310e6c",
+       :body "<!-- email\n\nMy Biff work over the past six months…",
+       :headers {"x-amz-acl" "private", "content-type" "text/html"}}
+      {:config-ns yakread.s3.content,
+       :method "PUT",
+       :key "2249e190-8bcf-01f3-1543-93cf2f9d04a6",
+       :body "<p><a href=\"https://biffweb.com/p/indexes-2/\">Las…",
+       :headers {"x-amz-acl" "private", "content-type" "text/html"}}]}
+    {:biff.fx/tx
+     [[:put-docs
+       :item
+       {:item/excerpt
+        "I've been working on/preparing for migrating Biff…",
+        :item/published-at
+        #time/zoned-date-time "2025-11-09T11:00Z[UTC]",
+        :item/paywalled false,
+        :item/url "https://biffweb.com/p/xtdb2-prerelease/",
+        :item/length 2021,
+        :item/content-key #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+        :item/lang "en",
+        :item/author-name "Jacob O'Bryant",
+        :item.feed/guid "https://biffweb.com/p/xtdb2-prerelease/",
+        :xt/id #uuid "0005c9f6-4f1d-f03a-8ce9-70b71df42503",
+        :item/title "Biff support for XTDB v2 is in pre-release",
+        :item.feed/feed #uuid "00050000-0000-0000-0000-000000000005",
+        :item/author-url "https://obryant.dev",
+        :item/ingested-at
+        #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}
+       {:item/excerpt
+        "I've recently finished a year-long rewrite of the…",
+        :item/published-at
+        #time/zoned-date-time "2025-09-06T12:30Z[UTC]",
+        :item/paywalled false,
+        :item/url "https://biffweb.com/p/yakread-relaunch/",
+        :item/length 7951,
+        :item/content-key #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
+        :item/lang "en",
+        :item/author-name "Jacob O'Bryant",
+        :item.feed/guid "https://biffweb.com/p/yakread-relaunch/",
+        :xt/id #uuid "0005c222-9cef-e94d-fc1e-932efb9a0f58",
+        :item/title "Relaunching Yakread: an algorithmic reading app",
+        :item.feed/feed #uuid "00050000-0000-0000-0000-000000000005",
+        :item/author-url "https://obryant.dev",
+        :item/ingested-at
+        #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}
+       {:item/excerpt
+        "I've previously written about my latest approach …",
+        :item/published-at
+        #time/zoned-date-time "2025-07-19T10:45Z[UTC]",
+        :item/paywalled false,
+        :item/url "https://biffweb.com/p/edn-tests/",
+        :item/length 5495,
+        :item/content-key #uuid "e1121b08-05e8-b107-f0f5-b4f22d0cd0f1",
+        :item/lang "en",
+        :item/author-name "Jacob O'Bryant",
+        :item.feed/guid "https://biffweb.com/p/edn-tests/",
+        :xt/id #uuid "0005620f-501c-9270-20ff-67585e33a8f6",
+        :item/title "Writing your tests in EDN files",
+        :item.feed/feed #uuid "00050000-0000-0000-0000-000000000005",
+        :item/author-url "https://obryant.dev",
+        :item/ingested-at
+        #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}
+       {:item/excerpt
+        "Merry solstice. After about a year, I'm roughly 8…",
+        :item/published-at
+        #time/zoned-date-time "2025-06-20T19:36Z[UTC]",
+        :item/paywalled false,
+        :item/url "https://biffweb.com/p/edn-html-forms/",
+        :item/length 4401,
+        :item/content-key #uuid "2587af97-b486-5538-05f2-ef1f005ae0b4",
+        :item/lang "en",
+        :item/author-name "Jacob O'Bryant",
+        :item.feed/guid "https://biffweb.com/p/edn-html-forms/",
+        :xt/id #uuid "00052308-025c-8f5f-f6e8-9c42901d787a",
+        :item/title "EDN-infused plain html forms",
+        :item.feed/feed #uuid "00050000-0000-0000-0000-000000000005",
+        :item/author-url "https://obryant.dev",
+        :item/ingested-at
+        #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}
+       {:item/excerpt
+        "I've been making some progress on rewriting Yakre…",
+        :item/published-at
+        #time/zoned-date-time "2025-01-28T20:15Z[UTC]",
+        :item/paywalled false,
+        :item/url "https://biffweb.com/p/structuring-large-codebases/",
+        :item/length 9136,
+        :item/content-key #uuid "1abfe6cb-40bc-f2e7-a009-97a449310e6c",
+        :item/lang "en",
+        :item/author-name "Jacob O'Bryant",
+        :item.feed/guid
+        "https://biffweb.com/p/structuring-large-codebases/",
+        :xt/id #uuid "0005f09b-03d2-42ca-c6bc-66e4fa08de96",
+        :item/title "Structuring large Clojure codebases with Biff",
+        :item.feed/feed #uuid "00050000-0000-0000-0000-000000000005",
+        :item/author-url "https://obryant.dev",
+        :item/ingested-at
+        #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}
+       {:item/excerpt
+        "An explanation of how I'm using Pathom to keep Ya…",
+        :item/published-at
+        #time/zoned-date-time "2024-12-21T13:30Z[UTC]",
+        :item/paywalled false,
+        :item/url "https://biffweb.com/p/yakread-pathom/",
+        :item/length 116,
+        :item/content
+        "<div style=\"padding:56.25% 0 0 0;position:relativ…",
+        :item/lang "en",
+        :item/author-name "Jacob O'Bryant",
+        :item.feed/guid "https://biffweb.com/p/yakread-pathom/",
+        :xt/id #uuid "00050200-b030-232e-7cbb-4a95de203044",
+        :item/title "Yakread + Pathom [video]",
+        :item.feed/feed #uuid "00050000-0000-0000-0000-000000000005",
+        :item/author-url "https://obryant.dev",
+        :item/ingested-at
+        #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}
+       {:item/excerpt
+        "I've started open-sourcing Yakread. I'm going to …",
+        :item/published-at
+        #time/zoned-date-time "2024-12-07T10:30Z[UTC]",
+        :item/paywalled false,
+        :item/url "https://biffweb.com/p/yakread-schema/",
+        :item/length 283,
+        :item/content
+        "<div style=\"padding:56.25% 0 0 0;position:relativ…",
+        :item/lang "en",
+        :item/author-name "Jacob O'Bryant",
+        :item.feed/guid "https://biffweb.com/p/yakread-schema/",
+        :xt/id #uuid "0005ad1b-fb1f-38d6-bbaf-da9391edc490",
+        :item/title "Yakread schema [video]",
+        :item.feed/feed #uuid "00050000-0000-0000-0000-000000000005",
+        :item/author-url "https://obryant.dev",
+        :item/ingested-at
+        #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}
+       {:item/excerpt
+        "Last time on Biff: The Newsletter: I've just bare…",
+        :item/published-at
+        #time/zoned-date-time "2024-10-05T19:15Z[UTC]",
+        :item/paywalled false,
+        :item/url "https://biffweb.com/p/rocksdb-indexes-yakread/",
+        :item/length 3162,
+        :item/content-key #uuid "2249e190-8bcf-01f3-1543-93cf2f9d04a6",
+        :item/lang "en",
+        :item/author-name "Jacob O'Bryant",
+        :item.feed/guid
+        "https://biffweb.com/p/rocksdb-indexes-yakread/",
+        :xt/id #uuid "0005d907-4e8f-1ba9-b8ec-6571abcba715",
+        :item/title
+        "RocksDB indexes are done, open-sourcing Yakread n…",
+        :item.feed/feed #uuid "00050000-0000-0000-0000-000000000005",
+        :item/author-url "https://obryant.dev",
+        :item/ingested-at
+        #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}]]}]}
   _]}
