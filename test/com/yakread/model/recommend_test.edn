@@ -35,77 +35,69 @@
     [conn
      {:skip
       [{:xt/id (t/uuid 3),
-        :skip/reclist-id "reclist1",
-        :skip/item-id "item1"}
+        :skip/reclist-id (t/uuid 27),
+        :skip/item-id (t/uuid 22)}
        {:xt/id (t/uuid 4),
-        :skip/reclist-id "reclist1",
-        :skip/item-id "item2"}
+        :skip/reclist-id (t/uuid 27),
+        :skip/item-id (t/uuid 23)}
        {:xt/id (t/uuid 5),
-        :skip/reclist-id "reclist2",
-        :skip/item-id "item4"}],
+        :skip/reclist-id (t/uuid 28),
+        :skip/item-id (t/uuid 25)}],
       :reclist
       [{:xt/id (t/uuid 6),
-        :reclist/user-id "user1",
+        :reclist/user-id (t/uuid 29),
         :reclist/created-at (t/zdt 2000)}
        {:xt/id (t/uuid 7),
-        :reclist/user-id "user1",
+        :reclist/user-id (t/uuid 29),
         :reclist/created-at (t/zdt 2002)}],
       :user-item
       [{:xt/id (t/uuid 8),
-        :user-item/item-id "item3",
-        :user-item/user-id "user1",
+        :user-item/item-id (t/uuid 24),
+        :user-item/user-id (t/uuid 29),
         :user-item/favorited-at (t/zdt 2001)}
        {:xt/id (t/uuid 9),
-        :user-item/item-id "item5",
-        :user-item/user-id "user1",
+        :user-item/item-id (t/uuid 26),
+        :user-item/user-id (t/uuid 29),
         :user-item/viewed-at (t/zdt 2003)}]}]
     (sub-affinity*
      {:biff/conn* conn}
      [{:sub/id (t/uuid 1),
        :sub/title "my sub",
        :sub/user {:xt/id (t/uuid 10)},
-       :sub/items [{:xt/id (t/uuid 11)} {:xt/id (t/uuid 12)} {:xt/id (t/uuid 13)}]}
+       :sub/items
+       [{:xt/id (t/uuid 11)}
+        {:xt/id (t/uuid 12)}
+        {:xt/id (t/uuid 13)}]}
       {:sub/id (t/uuid 2),
        :sub/title "my other sub",
        :sub/user {:xt/id (t/uuid 10)},
        :sub/items [{:xt/id (t/uuid 14)} {:xt/id (t/uuid 15)}]}])),
-   :ex #error {
- :cause "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
-   :at [com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]}]
- :trace
- [[com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]
-  [com.biffweb.sqlite$bytes__GT_uuid invoke "sqlite.clj" 134]
-  [com.biffweb.sqlite$make_column_reader$fn__34963 invoke "sqlite.clj" 282]
-  [next.jdbc.result_set$builder_adapter$fn$reify__15405 with_column "result_set.clj" 193]
-  [next.jdbc.result_set$row_builder$fn__15516 invoke "result_set.clj" 447]
-  [clojure.lang.LongRange reduce "LongRange.java" 170]
-  [clojure.core$reduce invokeStatic "core.clj" 6964]
-  [clojure.core$reduce invoke "core.clj" 6947]
-  [next.jdbc.result_set$row_builder invokeStatic "result_set.clj" 447]
-  [next.jdbc.result_set$row_builder invoke "result_set.clj" 443]
-  [next.jdbc.result_set$datafiable_result_set invokeStatic "result_set.clj" 663]
-  [next.jdbc.result_set$datafiable_result_set invoke "result_set.clj" 639]
-  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 905]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 852]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 841]
-  [com.yakread.model.recommend$sub_affinity_STAR___63936 invokeStatic "recommend.clj" 106]
-  [com.yakread.model.recommend$sub_affinity_STAR___63936 invoke "recommend.clj" 87]
-  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp252121$eval95595 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp252121$eval95595 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   [{:sub/n-interactions 0,
+     :sub/new true,
+     :sub/affinity-low* 0.0,
+     :sub/title "my sub",
+     :sub/affinity-high* 1.0,
+     :sub/id #uuid "00010000-0000-0000-0000-000000000001",
+     :sub/scores (),
+     :sub/items
+     [{:xt/id #uuid "00110000-0000-0000-0000-000000000011"}
+      {:xt/id #uuid "00120000-0000-0000-0000-000000000012"}
+      {:xt/id #uuid "00130000-0000-0000-0000-000000000013"}],
+     :sub/user {:xt/id #uuid "00100000-0000-0000-0000-000000000010"},
+     :sub/all-interactions ()}
+    {:sub/n-interactions 0,
+     :sub/new true,
+     :sub/affinity-low* 0.0,
+     :sub/title "my other sub",
+     :sub/affinity-high* 1.0,
+     :sub/id #uuid "00020000-0000-0000-0000-000000000002",
+     :sub/scores (),
+     :sub/items
+     [{:xt/id #uuid "00140000-0000-0000-0000-000000000014"}
+      {:xt/id #uuid "00150000-0000-0000-0000-000000000015"}],
+     :sub/user {:xt/id #uuid "00100000-0000-0000-0000-000000000010"},
+     :sub/all-interactions ()}]}
   _
   {:eval
    (binding
@@ -126,7 +118,7 @@
         :sub/unread-items []}]})),
    :result
    {:user/for-you-sub-recs
-    [{:item/id (t/uuid 11),
+    [{:item/id #uuid "00110000-0000-0000-0000-000000000011",
       :item/ingested-at #time/instant "2000-01-01T00:00:00Z",
       :item/n-skipped 10,
       :item/rec-type :item.rec-type/subscription}]}}
@@ -151,7 +143,7 @@
       :user/digest-sub-items [{:xt/id (t/uuid 11)}]})),
    :result
    {:user/icymi-sub-recs
-    [{:item/id (t/uuid 12),
+    [{:item/id #uuid "00120000-0000-0000-0000-000000000012",
       :item/ingested-at #time/instant "2001-01-01T00:00:00Z",
       :item/n-skipped 1,
       :item/rec-type :item.rec-type/subscription}]}}
@@ -160,7 +152,8 @@
    (binding
     [gen/*rnd* (java.util.Random. 0)]
     (icymi-bookmark-recs
-     {:user/digest-bookmarks [{:xt/id (t/uuid 11)} {:xt/id (t/uuid 12)}],
+     {:user/digest-bookmarks
+      [{:xt/id (t/uuid 11)} {:xt/id (t/uuid 12)}],
       :user/unread-bookmarks
       [{:item/id (t/uuid 11),
         :item/ingested-at (t/instant 2000),
@@ -178,7 +171,7 @@
         :item/url "https://example.com/article2"}]})),
    :result
    {:user/icymi-bookmark-recs
-    [{:item/id (t/uuid 14),
+    [{:item/id #uuid "00140000-0000-0000-0000-000000000014",
       :item/ingested-at #time/instant "2000-01-01T00:00:00Z",
       :item/n-skipped-with-digests 0,
       :item/url "https://example.com/article2",
@@ -199,19 +192,19 @@
        :user/icymi-bookmark-recs (mapv item (range 4 7))}))),
    :result
    {:user/icymi-recs
-    [{:item/id (t/uuid 14),
+    [{:item/id "item4",
       :item/ingested-at #time/instant "2004-01-01T00:00:00Z",
       :item/n-skipped 4}
-     {:item/id (t/uuid 12),
+     {:item/id "item2",
       :item/ingested-at #time/instant "2002-01-01T00:00:00Z",
       :item/n-skipped 2}
-     {:item/id (t/uuid 13),
+     {:item/id "item3",
       :item/ingested-at #time/instant "2003-01-01T00:00:00Z",
       :item/n-skipped 3}
-     {:item/id (t/uuid 15),
+     {:item/id "item5",
       :item/ingested-at #time/instant "2005-01-01T00:00:00Z",
       :item/n-skipped 5}
-     {:item/id (t/uuid 11),
+     {:item/id "item1",
       :item/ingested-at #time/instant "2001-01-01T00:00:00Z",
       :item/n-skipped 1}]}}
   _
@@ -224,14 +217,38 @@
        {:xt/id (t/uuid 12), :item/url "url2"}],
       :user-item
       [{:xt/id (t/uuid 16),
-        :user-item/user-id "user1",
-        :user-item/item-id "item1"}
+        :user-item/user-id (t/uuid 29),
+        :user-item/item-id (t/uuid 22)}
        {:xt/id (t/uuid 17),
-        :user-item/user-id "user1",
-        :user-item/item-id "item2",
+        :user-item/user-id (t/uuid 29),
+        :user-item/item-id (t/uuid 23),
         :user-item/viewed-at (t/zdt 2000)}]}]
-    (read-urls {:biff/conn* conn} {:user/id "user1"})),
-   :result {:user/read-urls #{"url2"}}}
+    (read-urls {:biff/conn* conn} {:user/id (t/uuid 29)})),
+   :ex #error {
+ :cause "Don't know how to create ISeq from: clojure.lang.Keyword"
+ :via
+ [{:type java.lang.IllegalArgumentException
+   :message "Don't know how to create ISeq from: clojure.lang.Keyword"
+   :at [clojure.lang.RT seqFrom "RT.java" 577]}]
+ :trace
+ [[clojure.lang.RT seqFrom "RT.java" 577]
+  [clojure.lang.RT seq "RT.java" 557]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$some invokeStatic "core.clj" 2709]
+  [clojure.core$some invoke "core.clj" 2709]
+  [com.yakread.util.biff_staging$bundle_query_QMARK_ invokeStatic "biff_staging.clj" 846]
+  [com.yakread.util.biff_staging$bundle_query_QMARK_ invoke "biff_staging.clj" 841]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 878]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
+  [com.yakread.model.recommend$read_urls__64191 invokeStatic "recommend.clj" 393]
+  [com.yakread.model.recommend$read_urls__64191 invoke "recommend.clj" 390]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp941057$eval95609 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp941057$eval95609 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "clicked-ads",
    :eval
@@ -239,45 +256,33 @@
     [conn
      {:ad-click
       [{:xt/id (t/uuid 18),
-        :ad-click/ad-id "ad1",
-        :ad-click/user-id "user1"}
+        :ad-click/ad-id (t/uuid 20),
+        :ad-click/user-id (t/uuid 29)}
        {:xt/id (t/uuid 19),
-        :ad-click/ad-id "ad2",
-        :ad-click/user-id "user2"}]}]
-    (clicked-ads {:biff/conn* conn} {:user/id "user1"})),
+        :ad-click/ad-id (t/uuid 21),
+        :ad-click/user-id (t/uuid 30)}]}]
+    (clicked-ads {:biff/conn* conn} {:user/id (t/uuid 29)})),
    :ex #error {
- :cause "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
+ :cause "Don't know how to create ISeq from: clojure.lang.Keyword"
  :via
- [{:type java.lang.ClassCastException
-   :message "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
-   :at [com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]}]
+ [{:type java.lang.IllegalArgumentException
+   :message "Don't know how to create ISeq from: clojure.lang.Keyword"
+   :at [clojure.lang.RT seqFrom "RT.java" 577]}]
  :trace
- [[com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]
-  [com.biffweb.sqlite$bytes__GT_uuid invoke "sqlite.clj" 134]
-  [com.biffweb.sqlite$make_column_reader$fn__34963 invoke "sqlite.clj" 282]
-  [next.jdbc.result_set$builder_adapter$fn$reify__15405 with_column "result_set.clj" 193]
-  [next.jdbc.result_set$row_builder$fn__15516 invoke "result_set.clj" 447]
-  [clojure.lang.LongRange reduce "LongRange.java" 170]
-  [clojure.core$reduce invokeStatic "core.clj" 6964]
-  [clojure.core$reduce invoke "core.clj" 6947]
-  [next.jdbc.result_set$row_builder invokeStatic "result_set.clj" 447]
-  [next.jdbc.result_set$row_builder invoke "result_set.clj" 443]
-  [next.jdbc.result_set$datafiable_result_set invokeStatic "result_set.clj" 663]
-  [next.jdbc.result_set$datafiable_result_set invoke "result_set.clj" 639]
-  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 905]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 852]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 841]
-  [com.yakread.model.recommend$clicked_ads__64198 invokeStatic "recommend.clj" 470]
-  [com.yakread.model.recommend$clicked_ads__64198 invoke "recommend.clj" 467]
+ [[clojure.lang.RT seqFrom "RT.java" 577]
+  [clojure.lang.RT seq "RT.java" 557]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$some invokeStatic "core.clj" 2709]
+  [clojure.core$some invoke "core.clj" 2709]
+  [com.yakread.util.biff_staging$bundle_query_QMARK_ invokeStatic "biff_staging.clj" 846]
+  [com.yakread.util.biff_staging$bundle_query_QMARK_ invoke "biff_staging.clj" 841]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 878]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
+  [com.yakread.model.recommend$clicked_ads__64224 invokeStatic "recommend.clj" 470]
+  [com.yakread.model.recommend$clicked_ads__64224 invoke "recommend.clj" 467]
   [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp252121$eval95617 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp252121$eval95617 invoke "NO_SOURCE_FILE" -1]
+  [tmp941057$eval95611 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp941057$eval95611 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]

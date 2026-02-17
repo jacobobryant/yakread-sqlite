@@ -34,7 +34,7 @@
       {:sub/id (t/uuid 1),
        :sub/doc-type :sub/email,
        :sub/latest-item
-       {:item/id "item1",
+       {:item/id (t/uuid 2),
         :item.email/list-unsubscribe "<https://example.com/unsub>",
         :item.email/list-unsubscribe-post
         "List-Unsubscribe=One-Click"}}}}),
@@ -59,7 +59,7 @@
       {:sub/id (t/uuid 1),
        :sub/doc-type :sub/email,
        :sub/latest-item
-       {:item/id "item1",
+       {:item/id (t/uuid 2),
         :item.email/list-unsubscribe "<mailto:unsub@example.com>"}}}}),
    :result
    {:status 204,
@@ -82,7 +82,7 @@
       {:sub/id (t/uuid 1),
        :sub/doc-type :sub/email,
        :sub/latest-item
-       {:item/id "item1",
+       {:item/id (t/uuid 2),
         :item.email/list-unsubscribe
         "<https://example.com/unsub>"}}}}),
    :result
@@ -102,7 +102,7 @@
     :post
     {:biff.fx/pathom
      {:params.checked/subscriptions
-      [{:sub/id (t/uuid 1)} {:sub/id "sub2"}]}}),
+      [{:sub/id (t/uuid 1)} {:sub/id (t/uuid 3)}]}}),
    :result
    {:biff.fx/tx
     [{:xt
@@ -111,14 +111,16 @@
        :where
        [:in
         :sub/id
-        [#uuid "00010000-0000-0000-0000-000000000001" "sub2"]]},
+        [#uuid "00010000-0000-0000-0000-000000000001"
+         #uuid "00030000-0000-0000-0000-000000000003"]]},
       :sqlite
       {:update :sub,
        :set {:sub/email-unsubscribed-at nil},
        :where
        [:in
         :sub/id
-        [#bytes "00010000000000000000000000000001" "sub2"]]}}],
+        [#bytes "00010000000000000000000000000001"
+         #bytes "00030000000000000000000000000003"]]}}],
     :status 204,
     :headers {"HX-Redirect" ["/subscriptions/unsubscribed" nil]}}}
   _]}

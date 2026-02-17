@@ -3,10 +3,10 @@
   [clojure.data.generators :as gen]
   [com.yakread.work.account :refer :all]],
  :tests
- [{:eval (export-user-data {:biff/job {:user/id "abc123"}} :start),
+ [{:eval (export-user-data {:biff/job {:user/id (t/uuid 13)}} :start),
    :result
    {:biff.fx/pathom
-    {:entity {:user/id "abc123"},
+    {:entity {:user/id #uuid "00130000-0000-0000-0000-000000000013"},
      :query
      [:user/id
       :user/email
@@ -21,7 +21,7 @@
    (export-user-data
     {:biff/now (t/instant 2000),
      :biff.fx/pathom
-     {:user/id "abc123",
+     {:user/id (t/uuid 13),
       :user/email "hello@example.com",
       :user/timezone "America/Denver",
       :user.export/feed-subs "feed-subs",
@@ -32,36 +32,38 @@
    :result
    [{:biff.fx/write
      ({:file
-       #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123/feed-subscriptions.opml",
+       #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-00130000-0000-0000-0000-000000000013/feed-subscriptions.opml",
        :content "feed-subs"}
       {:file
-       #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123/bookmarks.csv",
+       #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-00130000-0000-0000-0000-000000000013/bookmarks.csv",
        :content "bookmarks"}
       {:file
-       #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123/favorites.csv",
+       #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-00130000-0000-0000-0000-000000000013/favorites.csv",
        :content "favorites"})}
     {:biff.fx/shell
      ["zip"
       "-r"
-      "yakread-export-1999-12-31-946684800000-abc123.zip"
-      "yakread-export-1999-12-31-946684800000-abc123"
+      "yakread-export-1999-12-31-946684800000-00130000-0000-0000-0000-000000000013.zip"
+      "yakread-export-1999-12-31-946684800000-00130000-0000-0000-0000-000000000013"
       :dir
       "/tmp/dir"]}
     {:biff.fx/delete-files
-     #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123"}
+     #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-00130000-0000-0000-0000-000000000013"}
     {:biff.fx/s3
      {:config-ns yakread.s3.export,
-      :key "yakread-export-1999-12-31-946684800000-abc123.zip",
+      :key
+      "yakread-export-1999-12-31-946684800000-00130000-0000-0000-0000-000000000013.zip",
       :method "PUT",
       :body
-      #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123.zip",
+      #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-00130000-0000-0000-0000-000000000013.zip",
       :headers
       {"x-amz-acl" "private", "content-type" "application/zip"}}}
     {:biff.fx/delete-files
-     "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123.zip"}
+     "/tmp/dir/yakread-export-1999-12-31-946684800000-00130000-0000-0000-0000-000000000013.zip"}
     {:biff.fx/s3-presigned-url
      {:config-ns yakread.s3.export,
-      :key "yakread-export-1999-12-31-946684800000-abc123.zip",
+      :key
+      "yakread-export-1999-12-31-946684800000-00130000-0000-0000-0000-000000000013.zip",
       :method "GET",
       :expires-at #time/instant "2000-01-08T00:00:00Z"}}
     {:biff.fx/next :send,
@@ -82,7 +84,7 @@
    :eval (delete-account {:biff/job {:user/id (t/uuid 11)}} :start),
    :result
    {:biff.fx/pathom
-    {:entity {:user/id (t/uuid 11)},
+    {:entity {:user/id #uuid "00110000-0000-0000-0000-000000000011"},
      :query
      [:user/id
       (:user/email-username
@@ -127,7 +129,7 @@
        :socket-timeout 10000,
        :connection-timeout 10000})}
     {:biff.fx/tx
-     ([:erase-docs :user (t/uuid 11)]
+     ([:erase-docs :user #uuid "00110000-0000-0000-0000-000000000011"]
       [:erase-docs :ad #uuid "00010000-0000-0000-0000-000000000001"]
       [:delete-docs :sub #uuid "00020000-0000-0000-0000-000000000002"]
       [:put-docs
@@ -155,7 +157,10 @@
        :basic-auth ["sk_test_123"],
        :socket-timeout 10000,
        :connection-timeout 10000})}
-    {:biff.fx/tx ([:erase-docs :user (t/uuid 11)]),
+    {:biff.fx/tx
+     ([:erase-docs
+       :user
+       #uuid "00110000-0000-0000-0000-000000000011"]),
      :biff.fx/next :delete-email-batch}]}
   _
   {:doc "delete-account: delete state with no customer ids",
@@ -171,7 +176,10 @@
     :delete),
    :result
    [{:biff.fx/http ()}
-    {:biff.fx/tx ([:erase-docs :user (t/uuid 11)]),
+    {:biff.fx/tx
+     ([:erase-docs
+       :user
+       #uuid "00110000-0000-0000-0000-000000000011"]),
      :biff.fx/next :delete-email-batch}]}
   _
   {:doc "delete-account: delete-email-batch with no emails",
@@ -190,52 +198,29 @@
     [conn
      {:item
       [{:xt/id (t/uuid 2),
-        :item/content-key "content-key-1",
-        :item/email-raw-content-key "raw-key-1"}
-       {:xt/id (t/uuid 3), :item/content-key "content-key-2"}]}]
+        :item/content-key (t/uuid 14),
+        :item/email-raw-content-key (t/uuid 16)}
+       {:xt/id (t/uuid 3), :item/content-key (t/uuid 15)}]}]
     (delete-account
      {:biff/conn* conn,
       :biff/job {:user/id (t/uuid 10)},
       :session {:uid (t/uuid 10)},
       :com.yakread.work.account/email-ids [(t/uuid 2) (t/uuid 3)]}
      :delete-email-batch)),
-   :ex #error {
- :cause "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
- :via
- [{:type java.lang.ClassCastException
-   :message "class java.lang.String cannot be cast to class [B (java.lang.String and [B are in module java.base of loader 'bootstrap')"
-   :at [com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]}]
- :trace
- [[com.biffweb.sqlite$bytes__GT_uuid invokeStatic "sqlite.clj" 137]
-  [com.biffweb.sqlite$bytes__GT_uuid invoke "sqlite.clj" 134]
-  [com.biffweb.sqlite$make_column_reader$fn__34963 invoke "sqlite.clj" 282]
-  [next.jdbc.result_set$builder_adapter$fn$reify__15405 with_column "result_set.clj" 193]
-  [next.jdbc.result_set$row_builder$fn__15516 invoke "result_set.clj" 447]
-  [clojure.lang.LongRange reduce "LongRange.java" 170]
-  [clojure.core$reduce invokeStatic "core.clj" 6964]
-  [clojure.core$reduce invoke "core.clj" 6947]
-  [next.jdbc.result_set$row_builder invokeStatic "result_set.clj" 447]
-  [next.jdbc.result_set$row_builder invoke "result_set.clj" 443]
-  [next.jdbc.result_set$datafiable_result_set invokeStatic "result_set.clj" 663]
-  [next.jdbc.result_set$datafiable_result_set invoke "result_set.clj" 639]
-  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 905]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 852]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 841]
-  [com.yakread.work.account$fn__65312 invokeStatic "account.clj" 115]
-  [com.yakread.work.account$fn__65312 invoke "account.clj" 103]
-  [com.yakread.lib.fx$machine$run__53562 invoke "fx.clj" 76]
-  [tmp763941$eval71887 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp763941$eval71887 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   [{:biff.fx/s3
+     ({:key "00140000-0000-0000-0000-000000000014",
+       :config-ns yakread.s3.content,
+       :method "DELETE"}
+      {:key "00160000-0000-0000-0000-000000000016",
+       :config-ns yakread.s3.emails,
+       :method "DELETE"}
+      {:key "00150000-0000-0000-0000-000000000015",
+       :config-ns yakread.s3.content,
+       :method "DELETE"})}
+    {:biff.fx/tx [[:erase-docs :item nil nil]]}
+    {:biff.fx/next :delete-email-batch,
+     :com.yakread.work.account/email-ids ()}]}
   _
   {:doc
    "delete-account: delete-email-batch queries email items from SQL when email-ids not set",
@@ -249,11 +234,11 @@
       :item
       [{:xt/id (t/uuid 2),
         :item/email-sub-id (t/uuid 1),
-        :item/content-key "content-key-1",
-        :item/email-raw-content-key "raw-key-1"}
+        :item/content-key (t/uuid 14),
+        :item/email-raw-content-key (t/uuid 16)}
        {:xt/id (t/uuid 3),
         :item/email-sub-id (t/uuid 1),
-        :item/content-key "content-key-2"}]}]
+        :item/content-key (t/uuid 15)}]}]
     (delete-account
      {:biff/conn* conn,
       :biff/job {:user/id (t/uuid 10)},

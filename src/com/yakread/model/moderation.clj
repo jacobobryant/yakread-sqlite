@@ -15,19 +15,19 @@
                                :where [:= :item/record-type [:lift :item.record-type/direct]]})
         url->direct-item (into {} (map (juxt :item/url identity)) direct-items)
         item->url (into {}
-                        (map (juxt :xt/id :item/url))
+                        (map (juxt :item/id :item/url))
                         (biffs/q conn*
                                  {:select [:item/id :item/url]
                                   :from :item
                                   :where [:in :item/id (mapv :item/id all-liked-items)]}))
         direct-item-id->likes (->> all-liked-items
                                    (mapv (fn [{:keys [item/id item/n-likes]}]
-                                           (when-some [id (-> id item->url url->direct-item :xt/id)]
+                                           (when-some [id (-> id item->url url->direct-item :item/id)]
                                              {id n-likes})))
                                    (apply merge-with +))
         liked-direct-items (->> direct-items
                                 (into []
-                                      (comp (map #(assoc % :item/n-likes (direct-item-id->likes (:xt/id %))))
+                                      (comp (map #(assoc % :item/n-likes (direct-item-id->likes (:item/id %))))
                                             (filter :item/n-likes)
                                             ;; remove the ones that have already been approved or
                                             ;; blocked.

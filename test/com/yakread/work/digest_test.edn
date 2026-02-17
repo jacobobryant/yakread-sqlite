@@ -234,17 +234,19 @@
      :biff/jobs
      [{:digest/id (t/uuid 1), :digest/payload {:a 1}}
       {:digest/id (t/uuid 2), :digest/payload {:b 2}}
-      {:digest/id "digest3", :digest/payload {:c 3}}
-      {:digest/id "digest4", :digest/payload {:d 4}}
-      {:digest/id "digest5", :digest/payload {:e 5}}]}
+      {:digest/id (t/uuid 7), :digest/payload {:c 3}}
+      {:digest/id (t/uuid 8), :digest/payload {:d 4}}
+      {:digest/id (t/uuid 9), :digest/payload {:e 5}}]}
     :start*),
    :result
    {:biff.fx/queue
     {:jobs
      ([:work.digest/send-digest
-       {:digest/id "digest4", :digest/payload {:d 4}}]
+       {:digest/id #uuid "00080000-0000-0000-0000-000000000008",
+        :digest/payload {:d 4}}]
       [:work.digest/send-digest
-       {:digest/id "digest5", :digest/payload {:e 5}}])},
+       {:digest/id #uuid "00090000-0000-0000-0000-000000000009",
+        :digest/payload {:e 5}}])},
     :biff.fx/http
     {:method :post,
      :url "https://api.mailersend.com/v1/bulk-email",
@@ -257,7 +259,7 @@
     :com.yakread.work.digest/digest-ids
     [#uuid "00010000-0000-0000-0000-000000000001"
      #uuid "00020000-0000-0000-0000-000000000002"
-     "digest3"]}}
+     #uuid "00070000-0000-0000-0000-000000000007"]}}
   _
   {:eval
    (send-digest
@@ -266,19 +268,22 @@
      :biff/jobs
      [{:digest/id (t/uuid 1), :digest/payload {:a 1}}
       {:digest/id (t/uuid 2), :digest/payload {:b 2}}
-      {:digest/id "digest3", :digest/payload {:c 3}}
-      {:digest/id "digest4", :digest/payload {:d 4}}
-      {:digest/id "digest5", :digest/payload {:e 5}}]}
+      {:digest/id (t/uuid 7), :digest/payload {:c 3}}
+      {:digest/id (t/uuid 8), :digest/payload {:d 4}}
+      {:digest/id (t/uuid 9), :digest/payload {:e 5}}]}
     :start*),
    :result
    {:biff.fx/queue
     {:jobs
      ([:work.digest/send-digest
-       {:digest/id "digest3", :digest/payload {:c 3}}]
+       {:digest/id #uuid "00070000-0000-0000-0000-000000000007",
+        :digest/payload {:c 3}}]
       [:work.digest/send-digest
-       {:digest/id "digest4", :digest/payload {:d 4}}]
+       {:digest/id #uuid "00080000-0000-0000-0000-000000000008",
+        :digest/payload {:d 4}}]
       [:work.digest/send-digest
-       {:digest/id "digest5", :digest/payload {:e 5}}])},
+       {:digest/id #uuid "00090000-0000-0000-0000-000000000009",
+        :digest/payload {:e 5}}])},
     :biff.fx/http
     {:method :post,
      :url "https://api.mailersend.com/v1/bulk-email",

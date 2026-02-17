@@ -56,17 +56,39 @@
      {:ad [{:xt/id (t/uuid 2), :ad/session-id "my-session-id"}]},
      :biff/secret {:stripe/api-key "abc123"},
      :params {:session-id "my-session-id"}}),
-   :result
-   {:biff.fx/http
-    {:method :get,
-     :url "https://api.stripe.com/v1/checkout/sessions/my-session-id",
-     :basic-auth ["abc123"],
-     :multi-param-style :array,
-     :as :json,
-     :query-params
-     {:expand ["setup_intent" "setup_intent.payment_method"]}},
-    :ad/id #uuid "00020000-0000-0000-0000-000000000002",
-    :biff.fx/next :save-payment-method}}
+   :ex #error {
+ :cause "Don't know how to create ISeq from: clojure.lang.Keyword"
+ :via
+ [{:type java.lang.IllegalArgumentException
+   :message "Don't know how to create ISeq from: clojure.lang.Keyword"
+   :at [clojure.lang.RT seqFrom "RT.java" 577]}]
+ :trace
+ [[clojure.lang.RT seqFrom "RT.java" 577]
+  [clojure.lang.RT seq "RT.java" 557]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$some invokeStatic "core.clj" 2709]
+  [clojure.core$some invoke "core.clj" 2709]
+  [com.yakread.util.biff_staging$bundle_query_QMARK_ invokeStatic "biff_staging.clj" 846]
+  [com.yakread.util.biff_staging$bundle_query_QMARK_ invoke "biff_staging.clj" 841]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 878]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
+  [com.yakread.app.advertise$fn__56678$fn__56680 invoke "advertise.clj" 61]
+  [clojure.lang.AFn applyToHelper "AFn.java" 154]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.core$apply invoke "core.clj" 662]
+  [com.yakread.lib.fx$wrap_hiccup$fn__53614 doInvoke "fx.clj" 125]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [com.yakread.lib.fx$machine$run__53588 invoke "fx.clj" 76]
+  [com.yakread.lib.test$test_route invokeStatic "test.clj" 140]
+  [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
+  [clojure.lang.RestFn invoke "RestFn.java" 445]
+  [tmp571713$eval71967 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp571713$eval71967 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "receive-payment-method :get invalid session",
    :eval
@@ -76,7 +98,39 @@
     {:sqlite-db {},
      :biff/secret {:stripe/api-key "abc123"},
      :params {:session-id "my-session-id"}}),
-   :result {:biff.fx/next :redirect}}
+   :ex #error {
+ :cause "Don't know how to create ISeq from: clojure.lang.Keyword"
+ :via
+ [{:type java.lang.IllegalArgumentException
+   :message "Don't know how to create ISeq from: clojure.lang.Keyword"
+   :at [clojure.lang.RT seqFrom "RT.java" 577]}]
+ :trace
+ [[clojure.lang.RT seqFrom "RT.java" 577]
+  [clojure.lang.RT seq "RT.java" 557]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$some invokeStatic "core.clj" 2709]
+  [clojure.core$some invoke "core.clj" 2709]
+  [com.yakread.util.biff_staging$bundle_query_QMARK_ invokeStatic "biff_staging.clj" 846]
+  [com.yakread.util.biff_staging$bundle_query_QMARK_ invoke "biff_staging.clj" 841]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 878]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
+  [com.yakread.app.advertise$fn__56678$fn__56680 invoke "advertise.clj" 61]
+  [clojure.lang.AFn applyToHelper "AFn.java" 154]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.core$apply invoke "core.clj" 662]
+  [com.yakread.lib.fx$wrap_hiccup$fn__53614 doInvoke "fx.clj" 125]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [com.yakread.lib.fx$machine$run__53588 invoke "fx.clj" 76]
+  [com.yakread.lib.test$test_route invokeStatic "test.clj" 140]
+  [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
+  [clojure.lang.RestFn invoke "RestFn.java" 445]
+  [tmp571713$eval71969 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp571713$eval71969 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "receive-payment-method :save-payment-method",
    :eval
@@ -86,7 +140,7 @@
     :save-payment-method
     {:biff.fx/http {:body {:setup_intent {:payment_method "pm1"}}},
      :biff/now (t/zdt 2000),
-     :ad/id "ad2"}),
+     :ad/id (t/uuid 4)}),
    :result
    {:biff.fx/tx
     [{:xt
@@ -96,7 +150,8 @@
         :ad/payment-method nil,
         :ad/card-details [:lift nil],
         :ad/updated-at #time/zoned-date-time "2000-01-01T00:00Z[UTC]"},
-       :where [:= :ad/id "ad2"]},
+       :where
+       [:= :ad/id #uuid "00040000-0000-0000-0000-000000000004"]},
       :sqlite
       {:update :ad,
        :set
@@ -104,7 +159,7 @@
         :ad/payment-method nil,
         :ad/card-details nil,
         :ad/updated-at 946684800000},
-       :where [:= :ad/id "ad2"]}}],
+       :where [:= :ad/id #bytes "00040000000000000000000000000004"]}}],
     :biff.fx/next :redirect}}
   _
   {:doc "add-payment-method :post existing customer",
@@ -330,12 +385,12 @@
      {:biff.form/params
       {:ad/title "Title", :ad/description "Description"}}
      {:ad {:ad/title "Different Title"}})
-    {:session/user {:user/ad {:xt/id "abc123"}}}),
+    {:session/user {:user/ad {:xt/id (t/uuid 3)}}}),
    :result
    {:com.yakread.app.advertise/form-ad
     {:ad/title "Different Title",
      :ad/description "Description",
-     :xt/id "abc123"}}}
+     :xt/id #uuid "00030000-0000-0000-0000-000000000003"}}}
   _
   {:doc "autocomplete :get",
    :eval

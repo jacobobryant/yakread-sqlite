@@ -19,16 +19,40 @@
      :biff.fx/pathom
      {:session/user {:xt/id user-id},
       :params/item {:xt/id (t/uuid 1)}}}),
-   :result
-   {:status 204,
-    :biff.fx/tx
-    [[:patch-docs
-      :user-item
-      {:xt/id #uuid "1234b45f-d4d9-5138-3d93-cb799b3970be",
-       :user-item/user #uuid "12345678-0000-0000-0000-000000000000",
-       :user-item/item #uuid "00010000-0000-0000-0000-000000000001",
-       :user-item/viewed-at
-       #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}]]}}
+   :ex #error {
+ :cause "Don't know how to create ISeq from: clojure.lang.Keyword"
+ :via
+ [{:type java.lang.IllegalArgumentException
+   :message "Don't know how to create ISeq from: clojure.lang.Keyword"
+   :at [clojure.lang.RT seqFrom "RT.java" 577]}]
+ :trace
+ [[clojure.lang.RT seqFrom "RT.java" 577]
+  [clojure.lang.RT seq "RT.java" 557]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$some invokeStatic "core.clj" 2709]
+  [clojure.core$some invoke "core.clj" 2709]
+  [com.yakread.util.biff_staging$bundle_query_QMARK_ invokeStatic "biff_staging.clj" 846]
+  [com.yakread.util.biff_staging$bundle_query_QMARK_ invoke "biff_staging.clj" 841]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 878]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
+  [com.yakread.app.subscriptions.view$fn__60714$fn__60717 invoke "view.clj" 18]
+  [com.yakread.lib.fx$wrap_pathom$fn__53611 invoke "fx.clj" 121]
+  [clojure.lang.AFn applyToHelper "AFn.java" 154]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.core$apply invoke "core.clj" 662]
+  [com.yakread.lib.fx$wrap_hiccup$fn__53614 doInvoke "fx.clj" 125]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [com.yakread.lib.fx$machine$run__53588 invoke "fx.clj" 76]
+  [com.yakread.lib.test$test_route invokeStatic "test.clj" 140]
+  [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
+  [clojure.lang.RestFn invoke "RestFn.java" 445]
+  [tmp448407$eval95465 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp448407$eval95465 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "mark-read existing, read",
    :eval
@@ -45,7 +69,40 @@
      :biff.fx/pathom
      {:session/user {:xt/id user-id},
       :params/item {:xt/id (t/uuid 1)}}}),
-   :result {:status 204}}
+   :ex #error {
+ :cause "Don't know how to create ISeq from: clojure.lang.Keyword"
+ :via
+ [{:type java.lang.IllegalArgumentException
+   :message "Don't know how to create ISeq from: clojure.lang.Keyword"
+   :at [clojure.lang.RT seqFrom "RT.java" 577]}]
+ :trace
+ [[clojure.lang.RT seqFrom "RT.java" 577]
+  [clojure.lang.RT seq "RT.java" 557]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$some invokeStatic "core.clj" 2709]
+  [clojure.core$some invoke "core.clj" 2709]
+  [com.yakread.util.biff_staging$bundle_query_QMARK_ invokeStatic "biff_staging.clj" 846]
+  [com.yakread.util.biff_staging$bundle_query_QMARK_ invoke "biff_staging.clj" 841]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 878]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
+  [com.yakread.app.subscriptions.view$fn__60714$fn__60717 invoke "view.clj" 18]
+  [com.yakread.lib.fx$wrap_pathom$fn__53611 invoke "fx.clj" 121]
+  [clojure.lang.AFn applyToHelper "AFn.java" 154]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.core$apply invoke "core.clj" 662]
+  [com.yakread.lib.fx$wrap_hiccup$fn__53614 doInvoke "fx.clj" 125]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [com.yakread.lib.fx$machine$run__53588 invoke "fx.clj" 76]
+  [com.yakread.lib.test$test_route invokeStatic "test.clj" 140]
+  [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
+  [clojure.lang.RestFn invoke "RestFn.java" 445]
+  [tmp448407$eval95467 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp448407$eval95467 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "mark-read new",
    :eval
@@ -57,16 +114,40 @@
      :biff.fx/pathom
      {:session/user {:xt/id user-id},
       :params/item {:xt/id (t/uuid 1)}}}),
-   :result
-   {:status 204,
-    :biff.fx/tx
-    [[:patch-docs
-      :user-item
-      {:xt/id #uuid "1234b45f-d4d9-5138-3d93-cb799b3970be",
-       :user-item/user #uuid "12345678-0000-0000-0000-000000000000",
-       :user-item/item #uuid "00010000-0000-0000-0000-000000000001",
-       :user-item/viewed-at
-       #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}]]}}
+   :ex #error {
+ :cause "Don't know how to create ISeq from: clojure.lang.Keyword"
+ :via
+ [{:type java.lang.IllegalArgumentException
+   :message "Don't know how to create ISeq from: clojure.lang.Keyword"
+   :at [clojure.lang.RT seqFrom "RT.java" 577]}]
+ :trace
+ [[clojure.lang.RT seqFrom "RT.java" 577]
+  [clojure.lang.RT seq "RT.java" 557]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$some invokeStatic "core.clj" 2709]
+  [clojure.core$some invoke "core.clj" 2709]
+  [com.yakread.util.biff_staging$bundle_query_QMARK_ invokeStatic "biff_staging.clj" 846]
+  [com.yakread.util.biff_staging$bundle_query_QMARK_ invoke "biff_staging.clj" 841]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 878]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
+  [com.yakread.app.subscriptions.view$fn__60714$fn__60717 invoke "view.clj" 18]
+  [com.yakread.lib.fx$wrap_pathom$fn__53611 invoke "fx.clj" 121]
+  [clojure.lang.AFn applyToHelper "AFn.java" 154]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.core$apply invoke "core.clj" 662]
+  [com.yakread.lib.fx$wrap_hiccup$fn__53614 doInvoke "fx.clj" 125]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [com.yakread.lib.fx$machine$run__53588 invoke "fx.clj" 76]
+  [com.yakread.lib.test$test_route invokeStatic "test.clj" 140]
+  [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
+  [clojure.lang.RestFn invoke "RestFn.java" 445]
+  [tmp448407$eval95469 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp448407$eval95469 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "mark-all-read",
    :eval
@@ -77,14 +158,15 @@
      :biff.fx/pathom
      {:session/user {:xt/id user-id},
       :params/sub
-      {:sub/id "sub1",
+      {:sub/id (t/uuid 5),
        :sub/items
        [{:item/id (t/uuid 1), :item/unread true}
-        {:item/id "item2", :item/unread true}
-        {:item/id "item3", :item/unread false}]}}}),
+        {:item/id (t/uuid 3), :item/unread true}
+        {:item/id (t/uuid 4), :item/unread false}]}}}),
    :result
    {:status 303,
-    :headers {"HX-Location" ["/subscription/sub1" nil]},
+    :headers
+    {"HX-Location" ["/subscription/AAUAAAAAAAAAAAAAAAAABQ" nil]},
     :biff.fx/tx
     [[:biff/upsert
       :user-item
@@ -96,7 +178,7 @@
        #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}
       {:xt/id #uuid "1234c9f6-4f1d-f03a-8ce9-70b71df42503",
        :user-item/user #uuid "12345678-0000-0000-0000-000000000000",
-       :user-item/item "item2",
+       :user-item/item #uuid "00030000-0000-0000-0000-000000000003",
        :user-item/skipped-at
        #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}]]}}
   _

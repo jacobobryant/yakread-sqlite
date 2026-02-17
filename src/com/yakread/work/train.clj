@@ -39,13 +39,16 @@
                          (= 0 (.size (:work.train/add-candidate queues)))
                          (->> {:select :item/url
                                :from :item
-                               :where [:in
-                                       :item/url
-                                       {:select :item/url
-                                        :from :item
-                                        :join [:user-item [:= :item/id :user-item/item-id]]
-                                        :where [:is-not :user-item/favorited-at nil]}]
-                               :having [:not [:bool_or [:coalesce [:= :item/doc-type "item/direct"] false]]]}
+                               :where [:and
+                                       [:in
+                                        :item/url
+                                        {:select :item/url
+                                         :from :item
+                                         :join [:user-item [:= :item/id :user-item/item-id]]
+                                         :where [:is-not :user-item/favorited-at nil]}]
+                                       [:or
+                                        [:is :item/record-type nil]
+                                        [:!= :item/record-type [:lift :item.record-type/direct]]]]}
                               (biffs/q conn*)
                               (mapv :item/url)
                               not-empty))]

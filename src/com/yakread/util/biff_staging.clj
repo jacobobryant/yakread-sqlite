@@ -838,6 +838,34 @@
 ;; SQLite query function (XTDB-compatible interface)
 ;; ============================================================================
 
+(defn- bundle-query?
+  "Check if a query is a bundle query (uses :nest_many sub-selects)."
+  [query]
+  (and (map? query)
+       (vector? (:select query))
+       (some (fn [sel]
+               (and (vector? sel)
+                    (>= (count sel) 2)
+                    (vector? (first sel))
+                    (= :nest_many (ffirst sel))))
+             (:select query))))
+
+(defn- execute-bundle
+  "Execute a bundle query by running each sub-query separately and combining results."
+  [conn malli-opts query]
+  (let [sub-queries (:select query)
+        result (reduce (fn [acc sel]
+                         (let [[query-expr alias-kw] sel
+                               [_ sub-query] query-expr
+                               sql-vec (sql/format sub-query)
+                               _ (log/debug "biffs/q bundle SQL:" (first sql-vec))
+                               rows (biff-sqlite/execute {:biff/conn conn :biff/malli-opts malli-opts} sql-vec)
+                               rows (mapv (fn [row] (into {} (remove (fn [[_ v]] (nil? v))) row)) rows)]
+                           (assoc acc alias-kw rows)))
+                       {}
+                       sub-queries)]
+    [result]))
+
 (defn q
   "Query SQLite. conn must be a JDBC/SQLite connection.
    Queries should use native SQLite column/table names.
@@ -846,10 +874,12 @@
   ;; TODO: restructure so that malli-opts can be passed as a regular parameter
   ;; instead of using requiring-resolve. We can do that after the migration is finished.
   [conn query]
-  (let [malli-opts @(requiring-resolve 'com.yakread/malli-opts*)
-        sql-vec (sql/format query)
-        _ (log/debug "biffs/q SQL:" (first sql-vec))
-        results (biff-sqlite/execute {:biff/conn conn :biff/malli-opts malli-opts} sql-vec)]
-    (mapv (fn [row]
-            (into {} (remove (fn [[_ v]] (nil? v))) row))
-          results)))
+  (let [malli-opts @(requiring-resolve 'com.yakread/malli-opts*)]
+    (if (bundle-query? query)
+      (execute-bundle conn malli-opts query)
+      (let [sql-vec (sql/format query)
+            _ (log/debug "biffs/q SQL:" (first sql-vec))
+            results (biff-sqlite/execute {:biff/conn conn :biff/malli-opts malli-opts} sql-vec)]
+        (mapv (fn [row]
+                (into {} (remove (fn [[_ v]] (nil? v))) row))
+              results)))))

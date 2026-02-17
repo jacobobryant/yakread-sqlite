@@ -52,9 +52,9 @@
                                 :where [:= :feed/id feed-id]}))]
       {:sub/subtitle (:feed/url feed)})))
 
-(defresolver latest-email-item [{:keys [biff/conn*]} {:sub/keys [doc-type id]}]
+(defresolver latest-email-item [{:keys [biff/conn*]} {:sub/keys [record-type id]}]
   {::pco/output [{:sub/latest-item [:xt/id]}]}
-  (when-some [item (when (= doc-type :sub/email)
+  (when-some [item (when (= record-type :sub.record-type/email)
                      (first (biffs/q conn*
                                      {:select :item/id
                                       :from :item

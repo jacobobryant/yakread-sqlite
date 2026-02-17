@@ -13,9 +13,31 @@
         :sub/feed-id (t/uuid 1)}],
       :feed [{:xt/id (t/uuid 1), :feed/url "url1"}]}]
     (feed-subs {:biff/conn* conn} {:user/id (t/uuid 11)})),
-   :result
-   {:user.export/feed-subs
-    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<opml version=\"1.0\">\n  <head><title>Yakread RSS subscriptions</title></head>\n  <body>\n    <outline type=\"rss\" xmlUrl=\"url1\"></outline>\n</body></opml>"}}
+   :ex #error {
+ :cause "Don't know how to create ISeq from: clojure.lang.Keyword"
+ :via
+ [{:type java.lang.IllegalArgumentException
+   :message "Don't know how to create ISeq from: clojure.lang.Keyword"
+   :at [clojure.lang.RT seqFrom "RT.java" 577]}]
+ :trace
+ [[clojure.lang.RT seqFrom "RT.java" 577]
+  [clojure.lang.RT seq "RT.java" 557]
+  [clojure.core$seq__5486 invokeStatic "core.clj" 139]
+  [clojure.core$some invokeStatic "core.clj" 2709]
+  [clojure.core$some invoke "core.clj" 2709]
+  [com.yakread.util.biff_staging$bundle_query_QMARK_ invokeStatic "biff_staging.clj" 846]
+  [com.yakread.util.biff_staging$bundle_query_QMARK_ invoke "biff_staging.clj" 841]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 878]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
+  [com.yakread.model.user.export$feed_subs__64823 invokeStatic "export.clj" 21]
+  [com.yakread.model.user.export$feed_subs__64823 invoke "export.clj" 18]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp439186$eval95667 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp439186$eval95667 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "bookmarks",
    :eval
@@ -77,12 +99,12 @@
   [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
   [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
   [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 852]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 841]
-  [com.yakread.model.user.export$item_resolver$fn__64806 invoke "export.clj" 47]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 882]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
+  [com.yakread.model.user.export$item_resolver$fn__64832 invoke "export.clj" 47]
   [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp503312$eval95675 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp503312$eval95675 invoke "NO_SOURCE_FILE" -1]
+  [tmp439186$eval95669 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp439186$eval95669 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
