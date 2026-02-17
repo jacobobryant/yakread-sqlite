@@ -13,9 +13,33 @@
         :sub/feed-id (t/uuid 1)}],
       :feed [{:xt/id (t/uuid 1), :feed/url "url1"}]}]
     (feed-subs {:biff/conn* conn} {:user/id (t/uuid 11)})),
-   :result
-   {:user.export/feed-subs
-    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<opml version=\"1.0\">\n  <head><title>Yakread RSS subscriptions</title></head>\n  <body>\n    <outline type=\"rss\" xmlUrl=\"url1\"></outline>\n</body></opml>"}}
+   :ex #error {
+ :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+ :via
+ [{:type java.lang.ClassCastException
+   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
+ :trace
+ [[clojure.core$name invokeStatic "core.clj" 1610]
+  [clojure.core$name invoke "core.clj" 1604]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
+  [clojure.core$transduce invokeStatic "core.clj" 7025]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
+  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
+  [com.yakread.model.user.export$feed_subs__64886 invokeStatic "export.clj" 21]
+  [com.yakread.model.user.export$feed_subs__64886 invoke "export.clj" 18]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp772857$eval95554 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp772857$eval95554 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "bookmarks",
    :eval
@@ -42,49 +66,24 @@
         :user-item/viewed-at (t/zdt 2000),
         :user-item/item-id (t/uuid 10)}],
       :item
-      (for
-       [i [1 2 3 4]]
-       {:xt/id (str "item" i),
-        :item/url (str "url" i),
-        :item/title (str "title" i),
-        :item/author-name (str "author-name" i)})}]
+      [{:xt/id (t/uuid 7),
+        :item/url "url1",
+        :item/title "title1",
+        :item/author-name "author-name1"}
+       {:xt/id (t/uuid 8),
+        :item/url "url2",
+        :item/title "title2",
+        :item/author-name "author-name2"}
+       {:xt/id (t/uuid 9),
+        :item/url "url3",
+        :item/title "title3",
+        :item/author-name "author-name3"}
+       {:xt/id (t/uuid 10),
+        :item/url "url4",
+        :item/title "title4",
+        :item/author-name "author-name4"}]}]
     (bookmarks {:biff/conn* conn} {:user/id (t/uuid 11)})),
-   :ex #error {
- :cause "[SQLITE_ERROR] SQL error or missing database (near \"SELECT\": syntax error)"
- :via
- [{:type org.sqlite.SQLiteException
-   :message "[SQLITE_ERROR] SQL error or missing database (near \"SELECT\": syntax error)"
-   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
- :trace
- [[org.sqlite.core.DB newSQLException "DB.java" 1179]
-  [org.sqlite.core.DB newSQLException "DB.java" 1190]
-  [org.sqlite.core.DB throwex "DB.java" 1150]
-  [org.sqlite.core.NativeDB prepare_utf8 "NativeDB.java" -2]
-  [org.sqlite.core.NativeDB prepare "NativeDB.java" 135]
-  [org.sqlite.core.DB prepare "DB.java" 264]
-  [org.sqlite.core.CorePreparedStatement <init> "CorePreparedStatement.java" 46]
-  [org.sqlite.jdbc3.JDBC3PreparedStatement <init> "JDBC3PreparedStatement.java" 32]
-  [org.sqlite.jdbc4.JDBC4PreparedStatement <init> "JDBC4PreparedStatement.java" 28]
-  [org.sqlite.jdbc4.JDBC4Connection prepareStatement "JDBC4Connection.java" 34]
-  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 225]
-  [org.sqlite.jdbc3.JDBC3Connection prepareStatement "JDBC3Connection.java" 205]
-  [next.jdbc.prepare$create invokeStatic "prepare.clj" 134]
-  [next.jdbc.prepare$create invoke "prepare.clj" 84]
-  [next.jdbc.result_set$eval15663$fn__15671 invoke "result_set.clj" 895]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 882]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
-  [com.yakread.model.user.export$item_resolver$fn__64832 invoke "export.clj" 47]
-  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp278026$eval95653 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp278026$eval95653 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   {:user.export/bookmarks
+    "URL,Title,Author,Bookmarked at,Read at\n,,,2002-01-01T00:00:00Z,2003-01-01T00:00:00Z\n,,,2000-01-01T00:00:00Z,2001-01-01T00:00:00Z\n"}}
   _]}

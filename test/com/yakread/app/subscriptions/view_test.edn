@@ -45,7 +45,42 @@
      :biff.fx/pathom
      {:session/user {:xt/id user-id},
       :params/item {:xt/id (t/uuid 1)}}}),
-   :result {:status 204}}
+   :ex #error {
+ :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+ :via
+ [{:type java.lang.ClassCastException
+   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
+ :trace
+ [[clojure.core$name invokeStatic "core.clj" 1610]
+  [clojure.core$name invoke "core.clj" 1604]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
+  [clojure.core$transduce invokeStatic "core.clj" 7025]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
+  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
+  [com.yakread.app.subscriptions.view$fn__60777$fn__60780 invoke "view.clj" 18]
+  [com.yakread.lib.fx$wrap_pathom$fn__53674 invoke "fx.clj" 121]
+  [clojure.lang.AFn applyToHelper "AFn.java" 154]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.core$apply invokeStatic "core.clj" 667]
+  [clojure.core$apply invoke "core.clj" 662]
+  [com.yakread.lib.fx$wrap_hiccup$fn__53677 doInvoke "fx.clj" 125]
+  [clojure.lang.RestFn invoke "RestFn.java" 411]
+  [com.yakread.lib.fx$machine$run__53651 invoke "fx.clj" 76]
+  [com.yakread.lib.test$test_route invokeStatic "test.clj" 140]
+  [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
+  [clojure.lang.RestFn invoke "RestFn.java" 445]
+  [tmp759998$eval95386 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp759998$eval95386 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "mark-read new",
    :eval

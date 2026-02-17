@@ -207,20 +207,33 @@
       :session {:uid (t/uuid 10)},
       :com.yakread.work.account/email-ids [(t/uuid 2) (t/uuid 3)]}
      :delete-email-batch)),
-   :result
-   [{:biff.fx/s3
-     ({:key "00140000-0000-0000-0000-000000000014",
-       :config-ns yakread.s3.content,
-       :method "DELETE"}
-      {:key "00160000-0000-0000-0000-000000000016",
-       :config-ns yakread.s3.emails,
-       :method "DELETE"}
-      {:key "00150000-0000-0000-0000-000000000015",
-       :config-ns yakread.s3.content,
-       :method "DELETE"})}
-    {:biff.fx/tx [[:erase-docs :item nil nil]]}
-    {:biff.fx/next :delete-email-batch,
-     :com.yakread.work.account/email-ids ()}]}
+   :ex #error {
+ :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+ :via
+ [{:type java.lang.ClassCastException
+   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
+ :trace
+ [[clojure.core$name invokeStatic "core.clj" 1610]
+  [clojure.core$name invoke "core.clj" 1604]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
+  [clojure.core$transduce invokeStatic "core.clj" 7025]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
+  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
+  [com.yakread.work.account$fn__65401 invokeStatic "account.clj" 115]
+  [com.yakread.work.account$fn__65401 invoke "account.clj" 103]
+  [com.yakread.lib.fx$machine$run__53651 invoke "fx.clj" 76]
+  [tmp257155$eval71976 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp257155$eval71976 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc
    "delete-account: delete-email-batch queries email items from SQL when email-ids not set",
@@ -244,5 +257,31 @@
       :biff/job {:user/id (t/uuid 10)},
       :session {:uid (t/uuid 10)}}
      :delete-email-batch)),
-   :result nil}
+   :ex #error {
+ :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+ :via
+ [{:type java.lang.ClassCastException
+   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
+ :trace
+ [[clojure.core$name invokeStatic "core.clj" 1610]
+  [clojure.core$name invoke "core.clj" 1604]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
+  [clojure.core$transduce invokeStatic "core.clj" 7025]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
+  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
+  [com.yakread.work.account$fn__65401 invokeStatic "account.clj" 112]
+  [com.yakread.work.account$fn__65401 invoke "account.clj" 103]
+  [com.yakread.lib.fx$machine$run__53651 invoke "fx.clj" 76]
+  [tmp257155$eval71978 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp257155$eval71978 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _]}

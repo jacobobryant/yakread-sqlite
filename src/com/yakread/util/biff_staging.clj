@@ -583,17 +583,18 @@
   "Infer the record_type value for tables that use discriminated unions.
    In XTDB, the type is determined by which subtype attributes are present.
    In SQLite, it's stored as an integer in the record_type column.
+   Checks both XTDB-style keys (e.g. :sub.feed/feed) and SQLite-style keys (e.g. :sub/feed-id).
    Returns the namespaced keyword enum value (e.g. :sub.record-type/feed)."
   [doc table]
   (case table
     :sub (cond
-           (contains? doc :sub.feed/feed)   :sub.record-type/feed
-           (contains? doc :sub.email/from)  :sub.record-type/email
+           (or (contains? doc :sub.feed/feed) (contains? doc :sub/feed-id))   :sub.record-type/feed
+           (or (contains? doc :sub.email/from) (contains? doc :sub/email-from))  :sub.record-type/email
            :else nil)
     :item (cond
             (contains? doc :item/doc-type)       nil  ;; already has doc-type, will be coerced
-            (contains? doc :item.feed/feed)       :item.record-type/feed
-            (contains? doc :item.email/sub)       :item.record-type/email
+            (or (contains? doc :item.feed/feed) (contains? doc :item/feed-id))       :item.record-type/feed
+            (or (contains? doc :item.email/sub) (contains? doc :item/email-sub-id))  :item.record-type/email
             :else nil)
     nil))
 
@@ -839,7 +840,7 @@
 ;; ============================================================================
 
 (defn- bundle-query?
-  "Check if a query is a bundle query (uses :nest_many sub-selects)."
+  "Check if a query is a bundle query (uses :nest_many or :nest_one sub-selects)."
   [query]
   (and (map? query)
        (vector? (:select query))
@@ -847,24 +848,112 @@
                (and (vector? sel)
                     (>= (count sel) 2)
                     (vector? (first sel))
-                    (= :nest_many (ffirst sel))))
+                    (#{:nest_many :nest_one} (ffirst sel))))
              (:select query))))
 
 (defn- execute-bundle
-  "Execute a bundle query by running each sub-query separately and combining results."
+  "Execute a bundle query by running each sub-query separately and combining results.
+   Handles both :nest_many and :nest_one sub-selects."
   [conn malli-opts query]
   (let [sub-queries (:select query)
-        result (reduce (fn [acc sel]
-                         (let [[query-expr alias-kw] sel
-                               [_ sub-query] query-expr
-                               sql-vec (sql/format sub-query)
-                               _ (log/debug "biffs/q bundle SQL:" (first sql-vec))
-                               rows (biff-sqlite/execute {:biff/conn conn :biff/malli-opts malli-opts} sql-vec)
-                               rows (mapv (fn [row] (into {} (remove (fn [[_ v]] (nil? v))) row)) rows)]
-                           (assoc acc alias-kw rows)))
-                       {}
-                       sub-queries)]
-    [result]))
+        ;; Separate plain columns from nested sub-queries
+        plain-cols (filterv (fn [sel]
+                              (not (and (vector? sel)
+                                        (>= (count sel) 2)
+                                        (vector? (first sel))
+                                        (#{:nest_many :nest_one} (ffirst sel)))))
+                            sub-queries)
+        nested-sels (filterv (fn [sel]
+                               (and (vector? sel)
+                                    (>= (count sel) 2)
+                                    (vector? (first sel))
+                                    (#{:nest_many :nest_one} (ffirst sel))))
+                             sub-queries)]
+    (if (empty? plain-cols)
+      ;; Pure bundle query (all sub-queries, no main table)
+      (let [result (reduce (fn [acc sel]
+                             (let [[query-expr alias-kw] sel
+                                   [_ sub-query] query-expr
+                                   sql-vec (sql/format sub-query)
+                                   _ (log/debug "biffs/q bundle SQL:" (first sql-vec))
+                                   rows (biff-sqlite/execute {:biff/conn conn :biff/malli-opts malli-opts} sql-vec)
+                                   rows (mapv (fn [row] (into {} (remove (fn [[_ v]] (nil? v))) row)) rows)]
+                               (assoc acc alias-kw rows)))
+                           {}
+                           sub-queries)]
+        [result])
+      ;; Mixed query: run main query first, then nest sub-queries per row
+      (let [main-query (assoc query :select plain-cols)
+            sql-vec (sql/format main-query)
+            _ (log/debug "biffs/q main SQL:" (first sql-vec))
+            main-rows (biff-sqlite/execute {:biff/conn conn :biff/malli-opts malli-opts} sql-vec)
+            main-rows (mapv (fn [row] (into {} (remove (fn [[_ v]] (nil? v))) row)) main-rows)]
+        (mapv (fn [row]
+                (reduce (fn [r sel]
+                          (let [[query-expr join-key] sel
+                                [nest-type sub-query] query-expr
+                                ;; Replace the join key ref in the sub-query WHERE with the actual value
+                                join-val (get row join-key)
+                                patched-where (walk/postwalk
+                                                (fn [x] (if (= x join-key) join-val x))
+                                                (:where sub-query))
+                                patched-query (assoc sub-query :where patched-where)
+                                sql-vec (sql/format patched-query)
+                                _ (log/debug "biffs/q nested SQL:" (first sql-vec))
+                                nested-rows (biff-sqlite/execute {:biff/conn conn :biff/malli-opts malli-opts} sql-vec)
+                                nested-rows (mapv (fn [row] (into {} (remove (fn [[_ v]] (nil? v))) row)) nested-rows)]
+                            (assoc r join-key (if (= nest-type :nest_one)
+                                                (first nested-rows)
+                                                nested-rows))))
+                        row
+                        nested-sels))
+              main-rows)))))
+
+(defn- extract-aliases
+  "Extract unqualified alias keywords from a HoneySQL query's :select clause.
+   Returns a set of unqualified keyword aliases (e.g., #{:user-id :ad-id}).
+   Aliases are SELECT items like [:col/name :alias-name].
+   Also checks UNION branches."
+  [query]
+  (let [selects (cond
+                  (and (map? query) (vector? (:select query)))
+                  [(:select query)]
+
+                  (and (map? query) (:union query))
+                  (mapv :select (:union query))
+
+                  (and (map? query) (:union-all query))
+                  (mapv :select (:union-all query))
+
+                  :else [])]
+    (into #{}
+          (comp (filter vector?)
+                (mapcat identity)
+                (keep (fn [sel]
+                        (when (and (vector? sel)
+                                   (= 2 (count sel))
+                                   (keyword? (second sel))
+                                   (not (vector? (first sel))))  ;; exclude [:nest_one ...] etc.
+                          (second sel)))))
+          selects)))
+
+(defn- unqualify-aliases
+  "Post-process result rows to strip table qualification from aliased columns.
+   biff-sqlite/execute's as-kebab-maps qualifies all keys (e.g., :user/user-id),
+   but aliased columns should be unqualified (e.g., :user-id)."
+  [aliases rows]
+  (if (empty? aliases)
+    rows
+    (let [alias-names (into #{} (map name) aliases)]
+      (mapv (fn [row]
+              (into {}
+                    (map (fn [[k v]]
+                           (if (and (qualified-keyword? k)
+                                    (contains? alias-names (name k)))
+                             [(keyword (name k)) v]
+                             [k v])))
+                    row))
+            rows))))
 
 (defn q
   "Query SQLite. conn must be a JDBC/SQLite connection.
@@ -877,9 +966,11 @@
   (let [malli-opts @(requiring-resolve 'com.yakread/malli-opts*)]
     (if (bundle-query? query)
       (execute-bundle conn malli-opts query)
-      (let [sql-vec (sql/format query)
+      (let [aliases (extract-aliases query)
+            sql-vec (sql/format query)
             _ (log/debug "biffs/q SQL:" (first sql-vec))
             results (biff-sqlite/execute {:biff/conn conn :biff/malli-opts malli-opts} sql-vec)]
-        (mapv (fn [row]
-                (into {} (remove (fn [[_ v]] (nil? v))) row))
-              results)))))
+        (->> results
+             (mapv (fn [row]
+                     (into {} (remove (fn [[_ v]] (nil? v))) row)))
+             (unqualify-aliases aliases))))))

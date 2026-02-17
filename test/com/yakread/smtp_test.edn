@@ -28,17 +28,34 @@
      {:invalid-domain (f {:domain "1.example.com", :username "hello"}),
       :invalid-username (f {:domain "example.com", :username "hi"}),
       :valid (f {:username "hello"})})),
-   :result
-   {:invalid-domain nil,
-    :invalid-username nil,
-    :valid
-    {:com.yakread.fx/js
-     {:fn-name "juice",
-      :input
-      {:html
-       "<!DOCTYPE html><html><head><title></title></head><body><div>the quick brown fox jumps over the lazy dog</div></body></html>"}},
-     :biff.fx/next :end,
-     :com.yakread.smtp/url "https://example.com/p/example-post"}}}
+   :ex #error {
+ :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+ :via
+ [{:type java.lang.ClassCastException
+   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
+ :trace
+ [[clojure.core$name invokeStatic "core.clj" 1610]
+  [clojure.core$name invoke "core.clj" 1604]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
+  [clojure.core$transduce invokeStatic "core.clj" 7025]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
+  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
+  [com.yakread.smtp$fn__65839 invokeStatic "smtp.clj" 39]
+  [com.yakread.smtp$fn__65839 invoke "smtp.clj" 36]
+  [com.yakread.lib.fx$machine$run__53651 invoke "fx.clj" 76]
+  [tmp622559$eval71238$f__71239 invoke "NO_SOURCE_FILE" 0]
+  [tmp622559$eval71238 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp622559$eval71238 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "deliver* :end parse failed",
    :eval
@@ -67,34 +84,28 @@
       :com.yakread.fx/js {:html html}}
      :end)),
    :ex #error {
- :cause "Range [0, 4) out of bounds for length 0"
+ :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
  :via
- [{:type java.lang.StringIndexOutOfBoundsException
-   :message "Range [0, 4) out of bounds for length 0"
-   :at [jdk.internal.util.Preconditions$1 apply "Preconditions.java" 55]}]
+ [{:type java.lang.ClassCastException
+   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
  :trace
- [[jdk.internal.util.Preconditions$1 apply "Preconditions.java" 55]
-  [jdk.internal.util.Preconditions$1 apply "Preconditions.java" 52]
-  [jdk.internal.util.Preconditions$4 apply "Preconditions.java" 213]
-  [jdk.internal.util.Preconditions$4 apply "Preconditions.java" 210]
-  [jdk.internal.util.Preconditions outOfBounds "Preconditions.java" 98]
-  [jdk.internal.util.Preconditions outOfBoundsCheckFromToIndex "Preconditions.java" 112]
-  [jdk.internal.util.Preconditions checkFromToIndex "Preconditions.java" 349]
-  [java.lang.String checkBoundsBeginEnd "String.java" 4855]
-  [java.lang.String substring "String.java" 2823]
-  [clojure.core$subs invokeStatic "core.clj" 5040]
-  [clojure.core$subs invoke "core.clj" 5034]
-  [com.biffweb.impl.xtdb2$prefix_uuid invokeStatic "xtdb2.clj" 183]
-  [com.biffweb.impl.xtdb2$prefix_uuid invoke "xtdb2.clj" 182]
-  [com.biffweb.experimental$prefix_uuid invokeStatic "experimental.clj" 95]
-  [com.biffweb.experimental$prefix_uuid invoke "experimental.clj" 88]
-  [com.yakread.util.biff_staging$gen_uuid invokeStatic "biff_staging.clj" 835]
-  [com.yakread.util.biff_staging$gen_uuid invoke "biff_staging.clj" 831]
-  [com.yakread.smtp$fn__65784 invokeStatic "smtp.clj" 93]
-  [com.yakread.smtp$fn__65784 invoke "smtp.clj" 57]
-  [com.yakread.lib.fx$machine$run__53588 invoke "fx.clj" 76]
-  [tmp817956$eval71181 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp817956$eval71181 invoke "NO_SOURCE_FILE" -1]
+ [[clojure.core$name invokeStatic "core.clj" 1610]
+  [clojure.core$name invoke "core.clj" 1604]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
+  [clojure.core$transduce invokeStatic "core.clj" 7025]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
+  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
+  [com.yakread.smtp$fn__65847 invokeStatic "smtp.clj" 83]
+  [com.yakread.smtp$fn__65847 invoke "smtp.clj" 57]
+  [com.yakread.lib.fx$machine$run__53651 invoke "fx.clj" 76]
+  [tmp622559$eval71244 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp622559$eval71244 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -112,34 +123,28 @@
       :com.yakread.fx/js {:html html}}
      :end)),
    :ex #error {
- :cause "Range [0, 4) out of bounds for length 0"
+ :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
  :via
- [{:type java.lang.StringIndexOutOfBoundsException
-   :message "Range [0, 4) out of bounds for length 0"
-   :at [jdk.internal.util.Preconditions$1 apply "Preconditions.java" 55]}]
+ [{:type java.lang.ClassCastException
+   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
  :trace
- [[jdk.internal.util.Preconditions$1 apply "Preconditions.java" 55]
-  [jdk.internal.util.Preconditions$1 apply "Preconditions.java" 52]
-  [jdk.internal.util.Preconditions$4 apply "Preconditions.java" 213]
-  [jdk.internal.util.Preconditions$4 apply "Preconditions.java" 210]
-  [jdk.internal.util.Preconditions outOfBounds "Preconditions.java" 98]
-  [jdk.internal.util.Preconditions outOfBoundsCheckFromToIndex "Preconditions.java" 112]
-  [jdk.internal.util.Preconditions checkFromToIndex "Preconditions.java" 349]
-  [java.lang.String checkBoundsBeginEnd "String.java" 4855]
-  [java.lang.String substring "String.java" 2823]
-  [clojure.core$subs invokeStatic "core.clj" 5040]
-  [clojure.core$subs invoke "core.clj" 5034]
-  [com.biffweb.impl.xtdb2$prefix_uuid invokeStatic "xtdb2.clj" 183]
-  [com.biffweb.impl.xtdb2$prefix_uuid invoke "xtdb2.clj" 182]
-  [com.biffweb.experimental$prefix_uuid invokeStatic "experimental.clj" 95]
-  [com.biffweb.experimental$prefix_uuid invoke "experimental.clj" 88]
-  [com.yakread.util.biff_staging$gen_uuid invokeStatic "biff_staging.clj" 835]
-  [com.yakread.util.biff_staging$gen_uuid invoke "biff_staging.clj" 831]
-  [com.yakread.smtp$fn__65784 invokeStatic "smtp.clj" 93]
-  [com.yakread.smtp$fn__65784 invoke "smtp.clj" 57]
-  [com.yakread.lib.fx$machine$run__53588 invoke "fx.clj" 76]
-  [tmp817956$eval71183 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp817956$eval71183 invoke "NO_SOURCE_FILE" -1]
+ [[clojure.core$name invokeStatic "core.clj" 1610]
+  [clojure.core$name invoke "core.clj" 1604]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
+  [clojure.core$transduce invokeStatic "core.clj" 7025]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
+  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
+  [com.yakread.smtp$fn__65847 invokeStatic "smtp.clj" 83]
+  [com.yakread.smtp$fn__65847 invoke "smtp.clj" 57]
+  [com.yakread.lib.fx$machine$run__53651 invoke "fx.clj" 76]
+  [tmp622559$eval71246 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp622559$eval71246 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]

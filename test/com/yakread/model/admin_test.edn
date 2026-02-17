@@ -15,9 +15,33 @@
     (recent-users
      {:biff/conn* conn, :biff/now (.toInstant (t/zdt 2000 1 8))}
      {})),
-   :result
-   {:admin/recent-users
-    [{:xt/id #uuid "00010000-0000-0000-0000-000000000001"}]}}
+   :ex #error {
+ :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+ :via
+ [{:type java.lang.ClassCastException
+   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
+ :trace
+ [[clojure.core$name invokeStatic "core.clj" 1610]
+  [clojure.core$name invoke "core.clj" 1604]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
+  [clojure.core$transduce invokeStatic "core.clj" 7025]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
+  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
+  [com.yakread.model.admin$recent_users__61047 invokeStatic "admin.clj" 12]
+  [com.yakread.model.admin$recent_users__61047 invoke "admin.clj" 9]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp633901$eval95500 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp633901$eval95500 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "recent-users returns empty when no recent users",
    :eval
@@ -37,10 +61,33 @@
    (t/with-sqlite
     [conn {:ad [{:xt/id (t/uuid 1)} {:xt/id (t/uuid 2)}]}]
     (ads {:biff/conn* conn} {})),
-   :result
-   {:admin/ads
-    [{:xt/id #uuid "00010000-0000-0000-0000-000000000001"}
-     {:xt/id #uuid "00020000-0000-0000-0000-000000000002"}]}}
+   :ex #error {
+ :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+ :via
+ [{:type java.lang.ClassCastException
+   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
+ :trace
+ [[clojure.core$name invokeStatic "core.clj" 1610]
+  [clojure.core$name invoke "core.clj" 1604]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
+  [clojure.core$transduce invokeStatic "core.clj" 7025]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
+  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
+  [com.yakread.model.admin$ads__61072 invokeStatic "admin.clj" 45]
+  [com.yakread.model.admin$ads__61072 invoke "admin.clj" 43]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp633901$eval95504 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp633901$eval95504 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "ads returns empty when no ads",
    :eval (t/with-sqlite [conn {}] (ads {:biff/conn* conn} {})),

@@ -10,166 +10,63 @@
     :post
     {:session {:uid (t/uuid 2)},
      :params {:username "123"},
-     :db {:user [{:xt/id (t/uuid 2), :user/email-username "abc"}]}}),
-   :ex #error {
- :cause "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
- :via
- [{:type java.lang.IllegalArgumentException
-   :message "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
-   :at [clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]}]
- :trace
- [[clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]
-  [clojure.core$_cache_protocol_fn invoke "core_deftype.clj" 577]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 882]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
-  [com.yakread.app.subscriptions.add$eval60570$fn__60578 invoke "add.clj" 27]
-  [clojure.lang.AFn applyToHelper "AFn.java" 154]
-  [clojure.lang.AFn applyTo "AFn.java" 144]
-  [clojure.core$apply invokeStatic "core.clj" 667]
-  [clojure.core$apply invoke "core.clj" 662]
-  [com.yakread.lib.fx$wrap_hiccup$fn__53614 doInvoke "fx.clj" 125]
-  [clojure.lang.RestFn invoke "RestFn.java" 411]
-  [com.yakread.lib.fx$machine$run__53588 invoke "fx.clj" 76]
-  [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
-  [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
-  [clojure.lang.RestFn invoke "RestFn.java" 445]
-  [tmp385931$eval72001 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp385931$eval72001 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+     :sqlite-db
+     {:user [{:xt/id (t/uuid 2), :user/email-username "abc"}]}}),
+   :result
+   {:status 303, :headers {"location" ["/subscriptions/add" nil]}}}
   _
   {:doc "set-username invalid username",
    :eval
    (t/test-route
     set-username
     :post
-    {:db {}, :session {:uid 1}, :params {:username "admin"}}),
-   :ex #error {
- :cause "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
- :via
- [{:type java.lang.IllegalArgumentException
-   :message "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
-   :at [clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]}]
- :trace
- [[clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]
-  [clojure.core$_cache_protocol_fn invoke "core_deftype.clj" 577]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 882]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
-  [com.yakread.app.subscriptions.add$eval60570$fn__60578 invoke "add.clj" 27]
-  [clojure.lang.AFn applyToHelper "AFn.java" 154]
-  [clojure.lang.AFn applyTo "AFn.java" 144]
-  [clojure.core$apply invokeStatic "core.clj" 667]
-  [clojure.core$apply invoke "core.clj" 662]
-  [com.yakread.lib.fx$wrap_hiccup$fn__53614 doInvoke "fx.clj" 125]
-  [clojure.lang.RestFn invoke "RestFn.java" 411]
-  [com.yakread.lib.fx$machine$run__53588 invoke "fx.clj" 76]
-  [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
-  [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
-  [clojure.lang.RestFn invoke "RestFn.java" 445]
-  [tmp385931$eval95299 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp385931$eval95299 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+    {:sqlite-db {},
+     :session {:uid (t/uuid 1)},
+     :params {:username "admin"}}),
+   :result
+   {:status 303,
+    :headers
+    {"location"
+     ["/subscriptions/add"
+      {:error "username-unavailable", :email-username "admin"}]}}}
   _
   {:doc "set-username username taken",
    :eval
    (t/test-route
     set-username
     :post
-    {:db {:user [{:xt/id 2, :user/email-username "abc"}]},
-     :session {:uid 1},
+    {:sqlite-db
+     {:user [{:xt/id (t/uuid 2), :user/email-username "abc"}]},
+     :session {:uid (t/uuid 1)},
      :params {:username "abc"}}),
-   :ex #error {
- :cause "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
- :via
- [{:type java.lang.IllegalArgumentException
-   :message "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
-   :at [clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]}]
- :trace
- [[clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]
-  [clojure.core$_cache_protocol_fn invoke "core_deftype.clj" 577]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 882]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
-  [com.yakread.app.subscriptions.add$eval60570$fn__60578 invoke "add.clj" 27]
-  [clojure.lang.AFn applyToHelper "AFn.java" 154]
-  [clojure.lang.AFn applyTo "AFn.java" 144]
-  [clojure.core$apply invokeStatic "core.clj" 667]
-  [clojure.core$apply invoke "core.clj" 662]
-  [com.yakread.lib.fx$wrap_hiccup$fn__53614 doInvoke "fx.clj" 125]
-  [clojure.lang.RestFn invoke "RestFn.java" 411]
-  [com.yakread.lib.fx$machine$run__53588 invoke "fx.clj" 76]
-  [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
-  [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
-  [clojure.lang.RestFn invoke "RestFn.java" 445]
-  [tmp385931$eval95317 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp385931$eval95317 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   {:status 303,
+    :headers
+    {"location"
+     ["/subscriptions/add"
+      {:error "username-unavailable", :email-username "abc"}]}}}
   _
   {:doc "set-username success",
    :eval
    (t/test-route
     set-username
     :post
-    {:db {}, :session {:uid 1}, :params {:username "abc"}}),
-   :ex #error {
- :cause "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
- :via
- [{:type java.lang.IllegalArgumentException
-   :message "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
-   :at [clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]}]
- :trace
- [[clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]
-  [clojure.core$_cache_protocol_fn invoke "core_deftype.clj" 577]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 882]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
-  [com.yakread.app.subscriptions.add$eval60570$fn__60578 invoke "add.clj" 27]
-  [clojure.lang.AFn applyToHelper "AFn.java" 154]
-  [clojure.lang.AFn applyTo "AFn.java" 144]
-  [clojure.core$apply invokeStatic "core.clj" 667]
-  [clojure.core$apply invoke "core.clj" 662]
-  [com.yakread.lib.fx$wrap_hiccup$fn__53614 doInvoke "fx.clj" 125]
-  [clojure.lang.RestFn invoke "RestFn.java" 411]
-  [com.yakread.lib.fx$machine$run__53588 invoke "fx.clj" 76]
-  [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
-  [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
-  [clojure.lang.RestFn invoke "RestFn.java" 445]
-  [tmp385931$eval95335 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp385931$eval95335 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+    {:sqlite-db {},
+     :session {:uid (t/uuid 1)},
+     :params {:username "abc"}}),
+   :result
+   {:status 303,
+    :headers {"location" ["/subscriptions/add" nil]},
+    :biff.fx/tx
+    [[:patch-docs
+      :user
+      {:xt/id #uuid "00010000-0000-0000-0000-000000000001",
+       :user/email-username "abc"}]
+     {:xt
+      ["ASSERT ? >= (SELECT COUNT(*) FROM user WHERE (\"user$email_username\" = ?))"
+       1
+       "abc"],
+      :sqlite nil}]}}
   _
   {:doc "add-rss fix the url",
    :eval
@@ -192,8 +89,8 @@
     add-rss
     :post
     :add-urls
-    {:params {:session {:uid 1}},
-     :db {},
+    {:params {:session {:uid (t/uuid 1)}},
+     :sqlite-db {},
      :biff.fx/http
      {:url "https://example.com",
       :body "<html><body>hey</body></html>"}}),
@@ -211,48 +108,52 @@
     :post
     :add-urls
     {:session {:uid #uuid "12340000-0000-0000-0000-000000000000"},
-     :db {},
+     :sqlite-db {},
      :biff/now (t/zdt 2000),
      :biff.fx/http
      {:url "https://obryant.dev",
       :body
       "<html><head><link href=\"/feed.xml\" title=\"Feed for Jacob O'Bryant\" type=\"application/atom+xml\" rel=\"alternate\" /></head><body>hey</body></html>"}}),
-   :ex #error {
- :cause "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
- :via
- [{:type java.lang.IllegalArgumentException
-   :message "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
-   :at [clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]}]
- :trace
- [[clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]
-  [clojure.core$_cache_protocol_fn invoke "core_deftype.clj" 577]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 882]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
-  [com.yakread.app.subscriptions.add$subscribe_feeds_tx invokeStatic "add.clj" 57]
-  [com.yakread.app.subscriptions.add$subscribe_feeds_tx invoke "add.clj" 55]
-  [com.yakread.app.subscriptions.add$fn__60638$fn__60645 invoke "add.clj" 130]
-  [clojure.lang.AFn applyToHelper "AFn.java" 154]
-  [clojure.lang.AFn applyTo "AFn.java" 144]
-  [clojure.core$apply invokeStatic "core.clj" 667]
-  [clojure.core$apply invoke "core.clj" 662]
-  [com.yakread.lib.fx$wrap_hiccup$fn__53614 doInvoke "fx.clj" 125]
-  [clojure.lang.RestFn invoke "RestFn.java" 411]
-  [com.yakread.lib.fx$machine$run__53588 invoke "fx.clj" 76]
-  [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
-  [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
-  [clojure.lang.RestFn invoke "RestFn.java" 467]
-  [tmp385931$eval95373 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp385931$eval95373 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   [{:biff.fx/tx
+     ({:xt
+       {:assert
+        [:not-exists
+         {:select [:inline 1],
+          :from :feed,
+          :where [:in :feed/url ["https://obryant.dev/feed.xml"]],
+          :limit [:inline 1]}]},
+       :sqlite nil}
+      [:put-docs
+       :feed
+       {:xt/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+        :feed/url "https://obryant.dev/feed.xml"}]
+      {:xt
+       {:assert
+        [:not-exists
+         {:select [:inline 1],
+          :from :sub,
+          :where
+          [:and
+           [:= :sub/user #uuid "12340000-0000-0000-0000-000000000000"]
+           [:in
+            :sub.feed/feed
+            [#uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"]]],
+          :limit [:inline 1]}]},
+       :sqlite nil}
+      [:put-docs
+       :sub
+       {:xt/id #uuid "1234c9f6-4f1d-f03a-8ce9-70b71df42503",
+        :sub/user #uuid "12340000-0000-0000-0000-000000000000",
+        :sub/created-at #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
+        :sub.feed/feed #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"}])}
+    {:biff.fx/queue
+     {:jobs
+      ([:work.subscription/sync-feed
+        {:feed/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+         :biff/priority 0}])},
+     :status 303,
+     :headers {"Location" ["/subscriptions/add" {:added-feeds 1}]}}]}
   _
   {:doc "add-rss direct url",
    :eval
@@ -261,48 +162,52 @@
     :post
     :add-urls
     {:session {:uid #uuid "12340000-0000-0000-0000-000000000000"},
-     :db {},
+     :sqlite-db {},
      :biff/now (t/zdt 2000),
      :biff.fx/http
      {:url "https://obryant.dev/feed.xml",
       :body
       "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<feed xmlns=\"http://www.w3.org/2005/Atom\"><title>Jacob O'Bryant</title><id>https://obryant.dev/feed.xml</id><updated>2024-08-31T13:00:00.000Z</updated><link rel=\"self\" href=\"https://obryant.dev/feed.xml\" type=\"application/atom+xml\" /><link href=\"https://obryant.dev\" /><entry><title type=\"html\">Impressions on Sudbury Schooling</title><id>https://obryant.dev/p/impressions-sudbury/</id><updated>2024-08-31T13:00:00.000Z</updated><content type=\"html\">lorem ipsum dolor sit amet...</content><link href=\"https://obryant.dev/p/impressions-sudbury/\" /><author><name>Jacob O'Bryant</name><uri>https://obryant.dev</uri></author></entry></feed>"}}),
-   :ex #error {
- :cause "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
- :via
- [{:type java.lang.IllegalArgumentException
-   :message "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
-   :at [clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]}]
- :trace
- [[clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]
-  [clojure.core$_cache_protocol_fn invoke "core_deftype.clj" 577]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 882]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
-  [com.yakread.app.subscriptions.add$subscribe_feeds_tx invokeStatic "add.clj" 57]
-  [com.yakread.app.subscriptions.add$subscribe_feeds_tx invoke "add.clj" 55]
-  [com.yakread.app.subscriptions.add$fn__60638$fn__60645 invoke "add.clj" 130]
-  [clojure.lang.AFn applyToHelper "AFn.java" 154]
-  [clojure.lang.AFn applyTo "AFn.java" 144]
-  [clojure.core$apply invokeStatic "core.clj" 667]
-  [clojure.core$apply invoke "core.clj" 662]
-  [com.yakread.lib.fx$wrap_hiccup$fn__53614 doInvoke "fx.clj" 125]
-  [clojure.lang.RestFn invoke "RestFn.java" 411]
-  [com.yakread.lib.fx$machine$run__53588 invoke "fx.clj" 76]
-  [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
-  [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
-  [clojure.lang.RestFn invoke "RestFn.java" 467]
-  [tmp385931$eval95391 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp385931$eval95391 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   [{:biff.fx/tx
+     ({:xt
+       {:assert
+        [:not-exists
+         {:select [:inline 1],
+          :from :feed,
+          :where [:in :feed/url ["https://obryant.dev/feed.xml"]],
+          :limit [:inline 1]}]},
+       :sqlite nil}
+      [:put-docs
+       :feed
+       {:xt/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+        :feed/url "https://obryant.dev/feed.xml"}]
+      {:xt
+       {:assert
+        [:not-exists
+         {:select [:inline 1],
+          :from :sub,
+          :where
+          [:and
+           [:= :sub/user #uuid "12340000-0000-0000-0000-000000000000"]
+           [:in
+            :sub.feed/feed
+            [#uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"]]],
+          :limit [:inline 1]}]},
+       :sqlite nil}
+      [:put-docs
+       :sub
+       {:xt/id #uuid "1234c9f6-4f1d-f03a-8ce9-70b71df42503",
+        :sub/user #uuid "12340000-0000-0000-0000-000000000000",
+        :sub/created-at #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
+        :sub.feed/feed #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"}])}
+    {:biff.fx/queue
+     {:jobs
+      ([:work.subscription/sync-feed
+        {:feed/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+         :biff/priority 0}])},
+     :status 303,
+     :headers {"Location" ["/subscriptions/add" {:added-feeds 1}]}}]}
   _
   {:doc "add-rss don't create feed doc if someone already subscribes",
    :eval
@@ -311,7 +216,7 @@
     :post
     :add-urls
     {:session {:uid #uuid "12340000-0000-0000-0000-000000000000"},
-     :db
+     :sqlite-db
      {:feed
       [{:xt/id (t/uuid 1), :feed/url "https://obryant.dev/feed.xml"}]},
      :biff/now (t/zdt 2000),
@@ -334,23 +239,23 @@
   [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
   [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
   [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 882]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 972]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
   [com.yakread.app.subscriptions.add$subscribe_feeds_tx invokeStatic "add.clj" 57]
   [com.yakread.app.subscriptions.add$subscribe_feeds_tx invoke "add.clj" 55]
-  [com.yakread.app.subscriptions.add$fn__60638$fn__60645 invoke "add.clj" 130]
+  [com.yakread.app.subscriptions.add$fn__60701$fn__60708 invoke "add.clj" 130]
   [clojure.lang.AFn applyToHelper "AFn.java" 154]
   [clojure.lang.AFn applyTo "AFn.java" 144]
   [clojure.core$apply invokeStatic "core.clj" 667]
   [clojure.core$apply invoke "core.clj" 662]
-  [com.yakread.lib.fx$wrap_hiccup$fn__53614 doInvoke "fx.clj" 125]
+  [com.yakread.lib.fx$wrap_hiccup$fn__53677 doInvoke "fx.clj" 125]
   [clojure.lang.RestFn invoke "RestFn.java" 411]
-  [com.yakread.lib.fx$machine$run__53588 invoke "fx.clj" 76]
+  [com.yakread.lib.fx$machine$run__53651 invoke "fx.clj" 76]
   [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
   [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
   [clojure.lang.RestFn invoke "RestFn.java" 467]
-  [tmp385931$eval95409 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp385931$eval95409 invoke "NO_SOURCE_FILE" -1]
+  [tmp770176$eval71254 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp770176$eval71254 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
@@ -371,47 +276,77 @@
     :post
     :end
     {:session {:uid #uuid "12340000-0000-0000-0000-000000000000"},
-     :db {},
+     :sqlite-db {},
      :biff/now (t/zdt 2000),
      :biff.fx/slurp
      (slurp
       "test/com/yakread/app/subscriptions/add_test/sample.opml")}),
-   :ex #error {
- :cause "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
- :via
- [{:type java.lang.IllegalArgumentException
-   :message "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
-   :at [clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]}]
- :trace
- [[clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]
-  [clojure.core$_cache_protocol_fn invoke "core_deftype.clj" 577]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 882]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
-  [com.yakread.app.subscriptions.add$subscribe_feeds_tx invokeStatic "add.clj" 57]
-  [com.yakread.app.subscriptions.add$subscribe_feeds_tx invoke "add.clj" 55]
-  [com.yakread.app.subscriptions.add$fn__60660$fn__60668 invoke "add.clj" 146]
-  [clojure.lang.AFn applyToHelper "AFn.java" 154]
-  [clojure.lang.AFn applyTo "AFn.java" 144]
-  [clojure.core$apply invokeStatic "core.clj" 667]
-  [clojure.core$apply invoke "core.clj" 662]
-  [com.yakread.lib.fx$wrap_hiccup$fn__53614 doInvoke "fx.clj" 125]
-  [clojure.lang.RestFn invoke "RestFn.java" 411]
-  [com.yakread.lib.fx$machine$run__53588 invoke "fx.clj" 76]
-  [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
-  [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
-  [clojure.lang.RestFn invoke "RestFn.java" 467]
-  [tmp385931$eval95429 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp385931$eval95429 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   [{:biff.fx/tx
+     ({:xt
+       {:assert
+        [:not-exists
+         {:select [:inline 1],
+          :from :feed,
+          :where
+          [:in
+           :feed/url
+           ["https://code.thheller.com/feed.xml"
+            "http://timothypratley.blogspot.com/feeds/posts/default"
+            "https://www.clojuriststogether.org/index.xml"]],
+          :limit [:inline 1]}]},
+       :sqlite nil}
+      [:put-docs
+       :feed
+       {:xt/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+        :feed/url "https://code.thheller.com/feed.xml"}
+       {:xt/id #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503",
+        :feed/url
+        "http://timothypratley.blogspot.com/feeds/posts/default"}
+       {:xt/id #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
+        :feed/url "https://www.clojuriststogether.org/index.xml"}]
+      {:xt
+       {:assert
+        [:not-exists
+         {:select [:inline 1],
+          :from :sub,
+          :where
+          [:and
+           [:= :sub/user #uuid "12340000-0000-0000-0000-000000000000"]
+           [:in
+            :sub.feed/feed
+            [#uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"
+             #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503"
+             #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b"]]],
+          :limit [:inline 1]}]},
+       :sqlite nil}
+      [:put-docs
+       :sub
+       {:xt/id #uuid "1234c222-9cef-e94d-fc1e-932efb9a0f58",
+        :sub/user #uuid "12340000-0000-0000-0000-000000000000",
+        :sub/created-at #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
+        :sub.feed/feed #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"}
+       {:xt/id #uuid "12341b08-05e8-b107-f0f5-b4f22d0cd0f1",
+        :sub/user #uuid "12340000-0000-0000-0000-000000000000",
+        :sub/created-at #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
+        :sub.feed/feed #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503"}
+       {:xt/id #uuid "1234620f-501c-9270-20ff-67585e33a8f6",
+        :sub/user #uuid "12340000-0000-0000-0000-000000000000",
+        :sub/created-at #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
+        :sub.feed/feed #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b"}])}
+    {:biff.fx/queue
+     {:jobs
+      ([:work.subscription/sync-feed
+        {:feed/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+         :biff/priority 5}]
+       [:work.subscription/sync-feed
+        {:feed/id #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503",
+         :biff/priority 5}]
+       [:work.subscription/sync-feed
+        {:feed/id #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
+         :biff/priority 5}])},
+     :status 303,
+     :headers {"Location" ["/subscriptions/add" {:added-feeds 3}]}}]}
   _
   {:doc "add-opml no urls found, show an error",
    :eval

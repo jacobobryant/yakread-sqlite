@@ -70,13 +70,33 @@
      [{:xt/id (t/uuid 11)}
       {:xt/id (t/uuid 12)}
       {:xt/id (t/uuid 14)}])),
-   :result
-   [{:xt/id #uuid "00110000-0000-0000-0000-000000000011",
-     :item/n-skipped 0}
-    {:xt/id #uuid "00120000-0000-0000-0000-000000000012",
-     :item/n-skipped 0}
-    {:xt/id #uuid "00140000-0000-0000-0000-000000000014",
-     :item/n-skipped 0}]}
+   :ex #error {
+ :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+ :via
+ [{:type java.lang.ClassCastException
+   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
+ :trace
+ [[clojure.core$name invokeStatic "core.clj" 1610]
+  [clojure.core$name invoke "core.clj" 1604]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
+  [clojure.core$transduce invokeStatic "core.clj" 7025]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
+  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
+  [com.yakread.model.item$n_skipped__61197 invokeStatic "item.clj" 77]
+  [com.yakread.model.item$n_skipped__61197 invoke "item.clj" 73]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp474990$eval95562 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp474990$eval95562 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:eval
    (t/with-sqlite
@@ -96,14 +116,33 @@
      [{:xt/id (t/uuid 11)}
       {:xt/id (t/uuid 12)}
       {:xt/id (t/uuid 13)}])),
-   :result
-   [{:xt/id #uuid "00110000-0000-0000-0000-000000000011",
-     :item/user-item
-     {:xt/id #uuid "00290000-0000-0000-0000-000000000029"}}
-    {:xt/id #uuid "00120000-0000-0000-0000-000000000012",
-     :item/user-item
-     {:xt/id #uuid "00300000-0000-0000-0000-000000000030"}}
-    {}]}
+   :ex #error {
+ :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+ :via
+ [{:type java.lang.ClassCastException
+   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
+ :trace
+ [[clojure.core$name invokeStatic "core.clj" 1610]
+  [clojure.core$name invoke "core.clj" 1604]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
+  [clojure.core$transduce invokeStatic "core.clj" 7025]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
+  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
+  [com.yakread.model.item$user_item__61207 invokeStatic "item.clj" 102]
+  [com.yakread.model.item$user_item__61207 invoke "item.clj" 93]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp474990$eval95564 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp474990$eval95564 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "image-from-feed",
    :eval
@@ -123,11 +162,33 @@
        :item/feed-url "url1"}
       {:item/feed-url "url1"}
       {:item/feed-url "url3"}])),
-   :result
-   [{}
-    {:item/image-url "image-url1"}
-    {:item/image-url "image-url1"}
-    {}]}
+   :ex #error {
+ :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+ :via
+ [{:type java.lang.ClassCastException
+   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
+ :trace
+ [[clojure.core$name invokeStatic "core.clj" 1610]
+  [clojure.core$name invoke "core.clj" 1604]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
+  [clojure.core$transduce invokeStatic "core.clj" 7025]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
+  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
+  [com.yakread.model.item$image_from_feed__61215 invokeStatic "item.clj" 117]
+  [com.yakread.model.item$image_from_feed__61215 invoke "item.clj" 108]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp474990$eval95566 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp474990$eval95566 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "history-items",
    :eval
@@ -156,25 +217,33 @@
       {:biff/conn* conn}
       {:session/user {:xt/id (t/uuid 32)},
        :params/paginate-after (t/uuid 12)})}),
-   :result
-   {:all
-    {:user/history-items
-     [{:xt/id #uuid "00120000-0000-0000-0000-000000000012",
-       :item/user-item
-       {:xt/id #uuid "00300000-0000-0000-0000-000000000030"}}
-      {:xt/id #uuid "00110000-0000-0000-0000-000000000011",
-       :item/user-item
-       {:xt/id #uuid "00290000-0000-0000-0000-000000000029"}}]},
-    :page-1
-    {:user/history-items
-     [{:xt/id #uuid "00120000-0000-0000-0000-000000000012",
-       :item/user-item
-       {:xt/id #uuid "00300000-0000-0000-0000-000000000030"}}]},
-    :page-2
-    {:user/history-items
-     [{:xt/id #uuid "00110000-0000-0000-0000-000000000011",
-       :item/user-item
-       {:xt/id #uuid "00290000-0000-0000-0000-000000000029"}}]}}}
+   :ex #error {
+ :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+ :via
+ [{:type java.lang.ClassCastException
+   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
+ :trace
+ [[clojure.core$name invokeStatic "core.clj" 1610]
+  [clojure.core$name invoke "core.clj" 1604]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
+  [clojure.core$transduce invokeStatic "core.clj" 7025]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
+  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
+  [com.yakread.model.item$history_items__61232 invokeStatic "item.clj" 145]
+  [com.yakread.model.item$history_items__61232 invoke "item.clj" 136]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp474990$eval95568 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp474990$eval95568 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "feed-sub",
    :eval
@@ -234,19 +303,31 @@
       {:xt/id (t/uuid 15)}
       {:xt/id (t/uuid 1)}
       {:xt/id (t/uuid 2)}])),
-   :result
-   [{:xt/id #uuid "00110000-0000-0000-0000-000000000011",
-     :item/n-digest-sends 0}
-    {:xt/id #uuid "00120000-0000-0000-0000-000000000012",
-     :item/n-digest-sends 0}
-    {:xt/id #uuid "00130000-0000-0000-0000-000000000013",
-     :item/n-digest-sends 0}
-    {:xt/id #uuid "00140000-0000-0000-0000-000000000014",
-     :item/n-digest-sends 0}
-    {:xt/id #uuid "00150000-0000-0000-0000-000000000015",
-     :item/n-digest-sends 0}
-    {:xt/id #uuid "00010000-0000-0000-0000-000000000001",
-     :item/n-digest-sends 0}
-    {:xt/id #uuid "00020000-0000-0000-0000-000000000002",
-     :item/n-digest-sends 0}]}
+   :ex #error {
+ :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+ :via
+ [{:type java.lang.ClassCastException
+   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
+ :trace
+ [[clojure.core$name invokeStatic "core.clj" 1610]
+  [clojure.core$name invoke "core.clj" 1604]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
+  [clojure.core$transduce invokeStatic "core.clj" 7025]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
+  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
+  [com.yakread.model.item$digest_sends__61331 invokeStatic "item.clj" 299]
+  [com.yakread.model.item$digest_sends__61331 invoke "item.clj" 295]
+  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
+  [tmp474990$eval95574 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp474990$eval95574 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _]}

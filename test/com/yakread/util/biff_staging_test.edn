@@ -48,100 +48,90 @@
   _
   {:doc ":biff/upsert expansion",
    :eval
-   (t/with-node
-    [node {:stuff [{:xt/id (t/uuid 1), :x 1, :y 1}]}]
+   (t/with-sqlite
+    [conn
+     {:feed
+      [{:xt/id (t/uuid 1), :feed/url "https://example.com/feed1"}]}]
     (biff-tx-op
-     {:biff/conn* node}
+     {:biff/conn* conn}
      [:biff/upsert
-      :stuff
-      [:x :y]
-      {:xt/id (t/uuid 2), :x 1, :y 1, :z 1}
-      {:xt/id (t/uuid 4), :x 2, :y 2, :z 2}
-      {:x 3, :y 3, :z 3}])),
+      :feed
+      [:feed/url]
+      {:xt/id (t/uuid 2),
+       :feed/url "https://example.com/feed1",
+       :feed/title "New Title"}
+      {:xt/id (t/uuid 4),
+       :feed/url "https://example.com/feed2",
+       :feed/title "Feed 2"}
+      {:feed/url "https://example.com/feed3", :feed/title "Feed 3"}])),
    :ex #error {
- :cause "ERROR: Errors parsing SQL statement:\n  - line 1:61 no viable alternative at input '((x=$1)AND(y=$2),'\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb/sql-error\",\"Errors parsing SQL statement:\\n  - line 1:61 no viable alternative at input '((x=$1)AND(y=$2),'\",[\"^ \",\"~:sql\",\"SELECT stuff.id, x, y FROM stuff WHERE ((x = $1) AND (y = $2), (x = $3) AND (y = $4), (x = $5) AND (y = $6))\"]]]"
+ :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
  :via
- [{:type org.postgresql.util.PSQLException
-   :message "ERROR: Errors parsing SQL statement:\n  - line 1:61 no viable alternative at input '((x=$1)AND(y=$2),'\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb/sql-error\",\"Errors parsing SQL statement:\\n  - line 1:61 no viable alternative at input '((x=$1)AND(y=$2),'\",[\"^ \",\"~:sql\",\"SELECT stuff.id, x, y FROM stuff WHERE ((x = $1) AND (y = $2), (x = $3) AND (y = $4), (x = $5) AND (y = $6))\"]]]"
-   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ [{:type java.lang.ClassCastException
+   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
  :trace
- [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
-  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
-  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
-  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
-  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
-  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
-  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
-  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
-  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
-  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
-  [next.jdbc.result_set$eval15676$fn__15684 invoke "result_set.clj" 952]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 882]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
+ [[clojure.core$name invokeStatic "core.clj" 1610]
+  [clojure.core$name invoke "core.clj" 1604]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
+  [clojure.core$transduce invokeStatic "core.clj" 7025]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
+  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
   [com.yakread.util.biff_staging$eval46912$fn__46915 invoke "biff_staging.clj" 513]
   [clojure.lang.MultiFn invoke "MultiFn.java" 234]
-  [tmp451535$eval95519 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp451535$eval95519 invoke "NO_SOURCE_FILE" -1]
+  [tmp419727$eval95454 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp419727$eval95454 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
   [clojure.core$eval invoke "core.clj" 3228]]}}
   _
-  {:doc ":biff/upsert :on-insert / :on-delete",
+  {:doc ":biff/upsert :on-insert / :on-update",
    :eval
-   (t/with-node
-    [node {:stuff [{:xt/id (t/uuid 1), :x 1, :y 1}]}]
+   (t/with-sqlite
+    [conn
+     {:feed
+      [{:xt/id (t/uuid 1), :feed/url "https://example.com/feed1"}]}]
     (biff-tx-op
-     {:biff/conn* node}
+     {:biff/conn* conn}
      [:biff/upsert
-      :stuff
-      [:x :y]
+      :feed
+      [:feed/url]
       {:xt/id (t/uuid 2),
-       :x 1,
-       :y 1,
-       :biff/on-insert {:z 1},
-       :biff/on-update {:z [:+ :z 1]}}
+       :feed/url "https://example.com/feed1",
+       :biff/on-insert {:feed/title "Inserted"},
+       :biff/on-update {:feed/title "Updated"}}
       {:xt/id (t/uuid 4),
-       :x 2,
-       :y 2,
-       :biff/on-insert {:z 1},
-       :biff/on-update {:z [:+ :z 1]}}])),
+       :feed/url "https://example.com/feed2",
+       :biff/on-insert {:feed/title "New Feed"},
+       :biff/on-update {:feed/title "Existing"}}])),
    :ex #error {
- :cause "ERROR: Errors parsing SQL statement:\n  - line 1:61 no viable alternative at input '((x=$1)AND(y=$2),'\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb/sql-error\",\"Errors parsing SQL statement:\\n  - line 1:61 no viable alternative at input '((x=$1)AND(y=$2),'\",[\"^ \",\"~:sql\",\"SELECT stuff.id, x, y FROM stuff WHERE ((x = $1) AND (y = $2), (x = $3) AND (y = $4))\"]]]"
+ :cause "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
  :via
- [{:type org.postgresql.util.PSQLException
-   :message "ERROR: Errors parsing SQL statement:\n  - line 1:61 no viable alternative at input '((x=$1)AND(y=$2),'\n  Detail: [\"~#xt/error\",[\"~:incorrect\",\"~:xtdb/sql-error\",\"Errors parsing SQL statement:\\n  - line 1:61 no viable alternative at input '((x=$1)AND(y=$2),'\",[\"^ \",\"~:sql\",\"SELECT stuff.id, x, y FROM stuff WHERE ((x = $1) AND (y = $2), (x = $3) AND (y = $4))\"]]]"
-   :at [org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]}]
+ [{:type java.lang.ClassCastException
+   :message "class clojure.lang.PersistentArrayMap cannot be cast to class clojure.lang.Named (clojure.lang.PersistentArrayMap and clojure.lang.Named are in unnamed module of loader 'app')"
+   :at [clojure.core$name invokeStatic "core.clj" 1610]}]
  :trace
- [[org.postgresql.core.v3.QueryExecutorImpl receiveErrorResponse "QueryExecutorImpl.java" 2736]
-  [org.postgresql.core.v3.QueryExecutorImpl processResults "QueryExecutorImpl.java" 2421]
-  [org.postgresql.core.v3.QueryExecutorImpl execute "QueryExecutorImpl.java" 372]
-  [org.postgresql.jdbc.PgStatement executeInternal "PgStatement.java" 525]
-  [org.postgresql.jdbc.PgStatement execute "PgStatement.java" 435]
-  [org.postgresql.jdbc.PgPreparedStatement executeWithFlags "PgPreparedStatement.java" 196]
-  [org.postgresql.jdbc.PgPreparedStatement execute "PgPreparedStatement.java" 182]
-  [xtdb.jdbc.XtConnection$XtPreparedStatement execute "XtConnection.kt" -1]
-  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
-  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
-  [next.jdbc.result_set$eval15676$fn__15684 invoke "result_set.clj" 952]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 882]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
+ [[clojure.core$name invokeStatic "core.clj" 1610]
+  [clojure.core$name invoke "core.clj" 1604]
+  [clojure.core$map$fn__5950$fn__5951 invoke "core.clj" 2759]
+  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
+  [clojure.core$transduce invokeStatic "core.clj" 7025]
+  [clojure.core$into invokeStatic "core.clj" 7042]
+  [clojure.core$into invoke "core.clj" 7029]
+  [com.yakread.util.biff_staging$unqualify_aliases invokeStatic "biff_staging.clj" 947]
+  [com.yakread.util.biff_staging$unqualify_aliases invoke "biff_staging.clj" 940]
+  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 976]
+  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 958]
   [com.yakread.util.biff_staging$eval46912$fn__46915 invoke "biff_staging.clj" 513]
   [clojure.lang.MultiFn invoke "MultiFn.java" 234]
-  [tmp451535$eval95537 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp451535$eval95537 invoke "NO_SOURCE_FILE" -1]
+  [tmp419727$eval95456 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp419727$eval95456 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
