@@ -71,48 +71,35 @@
       :item/id (t/uuid 3),
       :user/id (t/uuid 5)},
      :biff/now (t/zdt 2000)}),
-   :ex #error {
- :cause "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
- :via
- [{:type java.lang.IllegalArgumentException
-   :message "No implementation of method: :-execute-all of protocol: #'next.jdbc.protocols/Executable found for class: nil"
-   :at [clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]}]
- :trace
- [[clojure.core$_cache_protocol_fn invokeStatic "core_deftype.clj" 585]
-  [clojure.core$_cache_protocol_fn invoke "core_deftype.clj" 577]
-  [next.jdbc.protocols$eval14701$fn__14717$G__14692__14726 invoke "protocols.clj" 34]
-  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
-  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
-  [com.biffweb.sqlite$execute$run__35051 invoke "sqlite.clj" 492]
-  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 495]
-  [com.biffweb.sqlite$execute invoke "sqlite.clj" 474]
-  [com.yakread.util.biff_staging$execute_bundle$fn__47091 invoke "biff_staging.clj" 862]
-  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
-  [clojure.core$reduce invokeStatic "core.clj" 6964]
-  [clojure.core$reduce invoke "core.clj" 6947]
-  [com.yakread.util.biff_staging$execute_bundle invokeStatic "biff_staging.clj" 857]
-  [com.yakread.util.biff_staging$execute_bundle invoke "biff_staging.clj" 853]
-  [com.yakread.util.biff_staging$q invokeStatic "biff_staging.clj" 879]
-  [com.yakread.util.biff_staging$q invoke "biff_staging.clj" 869]
-  [com.yakread.app.for_you$skip_tx invokeStatic "for_you.clj" 18]
-  [com.yakread.app.for_you$skip_tx invoke "for_you.clj" 12]
-  [com.yakread.app.for_you$fn__59689$fn__59691 invoke "for_you.clj" 71]
-  [clojure.lang.AFn applyToHelper "AFn.java" 154]
-  [clojure.lang.AFn applyTo "AFn.java" 144]
-  [clojure.core$apply invokeStatic "core.clj" 667]
-  [clojure.core$apply invoke "core.clj" 662]
-  [com.yakread.lib.fx$wrap_hiccup$fn__53614 doInvoke "fx.clj" 125]
-  [clojure.lang.RestFn invoke "RestFn.java" 411]
-  [com.yakread.lib.fx$machine$run__53588 invoke "fx.clj" 76]
-  [com.yakread.lib.test$test_route invokeStatic "test.clj" 144]
-  [com.yakread.lib.test$test_route doInvoke "test.clj" 124]
-  [clojure.lang.RestFn invoke "RestFn.java" 445]
-  [tmp820220$eval71997 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp820220$eval71997 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   {:status 204,
+    :biff.fx/tx
+    ([:biff/upsert
+      :reclist
+      [:reclist/user :reclist/created-at]
+      {:reclist/user #uuid "00050000-0000-0000-0000-000000000005",
+       :reclist/created-at
+       #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
+       :reclist/clicked
+       #{#uuid "00030000-0000-0000-0000-000000000003"},
+       :xt/id #uuid "0005b45f-d4d9-5138-3d93-cb799b3970be"}]
+     [:biff/upsert
+      :skip
+      [:skip/reclist :skip/item]
+      {:skip/reclist #uuid "0005b45f-d4d9-5138-3d93-cb799b3970be",
+       :skip/item #uuid "00010000-0000-0000-0000-000000000001",
+       :xt/id #uuid "0005c9f6-4f1d-f03a-8ce9-70b71df42503"}
+      {:skip/reclist #uuid "0005b45f-d4d9-5138-3d93-cb799b3970be",
+       :skip/item #uuid "00020000-0000-0000-0000-000000000002",
+       :xt/id #uuid "0005ba3d-c812-a76d-554d-cd2b40b5f04b"}]
+     [:biff/upsert
+      :user-item
+      [:user-item/user :user-item/item]
+      {:user-item/user #uuid "00050000-0000-0000-0000-000000000005",
+       :user-item/item #uuid "00030000-0000-0000-0000-000000000003",
+       :user-item/viewed-at
+       #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
+       :xt/id #uuid "0005c222-9cef-e94d-fc1e-932efb9a0f58"}])}}
   _
   {:doc "record-ad-click",
    :eval

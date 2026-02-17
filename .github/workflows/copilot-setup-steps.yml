@@ -69,3 +69,6 @@ jobs:
 
       - name: Install sqlite3def
         run: ./setup-sqlite3def.sh
+
+      - name: Enable pre-commit hook
+        run: git config core.hooksPath hooks

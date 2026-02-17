@@ -57,31 +57,23 @@
         :ad-click/created-at (t/zdt 1999),
         :ad-click/cost 200}]}]
     (ads {:biff/conn* conn, :biff/now (t/zdt 2000)} {})),
-   :ex #error {
- :cause "Cannot invoke \"Object.getClass()\" because \"x\" is null"
- :via
- [{:type java.lang.NullPointerException
-   :message "Cannot invoke \"Object.getClass()\" because \"x\" is null"
-   :at [clojure.lang.Numbers ops "Numbers.java" 1099]}]
- :trace
- [[clojure.lang.Numbers ops "Numbers.java" 1099]
-  [clojure.lang.Numbers lt "Numbers.java" 253]
-  [com.yakread.lib.ads$active_QMARK_ invokeStatic "ads.clj" 13]
-  [com.yakread.lib.ads$active_QMARK_ invoke "ads.clj" 3]
-  [clojure.core$filterv$fn__8568 invoke "core.clj" 7074]
-  [clojure.lang.PersistentVector reduce "PersistentVector.java" 418]
-  [clojure.core$reduce invokeStatic "core.clj" 6964]
-  [clojure.core$filterv invokeStatic "core.clj" 7068]
-  [clojure.core$filterv invoke "core.clj" 7068]
-  [com.yakread.lib.spark$ads__55507 invokeStatic "spark.clj" 54]
-  [com.yakread.lib.spark$ads__55507 invoke "spark.clj" 32]
-  [com.wsscode.pathom3.connect.operation.Resolver invoke "operation.cljc" 91]
-  [tmp514782$eval71189 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp514782$eval71189 invoke "NO_SOURCE_FILE" -1]
-  [clojure.lang.Compiler eval "Compiler.java" 7700]
-  [clojure.lang.Compiler eval "Compiler.java" 7655]
-  [clojure.core$eval invokeStatic "core.clj" 3232]
-  [clojure.core$eval invoke "core.clj" 3228]]}}
+   :result
+   {:com.yakread.lib.spark/all-ads
+    [{:ad/approve-state :ad.approve-state/approved,
+      :ad/payment-method "some-payment-method",
+      :ad/budget 2000,
+      :xt/id #uuid "00050000-0000-0000-0000-000000000005",
+      :ad/recent-cost 0}
+     {:xt/id #uuid "00060000-0000-0000-0000-000000000006",
+      :ad/recent-cost 0}
+     {:xt/id #uuid "00070000-0000-0000-0000-000000000007",
+      :ad/recent-cost 0}],
+    :com.yakread.lib.spark/ad-candidates
+    [{:ad/approve-state :ad.approve-state/approved,
+      :ad/payment-method "some-payment-method",
+      :ad/budget 2000,
+      :xt/id #uuid "00050000-0000-0000-0000-000000000005",
+      :ad/recent-cost 0}]}}
   _
   {:doc "ad-ratings - empty database",
    :eval

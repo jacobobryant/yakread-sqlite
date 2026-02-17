@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Pre-commit hook: runs unit tests and fails if results have changed.
+exec scripts/check-tests.sh

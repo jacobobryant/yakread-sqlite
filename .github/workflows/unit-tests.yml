@@ -1,0 +1,50 @@
+name: Unit Tests
+
+on:
+  push:
+    branches: [master, sqlite]
+  pull_request:
+    branches: [master, sqlite]
+  workflow_dispatch:
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Install Clojure CLI
+        uses: DeLaGuardo/setup-clojure@12.5
+        with:
+          cli: 'latest'
+
+      - name: Cache Clojure dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.gitlibs
+            ~/.clojure/.cpcache
+          key: ${{ runner.os }}-clojure-${{ hashFiles('**/deps.edn') }}
+          restore-keys: |
+            ${{ runner.os }}-clojure-
+
+      - name: Download dependencies
+        run: clojure -P -M:run
+
+      - name: Install sqlite3def
+        run: ./setup-sqlite3def.sh
+
+      - name: Run unit tests
+        run: scripts/check-tests.sh
