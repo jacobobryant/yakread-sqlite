@@ -44,9 +44,13 @@
      :no-items
      (latest-email-item
       {:biff/conn* conn}
-      {:sub/record-type :sub.record-type/email,
-       :sub/id (t/uuid 12)})}),
-   :result {:email-doc-type nil, :feed-doc-type nil, :no-items nil}}
+      {:sub/doc-type :sub/email, :sub/id (t/uuid 12)})}),
+   :result
+   {:email-doc-type
+    {:sub/latest-item
+     {:item/id #uuid "00030000-0000-0000-0000-000000000003"}},
+    :feed-doc-type nil,
+    :no-items nil}}
   _
   {:doc "total",
    :eval
@@ -93,7 +97,7 @@
    :result
    [{:sub/user {:xt/id #uuid "00090000-0000-0000-0000-000000000009"},
      :sub/source-id #uuid "00060000-0000-0000-0000-000000000006",
-     :sub/items-read 0}
+     :sub/items-read 1}
     {:sub/user {:xt/id #uuid "00090000-0000-0000-0000-000000000009"},
      :sub/source-id #uuid "00010000-0000-0000-0000-000000000001",
      :sub/items-read 0}]}
@@ -182,7 +186,13 @@
       {:sub/source-id (t/uuid 1),
        :sub/doc-type :sub/feed,
        :sub/published-at (t/zdt 2002)}])),
-   :result [{} {}]}
+   :result
+   [{:sub/source-id #uuid "00060000-0000-0000-0000-000000000006",
+     :sub/latest-item
+     {:item/id #uuid "00030000-0000-0000-0000-000000000003"}}
+    {:sub/source-id #uuid "00010000-0000-0000-0000-000000000001",
+     :sub/latest-item
+     {:item/id #uuid "00040000-0000-0000-0000-000000000004"}}]}
   _
   {:doc "from-params",
    :eval

@@ -954,7 +954,9 @@
 (defn- unqualify-aliases
   "Post-process result rows to strip table qualification from aliased columns.
    biff-sqlite/execute's as-kebab-maps qualifies all keys (e.g., :user/user-id),
-   but aliased columns should be unqualified (e.g., :user-id)."
+   but aliased columns should be unqualified (e.g., :user-id).
+   Also coerces any remaining 16-byte arrays to UUIDs since aliased UUID columns
+   may not get read coercion from biff-sqlite/execute."
   [aliases rows]
   (if (empty? aliases)
     rows
@@ -962,10 +964,14 @@
       (mapv (fn [row]
               (into {}
                     (map (fn [[k v]]
-                           (if (and (qualified-keyword? k)
-                                    (contains? alias-names (name k)))
-                             [(keyword (name k)) v]
-                             [k v])))
+                           (let [v (if (and (bytes? v) (= 16 (count v)))
+                                     (let [bb (java.nio.ByteBuffer/wrap v)]
+                                       (java.util.UUID. (.getLong bb) (.getLong bb)))
+                                     v)]
+                             (if (and (qualified-keyword? k)
+                                      (contains? alias-names (name k)))
+                               [(keyword (name k)) v]
+                               [k v]))))
                     row))
             rows))))
 
