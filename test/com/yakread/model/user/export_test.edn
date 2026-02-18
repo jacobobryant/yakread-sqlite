@@ -61,5 +61,5 @@
     (bookmarks {:biff/conn* conn} {:user/id (t/uuid 11)})),
    :result
    {:user.export/bookmarks
-    "URL,Title,Author,Bookmarked at,Read at\n,,,2002-01-01T00:00:00Z,2003-01-01T00:00:00Z\n,,,2000-01-01T00:00:00Z,2001-01-01T00:00:00Z\n"}}
+    "URL,Title,Author,Bookmarked at,Read at\nurl2,title2,author-name2,2002-01-01T00:00:00Z,2003-01-01T00:00:00Z\nurl1,title1,author-name1,2000-01-01T00:00:00Z,2001-01-01T00:00:00Z\n"}}
   _]}

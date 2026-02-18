@@ -897,7 +897,12 @@
                            sub-queries)]
         [result])
       ;; Mixed query: run main query first, then nest sub-queries per row
-      (let [main-query (assoc query :select plain-cols)
+      (let [;; Include join keys from nested sels in main query select
+            join-keys (mapv second nested-sels)
+            main-select (into plain-cols
+                              (remove (set plain-cols))
+                              join-keys)
+            main-query (assoc query :select main-select)
             sql-vec (format-sql main-query)
             _ (log/debug "biffs/q main SQL:" (first sql-vec))
             main-rows (biff-sqlite/execute {:biff/conn conn :biff/malli-opts malli-opts} sql-vec)

@@ -85,7 +85,9 @@
                           :group-by [:skip/item-id]})]
     (lib.core/restore-order items
                             :xt/id
-                            (mapv #(assoc % :xt/id (:item-id %) :item/n-skipped (:n-skipped %)) results)
+                            (mapv (fn [{:keys [item-id n-skipped]}]
+                                    {:xt/id item-id :item/n-skipped n-skipped})
+                                  results)
                             (fn [{:keys [xt/id]}]
                               {:xt/id id
                                :item/n-skipped 0}))))
@@ -319,7 +321,9 @@
                             :group-by [:digest-item/item-id]}]})]
     (lib.core/restore-order items
                             :xt/id
-                            (mapv #(assoc % :xt/id (:item-id %) :item/n-digest-sends (:n-digest-sends %)) results)
+                            (mapv (fn [{:keys [item-id n-digest-sends]}]
+                                    {:xt/id item-id :item/n-digest-sends n-digest-sends})
+                                  results)
                             (fn [{:keys [xt/id]}]
                               {:xt/id id
                                :item/n-digest-sends 0}))))

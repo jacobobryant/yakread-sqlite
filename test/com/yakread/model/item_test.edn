@@ -71,13 +71,9 @@
       {:xt/id (t/uuid 12)}
       {:xt/id (t/uuid 14)}])),
    :result
-   [{:item-id #uuid "00110000-0000-0000-0000-000000000011",
-     :n-skipped 2,
-     :xt/id #uuid "00110000-0000-0000-0000-000000000011",
+   [{:xt/id #uuid "00110000-0000-0000-0000-000000000011",
      :item/n-skipped 2}
-    {:item-id #uuid "00120000-0000-0000-0000-000000000012",
-     :n-skipped 1,
-     :xt/id #uuid "00120000-0000-0000-0000-000000000012",
+    {:xt/id #uuid "00120000-0000-0000-0000-000000000012",
      :item/n-skipped 1}
     {:xt/id #uuid "00140000-0000-0000-0000-000000000014",
      :item/n-skipped 0}]}
@@ -122,14 +118,14 @@
         :feed/image-url "image-url2"}]}]
     (image-from-feed
      {:biff/conn* conn}
-     [{:item.feed/feed {:feed/image-url "image-url3"}}
-      {:item.feed/feed {:feed/image-url "image-url4"},
+     [{:item/feed {:feed/image-url "image-url3"}}
+      {:item/feed {:feed/image-url "image-url4"},
        :item/feed-url "url1"}
       {:item/feed-url "url1"}
       {:item/feed-url "url3"}])),
    :result
-   [{}
-    {:item/image-url "image-url1"}
+   [{:item/image-url "image-url3"}
+    {:item/image-url "image-url4"}
     {:item/image-url "image-url1"}
     {}]}
   _
@@ -193,8 +189,9 @@
         :sub/feed-id (t/uuid 10)}]}]
     (feed-sub
      {:biff/conn* conn, :session {:uid (t/uuid 32)}}
-     [{:item.feed/feed {:xt/id (t/uuid 9)}}])),
-   :result [{:item/sub {:xt/id nil}}]}
+     [{:item/feed {:xt/id (t/uuid 9)}}])),
+   :result
+   [{:item/sub {:xt/id #uuid "00260000-0000-0000-0000-000000000026"}}]}
   _
   {:doc "email-sub",
    :eval (email-sub-resolver {:item/email-sub {:xt/id (t/uuid 28)}}),
@@ -241,23 +238,15 @@
    :result
    [{:xt/id #uuid "00110000-0000-0000-0000-000000000011",
      :item/n-digest-sends 0}
-    {:item-id #uuid "00120000-0000-0000-0000-000000000012",
-     :n-digest-sends 1,
-     :xt/id #uuid "00120000-0000-0000-0000-000000000012",
+    {:xt/id #uuid "00120000-0000-0000-0000-000000000012",
      :item/n-digest-sends 1}
-    {:item-id #uuid "00130000-0000-0000-0000-000000000013",
-     :n-digest-sends 1,
-     :xt/id #uuid "00130000-0000-0000-0000-000000000013",
+    {:xt/id #uuid "00130000-0000-0000-0000-000000000013",
      :item/n-digest-sends 1}
-    {:item-id #uuid "00140000-0000-0000-0000-000000000014",
-     :n-digest-sends 2,
-     :xt/id #uuid "00140000-0000-0000-0000-000000000014",
+    {:xt/id #uuid "00140000-0000-0000-0000-000000000014",
      :item/n-digest-sends 2}
     {:xt/id #uuid "00150000-0000-0000-0000-000000000015",
      :item/n-digest-sends 0}
-    {:item-id #uuid "00010000-0000-0000-0000-000000000001",
-     :n-digest-sends 2,
-     :xt/id #uuid "00010000-0000-0000-0000-000000000001",
+    {:xt/id #uuid "00010000-0000-0000-0000-000000000001",
      :item/n-digest-sends 2}
     {:xt/id #uuid "00020000-0000-0000-0000-000000000002",
      :item/n-digest-sends 0}]}

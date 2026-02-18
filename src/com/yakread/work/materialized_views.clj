@@ -34,7 +34,9 @@
 
   :current-item
   (fn [{:biff/keys [conn* job]}]
-    (let [{:user-item/keys [user item viewed-at]} job
+    (let [{user-id :user-item/user-id
+           item-id :user-item/item-id
+           viewed-at :user-item/viewed-at} job
 
           {current-item :user-item/item-id
            current-item-viewed-at :user-item/viewed-at}
@@ -43,21 +45,21 @@
                     {:select [:user-item/item-id :user-item/viewed-at]
                      :from :mv-user
                      :join [:user-item [:= :user-item/item-id :mv-user/current-item-id]]
-                     :where [:= :mv-user/user-id user]}))
+                     :where [:= :mv-user/user-id user-id]}))
 
           new-current-item (cond
                              (and viewed-at
                                   (or (not current-item-viewed-at)
                                       (tick/<= current-item-viewed-at viewed-at)))
-                             item
+                             item-id
 
                              (and (not viewed-at)
-                                  (= item current-item))
+                                  (= item-id current-item))
                              ::remove)]
       (when new-current-item
         {:biff.fx/tx [{:biff/upsert :mv-user [:mv.user/user]
-                       {:xt/id (biffs/gen-uuid user)
-                        :mv.user/user user
+                       {:xt/id (biffs/gen-uuid user-id)
+                        :mv.user/user user-id
                         :mv.user/current-item (when (not= new-current-item ::remove)
                                                 new-current-item)}}]}))))
 

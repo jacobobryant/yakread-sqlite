@@ -63,8 +63,8 @@
     (update-views
      {:biff/conn* conn,
       :biff/job
-      {:user-item/user (t/uuid 1),
-       :user-item/item (t/uuid 10),
+      {:user-item/user-id (t/uuid 1),
+       :user-item/item-id (t/uuid 10),
        :user-item/viewed-at (t/zdt 2000)}}
      :current-item)),
    :result
@@ -93,8 +93,8 @@
     (update-views
      {:biff/conn* conn,
       :biff/job
-      {:user-item/user (t/uuid 1),
-       :user-item/item (t/uuid 11),
+      {:user-item/user-id (t/uuid 1),
+       :user-item/item-id (t/uuid 11),
        :user-item/viewed-at (t/zdt 2001)}}
      :current-item)),
    :result
@@ -122,8 +122,8 @@
     (update-views
      {:biff/conn* conn,
       :biff/job
-      {:user-item/user (t/uuid 1),
-       :user-item/item (t/uuid 11),
+      {:user-item/user-id (t/uuid 1),
+       :user-item/item-id (t/uuid 11),
        :user-item/viewed-at (t/zdt 2000)}}
      :current-item)),
    :result nil}
@@ -145,8 +145,8 @@
     (update-views
      {:biff/conn* conn,
       :biff/job
-      {:user-item/user (t/uuid 1),
-       :user-item/item (t/uuid 10),
+      {:user-item/user-id (t/uuid 1),
+       :user-item/item-id (t/uuid 10),
        :user-item/viewed-at nil}}
      :current-item)),
    :result
@@ -174,8 +174,8 @@
     (update-views
      {:biff/conn* conn,
       :biff/job
-      {:user-item/user (t/uuid 1),
-       :user-item/item (t/uuid 11),
+      {:user-item/user-id (t/uuid 1),
+       :user-item/item-id (t/uuid 11),
        :user-item/viewed-at nil}}
      :current-item)),
    :result nil}
@@ -189,11 +189,24 @@
     (on-tx
      {:biff/conn* conn,
       :record
-      {:user-item/user (t/uuid 10),
-       :user-item/item (t/uuid 1),
+      {:user-item/user-id (t/uuid 10),
+       :user-item/item-id (t/uuid 1),
        :user-item/viewed-at (t/zdt 2000)}}
      :start)),
-   :result {:biff.fx/queue {:jobs ()}}}
+   :result
+   {:biff.fx/queue
+    {:jobs
+     ([:work.materialized-views/update
+       {:view :sub-affinity,
+        :sub/id #uuid "01000000-0000-0000-0000-000000000100"}]
+      [:work.materialized-views/update
+       {:user-item/user-id
+        #uuid "00100000-0000-0000-0000-000000000010",
+        :user-item/item-id
+        #uuid "00010000-0000-0000-0000-000000000001",
+        :user-item/viewed-at
+        #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
+        :view :current-item}])}}}
   _
   {:doc
    "on-tx: user-item record with feed sub queues sub-affinity and current-item",
@@ -208,11 +221,24 @@
     (on-tx
      {:biff/conn* conn,
       :record
-      {:user-item/user (t/uuid 10),
-       :user-item/item (t/uuid 1),
+      {:user-item/user-id (t/uuid 10),
+       :user-item/item-id (t/uuid 1),
        :user-item/viewed-at (t/zdt 2000)}}
      :start)),
-   :result {:biff.fx/queue {:jobs ()}}}
+   :result
+   {:biff.fx/queue
+    {:jobs
+     ([:work.materialized-views/update
+       {:view :sub-affinity,
+        :sub/id #uuid "01000000-0000-0000-0000-000000000100"}]
+      [:work.materialized-views/update
+       {:user-item/user-id
+        #uuid "00100000-0000-0000-0000-000000000010",
+        :user-item/item-id
+        #uuid "00010000-0000-0000-0000-000000000001",
+        :user-item/viewed-at
+        #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
+        :view :current-item}])}}}
   _
   {:doc
    "on-tx: user-item record without sub still queues current-item",
@@ -222,11 +248,21 @@
     (on-tx
      {:biff/conn* conn,
       :record
-      {:user-item/user (t/uuid 10),
-       :user-item/item (t/uuid 1),
+      {:user-item/user-id (t/uuid 10),
+       :user-item/item-id (t/uuid 1),
        :user-item/viewed-at (t/zdt 2000)}}
      :start)),
-   :result {:biff.fx/queue {:jobs ()}}}
+   :result
+   {:biff.fx/queue
+    {:jobs
+     ([:work.materialized-views/update
+       {:user-item/user-id
+        #uuid "00100000-0000-0000-0000-000000000010",
+        :user-item/item-id
+        #uuid "00010000-0000-0000-0000-000000000001",
+        :user-item/viewed-at
+        #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
+        :view :current-item}])}}}
   _
   {:doc "on-tx: skip record with email sub queues sub-affinity",
    :eval

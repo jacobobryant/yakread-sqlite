@@ -107,7 +107,7 @@
                                              {:union-all
                                               (for [{:sub/keys [id user items]} subscriptions]
                                                 {:select [:reclist/user-id
-                                                          [[:inline id] :sub-id]
+                                                          [[:lift id] :sub-id]
                                                           [:reclist/created-at :created-at]]
                                                  :from :reclist
                                                  :join [:skip [:= :skip/reclist-id :reclist/id]]
@@ -119,7 +119,7 @@
                                                 {:union-all
                                                  (for [{:sub/keys [id user items]} subscriptions]
                                                    {:select [:user-item/user-id
-                                                             [[:inline id] :sub-id]
+                                                             [[:lift id] :sub-id]
                                                              :user-item/favorited-at
                                                              :user-item/reported-at
                                                              :user-item/disliked-at

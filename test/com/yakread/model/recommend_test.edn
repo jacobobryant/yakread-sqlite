@@ -35,29 +35,29 @@
     [conn
      {:skip
       [{:xt/id (t/uuid 3),
-        :skip/reclist-id (t/uuid 27),
-        :skip/item-id (t/uuid 22)}
+        :skip/reclist-id (t/uuid 6),
+        :skip/item-id (t/uuid 11)}
        {:xt/id (t/uuid 4),
-        :skip/reclist-id (t/uuid 27),
-        :skip/item-id (t/uuid 23)}
+        :skip/reclist-id (t/uuid 6),
+        :skip/item-id (t/uuid 12)}
        {:xt/id (t/uuid 5),
-        :skip/reclist-id (t/uuid 28),
-        :skip/item-id (t/uuid 25)}],
+        :skip/reclist-id (t/uuid 7),
+        :skip/item-id (t/uuid 14)}],
       :reclist
       [{:xt/id (t/uuid 6),
-        :reclist/user-id (t/uuid 29),
+        :reclist/user-id (t/uuid 10),
         :reclist/created-at (t/zdt 2000)}
        {:xt/id (t/uuid 7),
-        :reclist/user-id (t/uuid 29),
+        :reclist/user-id (t/uuid 10),
         :reclist/created-at (t/zdt 2002)}],
       :user-item
       [{:xt/id (t/uuid 8),
-        :user-item/item-id (t/uuid 24),
-        :user-item/user-id (t/uuid 29),
+        :user-item/item-id (t/uuid 13),
+        :user-item/user-id (t/uuid 10),
         :user-item/favorited-at (t/zdt 2001)}
        {:xt/id (t/uuid 9),
-        :user-item/item-id (t/uuid 26),
-        :user-item/user-id (t/uuid 29),
+        :user-item/item-id (t/uuid 15),
+        :user-item/user-id (t/uuid 10),
         :user-item/viewed-at (t/zdt 2003)}]}]
     (sub-affinity*
      {:biff/conn* conn}
@@ -73,31 +73,36 @@
        :sub/user {:xt/id (t/uuid 10)},
        :sub/items [{:xt/id (t/uuid 14)} {:xt/id (t/uuid 15)}]}])),
    :result
-   [{:sub/n-interactions 0,
-     :sub/new true,
-     :sub/affinity-low* 0.0,
+   [{:sub/n-interactions 3,
+     :sub/new false,
+     :sub/affinity-low* 0.6287594284880811,
      :sub/title "my sub",
-     :sub/affinity-high* 1.0,
+     :sub/affinity-high* 0.8861517686835451,
      :sub/id #uuid "00010000-0000-0000-0000-000000000001",
-     :sub/scores (),
+     :sub/scores (10.0 -0.9355069850316178 -0.8751733190429475),
      :sub/items
      [{:xt/id #uuid "00110000-0000-0000-0000-000000000011"}
       {:xt/id #uuid "00120000-0000-0000-0000-000000000012"}
       {:xt/id #uuid "00130000-0000-0000-0000-000000000013"}],
      :sub/user {:xt/id #uuid "00100000-0000-0000-0000-000000000010"},
-     :sub/all-interactions ()}
-    {:sub/n-interactions 0,
-     :sub/new true,
-     :sub/affinity-low* 0.0,
+     :sub/all-interactions
+     ({:action :skipped, :t #time/instant "2000-01-01T00:00:00Z"}
+      {:action :skipped, :t #time/instant "2000-01-01T00:00:00Z"}
+      {:action :favorited, :t #time/instant "2001-01-01T00:00:00Z"})}
+    {:sub/n-interactions 2,
+     :sub/new false,
+     :sub/affinity-low* 0.27354641067767876,
      :sub/title "my other sub",
-     :sub/affinity-high* 1.0,
+     :sub/affinity-high* 0.872047711040352,
      :sub/id #uuid "00020000-0000-0000-0000-000000000002",
-     :sub/scores (),
+     :sub/scores (2.0 -0.9355069850316178),
      :sub/items
      [{:xt/id #uuid "00140000-0000-0000-0000-000000000014"}
       {:xt/id #uuid "00150000-0000-0000-0000-000000000015"}],
      :sub/user {:xt/id #uuid "00100000-0000-0000-0000-000000000010"},
-     :sub/all-interactions ()}]}
+     :sub/all-interactions
+     ({:action :skipped, :t #time/instant "2002-01-01T00:00:00Z"}
+      {:action :viewed, :t #time/instant "2003-01-01T00:00:00Z"})}]}
   _
   {:eval
    (binding
@@ -218,13 +223,13 @@
       :user-item
       [{:xt/id (t/uuid 16),
         :user-item/user-id (t/uuid 29),
-        :user-item/item-id (t/uuid 22)}
+        :user-item/item-id (t/uuid 11)}
        {:xt/id (t/uuid 17),
         :user-item/user-id (t/uuid 29),
-        :user-item/item-id (t/uuid 23),
+        :user-item/item-id (t/uuid 12),
         :user-item/viewed-at (t/zdt 2000)}]}]
     (read-urls {:biff/conn* conn} {:user/id (t/uuid 29)})),
-   :result {:user/read-urls #{}}}
+   :result {:user/read-urls #{"url2"}}}
   _
   {:doc "clicked-ads",
    :eval

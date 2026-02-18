@@ -125,7 +125,7 @@
                         {:key (str (get email k))
                          :config-ns config-ns
                          :method "DELETE"})}
-         {:biff.fx/tx [(into [:erase-docs :item] (map :xt/id) batch)]}
+         {:biff.fx/tx [(into [:erase-docs :item] (map :item/id) batch)]}
          {:biff.fx/next :delete-email-batch
           ::email-ids remaining}]))))
 

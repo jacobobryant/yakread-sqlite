@@ -290,6 +290,9 @@
    :eval
    (t/with-sqlite
     [conn {:mv-sub [{:xt/id (t/uuid 5), :mv-sub/sub-id (t/uuid 6)}]}]
-    (mv {:biff/conn* conn} [{:xt/id (t/uuid 6)}])),
-   :result [{}]}
+    (mv {:biff/conn* conn} [{:sub/id (t/uuid 6)}])),
+   :result
+   [{:sub/id #uuid "00060000-0000-0000-0000-000000000006",
+     :sub/mv
+     {:mv-sub/id #uuid "00050000-0000-0000-0000-000000000005"}}]}
   _]}
