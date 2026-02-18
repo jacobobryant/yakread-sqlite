@@ -851,6 +851,20 @@
                     (#{:nest_many :nest_one} (ffirst sel))))
              (:select query))))
 
+(defn- zdt->instant
+  "Convert ZonedDateTime to Instant. biff-sqlite/coerce-params handles Instant
+   but not ZonedDateTime, so we need to convert before passing to execute."
+  [v]
+  (if (instance? ZonedDateTime v)
+    (.toInstant ^ZonedDateTime v)
+    v))
+
+(defn- format-sql
+  "Format a HoneySQL query and convert ZonedDateTime params to Instants."
+  [query]
+  (let [sql-vec (sql/format query)]
+    (into [(first sql-vec)] (map zdt->instant) (rest sql-vec))))
+
 (defn- execute-bundle
   "Execute a bundle query by running each sub-query separately and combining results.
    Handles both :nest_many and :nest_one sub-selects."
@@ -874,7 +888,7 @@
       (let [result (reduce (fn [acc sel]
                              (let [[query-expr alias-kw] sel
                                    [_ sub-query] query-expr
-                                   sql-vec (sql/format sub-query)
+                                   sql-vec (format-sql sub-query)
                                    _ (log/debug "biffs/q bundle SQL:" (first sql-vec))
                                    rows (biff-sqlite/execute {:biff/conn conn :biff/malli-opts malli-opts} sql-vec)
                                    rows (mapv (fn [row] (into {} (remove (fn [[_ v]] (nil? v))) row)) rows)]
@@ -884,7 +898,7 @@
         [result])
       ;; Mixed query: run main query first, then nest sub-queries per row
       (let [main-query (assoc query :select plain-cols)
-            sql-vec (sql/format main-query)
+            sql-vec (format-sql main-query)
             _ (log/debug "biffs/q main SQL:" (first sql-vec))
             main-rows (biff-sqlite/execute {:biff/conn conn :biff/malli-opts malli-opts} sql-vec)
             main-rows (mapv (fn [row] (into {} (remove (fn [[_ v]] (nil? v))) row)) main-rows)]
@@ -898,7 +912,7 @@
                                                 (fn [x] (if (= x join-key) join-val x))
                                                 (:where sub-query))
                                 patched-query (assoc sub-query :where patched-where)
-                                sql-vec (sql/format patched-query)
+                                sql-vec (format-sql patched-query)
                                 _ (log/debug "biffs/q nested SQL:" (first sql-vec))
                                 nested-rows (biff-sqlite/execute {:biff/conn conn :biff/malli-opts malli-opts} sql-vec)
                                 nested-rows (mapv (fn [row] (into {} (remove (fn [[_ v]] (nil? v))) row)) nested-rows)]
@@ -967,7 +981,7 @@
     (if (bundle-query? query)
       (execute-bundle conn malli-opts query)
       (let [aliases (extract-aliases query)
-            sql-vec (sql/format query)
+            sql-vec (format-sql query)
             _ (log/debug "biffs/q SQL:" (first sql-vec))
             results (biff-sqlite/execute {:biff/conn conn :biff/malli-opts malli-opts} sql-vec)]
         (->> results

@@ -17,7 +17,9 @@
      {:biff/conn* conn, :biff/now (t/zdt 2003 1 10)}
      {:user/subscriptions
       [{:sub/items [{:xt/id (t/uuid 1)} {:xt/id (t/uuid 2)}]}]})),
-   :result {:user/digest-sub-items []}}
+   :result
+   {:user/digest-sub-items
+    [{:item/id #uuid "00020000-0000-0000-0000-000000000002"}]}}
   _
   {:eval
    (t/with-sqlite
@@ -34,7 +36,9 @@
      {:user/digest-last-sent (t/zdt 2003 1 5),
       :user/subscriptions
       [{:sub/items [{:xt/id (t/uuid 1)} {:xt/id (t/uuid 2)}]}]})),
-   :result {:user/digest-sub-items []}}
+   :result
+   {:user/digest-sub-items
+    [{:item/id #uuid "00020000-0000-0000-0000-000000000002"}]}}
   _
   {:eval
    (t/with-sqlite
@@ -49,5 +53,7 @@
     (digest-bookmarks
      {:biff/conn* conn, :biff/now (t/zdt 2003 1 10)}
      {:user/bookmarks [{:xt/id (t/uuid 1)} {:xt/id (t/uuid 2)}]})),
-   :result {:user/digest-bookmarks []}}
+   :result
+   {:user/digest-bookmarks
+    [{:item/id #uuid "00020000-0000-0000-0000-000000000002"}]}}
   _]}

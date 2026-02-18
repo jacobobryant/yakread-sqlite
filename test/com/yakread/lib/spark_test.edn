@@ -65,7 +65,7 @@
       :xt/id #uuid "00050000-0000-0000-0000-000000000005",
       :ad/recent-cost 0}
      {:xt/id #uuid "00060000-0000-0000-0000-000000000006",
-      :ad/recent-cost 0}
+      :ad/recent-cost 300}
      {:xt/id #uuid "00070000-0000-0000-0000-000000000007",
       :ad/recent-cost 0}],
     :com.yakread.lib.spark/ad-candidates
