@@ -156,7 +156,7 @@
 
 (defn- fast-thaw [blob]
   (when blob
-    (nippy/fast-thaw blob)))
+    (nippy/thaw blob)))
 
 (defn- make-enum-reader [enum-map]
   (fn [db-val]
@@ -182,7 +182,7 @@
 
 (defn- fast-freeze [v]
   (when v
-    (nippy/fast-freeze v)))
+    (nippy/freeze v)))
 
 (defn- make-enum-writer [enum-map]
   (let [reverse-map (into {} (map (fn [[k v]] [v k]) enum-map))]
@@ -303,9 +303,9 @@
                            (throw (ex-info "Unknown enum keyword value"
                                            {:value v
                                             :available (keys enum-val->int)})))
-            (map? v)     (fast-freeze v)
-            (vector? v)  (fast-freeze v)
-            (set? v)     (fast-freeze v)
+            (map? v)     (nippy/freeze v)
+            (vector? v)  (nippy/freeze v)
+            (set? v)     (nippy/freeze v)
             :else        v))
         params))
 
