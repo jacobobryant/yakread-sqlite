@@ -605,6 +605,7 @@
         (log/error e "Error in submit-sqlite-tx!")))))
 
 (defn submit-tx [ctx tx]
+  (throw (ex-info "unsupported" {}))
   (let [resolved (resolve-tx-ops ctx tx)
         _ (doseq [op resolved]
             (assert (or (xtql-op? op) (dual-write-op? op))

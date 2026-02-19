@@ -108,9 +108,10 @@
 (defn use-sqlite
   "Biff component that starts a HikariCP connection pool for SQLite
    and puts it in the :biff/conn* key."
-  [{:biff/keys [malli-opts] :as ctx}]
+  [{:biff/keys [conn malli-opts malli-opts*] :as ctx}]
   (-> ctx
-      (set/rename-keys {:biff/malli-opts* :biff/malli-opts})
+      (assoc :biff/malli-opts malli-opts*)
       biff.sqlite/use-sqlite
       (set/rename-keys {:biff/conn :biff/conn*})
-      (assoc :biff/malli-opts malli-opts)))
+      (assoc :biff/malli-opts malli-opts
+             :biff/conn conn)))

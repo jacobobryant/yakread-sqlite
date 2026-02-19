@@ -189,11 +189,11 @@
    use-error-reporting
    biffx/use-xtdb2
    lib.sqlite/use-sqlite
-   lib.spark/use-spark
-   biff/use-queues
+   ;lib.spark/use-spark
+   ;biff/use-queues
    ;biffx/use-xtdb2-listener
    biff/use-jetty
-   biff/use-chime
+   ;biff/use-chime
    biff/use-beholder
    lib.smtp/use-server])
 
