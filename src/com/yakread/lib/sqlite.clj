@@ -74,11 +74,11 @@
               op-name (symbol "com.yakread.lib.sqlite"
                               (str (name table-key) "-resolver"))]]
     (pco/resolver op-name
-                  {::pco/input [:xt/id]
+                  {::pco/input [id-key]
                    ::pco/output output
                    ::pco/batch? true}
                   (fn [ctx inputs]
-                    (let [ids (mapv :xt/id inputs)
+                    (let [ids (mapv id-key inputs)
                           results (execute ctx {:select :*
                                                 :from table-key
                                                 :where [:in :id ids]})
@@ -99,10 +99,10 @@
                           results (mapv process-row results)
                           id->result (into {} (map (juxt id-key identity)) results)]
                       (mapv (fn [input]
-                              (let [id (get input :xt/id)]
+                              (let [id (get input id-key)]
                                 (-> (get id->result id {})
                                     lib.core/some-vals
-                                    (assoc :xt/id id))))
+                                    (assoc id-key id))))
                             inputs))))))
 
 (defn use-sqlite
