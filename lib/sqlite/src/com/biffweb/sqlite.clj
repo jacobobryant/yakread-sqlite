@@ -480,9 +480,10 @@
   [ctx input]
   (let [{:biff/keys [conn malli-opts]} ctx
         {:keys [read-coercions enum-val->int]} (memoized-coercions malli-opts)
-        sql-vec (if (map? input)
-                  (hsql/format input)
-                  input)
+        sql-vec (cond
+                  (map? input) (hsql/format input)
+                  (string? input) [input]
+                  :else input)
         sql-vec (if enum-val->int
                   (into [(first sql-vec)] (coerce-params enum-val->int (rest sql-vec)))
                   sql-vec)

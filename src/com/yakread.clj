@@ -93,9 +93,7 @@
   (when-not (:clojure.tools.namespace.reload/error (biff/eval-files! sys))
     (generate-assets! sys)
     ;(test/run-all-tests #"com.yakread.*-test")
-    (time ((requiring-resolve 'com.yakread.lib.test/run-examples!)
-           {:ext "materialized_views_test.edn"}
-           ))
+    (time ((requiring-resolve 'com.yakread.lib.test/run-examples!) {}))
     (log/info :done)))
 
 (def malli-opts
@@ -144,7 +142,8 @@
                 :com.yakread/sign-redirect (fn [url]
                                              {:redirect url
                                               :redirect-sig (biffs/signature (jwt-secret) url)})
-                :biff/href-safe (partial lib.route/href-safe ctx)})
+                :biff/href-safe (partial lib.route/href-safe ctx)
+                :biff/query  (partial lib.sqlite/execute ctx)})
         (pcp/with-plan-cache (atom {})))))
 
 ;; TODO use a lib.pipe thing for this

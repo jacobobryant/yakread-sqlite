@@ -19,10 +19,10 @@
                             block))
           tx (into [:patch-docs :item]
                    (for [id all-items]
-                     {:xt/id id
-                      :item.direct/candidate-status (if (block-ids id)
-                                                      :blocked
-                                                      :approved)}))]
+                     {:item/id id
+                      :item/direct-candidate-status (if (block-ids id)
+                                                      :item.direct-candidate-status/blocked
+                                                      :item.direct-candidate-status/approved)}))]
       {:biff.fx/tx tx
        :status 303
        :headers {"location" (href page-route)}})))

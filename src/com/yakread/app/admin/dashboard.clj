@@ -6,12 +6,11 @@
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.middleware :as lib.mid]
    [com.yakread.lib.route :as lib.route :refer [href]]
-   [com.yakread.lib.ui :as ui])
-  (:import
-   [java.time ZoneId ZonedDateTime]))
+   [com.yakread.lib.ui :as ui]
+   [tick.core :as tick]))
 
 (defn past-30-days [now timezone]
-  (let [today-zdt (ZonedDateTime/ofInstant now (ZoneId/of timezone))]
+  (let [today-zdt (tick/in now (tick/zone timezone))]
     (->> (iterate #(.minusDays % 1) today-zdt)
          (take 30)
          (mapv #(.toLocalDate %)))))
