@@ -21,68 +21,65 @@
                                                             :email-username username}))}})]
   (fx/defroute set-username
     :post
-    (fn [{:keys [biff/conn session params]}]
+    (fn [{:keys [biff/query session params]}]
       (let [username (lib.user/normalize-email-username (:username params))]
         (cond
-          (not-empty (biffx/q conn {:select 1
-                                    :from :user
-                                    :where [:and
-                                            [:= :xt/id (:uid session)]
-                                            [:is-not :user/email-username nil]]}))
+          (not-empty (query {:select 1
+                             :from :user
+                             :where [:and
+                                     [:= :user/id (:uid session)]
+                                     [:is-not :user/email-username nil]]}))
           (response true nil)
+
 
           (or (empty? username)
               ;; TODO
               (not-empty
-               (biffx/q conn
-                        {:union
-                         [{:select 1
-                           :from :user
-                           :where [:= :user/email-username username]}
-                          {:select 1
-                           :from :deleted-user
-                           :where [:= :deleted-user/email-username-hash (lib.core/sha256 username)]}]})))
+               (query {:union
+                       [{:select 1
+                         :from :user
+                         :where [:= :user/email-username username]}
+                        {:select 1
+                         :from :deleted-user
+                         :where [:= :deleted-user/email-username-hash (lib.core/sha256 username)]}]})))
           (response false (:username params))
 
           :else
           (merge (response true username)
                  {:biff.fx/tx [[:patch-docs :user
-                                {:xt/id (:uid session)
+                                {:user/id (:uid session)
                                  :user/email-username username}]
                                {:xt (biffx/assert-unique :user {:user/email-username username})
                                 :sqlite nil}]}))))))
 
-(defn- subscribe-feeds-tx [{:keys [biff/conn biff/now session]} feed-urls]
+(defn- subscribe-feeds-tx [{:keys [biff/query biff/now session]} feed-urls]
   (let [user-id (:uid session)
-        results (biffx/q conn
-                         {:select [[:feed._id :feed-id]
-                                   :feed/url
-                                   [:sub._id :sub-id]]
-                          :from :feed
-                          :left-join [:sub [:= :feed._id :sub.feed/feed]]
-                          :where [:and
-                                  [:in :feed/url feed-urls]
-                                  [:or
-                                   [:is :sub/user nil]
-                                   [:= :sub/user user-id]]]})
-        url->feed (into {} (map (juxt :feed/url :feed-id)) results)
+        results (query {:select [:feed/id :feed/url :sub/id]
+                        :from :feed
+                        :left-join [:sub [:= :feed/id :sub/feed-id]]
+                        :where [:and
+                                [:in :feed/url feed-urls]
+                                [:or
+                                 [:is :sub/user-id nil]
+                                 [:= :sub/user-id user-id]]]})
+        url->feed (into {} (map (juxt :feed/url :feed/id)) results)
         existing-sub-feed-ids (into #{}
-                                    (comp (filter :sub-id)
-                                          (map :feed-id))
+                                    (comp (filter :sub/id)
+                                          (map :feed/id))
                                     results)
         new-feed-docs (for [url feed-urls
                             :when (not (url->feed url))]
-                        {:xt/id (biffs/gen-uuid)
+                        {:feed/id (biffs/gen-uuid)
                          :feed/url url})
         url->feed (into url->feed
-                        (map (juxt :feed/url :xt/id))
+                        (map (juxt :feed/url :feed/id))
                         new-feed-docs)
         new-sub-docs (for [feed (vals url->feed)
                            :when (not (existing-sub-feed-ids feed))]
-                       {:xt/id (biffs/gen-uuid user-id)
-                        :sub/user user-id
+                       {:sub/id (biffs/gen-uuid user-id)
+                        :sub/user-id user-id
                         :sub/created-at now
-                        :sub.feed/feed feed})]
+                        :sub/feed-id feed})]
     {:feed-ids (vals url->feed)
      :tx (concat
           (when (not-empty new-feed-docs)
@@ -99,7 +96,7 @@
                              :from :sub
                              :where [:and
                                      [:= :sub/user user-id]
-                                     [:in :sub.feed/feed (mapv :sub.feed/feed new-sub-docs)]]
+                                     [:in :sub/feed-id (mapv :sub/feed-id new-sub-docs)]]
                              :limit [:inline 1]}]}
               :sqlite nil}
              (into [:put-docs :sub] new-sub-docs)]))}))
@@ -132,7 +129,6 @@
            {:biff.fx/queue (sync-rss-jobs feed-ids 0)
             :status 303
             :headers {"Location" (href `page-route {:added-feeds (count feed-urls)})}}])))))
-
 
 (fx/defroute add-opml
   :post

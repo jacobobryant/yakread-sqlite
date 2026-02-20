@@ -8,9 +8,10 @@
    (t/test-route
     set-username
     :post
-    {:session {:uid "user1"},
+    {:session {:uid (t/uuid 1)},
      :params {:username "123"},
-     :db {:user [{:xt/id "user1", :user/email-username "abc"}]}}),
+     :db*
+     {:user [{:user/id (t/uuid 1), :user/email-username "abc"}]}}),
    :result
    {:status 303, :headers {"location" ["/subscriptions/add" nil]}}}
   _
@@ -19,7 +20,9 @@
    (t/test-route
     set-username
     :post
-    {:db {}, :session {:uid 1}, :params {:username "admin"}}),
+    {:db* {},
+     :session {:uid (t/uuid 1)},
+     :params {:username "admin"}}),
    :result
    {:status 303,
     :headers
@@ -32,8 +35,8 @@
    (t/test-route
     set-username
     :post
-    {:db {:user [{:xt/id 2, :user/email-username "abc"}]},
-     :session {:uid 1},
+    {:db* {:user [{:user/id (t/uuid 2), :user/email-username "abc"}]},
+     :session {:uid (t/uuid 1)},
      :params {:username "abc"}}),
    :result
    {:status 303,
@@ -47,12 +50,15 @@
    (t/test-route
     set-username
     :post
-    {:db {}, :session {:uid 1}, :params {:username "abc"}}),
+    {:db* {}, :session {:uid (t/uuid 1)}, :params {:username "abc"}}),
    :result
    {:status 303,
     :headers {"location" ["/subscriptions/add" nil]},
     :biff.fx/tx
-    [[:patch-docs :user {:xt/id 1, :user/email-username "abc"}]
+    [[:patch-docs
+      :user
+      {:user/id #uuid "00010000-0000-0000-0000-000000000001",
+       :user/email-username "abc"}]
      {:xt
       ["ASSERT ? >= (SELECT COUNT(*) FROM user WHERE (\"user$email_username\" = ?))"
        1
@@ -80,8 +86,8 @@
     add-rss
     :post
     :add-urls
-    {:params {:session {:uid 1}},
-     :db {},
+    {:params {:session {:uid (t/uuid 1)}},
+     :db* {},
      :biff.fx/http
      {:url "https://example.com",
       :body "<html><body>hey</body></html>"}}),
@@ -99,8 +105,8 @@
     :post
     :add-urls
     {:session {:uid #uuid "12340000-0000-0000-0000-000000000000"},
-     :db {},
-     :biff/now (t/zdt 2000),
+     :db* {},
+     :biff/now (t/instant 2000),
      :biff.fx/http
      {:url "https://obryant.dev",
       :body
@@ -117,7 +123,7 @@
        :sqlite nil}
       [:put-docs
        :feed
-       {:xt/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+       {:feed/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
         :feed/url "https://obryant.dev/feed.xml"}]
       {:xt
        {:assert
@@ -128,16 +134,16 @@
           [:and
            [:= :sub/user #uuid "12340000-0000-0000-0000-000000000000"]
            [:in
-            :sub.feed/feed
+            :sub/feed-id
             [#uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"]]],
           :limit [:inline 1]}]},
        :sqlite nil}
       [:put-docs
        :sub
-       {:xt/id #uuid "1234c9f6-4f1d-f03a-8ce9-70b71df42503",
-        :sub/user #uuid "12340000-0000-0000-0000-000000000000",
-        :sub/created-at #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-        :sub.feed/feed #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"}])}
+       {:sub/id #uuid "1234c9f6-4f1d-f03a-8ce9-70b71df42503",
+        :sub/user-id #uuid "12340000-0000-0000-0000-000000000000",
+        :sub/created-at #time/instant "2000-01-01T00:00:00Z",
+        :sub/feed-id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"}])}
     {:biff.fx/queue
      {:jobs
       ([:work.subscription/sync-feed
@@ -153,8 +159,8 @@
     :post
     :add-urls
     {:session {:uid #uuid "12340000-0000-0000-0000-000000000000"},
-     :db {},
-     :biff/now (t/zdt 2000),
+     :db* {},
+     :biff/now (t/instant 2000),
      :biff.fx/http
      {:url "https://obryant.dev/feed.xml",
       :body
@@ -171,7 +177,7 @@
        :sqlite nil}
       [:put-docs
        :feed
-       {:xt/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+       {:feed/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
         :feed/url "https://obryant.dev/feed.xml"}]
       {:xt
        {:assert
@@ -182,16 +188,16 @@
           [:and
            [:= :sub/user #uuid "12340000-0000-0000-0000-000000000000"]
            [:in
-            :sub.feed/feed
+            :sub/feed-id
             [#uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"]]],
           :limit [:inline 1]}]},
        :sqlite nil}
       [:put-docs
        :sub
-       {:xt/id #uuid "1234c9f6-4f1d-f03a-8ce9-70b71df42503",
-        :sub/user #uuid "12340000-0000-0000-0000-000000000000",
-        :sub/created-at #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-        :sub.feed/feed #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"}])}
+       {:sub/id #uuid "1234c9f6-4f1d-f03a-8ce9-70b71df42503",
+        :sub/user-id #uuid "12340000-0000-0000-0000-000000000000",
+        :sub/created-at #time/instant "2000-01-01T00:00:00Z",
+        :sub/feed-id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"}])}
     {:biff.fx/queue
      {:jobs
       ([:work.subscription/sync-feed
@@ -207,10 +213,11 @@
     :post
     :add-urls
     {:session {:uid #uuid "12340000-0000-0000-0000-000000000000"},
-     :db
+     :db*
      {:feed
-      [{:xt/id "feed1", :feed/url "https://obryant.dev/feed.xml"}]},
-     :biff/now (t/zdt 2000),
+      [{:feed/id (t/uuid 1),
+        :feed/url "https://obryant.dev/feed.xml"}]},
+     :biff/now (t/instant 2000),
      :biff.fx/http
      {:url "https://obryant.dev",
       :body
@@ -225,19 +232,22 @@
           :where
           [:and
            [:= :sub/user #uuid "12340000-0000-0000-0000-000000000000"]
-           [:in :sub.feed/feed ["feed1"]]],
+           [:in
+            :sub/feed-id
+            [#uuid "00010000-0000-0000-0000-000000000001"]]],
           :limit [:inline 1]}]},
        :sqlite nil}
       [:put-docs
        :sub
-       {:xt/id #uuid "1234b45f-d4d9-5138-3d93-cb799b3970be",
-        :sub/user #uuid "12340000-0000-0000-0000-000000000000",
-        :sub/created-at #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-        :sub.feed/feed "feed1"}])}
+       {:sub/id #uuid "1234b45f-d4d9-5138-3d93-cb799b3970be",
+        :sub/user-id #uuid "12340000-0000-0000-0000-000000000000",
+        :sub/created-at #time/instant "2000-01-01T00:00:00Z",
+        :sub/feed-id #uuid "00010000-0000-0000-0000-000000000001"}])}
     {:biff.fx/queue
      {:jobs
       ([:work.subscription/sync-feed
-        {:feed/id "feed1", :biff/priority 0}])},
+        {:feed/id #uuid "00010000-0000-0000-0000-000000000001",
+         :biff/priority 0}])},
      :status 303,
      :headers {"Location" ["/subscriptions/add" {:added-feeds 1}]}}]}
   _
@@ -256,8 +266,8 @@
     :post
     :end
     {:session {:uid #uuid "12340000-0000-0000-0000-000000000000"},
-     :db {},
-     :biff/now (t/zdt 2000),
+     :db* {},
+     :biff/now (t/instant 2000),
      :biff.fx/slurp
      (slurp
       "test/com/yakread/app/subscriptions/add_test/sample.opml")}),
@@ -278,12 +288,12 @@
        :sqlite nil}
       [:put-docs
        :feed
-       {:xt/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+       {:feed/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
         :feed/url "https://code.thheller.com/feed.xml"}
-       {:xt/id #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503",
+       {:feed/id #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503",
         :feed/url
         "http://timothypratley.blogspot.com/feeds/posts/default"}
-       {:xt/id #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
+       {:feed/id #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
         :feed/url "https://www.clojuriststogether.org/index.xml"}]
       {:xt
        {:assert
@@ -294,7 +304,7 @@
           [:and
            [:= :sub/user #uuid "12340000-0000-0000-0000-000000000000"]
            [:in
-            :sub.feed/feed
+            :sub/feed-id
             [#uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"
              #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503"
              #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b"]]],
@@ -302,18 +312,18 @@
        :sqlite nil}
       [:put-docs
        :sub
-       {:xt/id #uuid "1234c222-9cef-e94d-fc1e-932efb9a0f58",
-        :sub/user #uuid "12340000-0000-0000-0000-000000000000",
-        :sub/created-at #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-        :sub.feed/feed #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"}
-       {:xt/id #uuid "12341b08-05e8-b107-f0f5-b4f22d0cd0f1",
-        :sub/user #uuid "12340000-0000-0000-0000-000000000000",
-        :sub/created-at #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-        :sub.feed/feed #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503"}
-       {:xt/id #uuid "1234620f-501c-9270-20ff-67585e33a8f6",
-        :sub/user #uuid "12340000-0000-0000-0000-000000000000",
-        :sub/created-at #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-        :sub.feed/feed #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b"}])}
+       {:sub/id #uuid "1234c222-9cef-e94d-fc1e-932efb9a0f58",
+        :sub/user-id #uuid "12340000-0000-0000-0000-000000000000",
+        :sub/created-at #time/instant "2000-01-01T00:00:00Z",
+        :sub/feed-id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"}
+       {:sub/id #uuid "12341b08-05e8-b107-f0f5-b4f22d0cd0f1",
+        :sub/user-id #uuid "12340000-0000-0000-0000-000000000000",
+        :sub/created-at #time/instant "2000-01-01T00:00:00Z",
+        :sub/feed-id #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503"}
+       {:sub/id #uuid "1234620f-501c-9270-20ff-67585e33a8f6",
+        :sub/user-id #uuid "12340000-0000-0000-0000-000000000000",
+        :sub/created-at #time/instant "2000-01-01T00:00:00Z",
+        :sub/feed-id #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b"}])}
     {:biff.fx/queue
      {:jobs
       ([:work.subscription/sync-feed
@@ -335,7 +345,6 @@
     :post
     :end
     {:session {:uid #uuid "12340000-0000-0000-0000-000000000000"},
-     :biff/now (t/zdt 2000),
      :biff.fx/slurp ""}),
    :result
    {:status 303,
