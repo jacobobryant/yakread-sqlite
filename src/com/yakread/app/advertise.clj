@@ -151,7 +151,7 @@
 
 (fx/defroute-pathom save-ad
   [{:session/user
-    [:xt/id
+    [:user/id
      {(? :user/ad)
       [(? :ad/url)
        (? :ad/title)
@@ -181,10 +181,10 @@
                   (:ad/approve-state old-ad :ad.approve-state/pending)
                   :ad.approve-state/pending)
           tx [[:biff/upsert :ad [:ad/user-id]
-               (merge {:ad/user-id (:xt/id user)
+               (merge {:ad/user-id (:user/id user)
                        :ad/approve-state state
                        :ad/updated-at now
-                       :biff/on-insert {:xt/id (biffs/gen-uuid (:xt/id user))
+                       :biff/on-insert {:xt/id (biffs/gen-uuid (:user/id user))
                                         :ad/balance 0
                                         :ad/recent-cost 0}}
                       new-ad)]]]
@@ -239,13 +239,13 @@
                  :ad/url]]
   (defresolver form-ad [ctx params]
     {::pco/input [{:session/user
-                   [{(? :user/ad) [:xt/id]}]}]
-     ::pco/output [{::form-ad (into [:xt/id] form-keys)}]}
+                   [{(? :user/ad) [:ad/id]}]}]
+     ::pco/output [{::form-ad (into [:ad/id] form-keys)}]}
     {::form-ad (-> (:biff.form/params ctx)
                    (merge (:ad (pco/params ctx)))
                    (select-keys form-keys)
-                   (merge (when-some [id (get-in params [:session/user :user/ad :xt/id])]
-                            {:xt/id id})))}))
+                   (merge (when-some [id (get-in params [:session/user :user/ad :ad/id])]
+                            {:ad/id id})))}))
 
 (fx/defroute-pathom refresh-preview
   [{::form-ad [:ad/ui-preview-card]}]
@@ -421,7 +421,7 @@
 (fx/defroute-pathom page-route "/advertise"
   [:app.shell/app-shell
    {(? :session/user)
-    [:xt/id
+    [:user/id
      {(? :user/ad)
       [(? :ad/bid)
        (? :ad/budget)

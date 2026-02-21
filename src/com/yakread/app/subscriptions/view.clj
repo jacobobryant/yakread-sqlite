@@ -9,8 +9,8 @@
    [com.yakread.util.biff-staging :as biffs]))
 
 (fx/defroute-pathom mark-read
-  [{:session/user [:xt/id]}
-   {:params/item [:xt/id]}]
+  [{:session/user [:user/id]}
+   {:params/item [:item/id]}]
 
   :post
   (fn [{:biff/keys [query now]} {:keys [session/user params/item]}]
@@ -18,18 +18,18 @@
            (when (empty? (query {:select 1
                                  :from :user-item
                                  :where [:and
-                                         [:= :user-item/user-id (:xt/id user)]
-                                         [:= :user-item/item-id (:xt/id item)]
+                                         [:= :user-item/user-id (:user/id user)]
+                                         [:= :user-item/item-id (:item/id item)]
                                          [:is-not :user-item/viewed-at nil]]
                                  :limit 1}))
              {:biff.fx/tx [[:patch-docs :user-item
-                            {:xt/id (biffs/gen-uuid (:xt/id user))
-                             :user-item/user-id (:xt/id user)
-                             :user-item/item-id (:xt/id item)
+                            {:xt/id (biffs/gen-uuid (:user/id user))
+                             :user-item/user-id (:user/id user)
+                             :user-item/item-id (:item/id item)
                              :user-item/viewed-at now}]]}))))
 
 (fx/defroute-pathom mark-all-read
-  [{:session/user [:xt/id]}
+  [{:session/user [:user/id]}
    {:params/sub [:sub/id
                  {:sub/items [:item/id
                               :item/unread]}]}]
@@ -41,8 +41,8 @@
      :biff.fx/tx [(into [:biff/upsert :user-item [:user-item/user-id :user-item/item-id]]
                         (for [{:item/keys [id unread]} (:sub/items sub)
                               :when unread]
-                          {:xt/id (biffs/gen-uuid (:xt/id user))
-                           :user-item/user-id (:xt/id user)
+                          {:xt/id (biffs/gen-uuid (:user/id user))
+                           :user-item/user-id (:user/id user)
                            :user-item/item-id id
                            :user-item/skipped-at now}))]}))
 

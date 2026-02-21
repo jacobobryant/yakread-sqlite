@@ -60,7 +60,8 @@ Even in non-query code (TX operations, data access, etc.), update field names to
 - Reference fields: add `-id` suffix
 - Enum values: use namespaced keywords
 - ID fields: `:xt/id` → `:table/id` in TX docs
-- **Exception:** Pathom query specs and pathom-resolved data may still use `:xt/id` — leave these unchanged
+- **Pathom inputs and outputs:** Update `:xt/id` to the appropriate table-specific ID (e.g., `:user/id`, `:item/id`, `:ad/id`). Also update corresponding code that reads from pathom-resolved data (e.g., `(:xt/id user)` → `(:user/id user)`)
+- **Pathom resolver `::pco/input` and `::pco/output`:** Same treatment — replace `:xt/id` with the correct table-prefixed ID
 
 ### 4. Update Imports
 - Remove `[com.biffweb.experimental :as biffx]` if no longer needed
@@ -69,6 +70,7 @@ Even in non-query code (TX operations, data access, etc.), update field names to
 ### 5. Update Test Files
 - Change `:db` to `:db*` for test data seeding (switches from XTDB to SQLite)
 - Update seeded data keys to new schema (e.g., `:xt/id` → `:table/id`, reference fields with `-id` suffix)
+- Update pathom mock data in `:biff.fx/pathom` maps: change `:xt/id` to the correct table-specific ID (e.g., `{:session/user {:xt/id ...}}` → `{:session/user {:user/id ...}}`)
 - Change `(t/zdt year)` → `(t/instant year)` for timestamp fields
 - Run the test runner to regenerate expected results: `clojure -X:run com.yakread.lib.test/run-examples! :ext '"filename_test.edn"'`
 - Review regenerated results and commit
