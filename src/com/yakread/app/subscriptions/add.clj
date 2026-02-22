@@ -148,7 +148,7 @@
 
 (fx/defroute-pathom page-route "/subscriptions/add"
   [:app.shell/app-shell
-   {(? :user/current) [:xt/id
+   {(? :user/current) [:user/id
                        (? :user/email-username)
                        (? :user/suggested-email-username)]}]
 

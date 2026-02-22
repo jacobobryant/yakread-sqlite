@@ -1,9 +1,7 @@
 (ns com.yakread.app.advertise
   (:require
-   [clojure.set :as set]
    [clojure.string :as str]
    [com.biffweb :as biff]
-   [com.biffweb.experimental :as biffx]
    [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
    [com.yakread.lib.content :as lib.content]
    [com.yakread.lib.core :as lib.core]
@@ -57,12 +55,11 @@
 
 (fx/defroute receive-payment-method
   :get
-  (fn [{:keys [biff/conn biff/secret params]}]
+  (fn [{:keys [biff/query biff/secret params]}]
     (let [{:keys [session-id]} params
-          [{ad-id :xt/id}] (biffx/q conn
-                                    {:select :xt/id
-                                     :from :ad
-                                     :where [:= :ad/session-id session-id]})]
+          [{ad-id :ad/id}] (query {:select :ad/id
+                                   :from :ad
+                                   :where [:= :ad/session-id session-id]})]
       (if ad-id
         {:biff.fx/http {:method :get
                         :url (str "https://api.stripe.com/v1/checkout/sessions/" session-id)
@@ -84,8 +81,6 @@
                             :ad/card-details [:lift
                                               (-> (:card pm)
                                                   (select-keys [:brand :last4 :exp_year :exp_month])
-                                                  (set/rename-keys {:exp_year :exp-year
-                                                                    :exp_month :exp-month})
                                                   not-empty)]
                             :ad/updated-at now}
                       :where [:= :xt/id ad-id]})]
@@ -116,12 +111,12 @@
   :create-customer
   (fn [{:keys [biff.fx/http biff/now session]} _]
     (let [customer-id (get-in http [:body :id])]
-      {:biff.fx/tx [[:biff/upsert :ad [:ad/user]
-                     {:ad/user (:uid session)
+      {:biff.fx/tx [[:biff/upsert :ad [:ad/user-id]
+                     {:ad/user-id (:uid session)
                       :ad/customer-id customer-id
                       :ad/updated-at now
                       :biff/on-insert {:xt/id (biffs/gen-uuid (:uid session))
-                                       :ad/approve-state :pending
+                                       :ad/approve-state :ad.approve-state/pending
                                        :ad/balance 0
                                        :ad/recent-cost 0}}]]
        :biff.fx/next :create-session
@@ -147,8 +142,8 @@
   :redirect
   (fn [{:keys [biff.fx/http session biff/now]} _]
     (let [{:keys [url id]} (:body http)]
-      {:biff.fx/tx [[:biff/upsert :ad [:ad/user]
-                     {:ad/user (:uid session)
+      {:biff.fx/tx [[:biff/upsert :ad [:ad/user-id]
+                     {:ad/user-id (:uid session)
                       :ad/session-id id
                       :ad/updated-at now}]]
        :status 303
@@ -156,7 +151,7 @@
 
 (fx/defroute-pathom save-ad
   [{:session/user
-    [:xt/id
+    [:user/id
      {(? :user/ad)
       [(? :ad/url)
        (? :ad/title)
@@ -183,13 +178,13 @@
                               {:ad/url (lib.content/add-protocol url)})))
           state (if (every? #(= (% old-ad) (% new-ad))
                             [:ad/url :ad/title :ad/description :ad/image-url])
-                  (:ad/approve-state old-ad :pending)
-                  :pending)
-          tx [[:biff/upsert :ad [:ad/user]
-               (merge {:ad/user (:xt/id user)
+                  (:ad/approve-state old-ad :ad.approve-state/pending)
+                  :ad.approve-state/pending)
+          tx [[:biff/upsert :ad [:ad/user-id]
+               (merge {:ad/user-id (:user/id user)
                        :ad/approve-state state
                        :ad/updated-at now
-                       :biff/on-insert {:xt/id (biffs/gen-uuid (:xt/id user))
+                       :biff/on-insert {:xt/id (biffs/gen-uuid (:user/id user))
                                         :ad/balance 0
                                         :ad/recent-cost 0}}
                       new-ad)]]]
@@ -244,13 +239,13 @@
                  :ad/url]]
   (defresolver form-ad [ctx params]
     {::pco/input [{:session/user
-                   [{(? :user/ad) [:xt/id]}]}]
-     ::pco/output [{::form-ad (into [:xt/id] form-keys)}]}
+                   [{(? :user/ad) [:ad/id]}]}]
+     ::pco/output [{::form-ad (into [:ad/id] form-keys)}]}
     {::form-ad (-> (:biff.form/params ctx)
                    (merge (:ad (pco/params ctx)))
                    (select-keys form-keys)
-                   (merge (when-some [id (get-in params [:session/user :user/ad :xt/id])]
-                            {:xt/id id})))}))
+                   (merge (when-some [id (get-in params [:session/user :user/ad :ad/id])]
+                            {:ad/id id})))}))
 
 (fx/defroute-pathom refresh-preview
   [{::form-ad [:ad/ui-preview-card]}]
@@ -400,11 +395,11 @@
 (defn view-payment-method [{:keys [ad]}]
   [:div#payment-method
    (ui/input-label {} (:ad/payment-method required-field->label))
-   (if-some [{:keys [brand last4 exp-year exp-month]} (:ad/card-details ad)]
+   (if-some [{:keys [brand last4 exp_year exp_month]} (:ad/card-details ad)]
      [:.flex.items-baseline.gap-3
       [:div
        [:span (str/upper-case brand) " ending in " last4
-        " (expires " exp-month "/" exp-year ")"]
+        " (expires " exp_month "/" exp_year ")"]
        ". "
        [:button {:class '[font-medium text-redv-800 hover:underline]
                  :hx-post (href delete-payment-method)
@@ -426,7 +421,7 @@
 (fx/defroute-pathom page-route "/advertise"
   [:app.shell/app-shell
    {(? :session/user)
-    [:xt/id
+    [:user/id
      {(? :user/ad)
       [(? :ad/bid)
        (? :ad/budget)
