@@ -147,7 +147,8 @@
    :skip [:map {:closed true}
           [:skip/id                      :uuid]
           [:skip/reclist-id (r :reclist) :uuid]
-          [:skip/item-id    (r :item)    :uuid]]
+          [:skip/item-id    (?r :item)   :uuid]
+          [:skip/ad-id      (?r :ad)     :uuid]]
 
    :ad [:map {:closed true}
         [:ad/id                     :uuid]

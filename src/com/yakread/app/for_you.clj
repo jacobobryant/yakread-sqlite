@@ -117,7 +117,8 @@
     [{(? :user/current-item)
       [:item/ui-read-more-card]}
      {:user/for-you-recs
-      [:xt/id
+      [(? :item/id)
+       (? :ad/id)
        :rec/ui-read-more-card]}]}
    {(? :session/anon)
     [{:user/discover-recs
@@ -155,7 +156,10 @@
        user
        (for [[i {:rec/keys [ui-read-more-card]}] (map-indexed vector for-you-recs)]
          (ui-read-more-card {:on-click-route `read-page-route
-                             :on-click-params {:skip (set (mapv :xt/id (take i for-you-recs)))
+                             :on-click-params {:skip (into #{}
+                                                           (comp (take 5)
+                                                                 (map (some-fn :item/id :ad/id)))
+                                                           for-you-recs)
                                                :t now}
                              :highlight-unread false
                              :show-author true}))
