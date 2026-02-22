@@ -6,17 +6,19 @@
  :tests
  [{:doc "add-item-machine* :start",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [ctx
      {:item
-      [{:xt/id "item1", :item/url "url1", :item/doc-type :item/direct}
-       {:xt/id "item2",
+      [{:item/id (t/uuid 1),
+        :item/url "url1",
+        :item/record-type [:lift :item.record-type/direct]}
+       {:item/id (t/uuid 2),
         :item/url "url2",
-        :item/doc-type :item/direct}],
+        :item/record-type [:lift :item.record-type/direct]}],
       :redirect
-      [{:xt/id "redirect1",
+      [{:redirect/id (t/uuid 3),
         :redirect/url "url3",
-        :redirect/item "item2"}]}]
+        :redirect/item-id (t/uuid 2)}]}]
     (let
      [{:keys [start]}
       (add-item-machine*
@@ -25,14 +27,13 @@
         (fn
          [ctx params]
          {:on-success
-          {:ctx (dissoc ctx :biff/conn), :params params}})})
+          {:ctx (dissoc ctx :biff/query :biff/conn* :biff/malli-opts*),
+           :params params}})})
       start*
       (fn
        [url]
        (start
-        {:biff/base-url "https://example.com",
-         :biff/conn node,
-         :url url}))]
+        (merge ctx {:biff/base-url "https://example.com", :url url})))]
      {:matching-url (start* "url1"),
       :matching-redirect (start* "url3"),
       :missing-url (start* "url4")})),
@@ -40,11 +41,15 @@
    {:matching-url
     {:on-success
      {:ctx {:biff/base-url "https://example.com", :url "url1"},
-      :params {:item/id "item1", :item/url "url1"}}},
+      :params
+      {:item/id #uuid "00010000-0000-0000-0000-000000000001",
+       :item/url "url1"}}},
     :matching-redirect
     {:on-success
      {:ctx {:biff/base-url "https://example.com", :url "url3"},
-      :params {:item/id "item2", :item/url "url2"}}},
+      :params
+      {:item/id #uuid "00020000-0000-0000-0000-000000000002",
+       :item/url "url2"}}},
     :missing-url
     {:biff.fx/http
      {:url "url4",
@@ -165,17 +170,18 @@
      {:biff.fx/tx
       [[:put-docs
         :item
-        {:item/image-url "https://example.com/some-image.png",
+        {:item/id #uuid "0000c9f6-4f1d-f03a-8ce9-70b71df42503",
+         :item/image-url "https://example.com/some-image.png",
          :item/content-key
          #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
          :item/lang "en",
-         :item/doc-type :item/direct,
-         :xt/id #uuid "0000c9f6-4f1d-f03a-8ce9-70b71df42503"}]
+         :item/record-type :item.record-type/direct}]
        [:put-docs
         :redirect
-        {:xt/id #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
+        {:redirect/id #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
          :redirect/url "url",
-         :redirect/item #uuid "0000c9f6-4f1d-f03a-8ce9-70b71df42503"}]
+         :redirect/item-id
+         #uuid "0000c9f6-4f1d-f03a-8ce9-70b71df42503"}]
        [:put-docs :stuff {:xt/id "stuff1"}]],
       :on-success
       {:ctx
