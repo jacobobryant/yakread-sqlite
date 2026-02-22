@@ -69,7 +69,7 @@
                            [[:max :reclist/created-at] :last-skipped]
                            [nil :last-clicked]]
                   :from :ad
-                  :join [:skip [:= :skip/item-id :ad/id]
+                  :join [:skip [:= :skip/ad-id :ad/id]
                          :reclist [:= :skip/reclist-id :reclist/id]]
                   :group-by [:ad/id :reclist/user-id]}
                  {:select [[:ad/id :ad-id]
