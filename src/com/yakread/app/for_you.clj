@@ -10,55 +10,63 @@
    [com.yakread.util.biff-staging :as biffs]))
 
 (defn- skip-tx [{:keys [biff/query t]
-                 new-skips :skip
+                 skip-items :skip-items
+                 skip-ads :skip-ads
                  user-id :user/id
                  rec-id :rec/id}]
-  (when (and new-skips t)
-    (let [reclist (first (query {:select [:reclist/id :reclist/clicked]
-                                 :from :reclist
-                                 :where [:and
-                                         [:= :reclist/user-id user-id]
-                                         [:= :reclist/created-at t]]}))
-          existing-skips (when (:reclist/id reclist)
-                           (query {:select [:skip/id :skip/item-id]
-                                   :from :skip
-                                   :where [:= :skip/reclist-id (:reclist/id reclist)]}))
+  (let [new-skips (concat (for [id skip-items] {:skip/item-id id})
+                          (for [id skip-ads] {:skip/ad-id id}))]
+    (when (and (seq new-skips) t)
+      (let [reclist (first (query {:select [:reclist/id :reclist/clicked]
+                                   :from :reclist
+                                   :where [:and
+                                           [:= :reclist/user-id user-id]
+                                           [:= :reclist/created-at t]]}))
+            existing-skips (when (:reclist/id reclist)
+                             (query {:select [:skip/id :skip/item-id :skip/ad-id]
+                                     :from :skip
+                                     :where [:= :skip/reclist-id (:reclist/id reclist)]}))
 
-          old-clicked (:reclist/clicked reclist #{})
-          new-clicked (conj old-clicked rec-id)
-          delete-skips (into []
-                             (comp (filter (comp new-clicked :skip/item-id))
-                                   (map :skip/id))
-                             existing-skips)
-          create-skips-for (into []
-                                 (remove (into new-clicked (map :skip/item-id) existing-skips))
-                                 new-skips)
-          reclist-id (or (:reclist/id reclist)
-                         (biffs/gen-uuid user-id))]
-      (when (not= old-clicked new-clicked)
-        (concat
-         [[:biff/upsert :reclist [:reclist/user-id :reclist/created-at]
-           {:reclist/user-id user-id
-            :reclist/created-at t
-            :reclist/clicked new-clicked
-            :xt/id reclist-id}]]
+            skip-id (fn [skip]
+                      (or (:skip/item-id skip) (:skip/ad-id skip)))
+            old-clicked (:reclist/clicked reclist #{})
+            new-clicked (conj old-clicked rec-id)
+            delete-skips (into []
+                               (comp (filter (comp new-clicked skip-id))
+                                     (map :skip/id))
+                               existing-skips)
+            existing-ids (into #{} (map skip-id) existing-skips)
+            create-skips (into []
+                               (remove (fn [skip]
+                                         (or (new-clicked (skip-id skip))
+                                             (existing-ids (skip-id skip)))))
+                               new-skips)
+            reclist-id (or (:reclist/id reclist)
+                           (biffs/gen-uuid user-id))]
+        (when (not= old-clicked new-clicked)
+          (concat
+           [[:biff/upsert :reclist [:reclist/user-id :reclist/created-at]
+             {:reclist/user-id user-id
+              :reclist/created-at t
+              :reclist/clicked new-clicked
+              :xt/id reclist-id}]]
 
-         (when (not-empty delete-skips)
-           [{:xt (into [:delete :skip] delete-skips)
-             :sqlite {:delete-from :skip
-                      :where [:in :id (mapv biffs/coerce-sqlite-value* delete-skips)]}}])
+           (when (not-empty delete-skips)
+             [{:xt (into [:delete :skip] delete-skips)
+               :sqlite {:delete-from :skip
+                        :where [:in :id (mapv biffs/coerce-sqlite-value* delete-skips)]}}])
 
-         (when (not-empty create-skips-for)
-           [(into [:biff/upsert :skip [:skip/reclist-id :skip/item-id]]
-                  (for [item-id create-skips-for]
-                    {:skip/reclist-id reclist-id
-                     :skip/item-id item-id
-                     :xt/id (biffs/gen-uuid reclist-id)}))]))))))
+           (when (not-empty create-skips)
+             [(into [:biff/upsert :skip [:skip/reclist-id :skip/item-id :skip/ad-id]]
+                    (for [skip create-skips]
+                      (merge {:skip/reclist-id reclist-id
+                              :xt/id (biffs/gen-uuid reclist-id)}
+                             skip)))])))))))
 
 (fx/defroute record-item-click
   :post
   (fn [{:biff/keys [query safe-params now]}]
-    (let [{:keys [action t skip] item-id :item/id user-id :user/id} safe-params]
+    (let [{:keys [action t skip-items skip-ads] item-id :item/id user-id :user/id} safe-params]
       (if (not= action :action/click-item)
         (ui/on-error {:status 400})
         {:status 204
@@ -66,7 +74,8 @@
                       (skip-tx {:biff/query query
                                 :user/id user-id
                                 :rec/id item-id
-                                :skip skip
+                                :skip-items skip-items
+                                :skip-ads skip-ads
                                 :t t})
                       (when (empty? (query
                                      {:select 1
@@ -85,7 +94,7 @@
 (fx/defroute record-ad-click
   :post
   (fn [{:biff/keys [query safe-params now]}]
-    (let [{:keys [action skip t ad/click-cost ad.click/source]
+    (let [{:keys [action skip-items skip-ads t ad/click-cost ad.click/source]
            ad-id :ad/id
            user-id :user/id} safe-params]
       (if (not= action :action/click-ad)
@@ -95,7 +104,8 @@
                       (skip-tx {:biff/query query
                                 :user/id user-id
                                 :rec/id ad-id
-                                :skip  skip
+                                :skip-items skip-items
+                                :skip-ads skip-ads
                                 :t t})
                       (when (empty?
                              (query
@@ -155,14 +165,13 @@
 
        user
        (for [[i {:rec/keys [ui-read-more-card]}] (map-indexed vector for-you-recs)]
-         (ui-read-more-card {:on-click-route `read-page-route
-                             :on-click-params {:skip (into #{}
-                                                           (comp (take 5)
-                                                                 (map (some-fn :item/id :ad/id)))
-                                                           for-you-recs)
-                                               :t now}
-                             :highlight-unread false
-                             :show-author true}))
+         (let [prev-recs (take i for-you-recs)]
+           (ui-read-more-card {:on-click-route `read-page-route
+                               :on-click-params {:skip-items (into #{} (keep :item/id) prev-recs)
+                                                 :skip-ads (into #{} (keep :ad/id) prev-recs)
+                                                 :t now}
+                               :highlight-unread false
+                               :show-author true})))
 
        :else
        (for [[i {:item/keys [ui-read-more-card]}] (map-indexed vector (:user/discover-recs anon))]
@@ -187,7 +196,8 @@
                                     {:action  :action/click-item
                                      :user/id (:uid session)
                                      :item/id (get-in pathom [:params/item :item/id])
-                                     :skip    (:skip params)
+                                     :skip-items (:skip-items params)
+                                     :skip-ads (:skip-ads params)
                                      :t       (:t params)}))]
   (fx/defroute-pathom read-page-route "/item/:item-id"
     [{(? :params/item) [:item/id

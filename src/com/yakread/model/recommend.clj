@@ -96,6 +96,8 @@
                  :sub/affinity-high*
                  :sub/n-interactions]
    ::pco/batch? true}
+  ;; MIGRATION TODO: skip table now has separate :skip/item-id and :skip/ad-id columns.
+  ;; :skip/item and :skip/reclist references in the query below need to be updated.
   (let [q-inputs             (for [{:sub/keys [id user items]} subscriptions
                                    item items]
                                [(:xt/id user) id (:xt/id item)])

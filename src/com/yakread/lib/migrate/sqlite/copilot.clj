@@ -375,6 +375,8 @@
               :kind (digest-item-kind-enum :discover)}}))))
 
 ;; ============================================================================
+;; MIGRATION TODO: skip table now has separate item_id and ad_id columns.
+;; This function creates :item_id for all skips, but ad skips should use :ad_id instead.
 ;; Skip handling - old schema stored skips inside reclist doc
 ;; ============================================================================
 

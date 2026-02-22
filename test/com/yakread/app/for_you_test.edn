@@ -12,7 +12,7 @@
      :biff/safe-params
      {:action :action/click-item,
       :t (t/instant 2000),
-      :skip #{(t/uuid 3) (t/uuid 2)},
+      :skip-items #{(t/uuid 3) (t/uuid 2)},
       :item/id (t/uuid 1),
       :user/id (t/uuid 0)},
      :biff/now (t/instant 2000)}),
@@ -29,13 +29,13 @@
        :xt/id #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be"}]
      [:biff/upsert
       :skip
-      [:skip/reclist-id :skip/item-id]
+      [:skip/reclist-id :skip/item-id :skip/ad-id]
       {:skip/reclist-id #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
-       :skip/item-id #uuid "00020000-0000-0000-0000-000000000002",
-       :xt/id #uuid "0000c9f6-4f1d-f03a-8ce9-70b71df42503"}
+       :xt/id #uuid "0000c9f6-4f1d-f03a-8ce9-70b71df42503",
+       :skip/item-id #uuid "00020000-0000-0000-0000-000000000002"}
       {:skip/reclist-id #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
-       :skip/item-id #uuid "00030000-0000-0000-0000-000000000003",
-       :xt/id #uuid "0000ba3d-c812-a76d-554d-cd2b40b5f04b"}]
+       :xt/id #uuid "0000ba3d-c812-a76d-554d-cd2b40b5f04b",
+       :skip/item-id #uuid "00030000-0000-0000-0000-000000000003"}]
      [:biff/upsert
       :user-item
       [:user-item/user-id :user-item/item-id]
@@ -65,7 +65,7 @@
      :biff/safe-params
      {:action :action/click-item,
       :t (t/instant 2000),
-      :skip #{(t/uuid 1) (t/uuid 2)},
+      :skip-items #{(t/uuid 1) (t/uuid 2)},
       :item/id (t/uuid 3),
       :user/id (t/uuid 5)},
      :biff/now (t/instant 2000)}),
@@ -103,7 +103,34 @@
      :biff/safe-params
      {:action :action/click-ad,
       :t (t/instant 2000),
-      :skip #{},
+      :skip-items #{},
+      :ad/id (t/uuid 1),
+      :ad/click-cost 50,
+      :ad.click/source :email,
+      :user/id (t/uuid 0)},
+     :biff/now (t/instant 2000)}),
+   :result
+   {:status 204,
+    :biff.fx/tx
+    ([:biff/upsert
+      :ad-click
+      [:ad-click/user-id :ad-click/ad-id]
+      {:ad-click/user-id #uuid "00000000-0000-0000-0000-000000000000",
+       :ad-click/ad-id #uuid "00010000-0000-0000-0000-000000000001",
+       :ad-click/created-at #time/instant "2000-01-01T00:00:00Z",
+       :ad-click/cost 50,
+       :ad-click/source :email}])}}
+  _
+  {:doc "record-ad-click with ad skips",
+   :eval
+   (t/test-route
+    record-ad-click
+    :post
+    {:db* {},
+     :biff/safe-params
+     {:action :action/click-ad,
+      :t (t/instant 2000),
+      :skip-ads #{(t/uuid 2)},
       :ad/id (t/uuid 1),
       :ad/click-cost 50,
       :ad.click/source :email,
@@ -120,6 +147,12 @@
        :reclist/clicked
        #{#uuid "00010000-0000-0000-0000-000000000001"},
        :xt/id #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be"}]
+     [:biff/upsert
+      :skip
+      [:skip/reclist-id :skip/item-id :skip/ad-id]
+      {:skip/reclist-id #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
+       :xt/id #uuid "0000c9f6-4f1d-f03a-8ce9-70b71df42503",
+       :skip/ad-id #uuid "00020000-0000-0000-0000-000000000002"}]
      [:biff/upsert
       :ad-click
       [:ad-click/user-id :ad-click/ad-id]
