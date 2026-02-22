@@ -5,231 +5,263 @@
  :tests
  [{:doc "item-candidates",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [ctx
      {:item
-      [{:xt/id "item1", :item/url "url1"}
-       {:xt/id "item2",
+      [{:item/id (t/uuid 1), :item/url "url1"}
+       {:item/id (t/uuid 2),
         :item/url "url2",
-        :item.direct/candidate-status :approved}]}]
-    (item-candidates {:biff/conn node} {})),
+        :item/direct-candidate-status
+        [:lift :item.direct-candidate-status/approved]}]}]
+    (item-candidates ctx {})),
    :result
    {:com.yakread.lib.spark/item-candidates
-    [{:xt/id "item2", :item/url "url2"}]}}
+    [{:item/id #uuid "00020000-0000-0000-0000-000000000002",
+      :item/url "url2"}]}}
   _
   {:doc "ads - empty database",
    :eval
-   (t/with-node
-    [node {}]
-    (ads {:biff/conn node, :biff/now (t/zdt 2000)} {})),
+   (t/with-sqlite
+    [ctx {}]
+    (ads (assoc ctx :biff/now (t/instant 2000)) {})),
    :result
    {:com.yakread.lib.spark/all-ads [],
     :com.yakread.lib.spark/ad-candidates []}}
   _
   {:doc "ads",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [ctx
      {:ad
-      [{:xt/id "ad1",
-        :ad/approve-state :approved,
+      [{:ad/id (t/uuid 1),
+        :ad/approve-state [:lift :ad.approve-state/approved],
         :ad/payment-method "some-payment-method",
         :ad/budget 2000}
-       {:xt/id "ad2"}
-       {:xt/id "ad3"}],
+       {:ad/id (t/uuid 2)}
+       {:ad/id (t/uuid 3)}],
       :ad-click
-      [{:xt/id "ad-click1",
-        :ad.click/ad "ad2",
-        :ad.click/created-at (t/zdt 2000),
-        :ad.click/cost 100}
-       {:xt/id "ad-click2",
-        :ad.click/ad "ad2",
-        :ad.click/created-at (t/zdt 2000),
-        :ad.click/cost 200}
-       {:xt/id "ad-click3",
-        :ad.click/ad "ad2",
-        :ad.click/created-at (t/zdt 1999),
-        :ad.click/cost 200}
-       {:xt/id "ad-click4",
-        :ad.click/ad "ad3",
-        :ad.click/created-at (t/zdt 1999),
-        :ad.click/cost 200}]}]
-    (ads {:biff/conn node, :biff/now (t/zdt 2000)} {})),
+      [{:ad-click/id (t/uuid 11),
+        :ad-click/ad-id (t/uuid 2),
+        :ad-click/created-at (t/instant 2000),
+        :ad-click/cost 100}
+       {:ad-click/id (t/uuid 12),
+        :ad-click/ad-id (t/uuid 2),
+        :ad-click/created-at (t/instant 2000),
+        :ad-click/cost 200}
+       {:ad-click/id (t/uuid 13),
+        :ad-click/ad-id (t/uuid 2),
+        :ad-click/created-at (t/instant 1999),
+        :ad-click/cost 200}
+       {:ad-click/id (t/uuid 14),
+        :ad-click/ad-id (t/uuid 3),
+        :ad-click/created-at (t/instant 1999),
+        :ad-click/cost 200}]}]
+    (ads (assoc ctx :biff/now (t/instant 2000)) {})),
    :result
    {:com.yakread.lib.spark/all-ads
-    [{:xt/id "ad2", :ad/recent-cost 300}
-     {:xt/id "ad3", :ad/recent-cost 0}
-     {:xt/id "ad1",
-      :ad/approve-state :approved,
+    [{:ad/id #uuid "00010000-0000-0000-0000-000000000001",
+      :ad/approve-state :ad.approve-state/approved,
+      :ad/paused nil,
+      :ad/payment-failed nil,
       :ad/payment-method "some-payment-method",
       :ad/budget 2000,
+      :ad/recent-cost 0}
+     {:ad/id #uuid "00020000-0000-0000-0000-000000000002",
+      :ad/approve-state nil,
+      :ad/paused nil,
+      :ad/payment-failed nil,
+      :ad/payment-method nil,
+      :ad/budget nil,
+      :ad/recent-cost 300}
+     {:ad/id #uuid "00030000-0000-0000-0000-000000000003",
+      :ad/approve-state nil,
+      :ad/paused nil,
+      :ad/payment-failed nil,
+      :ad/payment-method nil,
+      :ad/budget nil,
       :ad/recent-cost 0}],
     :com.yakread.lib.spark/ad-candidates
-    [{:xt/id "ad1",
-      :ad/approve-state :approved,
+    [{:ad/id #uuid "00010000-0000-0000-0000-000000000001",
+      :ad/approve-state :ad.approve-state/approved,
+      :ad/paused nil,
+      :ad/payment-failed nil,
       :ad/payment-method "some-payment-method",
       :ad/budget 2000,
       :ad/recent-cost 0}]}}
   _
   {:doc "ad-ratings - empty database",
    :eval
-   (t/with-node
-    [node {}]
-    {:input (ad-interaction-info node),
-     :ratings (ad-ratings {:biff/conn node} {})}),
+   (t/with-sqlite
+    [ctx {}]
+    {:input (ad-interaction-info (:biff/query ctx)),
+     :ratings (ad-ratings ctx {})}),
    :result
    {:input [], :ratings {:com.yakread.lib.spark/ad-ratings []}}}
   _
   {:doc "ad-ratings",
    :eval
-   (t/with-node
-    [node
-     {:ad [{:xt/id "ad1"} {:xt/id "ad2"}],
+   (t/with-sqlite
+    [ctx
+     {:ad [{:ad/id (t/uuid 1)} {:ad/id (t/uuid 2)}],
       :reclist
-      [{:xt/id "reclist1",
-        :reclist/user "user1",
-        :reclist/created-at (t/zdt 2000)}
-       {:xt/id "reclist2",
-        :reclist/user "user2",
-        :reclist/created-at (t/zdt 2001)}
-       {:xt/id "reclist3",
-        :reclist/user "user2",
-        :reclist/created-at (t/zdt 2003)}],
+      [{:reclist/id (t/uuid 11),
+        :reclist/user-id (t/uuid 101),
+        :reclist/created-at (t/instant 2000)}
+       {:reclist/id (t/uuid 12),
+        :reclist/user-id (t/uuid 102),
+        :reclist/created-at (t/instant 2001)}
+       {:reclist/id (t/uuid 13),
+        :reclist/user-id (t/uuid 102),
+        :reclist/created-at (t/instant 2003)}],
       :skip
-      [{:xt/id "skip1", :skip/item "ad1", :skip/reclist "reclist1"}
-       {:xt/id "skip2", :skip/item "ad1", :skip/reclist "reclist2"}
-       {:xt/id "skip3", :skip/item "ad1", :skip/reclist "reclist3"}],
+      [{:skip/id (t/uuid 21),
+        :skip/item-id (t/uuid 1),
+        :skip/reclist-id (t/uuid 11)}
+       {:skip/id (t/uuid 22),
+        :skip/item-id (t/uuid 1),
+        :skip/reclist-id (t/uuid 12)}
+       {:skip/id (t/uuid 23),
+        :skip/item-id (t/uuid 1),
+        :skip/reclist-id (t/uuid 13)}],
       :ad-click
-      [{:xt/id "ad-click1",
-        :ad.click/user "user1",
-        :ad.click/ad "ad1",
-        :ad.click/created-at (t/zdt 2000)}
-       {:xt/id "ad-click2",
-        :ad.click/user "user1",
-        :ad.click/ad "ad1",
-        :ad.click/created-at (t/zdt 2002)}]}]
-    {:input (ad-interaction-info node),
-     :ratings (ad-ratings {:biff/conn node} {})}),
+      [{:ad-click/id (t/uuid 31),
+        :ad-click/user-id (t/uuid 101),
+        :ad-click/ad-id (t/uuid 1),
+        :ad-click/created-at (t/instant 2000)}
+       {:ad-click/id (t/uuid 32),
+        :ad-click/user-id (t/uuid 101),
+        :ad-click/ad-id (t/uuid 1),
+        :ad-click/created-at (t/instant 2002)}]}]
+    {:input (ad-interaction-info (:biff/query ctx)),
+     :ratings (ad-ratings ctx {})}),
    :result
    {:input
-    [{:ad-id "ad1",
-      :user-id "user1",
+    [{:last-clicked #time/instant "2002-01-01T00:00:00Z",
+      :ad-id #uuid "00010000-0000-0000-0000-000000000001",
+      :user-id #uuid "01010000-0000-0000-0000-000000000101",
       :n-skips 1,
-      :last-skipped #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-      :last-clicked #time/zoned-date-time "2002-01-01T00:00Z[UTC]"}
-     {:ad-id "ad1",
-      :user-id "user2",
-      :n-skips 2,
-      :last-skipped #time/zoned-date-time "2003-01-01T00:00Z[UTC]"}],
+      :last-skipped #time/instant "2000-01-01T00:00:00Z"}
+     {:n-skips 2,
+      :last-skipped #time/instant "2003-01-01T00:00:00Z",
+      :ad-id #uuid "00010000-0000-0000-0000-000000000001",
+      :user-id #uuid "01020000-0000-0000-0000-000000000102"}],
     :ratings
     {:com.yakread.lib.spark/ad-ratings
-     [{:rating/candidate "ad1",
-       :rating/user "user1",
+     [{:rating/candidate #uuid "00010000-0000-0000-0000-000000000001",
+       :rating/user #uuid "01010000-0000-0000-0000-000000000101",
        :rating/value 0.75,
-       :rating/created-at
-       #time/zoned-date-time "2002-01-01T00:00Z[UTC]"}
-      {:rating/candidate "ad1",
-       :rating/user "user2",
+       :rating/created-at #time/instant "2002-01-01T00:00:00Z"}
+      {:rating/candidate #uuid "00010000-0000-0000-0000-000000000001",
+       :rating/user #uuid "01020000-0000-0000-0000-000000000102",
        :rating/value 0.3,
-       :rating/created-at
-       #time/zoned-date-time "2003-01-01T00:00Z[UTC]"}]}}}
+       :rating/created-at #time/instant "2003-01-01T00:00:00Z"}]}}}
+ 
   _
   {:doc "dedupe-item-id",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [ctx
      {:item
-      [{:xt/id "item1", :item/url "url1"}
-       {:xt/id "item2", :item/url "url1"}
-       {:xt/id "item3", :item/url "url2"}
-       {:xt/id "item4", :item/url "url3"}]}]
+      [{:item/id (t/uuid 1), :item/url "url1"}
+       {:item/id (t/uuid 2), :item/url "url1"}
+       {:item/id (t/uuid 3), :item/url "url2"}
+       {:item/id (t/uuid 4), :item/url "url3"}]}]
     (dedupe-item-id
-     {:biff/conn node}
+     ctx
      {:com.yakread.lib.spark/item-candidates
-      [{:xt/id "item1", :item/url "url1"}
-       {:xt/id "item3", :item/url "url2"}]})),
+      [{:item/id (t/uuid 1), :item/url "url1"}
+       {:item/id (t/uuid 3), :item/url "url2"}]})),
    :result
    {:com.yakread.lib.spark/dedupe-item-id
-    {"item3" "item3", "item2" "item1", "item1" "item1"}}}
+    {#uuid "00010000-0000-0000-0000-000000000001"
+     #uuid "00010000-0000-0000-0000-000000000001",
+     #uuid "00020000-0000-0000-0000-000000000002"
+     #uuid "00010000-0000-0000-0000-000000000001",
+     #uuid "00030000-0000-0000-0000-000000000003"
+     #uuid "00030000-0000-0000-0000-000000000003"}}}
   _
   {:doc "item-ratings empty input",
    :eval
-   (t/with-node
-    [node {}]
+   (t/with-sqlite
+    [ctx {}]
     (item-ratings
-     {:biff/conn node}
+     ctx
      {:com.yakread.lib.spark/item-candidates [],
       :com.yakread.lib.spark/dedupe-item-id {}})),
    :result {:com.yakread.lib.spark/item-ratings []}}
   _
   {:doc "item-ratings non-empty input",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [ctx
      {:item
-      [{:xt/id "item1", :item/url "url1"}
-       {:xt/id "item2", :item/url "url2"}
-       {:xt/id "item3", :item/url "url2"}],
+      [{:item/id (t/uuid 1), :item/url "url1"}
+       {:item/id (t/uuid 2), :item/url "url2"}
+       {:item/id (t/uuid 3), :item/url "url2"}],
       :user-item
-      [{:xt/id "usit1",
-        :user-item/user "user1",
-        :user-item/item "item1",
-        :user-item/favorited-at (t/zdt 2000)}],
+      [{:user-item/id (t/uuid 11),
+        :user-item/user-id (t/uuid 101),
+        :user-item/item-id (t/uuid 1),
+        :user-item/favorited-at (t/instant 2000)}],
       :reclist
-      [{:xt/id "reclist1",
-        :reclist/user "user2",
-        :reclist/created-at (t/zdt 2002)}
-       {:xt/id "reclist2",
-        :reclist/user "user2",
-        :reclist/created-at (t/zdt 2001)}],
+      [{:reclist/id (t/uuid 21),
+        :reclist/user-id (t/uuid 102),
+        :reclist/created-at (t/instant 2002)}
+       {:reclist/id (t/uuid 22),
+        :reclist/user-id (t/uuid 102),
+        :reclist/created-at (t/instant 2001)}],
       :skip
-      [{:xt/id "skip1", :skip/reclist "reclist1", :skip/item "item2"}
-       {:xt/id "skip2",
-        :skip/reclist "reclist2",
-        :skip/item "item3"}]}]
+      [{:skip/id (t/uuid 31),
+        :skip/reclist-id (t/uuid 21),
+        :skip/item-id (t/uuid 2)}
+       {:skip/id (t/uuid 32),
+        :skip/reclist-id (t/uuid 22),
+        :skip/item-id (t/uuid 3)}]}]
     (item-ratings
-     {:biff/conn node}
+     ctx
      {:com.yakread.lib.spark/item-candidates
-      [{:xt/id "item1", :item/url "url1"}
-       {:xt/id "item2", :item/url "url2"}],
+      [{:item/id (t/uuid 1), :item/url "url1"}
+       {:item/id (t/uuid 2), :item/url "url2"}],
       :com.yakread.lib.spark/dedupe-item-id
-      {"item3" "item2", "item1" "item1", "item2" "item2"}})),
+      {(t/uuid 3) (t/uuid 2),
+       (t/uuid 1) (t/uuid 1),
+       (t/uuid 2) (t/uuid 2)}})),
    :result
    {:com.yakread.lib.spark/item-ratings
-    [{:rating/user "user1",
-      :rating/candidate "item1",
+    [{:rating/user #uuid "01010000-0000-0000-0000-000000000101",
+      :rating/candidate #uuid "00010000-0000-0000-0000-000000000001",
       :rating/value 1,
-      :rating/created-at
-      #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}
-     {:rating/user "user2",
-      :rating/candidate "item2",
+      :rating/created-at #time/instant "2000-01-01T00:00:00Z"}
+     {:rating/user #uuid "01020000-0000-0000-0000-000000000102",
+      :rating/candidate #uuid "00020000-0000-0000-0000-000000000002",
       :rating/value 0.3,
-      :rating/created-at
-      #time/zoned-date-time "2002-01-01T00:00Z[UTC]"}]}}
+      :rating/created-at #time/instant "2002-01-01T00:00:00Z"}]}}
   _
   {:doc "all-liked-items - empty database",
-   :eval
-   (t/with-node [node {}] (all-liked-items {:biff/conn node} {})),
+   :eval (t/with-sqlite [ctx {}] (all-liked-items ctx {})),
    :result {:yakread.model/all-liked-items []}}
+ 
   _
   {:doc "all-liked-items",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [ctx
      {:user-item
-      [{:xt/id "usit1",
-        :user-item/item "item1",
-        :user-item/favorited-at (t/zdt 2000)}
-       {:xt/id "usit2",
-        :user-item/item "item2",
-        :user-item/favorited-at (t/zdt 2001)}
-       {:xt/id "usit3",
-        :user-item/item "item2",
-        :user-item/favorited-at (t/zdt 2000)}
-       {:xt/id "usit4", :user-item/item "item3"}]}]
-    (all-liked-items {:biff/conn node} {})),
+      [{:user-item/id (t/uuid 1),
+        :user-item/item-id (t/uuid 101),
+        :user-item/favorited-at (t/instant 2000)}
+       {:user-item/id (t/uuid 2),
+        :user-item/item-id (t/uuid 102),
+        :user-item/favorited-at (t/instant 2001)}
+       {:user-item/id (t/uuid 3),
+        :user-item/item-id (t/uuid 102),
+        :user-item/favorited-at (t/instant 2000)}
+       {:user-item/id (t/uuid 4), :user-item/item-id (t/uuid 103)}]}]
+    (all-liked-items ctx {})),
    :result
    {:yakread.model/all-liked-items
-    [{:item/id "item2", :item/n-likes 2}
-     {:item/id "item1", :item/n-likes 1}]}}
+    [{:item/id #uuid "01020000-0000-0000-0000-000000000102",
+      :item/n-likes 2}
+     {:item/id #uuid "01010000-0000-0000-0000-000000000101",
+      :item/n-likes 1}]}}
   _]}
