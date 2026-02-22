@@ -55,6 +55,8 @@
        vals
        (mapv #(apply merge %))))
 
+;; MIGRATION TODO: skip table now has separate :skip/item-id and :skip/ad-id columns.
+;; The first union branch joins :skip/item to :ad._id which needs to become :skip/ad-id.
 (defn ad-interaction-info [conn]
   (->> {:union [{:select [[:ad._id :ad-id]
                           [:reclist/user :user-id]
@@ -149,6 +151,8 @@
                         (number? a) (+ a b)
                         (tick/zoned-date-time? a) (tick/max a b)
                         :else b))
+        ;; MIGRATION TODO: skip table now has separate :skip/item-id and :skip/ad-id columns.
+        ;; :skip/item references below need to become :skip/item-id.
         skip-usits (->> (when all-item-ids
                           (biffx/q conn
                                    {:select [[:reclist/user :user-item/user]
