@@ -164,8 +164,8 @@
                         :else b))
         skip-usits (->> (when all-item-ids
                           (->> (query
-                                {:select [[:reclist/user-id :user-id]
-                                          [:skip/item-id :item-id]
+                                {:select [:reclist/user-id
+                                          :skip/item-id
                                           [[:count :skip/id] :skips]
                                           [[:max :reclist/created-at] :skipped-at]]
                                  :from :skip
@@ -290,6 +290,7 @@
                   (->> (for [candidate candidates
                              :let [id (get candidate id-key)]]
                          {:xt/id id
+                          id-key id
                           :candidate/type type*
                           :candidate/score (predict id type*)
                           :candidate/last-liked (get candidate->last-liked
@@ -311,7 +312,7 @@
          (comp (map #(set/rename-keys % {:user-item/item-id :item/id :n-likes :item/n-likes}))
                (remove (comp nil? :item/id)))
          (query
-          {:select [[:user-item/item-id :item-id]
+          {:select [:user-item/item-id
                     [[:count :user-item/id] :n-likes]]
            :from :user-item
            :where [:is-not :user-item/favorited-at nil]

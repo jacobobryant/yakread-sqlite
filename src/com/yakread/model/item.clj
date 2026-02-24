@@ -70,6 +70,9 @@
          :output [{:user/unread-bookmarks [:item/id]}]}
   {:user/unread-bookmarks (filterv :item/unread bookmarks)})
 
+;; MIGRATION TODO: skip table now has separate :skip/item-id and :skip/ad-id columns.
+;; This query uses :skip/item which needs to become :skip/item-id, and an additional
+;; query/union for :skip/ad-id may be needed to count ad skips separately.
 (defresolver n-skipped [{:keys [biff/conn session]} items]
   #::pco{:input [:xt/id]
          :output [:item/n-skipped]

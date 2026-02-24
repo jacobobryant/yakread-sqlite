@@ -161,9 +161,11 @@ CREATE TABLE redirect (
 CREATE TABLE skip (
   id BLOB PRIMARY KEY NOT NULL,
   reclist_id BLOB NOT NULL,
-  item_id BLOB NOT NULL,
+  item_id BLOB,
+  ad_id BLOB,
   FOREIGN KEY(reclist_id) REFERENCES reclist(id),
-  FOREIGN KEY(item_id) REFERENCES item(id)
+  FOREIGN KEY(item_id) REFERENCES item(id),
+  FOREIGN KEY(ad_id) REFERENCES ad(id)
 ) STRICT;
 
 CREATE TABLE sub (

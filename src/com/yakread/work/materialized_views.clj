@@ -88,6 +88,8 @@
                   [{:view :sub-affinity :sub/id sub-id}])
                 [(merge record {:view :current-item})])
 
+               ;; MIGRATION TODO: skip table now has separate :skip/item-id and :skip/ad-id columns.
+               ;; :skip/item references below need to change accordingly. Ad skips should use :skip/ad-id.
                (:skip/item record)
                (when-some [sub-id (-> (biffx/q
                                        conn

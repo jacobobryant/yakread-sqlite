@@ -12,13 +12,13 @@
      :ctx {:biff.pipe.pathom/output
            {:params/sub
             {:sub/id 1
-             :sub/doc-type :sub/feed}}}}
+             :sub/record-type :sub.record-type/feed}}}}
     {:doc "unpin"
      :ctx {:biff.pipe.pathom/output
            {:params/sub
             {:sub/id 1
              :sub/pinned-at "now"
-             :sub/doc-type :sub/feed}}}}]))
+             :sub/record-type :sub.record-type/feed}}}}]))
 
 (defn get-context []
   {:biff/router          main/router
