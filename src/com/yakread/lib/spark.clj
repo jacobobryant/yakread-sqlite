@@ -1,14 +1,12 @@
 (ns com.yakread.lib.spark
   (:require
+   [clojure.set :as set]
    [clojure.tools.logging :as log]
-   [com.biffweb :refer [q]]
-   [com.biffweb.experimental :as biffx]
    [com.wsscode.pathom3.connect.indexes :as pci]
    [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
    [com.wsscode.pathom3.interface.eql :as p.eql]
    [com.yakread.lib.ads :as lib.ads]
    [com.yakread.util.biff-staging :as biffs]
-   [honey.sql.helpers]
    [tick.core :as tick])
   (:import
    [java.time Instant]
@@ -18,74 +16,87 @@
 (defn- median [xs]
   (first (take (/ (count xs) 2) xs)))
 
-(defresolver item-candidates [{:keys [biff/conn]} _]
-  {::pco/output [{::item-candidates [:xt/id
+(defn- ->instant [x]
+  (cond
+    (instance? Instant x) x
+    (number? x) (Instant/ofEpochMilli (long x))
+    :else nil))
+
+(defresolver item-candidates [{:biff/keys [query]} _]
+  {::pco/output [{::item-candidates [:item/id
                                      :item/url]}]}
   {::item-candidates
-   (biffx/q conn
-            {:select [:xt/id :item/url]
-             :from :item
-             :where [:= :item.direct/candidate-status [:lift :approved]]})})
+   (query
+    {:select [:item/id :item/url]
+     :from :item
+     :where [:= :item/direct-candidate-status [:lift :item.direct-candidate-status/approved]]})})
 
 
-(defresolver ads [{:biff/keys [conn now]} _]
-  {::pco/output [{::all-ads [:xt/id]}
-                 {::ad-candidates [:xt/id]}]}
+(defresolver ads [{:biff/keys [query now]} _]
+  {::pco/output [{::all-ads [:ad/id]}
+                 {::ad-candidates [:ad/id]}]}
   (let [all-ads (into []
-                      (remove (comp nil? :xt/id))
-                      (biffx/q conn
-                               {:select [:ad._id
-                                         :ad/approve-state
-                                         :ad/paused
-                                         :ad/payment-failed
-                                         :ad/payment-method
-                                         :ad/budget
-                                         [[:coalesce [:sum :ad.click/cost] 0] :ad/recent-cost]]
-                                :from :ad
-                                :left-join [:ad-click [:and
-                                                       [:= :ad.click/ad :ad._id]
-                                                       [:<
-                                                        (tick/<< now (tick/of-days 7))
-                                                        :ad.click/created-at]]]}))]
+                      (comp (map #(set/rename-keys % {:recent-cost :ad/recent-cost}))
+                            (remove (comp nil? :ad/id)))
+                      (query
+                       {:select [:ad/id
+                                 :ad/approve-state
+                                 :ad/paused
+                                 :ad/payment-failed
+                                 :ad/payment-method
+                                 :ad/budget
+                                 [[:coalesce [:sum :ad-click/cost] 0] :recent-cost]]
+                        :from :ad
+                        :left-join [:ad-click [:and
+                                               [:= :ad-click/ad-id :ad/id]
+                                               [:<
+                                                (tick/<< now (tick/of-days 7))
+                                                :ad-click/created-at]]]
+                        :group-by [:ad/id]}))]
     {::all-ads all-ads
      ::ad-candidates (filterv lib.ads/active? all-ads)}))
 
 (defn- full-outer-join [on records]
   (->> (group-by on records)
        vals
-       (mapv #(apply merge %))))
+       (mapv #(apply merge (map (fn [m] (into {} (remove (comp nil? val)) m)) %)))))
 
-;; MIGRATION TODO: skip table now has separate :skip/item-id and :skip/ad-id columns.
-;; The first union branch joins :skip/item to :ad._id which needs to become :skip/ad-id.
-(defn ad-interaction-info [conn]
-  (->> {:union [{:select [[:ad._id :ad-id]
-                          [:reclist/user :user-id]
-                          [[:count :skip._id] :n-skips]
+(defn ad-interaction-info [query]
+  (->> {:union [{:select [:ad/id
+                          :reclist/user-id
+                          [[:count :skip/id] :n-skips]
                           [[:max :reclist/created-at] :last-skipped]
                           [nil :last-clicked]]
                  :from :ad
-                 :join [:skip [:= :skip/item :ad._id]
-                        :reclist [:= :skip/reclist :reclist._id]]}
-                {:select [[:ad._id :ad-id]
-                          [:ad.click/user :user-id]
+                 :join [:skip [:= :skip/ad-id :ad/id]
+                        :reclist [:= :skip/reclist-id :reclist/id]]
+                 :group-by [:ad/id :reclist/user-id]}
+                {:select [:ad/id
+                          :ad-click/user-id
                           [nil :n-skips]
                           [nil :last-skipped]
-                          [[:max :ad.click/created-at] :last-clicked]]
+                          [[:max :ad-click/created-at] :last-clicked]]
                  :from :ad
-                 :join [:ad-click [:= :ad._id :ad.click/ad]]}]}
-       (biffx/q conn)
+                 :join [:ad-click [:= :ad/id :ad-click/ad-id]]
+                 :group-by [:ad/id :ad-click/user-id]}]}
+       query
+       (mapv #(-> %
+                  (set/rename-keys {:ad/id :ad-id
+                                    :reclist/user-id :user-id})
+                  (update :last-skipped ->instant)
+                  (update :last-clicked ->instant)))
        (remove (comp nil? :ad-id))
        (full-outer-join (juxt :ad-id :user-id))))
 
-(defresolver ad-ratings [{:keys [biff/conn]} {::keys [all-ads]}]
-  {::pco/input [{::all-ads [:xt/id]}]
+(defresolver ad-ratings [{:biff/keys [query]} {::keys [all-ads]}]
+  {::pco/input [{::all-ads [:ad/id]}]
    ::pco/output [{::ad-ratings [:rating/candidate
                                 :rating/user
                                 :rating/value
                                 :rating/created-at]}]}
   {::ad-ratings (vec
                  (for [{:keys [ad-id user-id n-skips last-skipped last-clicked]}
-                       (ad-interaction-info conn)]
+                       (ad-interaction-info query)]
                    {:rating/candidate ad-id
                     :rating/user user-id
                     :rating/value (if last-clicked
@@ -93,25 +104,25 @@
                                     (max 0 (- 0.5 (* 0.1 n-skips))))
                     :rating/created-at (or last-clicked last-skipped)}))})
 
-(defresolver dedupe-item-id [{:keys [biff/conn]} {::keys [item-candidates]}]
-  {::pco/input [{::item-candidates [:xt/id
+(defresolver dedupe-item-id [{:biff/keys [query]} {::keys [item-candidates]}]
+  {::pco/input [{::item-candidates [:item/id
                                     :item/url]}]
    ::pco/output [::dedupe-item-id]}
   (let [candidate-urls (not-empty (mapv :item/url item-candidates))
         item-id->url (into {}
-                           (map (juxt :xt/id :item/url))
+                           (map (juxt :item/id :item/url))
                            (when candidate-urls
-                             (biffx/q conn
-                                      {:select [:xt/id :item/url]
-                                       :from :item
-                                       :where [:in :item/url candidate-urls]})))
+                             (query
+                              {:select [:item/id :item/url]
+                               :from :item
+                               :where [:in :item/url candidate-urls]})))
         url->item-candidate-id (into {}
-                                     (map (juxt :item/url :xt/id))
+                                     (map (juxt :item/url :item/id))
                                      item-candidates)]
     {::dedupe-item-id (update-vals item-id->url url->item-candidate-id)}))
 
-(defresolver item-ratings [{:keys [biff/conn]} {::keys [item-candidates dedupe-item-id]}]
-  {::pco/input [{::item-candidates [:xt/id
+(defresolver item-ratings [{:biff/keys [query]} {::keys [item-candidates dedupe-item-id]}]
+  {::pco/input [{::item-candidates [:item/id
                                     :item/url]}
                 ::dedupe-item-id]
    ::pco/output [{::item-ratings [:rating/user
@@ -121,27 +132,27 @@
   (let [candidate-urls (not-empty (mapv :item/url item-candidates))
         all-item-ids (when candidate-urls
                        (not-empty
-                        (mapv :xt/id
-                              (biffx/q conn
-                                       {:select :xt/id
-                                        :from :item
-                                        :where [:in :item/url candidate-urls]}))))
+                        (mapv :item/id
+                              (query
+                               {:select :item/id
+                                :from :item
+                                :where [:in :item/url candidate-urls]}))))
 
 
         dedupe-usit (fn [usit]
-                      (update usit :user-item/item dedupe-item-id))
-        usit-key (juxt :user-item/user :user-item/item)
+                      (update usit :user-item/item-id dedupe-item-id))
+        usit-key (juxt :user-item/user-id :user-item/item-id)
         item-usits (->> (when all-item-ids
-                          (biffx/q conn
-                                   {:select [:user-item/user
-                                             :user-item/item
-                                             :user-item/favorited-at
-                                             :user-item/disliked-at
-                                             :user-item/reported-at
-                                             :user-item/viewed-at
-                                             :user-item/bookmarked-at]
-                                    :from :user-item
-                                    :where [:in :user-item/item all-item-ids]}))
+                          (query
+                           {:select [:user-item/user-id
+                                     :user-item/item-id
+                                     :user-item/favorited-at
+                                     :user-item/disliked-at
+                                     :user-item/reported-at
+                                     :user-item/viewed-at
+                                     :user-item/bookmarked-at]
+                            :from :user-item
+                            :where [:in :user-item/item-id all-item-ids]}))
                         (mapv dedupe-usit)
                         (group-by usit-key)
                         (vals)
@@ -149,19 +160,22 @@
         merge-skips (fn [a b]
                       (cond
                         (number? a) (+ a b)
-                        (tick/zoned-date-time? a) (tick/max a b)
+                        (inst? a) (if (pos? (compare a b)) a b)
                         :else b))
-        ;; MIGRATION TODO: skip table now has separate :skip/item-id and :skip/ad-id columns.
-        ;; :skip/item references below need to become :skip/item-id.
         skip-usits (->> (when all-item-ids
-                          (biffx/q conn
-                                   {:select [[:reclist/user :user-item/user]
-                                             [:skip/item :user-item/item]
-                                             [[:count :skip._id] :user-item/skips]
-                                             [[:max :reclist/created-at] :user-item/skipped-at]]
-                                    :from :skip
-                                    :join [:reclist [:= :reclist._id :skip/reclist]]
-                                    :where [:in :skip/item all-item-ids]}))
+                          (->> (query
+                                {:select [:reclist/user-id
+                                          :skip/item-id
+                                          [[:count :skip/id] :skips]
+                                          [[:max :reclist/created-at] :skipped-at]]
+                                 :from :skip
+                                 :join [:reclist [:= :reclist/id :skip/reclist-id]]
+                                 :where [:in :skip/item-id all-item-ids]
+                                 :group-by [:reclist/user-id :skip/item-id]})
+                               (mapv #(set/rename-keys % {:reclist/user-id :user-item/user-id
+                                                          :skip/item-id :user-item/item-id
+                                                          :skips :user-item/skips
+                                                          :skipped-at :user-item/skipped-at}))))
                         (mapv dedupe-usit)
                         (group-by usit-key)
                         (vals)
@@ -185,8 +199,8 @@
                                                         (max 0))]
                              [:user-item/bookmarked-at 0.6]])]
                 :when value]
-            {:rating/user (:user-item/user usit)
-             :rating/candidate (:user-item/item usit)
+            {:rating/user (:user-item/user-id usit)
+             :rating/candidate (:user-item/item-id usit)
              :rating/value value
              :rating/created-at created-at}))}))
 
@@ -248,8 +262,8 @@
                                :rating/user
                                :rating/value
                                :rating/created-at]}
-                {::item-candidates [:xt/id]}
-                {::ad-candidates [:xt/id]}
+                {::item-candidates [:item/id]}
+                {::ad-candidates [:ad/id]}
                 ::predict-fn]
    ::pco/output [:yakread.model/get-candidates]}
   (let [all-ratings (concat item-ratings ad-ratings)
@@ -272,7 +286,8 @@
                (for [[type* candidates] [[:item item-candidates]
                                          [:ad ad-candidates]]]
                  [type*
-                  (->> (for [{:keys [xt/id]} candidates]
+                  (->> (for [candidate candidates
+                             :let [id (or (:item/id candidate) (:ad/id candidate))]]
                          {:xt/id id
                           :candidate/type type*
                           :candidate/score (predict id type*)
@@ -285,20 +300,23 @@
                        vec)]))))}))
 
 (defresolver item-candidate-ids [{::keys [item-candidates]}]
-  {:yakread.model/item-candidate-ids (into #{} (map :xt/id) item-candidates)})
+  {:yakread.model/item-candidate-ids (into #{} (map :item/id) item-candidates)})
 
-(defresolver all-liked-items [{:keys [biff/conn]} _]
+(defresolver all-liked-items [{:biff/keys [query]} _]
   {::pco/output [{:yakread.model/all-liked-items
                   [:item/id :item/n-likes]}]}
   {:yakread.model/all-liked-items
    (into []
-         (remove (comp nil? :item/id))
-         (biffx/q conn
-                  {:select [[:user-item/item :item/id]
-                            [[:count :xt/id] :item/n-likes]]
-                   :from :user-item
-                   :where [:is-not :user-item/favorited-at nil]
-                   :order-by [[:item/n-likes :desc]]}))})
+         (comp (map #(set/rename-keys % {:user-item/item-id :item/id
+                                         :n-likes :item/n-likes}))
+               (remove (comp nil? :item/id)))
+         (query
+          {:select [:user-item/item-id
+                    [[:count :user-item/id] :n-likes]]
+           :from :user-item
+           :where [:is-not :user-item/favorited-at nil]
+           :group-by [:user-item/item-id]
+           :order-by [[:n-likes :desc]]}))})
 
 (def ^:private pathom-env (pci/register [item-candidates
                                          ads
@@ -314,7 +332,7 @@
   (log/info "updating model")
   (merge {:yakread.model/item-candidate-ids #{}
           :yakread.model/get-candidates (constantly {})}
-         (p.eql/process (merge ctx pathom-env {:biff/now (tick/zoned-date-time)})
+         (p.eql/process (merge ctx pathom-env {:biff/now (tick/instant)})
                         {}
                         [(? :yakread.model/item-candidate-ids)
                          (? :yakread.model/get-candidates)

@@ -87,6 +87,10 @@ Even in non-query code (TX operations, data access, etc.), update field names to
 - [x] `com.yakread.app.for-you` (and `for_you_test.edn`)
 - [x] `com.yakread.app.settings` (and `settings_test.edn`)
 - [x] `com.yakread.app.subscriptions` (and `subscriptions_unsub_test.edn`, `subscriptions_test.clj`)
+- [x] `com.yakread.lib.ads`
+- [x] `com.yakread.lib.item` (and `item_test.edn`)
+- [x] `com.yakread.lib.spark` (and `spark_test.edn`)
+- [x] `com.yakread.lib.user` (and `user_test.edn`, caller `com.yakread.model.user`)
 
 ## Reference Commands
 
