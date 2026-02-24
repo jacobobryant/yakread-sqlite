@@ -36,8 +36,8 @@
   {::pco/output [{::all-ads [:ad/id]}
                  {::ad-candidates [:ad/id]}]}
   (let [all-ads (into []
-                      (comp (map #(set/rename-keys % {:recent-cost :ad/recent-cost}))
-                            (remove (comp nil? :ad/id)))
+                      (comp (remove (comp nil? :ad/id))
+                            (map #(set/rename-keys % {:recent-cost :ad/recent-cost})))
                       (query
                        {:select [:ad/id
                                  :ad/approve-state
