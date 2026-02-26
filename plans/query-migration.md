@@ -95,6 +95,8 @@ Even in non-query code (TX operations, data access, etc.), update field names to
 - [x] `com.yakread.model.ad` (and `ad_test.edn`)
 - [x] `com.yakread.model.admin` (and `admin_test.edn`)
 - [x] `com.yakread.model.digest` (and `digest_test.edn`)
+- [x] `com.yakread.model.item` (and `item_test.edn`)
+- [x] `com.yakread.model.moderation` (and `moderation_test.edn`)
 
 ## Reference Commands
 
