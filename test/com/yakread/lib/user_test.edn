@@ -5,18 +5,16 @@
   [com.yakread.lib.core :as lib.core]],
  :tests
  [{:eval
-   (t/with-node
-    [node
-     {:user [{:xt/id "user1", :user/email-username "foo"}],
+   (t/with-sqlite
+    [ctx
+     {:user [{:user/id (t/uuid 1), :user/email-username "foo"}],
       :deleted-user
-      [{:xt/id "deleted-user1",
+      [{:deleted-user/id (t/uuid 2),
         :deleted-user/email-username-hash
         "fcde2b2edba56bf408601fb721fe9b5c338d10ee429ea04fae5511b68fbf8fb9"}]}]
-    {:taken-by-user (email-username-taken? node "foo"),
-     :taken-by-deleted-user (email-username-taken? node "bar"),
-     :not-taken (email-username-taken? node "baz")}),
-   :result
-   {:taken-by-user true,
-    :taken-by-deleted-user true,
-    :not-taken false}}
+    {:taken-by-user (email-username-taken? (:biff/query ctx) "foo"),
+     :taken-by-deleted-user
+     (email-username-taken? (:biff/query ctx) "bar"),
+     :not-taken (email-username-taken? (:biff/query ctx) "baz")}),
+   :result {:taken-by-user true, :taken-by-deleted-user true, :not-taken false}}
   _]}

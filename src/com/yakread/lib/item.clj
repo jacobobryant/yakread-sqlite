@@ -2,7 +2,6 @@
   (:require
    [clojure.set :as set]
    [clojure.string :as str]
-   [com.biffweb.experimental :as biffx]
    [com.yakread.lib.content :as lib.content]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.route :refer [hx-redirect]]
@@ -11,20 +10,20 @@
 
 (defn add-item-machine* [{:keys [get-url on-error on-success]}]
   {:start
-   (fn [{:biff/keys [conn base-url] :as ctx}]
+   (fn [{:biff/keys [query base-url] :as ctx}]
      (let [url (str/trim (get-url ctx))]
        (if-some [item (first
-                       (biffx/q conn
-                                {:select [:item._id :item/url]
-                                 :from :item
-                                 :left-join [:redirect [:= :redirect/item :item._id]]
-                                 :where [:and
-                                         [:or
-                                          [:= :item/url url]
-                                          [:= :redirect/url url]]
-                                         [:= :item/doc-type "item/direct"]]
-                                 :limit 1}))]
-         (on-success ctx {:item/id (:xt/id item) :item/url (:item/url item)})
+                       (query
+                        {:select [:item/id :item/url]
+                         :from :item
+                         :left-join [:redirect [:= :redirect/item-id :item/id]]
+                         :where [:and
+                                 [:or
+                                  [:= :item/url url]
+                                  [:= :redirect/url url]]
+                                 [:= :item/record-type [:lift :item.record-type/direct]]]
+                         :limit 1}))]
+         (on-success ctx {:item/id (:item/id item) :item/url (:item/url item)})
          {:biff.fx/http {:url url
                          :method  :get
                          :headers {"User-Agent" base-url}
@@ -74,7 +73,7 @@
                         [[:put-docs :item
                           (lib.core/some-vals
                            {:xt/id item-id
-                            :item/doc-type :item/direct
+                            :item/record-type :item.record-type/direct
                             :item/ingested-at now
                             :item/title title
                             :item/url final-url
@@ -92,7 +91,7 @@
                            [:put-docs :redirect
                             {:xt/id (biffs/gen-uuid)
                              :redirect/url url
-                             :redirect/item item-id}])])}
+                             :redirect/item-id item-id}])])}
                       (on-success ctx {:item/id item-id :item/url url}))])))})
 
 (defn add-item-machine [{:keys [start user-item-key redirect-to]
@@ -107,8 +106,8 @@
                   ;; TODO switch to :biff/upsert
                   (biffs/upsert conn
                                 :user-item
-                                {:user-item/user (:uid session)
-                                 :user-item/item id}
+                                {:user-item/user-id (:uid session)
+                                 :user-item/item-id id}
                                 (merge {:xt/id (biffs/gen-uuid (:uid session))
                                         :user-item/favorited-at nil
                                         :user-item/disliked-at nil
