@@ -1,7 +1,7 @@
 (ns com.yakread.model.ad
   (:require
+   [clojure.set :as set]
    [clojure.string :as str]
-   [com.biffweb.experimental :as biffx]
    [com.wsscode.misc.coll :as wss-coll]
    [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
    [com.yakread.lib.content :as lib.content]
@@ -21,12 +21,12 @@
 (defresolver xt-id [{:keys [ad/id]}]
   {:xt/id id})
 
-(defresolver user-ad [{:keys [biff/conn]} {:keys [xt/id]}]
-  {::pco/output [{:user/ad [:xt/id]}]}
-  (when-some [ad (first (biffx/q conn
-                                 {:select :xt/id
-                                  :from :ad
-                                  :where [:= :ad/user id]}))]
+(defresolver user-ad [{:biff/keys [query]} {:keys [user/id]}]
+  {::pco/input [:user/id]
+   ::pco/output [{:user/ad [:ad/id]}]}
+  (when-some [ad (first (query {:select :ad/id
+                                :from :ad
+                                :where [:= :ad/user-id id]}))]
     {:user/ad ad}))
 
 (defresolver url-with-protocol [{:keys [ad/url]}]
@@ -71,46 +71,49 @@
                  payment-failed :payment-failed
                  paused :paused
                  (not-empty incomplete-fields) :incomplete
-                 (= approve-state :approved) :running
-                 (= approve-state :rejected) :rejected
-                 (= approve-state :pending) :pending)
+                 (= approve-state :ad.approve-state/approved) :running
+                 (= approve-state :ad.approve-state/rejected) :rejected
+                 (= approve-state :ad.approve-state/pending) :pending)
      :ad/incomplete-fields incomplete-fields}))
 
-(defresolver n-clicks [{:keys [biff/conn]} {:keys [ad/id]}]
+(defresolver n-clicks [{:biff/keys [query]} {:keys [ad/id]}]
   {:ad/n-clicks
-   (-> (biffx/q conn
-                {:select [[[:count [:distinct :ad.click/user]] :cnt]]
-                 :from :ad-click
-                 :where [:= :ad.click/ad id]})
+   (-> (query {:select [[[:count [:distinct :ad-click/user-id]] :cnt]]
+               :from :ad-click
+               :where [:= :ad-click/ad-id id]})
        first
        :cnt)})
 
 (defresolver host [{:keys [ad/url-with-protocol]}]
   {:ad/host (some-> url-with-protocol uri/uri :host str/trim not-empty)})
 
-(defresolver last-clicked [{:keys [biff/conn]} ads]
-  {::pco/input [:xt/id]
+(defresolver last-clicked [{:biff/keys [query]} ads]
+  {::pco/input [:ad/id]
    ::pco/output [:ad/last-clicked]
    ::pco/batch? true}
-  (->> (biffx/q conn
-                {:select [[:ad.click/ad :xt/id]
-                          [[:max :ad.click/created-at] :ad/last-clicked]]
-                 :from :ad-click
-                 :where [:in :ad.click/ad (mapv :xt/id ads)]})
-       (wss-coll/restore-order ads :xt/id)))
+  (->> (query {:select [:ad-click/ad-id
+                        [[:max :ad-click/created-at] :last-clicked]]
+               :from :ad-click
+               :where [:in :ad-click/ad-id (mapv :ad/id ads)]
+               :group-by :ad-click/ad-id})
+       (mapv #(set/rename-keys % {:ad-click/ad-id :ad/id
+                                  :last-clicked :ad/last-clicked}))
+       (wss-coll/restore-order ads :ad/id)))
 
-(defresolver amount-pending [{:keys [biff/conn]} ads]
-  {::pco/input [:xt/id]
+(defresolver amount-pending [{:biff/keys [query]} ads]
+  {::pco/input [:ad/id]
    ::pco/output [:ad/amount-pending]
    ::pco/batch? true}
-  (->> (biffx/q conn
-                {:select [[:ad.credit/ad :xt/id]
-                          [[:sum :ad.credit/amount] :ad/amount-pending]]
-                 :from :ad-credit
-                 :where [:and
-                         [:in :ad.credit/ad (mapv :xt/id ads)]
-                         [:= :ad.credit/charge-status [:lift :pending]]]})
-       (wss-coll/restore-order ads :xt/id)))
+  (->> (query {:select [:ad-credit/ad-id
+                        [[:sum :ad-credit/amount] :amount-pending]]
+               :from :ad-credit
+               :where [:and
+                       [:in :ad-credit/ad-id (mapv :ad/id ads)]
+                       [:= :ad-credit/charge-status [:lift :ad-credit.charge-status/pending]]]
+               :group-by :ad-credit/ad-id})
+       (mapv #(set/rename-keys % {:ad-credit/ad-id :ad/id
+                                  :amount-pending :ad/amount-pending}))
+       (wss-coll/restore-order ads :ad/id)))
 
 (defresolver chargeable [{:keys [biff/now]} {:ad/keys [payment-method
                                                        payment-failed
@@ -126,7 +129,7 @@
                 (? :ad/last-clicked)
                 ;; ensure these are set / user account hasn't been deleted
                 :ad/customer-id
-                {:ad/user [:user/email]}]}
+                {:ad/user-id [:user/email]}]}
   {:ad/chargeable
    (boolean
     (and payment-method
@@ -139,8 +142,8 @@
 (fx/defmachine get-stripe-status
   :start
   (fn [{:keys [biff/secret biff.fx/pathom]}]
-    (let [{:ad.credit/keys [ad created-at]} pathom
-          {:ad/keys [customer-id]} ad]
+    (let [{:ad-credit/keys [ad-id created-at]} pathom
+          {:ad/keys [customer-id]} ad-id]
       {:biff.fx/http {:method :get
                       :url "https://api.stripe.com/v1/payment_intents"
                       :basic-auth [(secret :stripe/api-key) ""]
@@ -159,38 +162,37 @@
   (fn [{credit :biff.fx/pathom
         http :biff.fx/http}]
     (when-some [status (some (fn [{:keys [metadata status]}]
-                               (when (= (str (:xt/id credit))
+                               (when (= (str (:ad-credit/id credit))
                                         (:charge_id metadata))
                                  status))
                              (get-in http [:body :data]))]
-      {:ad.credit/stripe-status status})))
+      {:ad-credit/stripe-status status})))
 
-(defresolver stripe-status [ctx {:ad.credit/keys [charge-status] :as credit}]
-  {::pco/input [:xt/id
-                {:ad.credit/ad [:ad/customer-id]}
-                :ad.credit/created-at
-                :ad.credit/charge-status]
-   ::pco/output [:ad.credit/stripe-status]}
-  (when (= charge-status :pending)
+(defresolver stripe-status [ctx {:ad-credit/keys [charge-status] :as credit}]
+  {::pco/input [:ad-credit/id
+                {:ad-credit/ad-id [:ad/customer-id]}
+                :ad-credit/created-at
+                :ad-credit/charge-status]
+   ::pco/output [:ad-credit/stripe-status]}
+  (when (= charge-status :ad-credit.charge-status/pending)
     (get-stripe-status (assoc ctx :biff.fx/pathom credit))))
 
-(defresolver pending-charge [{:keys [biff/conn]} {:keys [xt/id]}]
-  {::pco/output [{:ad/pending-charge [:xt/id]}]}
-  (when-some [credit (first (biffx/q conn
-                                     {:select :xt/id
-                                      :from :ad-credit
-                                      :where [:and
-                                              [:= :ad.credit/ad id]
-                                              [:= :ad.credit/charge-status [:lift :pending]]]}))]
+(defresolver pending-charge [{:biff/keys [query]} {:keys [ad/id]}]
+  {::pco/input [:ad/id]
+   ::pco/output [{:ad/pending-charge [:ad-credit/id]}]}
+  (when-some [credit (first (query {:select :ad-credit/id
+                                    :from :ad-credit
+                                    :where [:and
+                                            [:= :ad-credit/ad-id id]
+                                            [:= :ad-credit/charge-status [:lift :ad-credit.charge-status/pending]]]}))]
     {:ad/pending-charge credit}))
 
-(defresolver pending-charges [{:keys [biff/conn]} _]
-  {::pco/output [{:admin/pending-charges [:xt/id]}]}
+(defresolver pending-charges [{:biff/keys [query]} _]
+  {::pco/output [{:admin/pending-charges [:ad-credit/id]}]}
   {:admin/pending-charges
-   (biffx/q conn
-            {:select :xt/id
-             :from :ad-credit
-             :where [:= :ad.credit/charge-status [:lift :pending]]})})
+   (query {:select :ad-credit/id
+           :from :ad-credit
+           :where [:= :ad-credit/charge-status [:lift :ad-credit.charge-status/pending]]})})
 
 (def module {:resolvers [ad-id
                          xt-id
