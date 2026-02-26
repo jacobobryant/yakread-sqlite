@@ -91,6 +91,10 @@ Even in non-query code (TX operations, data access, etc.), update field names to
 - [x] `com.yakread.lib.item` (and `item_test.edn`)
 - [x] `com.yakread.lib.spark` (and `spark_test.edn`)
 - [x] `com.yakread.lib.user` (and `user_test.edn`, caller `com.yakread.model.user`)
+- [x] `com.yakread.model.user.export` (and `export_test.edn`)
+- [x] `com.yakread.model.ad` (and `ad_test.edn`)
+- [x] `com.yakread.model.admin` (and `admin_test.edn`)
+- [x] `com.yakread.model.digest` (and `digest_test.edn`)
 
 ## Reference Commands
 

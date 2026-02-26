@@ -3,46 +3,46 @@
  :tests
  [{:doc "recent-users returns users joined in last 7 days",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [ctx
      {:user
-      [{:xt/id (t/uuid 1),
+      [{:user/id (t/uuid 1),
         :user/email "recent@test.com",
-        :user/joined-at (t/zdt 2000 1 5)}
-       {:xt/id (t/uuid 2),
+        :user/joined-at (t/instant 2000 1 5)}
+       {:user/id (t/uuid 2),
         :user/email "old@test.com",
-        :user/joined-at (t/zdt 1999)}]}]
+        :user/joined-at (t/instant 1999)}]}]
     (recent-users
-     {:biff/conn node, :biff/now (.toInstant (t/zdt 2000 1 8))}
+     (merge ctx {:biff/now (t/instant 2000 1 8)})
      {})),
    :result
    {:admin/recent-users
-    [{:xt/id #uuid "00010000-0000-0000-0000-000000000001"}]}}
+    [{:user/id #uuid "00010000-0000-0000-0000-000000000001"}]}}
   _
   {:doc "recent-users returns empty when no recent users",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [ctx
      {:user
-      [{:xt/id (t/uuid 1),
+      [{:user/id (t/uuid 1),
         :user/email "old@test.com",
-        :user/joined-at (t/zdt 1999)}]}]
+        :user/joined-at (t/instant 1999)}]}]
     (recent-users
-     {:biff/conn node, :biff/now (.toInstant (t/zdt 2000 1 8))}
+     (merge ctx {:biff/now (t/instant 2000 1 8)})
      {})),
    :result {:admin/recent-users []}}
   _
   {:doc "ads returns all ads",
    :eval
-   (t/with-node
-    [node {:ad [{:xt/id (t/uuid 1)} {:xt/id (t/uuid 2)}]}]
-    (ads {:biff/conn node} {})),
+   (t/with-sqlite
+    [ctx {:ad [{:ad/id (t/uuid 1)} {:ad/id (t/uuid 2)}]}]
+    (ads ctx {})),
    :result
    {:admin/ads
-    [{:xt/id #uuid "00010000-0000-0000-0000-000000000001"}
-     {:xt/id #uuid "00020000-0000-0000-0000-000000000002"}]}}
+    [{:ad/id #uuid "00010000-0000-0000-0000-000000000001"}
+     {:ad/id #uuid "00020000-0000-0000-0000-000000000002"}]}}
   _
   {:doc "ads returns empty when no ads",
-   :eval (t/with-node [node {}] (ads {:biff/conn node} {})),
+   :eval (t/with-sqlite [ctx {}] (ads ctx {})),
    :result {:admin/ads []}}
   _]}
