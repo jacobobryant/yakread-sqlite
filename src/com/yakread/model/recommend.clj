@@ -1,7 +1,6 @@
 (ns com.yakread.model.recommend
   (:require
    [clojure.data.generators :as gen]
-   [com.biffweb.experimental :as biffx]
    [com.rpl.specter :as sp]
    [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
    [com.yakread.lib.core :as lib.core]
@@ -86,53 +85,41 @@
 
 (defresolver sub-affinity*
   "Returns the 10 most recent interactions (e.g. viewed, liked, etc) for a given sub."
-  [{:keys [biff/conn]} subscriptions]
+  [{:biff/keys [query]} subscriptions]
   {::pco/input [:sub/id
                 :sub/title
-                {:sub/user [:xt/id]}
-                {:sub/items [:xt/id]}]
+                :sub/user-id
+                {:sub/items [:item/id]}]
    ::pco/output [:sub/new
                  :sub/affinity-low*
                  :sub/affinity-high*
                  :sub/n-interactions]
    ::pco/batch? true}
-  ;; MIGRATION TODO: skip table now has separate :skip/item-id and :skip/ad-id columns.
-  ;; :skip/item and :skip/reclist references in the query below need to be updated.
-  (let [q-inputs             (for [{:sub/keys [id user items]} subscriptions
-                                   item items]
-                               [(:xt/id user) id (:xt/id item)])
-        user+sub->skips      (into {}
-                                   (map (fn [{:keys [reclist/user sub/id zdts]}]
-                                          [[user id] zdts]))
-                                   (biffx/q conn
-                                            {:union-all
-                                             (for [{:sub/keys [id user items]} subscriptions]
-                                               {:select [:reclist/user
-                                                         [[:inline id] :sub/id]
-                                                         [[:array_agg :reclist/created-at]
-                                                          :zdts]]
-                                                :from :reclist
-                                                :join [:skip [:= :skip/reclist :reclist._id]]
-                                                :where [:and
-                                                        [:= :reclist/user (:xt/id user)]
-                                                        [:in :skip/item (mapv :xt/id items)]]})}))
-        user+sub->user-items (group-by (juxt :user-item/user :sub/id)
-                                       (biffx/q conn
-                                                {:union-all
-                                                 (for [{:sub/keys [id user items]} subscriptions]
-                                                   {:select [:user-item/user
-                                                             [[:inline id] :sub/id]
-                                                             :user-item/favorited-at
-                                                             :user-item/reported-at
-                                                             :user-item/disliked-at
-                                                             :user-item/viewed-at]
-                                                    :from :user-item
-                                                    :where [:and
-                                                            [:= :user-item/user (:xt/id user)]
-                                                            [:in :user-item/item (mapv :xt/id items)]]})}))]
-    (mapv (fn [{:sub/keys [id user] :as sub}]
-            (let [user-items   (get user+sub->user-items [(:xt/id user) id])
-                  skips        (get user+sub->skips [(:xt/id user) id])
+  (let [user+sub->skips      (into {}
+                                   (for [{:sub/keys [id user-id items]} subscriptions
+                                         :when (not-empty items)
+                                         :let [rows (query {:select [:reclist/created-at]
+                                                            :from :reclist
+                                                            :join [:skip [:= :skip/reclist-id :reclist/id]]
+                                                            :where [:and
+                                                                    [:= :reclist/user-id user-id]
+                                                                    [:in :skip/item-id (mapv :item/id items)]]})]]
+                                     [[user-id id] (mapv :reclist/created-at rows)]))
+        user+sub->user-items (into {}
+                                   (for [{:sub/keys [id user-id items]} subscriptions
+                                         :when (not-empty items)
+                                         :let [rows (query {:select [:user-item/favorited-at
+                                                                     :user-item/reported-at
+                                                                     :user-item/disliked-at
+                                                                     :user-item/viewed-at]
+                                                            :from :user-item
+                                                            :where [:and
+                                                                    [:= :user-item/user-id user-id]
+                                                                    [:in :user-item/item-id (mapv :item/id items)]]})]]
+                                     [[user-id id] rows]))]
+    (mapv (fn [{:sub/keys [id user-id] :as sub}]
+            (let [user-items   (get user+sub->user-items [user-id id])
+                  skips        (get user+sub->skips [user-id id])
                   interactions (concat (mapv skip->interaction skips)
                                        (keep usit->interaction user-items))
                   scores       (->> interactions
@@ -178,21 +165,21 @@
        (rerank 0.1)))
 
 (defresolver unread-subs [{:user/keys [subscriptions]}]
-  {::pco/input [{:user/subscriptions [:xt/id :sub/unread]}]
-   ::pco/output [{:user/unread-subscriptions [:xt/id]}]}
+  {::pco/input [{:user/subscriptions [:sub/id :sub/unread]}]
+   ::pco/output [{:user/unread-subscriptions [:sub/id]}]}
   {:user/unread-subscriptions (filterv #(not= 0 (:sub/unread %)) subscriptions)})
 
 (defresolver selected-subs [{:user/keys [unread-subscriptions]}]
-  {::pco/input [{:user/unread-subscriptions [:xt/id
-                                             :sub/doc-type
-                                             {(? :sub/mv) [(? :mv.sub/affinity-low)
-                                                           (? :mv.sub/affinity-high)]}
+  {::pco/input [{:user/unread-subscriptions [:sub/id
+                                             :sub/record-type
+                                             {(? :sub/mv) [(? :mv-sub/affinity-low)
+                                                           (? :mv-sub/affinity-high)]}
                                              (? :sub/pinned-at)
                                              (? :sub/published-at)]}]
-   ::pco/output [{:user/selected-subs [:xt/id
+   ::pco/output [{:user/selected-subs [:sub/id
                                        :item/rec-type]}]}
-  (let [new? (fn [sub] (and (= (:sub/doc-type sub) :sub/email)
-                            (nil? (get-in sub [:sub/mv :mv.sub/affinity-low]))))
+  (let [new? (fn [sub] (and (= (:sub/record-type sub) :sub.record-type/email)
+                            (nil? (get-in sub [:sub/mv :mv-sub/affinity-low]))))
         {new-subs true old-subs false} (group-by new? (gen/shuffle unread-subscriptions))
         ;; We'll always show new subs first e.g. so the user will see any confirmation emails.
         new-subs (sort-by :sub/published-at #(compare %2 %1) new-subs)
@@ -202,8 +189,8 @@
                       (mapv #(assoc % :item/rec-type :item.rec-type/new-subscription)))
         {pinned true unpinned false} (->> (interleave-uniform
                                            ;; Do a mix of explore and exploit
-                                           (sort-by #(get-in % [:sub/mv :mv.sub/affinity-low] 0.0) > old-subs)
-                                           (sort-by #(get-in % [:sub/mv :mv.sub/affinity-high] 1.0) > old-subs))
+                                           (sort-by #(get-in % [:sub/mv :mv-sub/affinity-low] 0.0) > old-subs)
+                                           (sort-by #(get-in % [:sub/mv :mv-sub/affinity-high] 1.0) > old-subs))
                                           distinct
                                           (map-indexed (fn [i sub]
                                                          (assoc sub ::rank i)))
@@ -283,10 +270,10 @@
   (sub-recs-resolver
    {:op-name `icymi-sub-recs
     :output-key :user/icymi-sub-recs
-    :extra-input [{:user/digest-sub-items [:xt/id]}]
+    :extra-input [{:user/digest-sub-items [:item/id]}]
     :n-skipped-key :item/n-skipped-with-digests
     :wrap-input (fn [input]
-                  (let [exclude (into #{} (map :xt/id) (:user/digest-sub-items input))]
+                  (let [exclude (into #{} (map :item/id) (:user/digest-sub-items input))]
                     (->> input
                          (sp/setval [:user/selected-subs
                                      sp/ALL
@@ -335,9 +322,9 @@
     :output-key :user/icymi-bookmark-recs
     :n-skipped-key :item/n-skipped-with-digests
     :n-recs n-icymi-recs
-    :extra-input {:user/digest-bookmarks [:xt/id]}
+    :extra-input {:user/digest-bookmarks [:item/id]}
     :wrap-input (fn [{:user/keys [unread-bookmarks digest-bookmarks] :as input}]
-                  (let [exclude (into #{} (map :xt/id) digest-bookmarks)]
+                  (let [exclude (into #{} (map :item/id) digest-bookmarks)]
                     (assoc input :user/unread-bookmarks (into []
                                                               (remove (comp exclude :item/id))
                                                               unread-bookmarks))))}))
@@ -371,16 +358,19 @@
 (defresolver candidates [{:keys [yakread.model/get-candidates]}
                          {user-id :user/id}]
   {::pco/input [(? :user/id)]
-   ::pco/output (vec
-                 (for [k [:user/item-candidates
-                          :user/ad-candidates]]
-                   {k [:xt/id
-                       :candidate/type
-                       :candidate/score
-                       :candidate/last-liked]}))}
+   ::pco/output [{:user/item-candidates [:xt/id
+                                         :item/id
+                                         :candidate/type
+                                         :candidate/score
+                                         :candidate/last-liked]}
+                 {:user/ad-candidates [:xt/id
+                                       :ad/id
+                                       :candidate/type
+                                       :candidate/score
+                                       :candidate/last-liked]}]}
   (let [{:keys [item ad]} (get-candidates user-id)]
-    {:user/item-candidates item
-     :user/ad-candidates ad}))
+    {:user/item-candidates (mapv #(assoc % :item/id (:xt/id %)) item)
+     :user/ad-candidates (mapv #(assoc % :ad/id (:xt/id %)) ad)}))
 
 (defresolver candidate-digest-skips [{:keys [item/n-digest-sends item/n-skipped]}]
   {:candidate/n-skips-with-digests (+ n-digest-sends n-skipped)})
@@ -389,33 +379,32 @@
   {:item/n-skipped-with-digests (+ n-digest-sends n-skipped)})
 
 ;; TODO materialize this
-(defresolver read-urls [{:keys [biff/conn]} {:keys [user/id]}]
+(defresolver read-urls [{:biff/keys [query]} {:keys [user/id]}]
   {:user/read-urls (into #{}
                          (keep :item/url)
-                         (biffx/q conn
-                                  {:select :item/url
-                                   :from :item
-                                   :join [:user-item [:= :item._id :user-item/item]]
-                                   :where [:and
-                                           [:= :user-item/user id]
-                                           [:is-not [:coalesce
-                                                     :user-item/viewed-at
-                                                     :user-item/skipped-at
-                                                     :user-item/favorited-at
-                                                     :user-item/disliked-at
-                                                     :user-item/reported-at]
-                                            nil]]}))})
+                         (query {:select :item/url
+                                 :from :item
+                                 :join [:user-item [:= :item/id :user-item/item-id]]
+                                 :where [:and
+                                         [:= :user-item/user-id id]
+                                         [:is-not [:coalesce
+                                                   :user-item/viewed-at
+                                                   :user-item/skipped-at
+                                                   :user-item/favorited-at
+                                                   :user-item/disliked-at
+                                                   :user-item/reported-at]
+                                          nil]]}))})
 
 (defn discover-recs-resolver [{:keys [op-name output-key n-skips-key n-recs]}]
   (pco/resolver
    op-name
    {::pco/input [(? :user/read-urls)
-                 {:user/item-candidates [:xt/id
+                 {:user/item-candidates [:item/id
                                          :item/url
                                          :candidate/score
                                          :candidate/last-liked
                                          n-skips-key]}]
-    ::pco/output [{output-key [:xt/id
+    ::pco/output [{output-key [:item/id
                                :item/rec-type]}]}
    (fn [_ {candidates :user/item-candidates
            :keys [read-urls]}]
@@ -466,13 +455,12 @@
 (defresolver ad-score [{:keys [candidate/score ad/effective-bid]}]
   {:candidate/ad-score (* (max 0.0001 score) effective-bid)})
 
-(defresolver clicked-ads [{:keys [biff/conn]} {:keys [user/id]}]
+(defresolver clicked-ads [{:biff/keys [query]} {:keys [user/id]}]
   {:user/clicked-ads (into #{}
-                           (map :ad.click/ad)
-                           (biffx/q conn
-                                    {:select :ad.click/ad
-                                     :from :ad-click
-                                     :where [:= :ad.click/user id]}))})
+                           (map :ad-click/ad-id)
+                           (query {:select :ad-click/ad-id
+                                   :from :ad-click
+                                   :where [:= :ad-click/user-id id]}))})
 
 (defresolver ad-rec [{:user/keys [premium clicked-ads]
                       user-id :user/id
@@ -480,29 +468,30 @@
   {::pco/input [(? :user/id)
                 (? :user/premium)
                 (? :user/clicked-ads)
-                {:user/ad-candidates [:xt/id
+                {:user/ad-candidates [:ad/id
                                       :item/n-skipped
                                       :candidate/ad-score
                                       :ad/effective-bid
                                       :ad/approve-state
                                       (? :ad/paused)
-                                      {:ad/user [:xt/id
-                                                 (? :user/email)]}]}]
-   ::pco/output [{:user/ad-rec [:xt/id
+                                      {:ad/user-id [:user/id
+                                                    (? :user/email)]}]}]
+   ::pco/output [{:user/ad-rec [:ad/id
                                 :ad/click-cost
                                 :item/rec-type]}]}
   (when-not premium
     (let [[first-ad second-ad] (->> candidates
-                                    (remove (fn [{:keys [xt/id] :ad/keys [user paused approve-state]}]
+                                    (remove (fn [{:ad/keys [id paused approve-state]
+                                                  ad-user :ad/user-id}]
                                               (or (contains? clicked-ads id)
-                                                  (not= approve-state :approved)
-                                                (= user-id (:xt/id user))
+                                                  (not= approve-state :ad.approve-state/approved)
+                                                (= user-id (:user/id ad-user))
                                                 paused
                                                 ;; Apparently when people requested to have their
                                                 ;; accounts removed, I did so without changing their
                                                 ;; ads. So we check here to make sure the ad user's
                                                 ;; account wasn't removed.
-                                                (nil? (:user/email user)))))
+                                                (nil? (:user/email ad-user)))))
                                   gen/shuffle
                                   (sort-by :item/n-skipped)
                                   (take-rand 2)
@@ -520,7 +509,7 @@
 
 (defn- take-items [n xs]
   (->> xs
-       (lib.core/distinct-by :xt/id)
+       (lib.core/distinct-by (some-fn :item/id :ad/id))
        (take n)))
 
 
@@ -539,19 +528,20 @@
 
 (defresolver for-you-recs [ctx {:user/keys [id]}]
   #::pco{:input [:user/id]
-         :output [{:user/for-you-recs [:xt/id
+         :output [{:user/for-you-recs [:item/id
+                                       :ad/id
                                        :item/rec-type
                                        :ad/click-cost]}]}
   (let [cache (:com.wsscode.pathom3.connect.runner/resolver-cache* ctx)
-        input (->> [[{(? :user/for-you-sub-recs) [:xt/id
+        input (->> [[{(? :user/for-you-sub-recs) [:item/id
                                                   :item/n-skipped
                                                   :item/rec-type]}]
-                    [{(? :user/for-you-bookmark-recs) [:xt/id
+                    [{(? :user/for-you-bookmark-recs) [:item/id
                                                        :item/n-skipped
                                                        :item/rec-type]}
-                     {:user/discover-recs [:xt/id
+                     {:user/discover-recs [:item/id
                                            :item/rec-type]}
-                     {(? :user/ad-rec) [:xt/id
+                     {(? :user/ad-rec) [:ad/id
                                         :item/rec-type
                                         :ad/click-cost]}]]
                    (pmap (fn [query]
@@ -577,13 +567,13 @@
     {:user/for-you-recs recs}))
 
 (defresolver icymi-recs [{:user/keys [icymi-sub-recs icymi-bookmark-recs]}]
-  #::pco{:input [{(? :user/icymi-sub-recs) [:xt/id
+  #::pco{:input [{(? :user/icymi-sub-recs) [:item/id
                                             :item/n-skipped-with-digests
                                             :item/rec-type]}
-                 {(? :user/icymi-bookmark-recs) [:xt/id
+                 {(? :user/icymi-bookmark-recs) [:item/id
                                                  :item/n-skipped-with-digests
                                                  :item/rec-type]}]
-         :output [{:user/icymi-recs [:xt/id
+         :output [{:user/icymi-recs [:item/id
                                      :item/rec-type]}]}
   {:user/icymi-recs (into []
                           (take n-icymi-recs)
