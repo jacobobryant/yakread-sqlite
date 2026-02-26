@@ -358,13 +358,11 @@
 (defresolver candidates [{:keys [yakread.model/get-candidates]}
                          {user-id :user/id}]
   {::pco/input [(? :user/id)]
-   ::pco/output [{:user/item-candidates [:xt/id
-                                         :item/id
+   ::pco/output [{:user/item-candidates [:item/id
                                          :candidate/type
                                          :candidate/score
                                          :candidate/last-liked]}
-                 {:user/ad-candidates [:xt/id
-                                       :ad/id
+                 {:user/ad-candidates [:ad/id
                                        :candidate/type
                                        :candidate/score
                                        :candidate/last-liked]}]}
