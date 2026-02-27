@@ -50,7 +50,7 @@
            (when (= doc-type :item/direct)
              (some-> url uri/uri :host str/trim not-empty))
            (let [;; TODO get timezone for user
-                 zdt (or published-at ingested-at)
+                 zdt (tick/in (or published-at ingested-at) "UTC")
                  same-year (= (tick/year zdt)
                               (tick/year (tick/in (tick/instant) "UTC")))]
              (tick/format (if same-year

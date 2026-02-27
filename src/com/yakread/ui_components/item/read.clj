@@ -11,7 +11,7 @@
    [com.yakread.util.biff-staging :as biffs]))
 
 (fx/defroute-pathom mark-unread
-  [{:params/item [{:item/user-item [:xt/id]}]}
+  [{:params/item [{:item/user-item [:user-item/id]}]}
    :params/redirect-url]
 
   :post
@@ -26,13 +26,13 @@
                           :user-item/reported-at nil
                           :user-item/report-reason nil
                           :user-item/skipped-at nil}
-                    :where [:= :xt/id (get-in item [:item/user-item :xt/id])]})]}))
+                    :where [:= :xt/id (get-in item [:item/user-item :user-item/id])]})]}))
 
 (fx/defroute-pathom toggle-favorite
   [{:params/item
     [:item/like-button*
      {:item/user-item
-      [:xt/id
+      [:user-item/id
        (? :user-item/favorited-at)]}]}]
 
   :post
@@ -48,10 +48,10 @@
                             :user-item/disliked-at nil
                             :user-item/reported-at nil
                             :user-item/report-reason nil}
-                      :where [:= :xt/id (:xt/id user-item)]})]})))
+                      :where [:= :xt/id (:user-item/id user-item)]})]})))
 
 (fx/defroute-pathom not-interested
-  [{:params/item [{:item/user-item [:xt/id]}]}
+  [{:params/item [{:item/user-item [:user-item/id]}]}
    :params/redirect-url]
 
   :post
@@ -62,7 +62,7 @@
                    {:update :user-item
                     :set {:user-item/favorited-at nil
                           :user-item/disliked-at now}
-                    :where [:= :xt/id (get-in item [:item/user-item :xt/id])]})]}))
+                    :where [:= :xt/id (get-in item [:item/user-item :user-item/id])]})]}))
 
 (defn bar-button-icon-label [icon text]
   [:.flex.justify-center
@@ -120,13 +120,12 @@
           (str/replace "+" "%20")))
 
 (defresolver button-bar [{:keys [com.yakread/sign-redirect]}
-                         {:item/keys [id title sub like-button share-button]
-                          :item.email/keys [reply-to]}]
+                         {:item/keys [id title sub like-button share-button email-reply-to]}]
   #::pco{:input [:item/id
                  :item/like-button
                  (? :item/title)
                  (? :item/share-button)
-                 (? :item.email/reply-to)
+                 (? :item/email-reply-to)
                  {(? :item/sub) [:sub/id :sub/title]}]}
   {:item/ui-button-bar
    (fn [{:keys [leave-item-redirect
@@ -141,11 +140,11 @@
               :style {:box-shadow "0 -4px 6px -1px rgb(0 0 0 / 0.1), 0 -2px 4px -2px rgb(0 0 0 / 0.1)"}}
         (when share-button
           [:.flex-1 share-button])
-        (when reply-to
+        (when email-reply-to
           [:.flex-1
            (bar-button
             {:ui/icon "reply-regular"
-             :href (str "mailto:" (query-encode reply-to) "?subject=" (query-encode (str "Re: " title)))}
+             :href (str "mailto:" (query-encode email-reply-to) "?subject=" (query-encode (str "Re: " title)))}
             "Reply")])
 
         ;;(cond

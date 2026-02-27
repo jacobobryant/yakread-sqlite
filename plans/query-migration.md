@@ -97,6 +97,11 @@ Even in non-query code (TX operations, data access, etc.), update field names to
 - [x] `com.yakread.model.digest` (and `digest_test.edn`)
 - [x] `com.yakread.model.item` (and `item_test.edn`)
 - [x] `com.yakread.model.moderation` (and `moderation_test.edn`)
+- [x] `com.yakread.ui-components.shell`
+- [x] `com.yakread.ui-components.item`
+- [x] `com.yakread.ui-components.item.read`
+- [x] `com.yakread.ui-components.digest.html`
+- [x] `com.yakread.ui-components.digest.text`
 
 ## Reference Commands
 
