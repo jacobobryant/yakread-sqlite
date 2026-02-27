@@ -3,7 +3,6 @@
    [clojure.string :as str]
    [clojure.tools.logging :as log]
    [com.biffweb :as biff]
-   [com.biffweb.experimental :as biffx]
    [com.yakread.lib.content :as lib.content]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.fx :as fx]
@@ -15,41 +14,41 @@
 
 (def ^:private epoch (java.time.Instant/ofEpochMilli 0))
 
-(defn active-user-ids [conn now]
+(defn active-user-ids [query now]
   (let [t0 (tick/<< now (tick/of-months 6))]
-    (->> (biffx/q conn
-                  {:union [{:select [[:xt/id :user/id]]
+    (->> (query
+                  {:union [{:select :user/id
                             :from :user
                             :where [:< t0 :user/joined-at]}
-                           {:select [[:user-item/user :user/id]]
+                           {:select :user-item/user-id
                             :from :user-item
                             :where [:< t0 :user-item/viewed-at]}
-                           {:select [[:ad/user :user/id]]
+                           {:select :ad/user-id
                             :from :ad
                             :where [:< t0 :ad/updated-at]}
-                           {:select [[:ad.click/user :user/id]]
+                           {:select :ad-click/user-id
                             :from :ad-click
-                            :where [:< t0 :ad.click/created-at]}]})
+                            :where [:< t0 :ad-click/created-at]}]})
          (mapv :user/id))))
 
 ;; TODO modify sync waiting period based on :feed/failed-syncs
 (fx/defmachine sync-all-feeds!
   :start
-  (fn [{:keys [biff/conn biff/now yakread.work.sync-all-feeds/enabled biff/queues]}]
+  (fn [{:keys [biff/query biff/now yakread.work.sync-all-feeds/enabled biff/queues]}]
     (when (and enabled (= 0 (.size (:work.subscription/sync-feed queues))))
-      (let [user-ids (active-user-ids conn now)
+      (let [user-ids (active-user-ids query now)
             t0 (tick/<< now (tick/of-hours 12))
-            feeds (biffx/q conn
-                           {:select :feed._id
+            feeds (query
+                           {:select :feed/id
                             :from :sub
-                            :join [:feed [:= :sub.feed/feed :feed._id]]
+                            :join [:feed [:= :sub/feed-id :feed/id]]
                             :where [:and
-                                    [:in :sub/user user-ids]
+                                    [:in :sub/user-id user-ids]
                                     [:or
                                      [:is :feed/synced-at nil]
                                      [:< :feed/synced-at t0]]]})]
         (log/info "Syncing" (count feeds) "feeds")
-        {:biff.fx/queue {:jobs (for [{:keys [xt/id]} feeds]
+        {:biff.fx/queue {:jobs (for [{:keys [feed/id]} feeds]
                                  [:work.subscription/sync-feed {:feed/id id}])}}))))
 
 (defn- entry->html [entry]
@@ -68,14 +67,14 @@
 ;; TODO update url for feeds that change their URL
 (fx/defmachine sync-feed!
   :start
-  (fn [{:biff/keys [conn base-url] {:keys [feed/id]} :biff/job}]
+  (fn [{:biff/keys [query base-url] {:keys [feed/id]} :biff/job}]
     (let [[{:feed/keys [url etag last-modified failed-syncs]}]
-          (biffx/q conn {:select [:feed/url
+          (query {:select [:feed/url
                                   :feed/etag
                                   :feed/last-modified
                                   :feed/failed-syncs]
                          :from :feed
-                         :where [:= :xt/id id]})]
+                         :where [:= :feed/id id]})]
       {:biff.fx/next :parse
        :biff.fx/http {:method :get
                       :url url
@@ -91,7 +90,7 @@
        :feed/failed-syncs failed-syncs}))
 
   :parse
-  (fn [{:keys [biff/conn biff/job biff.fx/http biff/now feed/failed-syncs]}]
+  (fn [{:keys [biff/query biff/job biff.fx/http biff/now feed/failed-syncs]}]
     (let [{feed-id :feed/id}          job
           {:keys [headers exception]} http
           remus-output                (when-not exception
@@ -131,7 +130,7 @@
                       (into {}
                             (remove (comp nil? val))
                             {:xt/id             (biffs/gen-uuid feed-id)
-                             :item.feed/feed    feed-id
+                             :item/feed-id      feed-id
                              :item/title        title
                              :item/content-key  (when (< 1000 (count html))
                                                   (biffs/gen-uuid))
@@ -155,27 +154,27 @@
                              :item/byline       (:byline entry)
                              :item/image-url    (some-> (:og/image entry) str/trim)
                              :item/site-name    (:siteName entry)
-                             :item.feed/guid    (:uri entry)})))
+                             :item/feed-guid    (:uri entry)})))
 
           titles   (not-empty (keep :item/title items))
-          guids    (not-empty (keep :item.feed/guid items))
+          guids    (not-empty (keep :item/feed-guid items))
           existing (when (or titles guids)
-                     (biffx/q conn
-                              {:select [:item/title :item.feed/guid]
+                     (query
+                              {:select [:item/title :item/feed-guid]
                                :from :item
                                :where [:and
-                                       [:= :item.feed/feed feed-id]
+                                       [:= :item/feed-id feed-id]
                                        (concat [:or]
                                                (when titles
                                                  [[:in :item/title titles]])
                                                (when guids
-                                                 [[:in :item.feed/guid guids]]))]}))
+                                                 [[:in :item/feed-guid guids]]))]}))
           existing-titles (into #{} (keep :item/title) existing)
-          existing-guids  (into #{} (keep :item.feed/guid) existing)
+          existing-guids  (into #{} (keep :item/feed-guid) existing)
 
           items     (into []
                           (remove (some-fn (comp existing-titles :item/title)
-                                           (comp existing-guids :item.feed/guid)))
+                                           (comp existing-guids :item/feed-guid)))
                           items)
           s3-inputs (vec
                      (for [{:item/keys [content content-key]} items
