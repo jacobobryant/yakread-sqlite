@@ -9,7 +9,6 @@
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.smtp :as lib.smtp]
-   [xtdb.api :as-alias xt]
    [tick.core :as tick]) 
   (:import
    [org.jsoup Jsoup]))
@@ -33,10 +32,10 @@
 
 (fx/defmachine deliver*
   :start
-  (fn [{:keys [biff/conn yakread/domain biff.smtp/message]}]
+  (fn [{:keys [biff/query yakread/domain biff.smtp/message]}]
     (let [result (and (or (not domain) (= domain (:domain message)))
                       (not-empty
-                       (biffx/q conn
+                       (query
                                 {:select 1
                                  :from :user
                                  :where [:=
@@ -54,7 +53,7 @@
          ::url (infer-post-url (:headers message) html)})))
 
   :end
-  (fn [{:keys [biff.smtp/message biff/conn biff/now ::url]
+  (fn [{:keys [biff.smtp/message biff/query biff/now ::url]
         {:keys [html]} :com.yakread.fx/js}]
     (if-not html
       (do
@@ -80,13 +79,13 @@
 
             [{user-id :user/id
               sub-id :sub/id}]
-            (biffx/q conn
-                     {:select [[:user._id :user/id]
-                               [:sub._id :sub/id]]
+            (query
+                     {:select [:user/id
+                               :sub/id]
                       :from :user
                       :left-join [:sub [:and
-                                        [:= :sub/user :user._id]
-                                        [:= :sub.email/from from]]]
+                                        [:= :sub/user-id :user/id]
+                                        [:= :sub/email-from from]]]
                       :where [:= :user/email-username (str/lower-case (:username message))]
                       :limit 1})
             new-sub (nil? sub-id)
@@ -118,17 +117,17 @@
                            :item/author-name from
                            :item/lang (lib.content/lang html)
                            :item/length (count text)
-                           :item.email/sub sub-id
-                           :item.email/raw-content-key raw-content-key
-                           :item.email/list-unsubscribe (first-header "list-unsubscribe")
-                           :item.email/list-unsubscribe-post (first-header "list-unsubscribe-post")
-                           :item.email/reply-to (some :address (:reply-to message))
-                           :item.email/maybe-confirmation (or new-sub nil)})]]
+                           :item/email-sub-id sub-id
+                           :item/email-raw-content-key raw-content-key
+                           :item/email-list-unsubscribe (first-header "list-unsubscribe")
+                           :item/email-list-unsubscribe-post (first-header "list-unsubscribe-post")
+                           :item/email-reply-to (some :address (:reply-to message))
+                           :item/email-maybe-confirmation (or new-sub nil)})]]
                        (when new-sub
                          [[:put-docs :sub
                            {:xt/id sub-id
-                            :sub/user user-id
-                            :sub.email/from from
+                            :sub/user-id user-id
+                            :sub/email-from from
                             :sub/created-at now}]
-                          {:xt (biffx/assert-unique :sub {:sub/user user-id :sub.email/from from})
+                          {:xt (biffx/assert-unique :sub {:sub/user-id user-id :sub/email-from from})
                            :sqlite nil}]))}]))))
