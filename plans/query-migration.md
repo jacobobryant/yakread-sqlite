@@ -102,6 +102,12 @@ Even in non-query code (TX operations, data access, etc.), update field names to
 - [x] `com.yakread.ui-components.item.read`
 - [x] `com.yakread.ui-components.digest.html`
 - [x] `com.yakread.ui-components.digest.text`
+- [x] `com.yakread.work.materialized-views` (and `materialized_views_test.edn`)
+- [x] `com.yakread.work.train` (and `train_test.edn`)
+- [x] `com.yakread.work.account` (and `account_test.edn`)
+- [x] `com.yakread.work.digest` (and `digest_test.edn`)
+- [x] `com.yakread.work.subscription` (and `subscription_test.edn`)
+- [x] `com.yakread.smtp` (and `smtp_test.edn`)
 
 ## Reference Commands
 
