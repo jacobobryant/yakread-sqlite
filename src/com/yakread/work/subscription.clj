@@ -15,7 +15,7 @@
 (def ^:private epoch (java.time.Instant/ofEpochMilli 0))
 
 (defn active-user-ids [query now]
-  (let [t0 (tick/<< now (tick/of-months 6))]
+  (let [t0 (tick/instant (tick/<< now (tick/of-months 6)))]
     (->> (query
                   {:union [{:select :user/id
                             :from :user
@@ -37,7 +37,7 @@
   (fn [{:keys [biff/query biff/now yakread.work.sync-all-feeds/enabled biff/queues]}]
     (when (and enabled (= 0 (.size (:work.subscription/sync-feed queues))))
       (let [user-ids (active-user-ids query now)
-            t0 (tick/<< now (tick/of-hours 12))
+            t0 (tick/instant (tick/<< now (tick/of-hours 12)))
             feeds (query
                            {:select :feed/id
                             :from :sub
