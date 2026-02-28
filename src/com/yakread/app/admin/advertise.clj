@@ -22,7 +22,7 @@
           set-fields (cond-> (dissoc ad :ad/id)
                        (:ad/approve-state ad)
                        (update :ad/approve-state
-                               #([:lift (keyword "ad.approve-state" (name %))])))]
+                               (fn [v] [:lift (keyword "ad.approve-state" (name v))])))]
       {:biff.fx/sqlite [{:update :ad
                           :set set-fields
                           :where [:= :ad/id id]}]

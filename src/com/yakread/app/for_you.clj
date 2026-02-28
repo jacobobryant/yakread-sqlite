@@ -125,7 +125,7 @@
                                     :ad-click/ad-id ad-id
                                     :ad-click/created-at now
                                     :ad-click/cost click-cost
-                                    :ad-click/source [:lift (or source :ad-click.source/web)]}]
+                                    :ad-click/source [:lift (keyword "ad-click.source" (name (or source :web)))]}]
                           :on-conflict [:ad-click/user-id :ad-click/ad-id]
                           :do-update-set {:fields [:created-at :cost :source]}}]))}))))
 
