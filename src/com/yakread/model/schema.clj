@@ -150,7 +150,8 @@
           [:skip/item-id    (?r :item)   :uuid]
           [:skip/ad-id      (?r :ad)     :uuid]]
 
-   :ad [:map {:closed true}
+   :ad [:map {:closed true
+              :biff/unique [[:ad/user-id]]}
         [:ad/id                     :uuid]
         [:ad/user-id      (r :user) :uuid]
         [:ad/approve-state          [:enum

@@ -92,6 +92,14 @@ Once all namespaces use `:biff.fx/sqlite`, remove the old infrastructure:
 ### Unique Constraints
 `biffx/assert-unique` is used in SMTP for ensuring sub uniqueness. SQLite handles this via schema-level UNIQUE constraints, so these assertions can be removed.
 
+When using `ON CONFLICT` / upsert patterns in `:biff.fx/sqlite`, the target column(s) must have a UNIQUE constraint in the schema. Add `:biff/unique` to the table definition in `model/schema.clj`:
+```clojure
+:my-table [:map {:closed true
+                 :biff/unique [[:my-table/some-col]]}
+           ...]
+```
+Then regenerate `resources/schema.sql`. For composite uniqueness constraints, use multiple keys in the inner vector: `:biff/unique [[:col-a :col-b]]`.
+
 ### ID Generation
 `biffs/gen-uuid` was needed for XTDB 2 which required IDs to be prefixed in a certain way to ensure good locality. For SQLite, this is not needed — use regular random UUIDs (e.g., `(random-uuid)`) instead. All usages of `biffs/gen-uuid` should be replaced with `(random-uuid)`.
 

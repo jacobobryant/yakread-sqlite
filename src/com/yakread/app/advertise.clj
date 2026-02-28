@@ -191,11 +191,9 @@
           sqlite [{:insert-into :ad
                    :values [(merge {:ad/id (gen/uuid)
                                     :ad/user-id (:user/id user)
-                                    :ad/approve-state [:lift state]
-                                    :ad/updated-at now
                                     :ad/balance 0
                                     :ad/recent-cost 0}
-                                   new-ad)]
+                                   update-set)]
                    :on-conflict [:ad/user-id]
                    :do-update-set update-set}]]
       {:status 303
