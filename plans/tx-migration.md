@@ -53,11 +53,11 @@ Once all namespaces use `:biff.fx/sqlite`:
 - [x] `com.yakread.app.settings` — uses `biffs/dual-write` for user settings updates
 - [x] `com.yakread.app.advertise` — uses `biffs/dual-write` for ad CRUD, `:biff/upsert` for ad-credits
 - [x] `com.yakread.app.subscriptions` — uses `biffs/dual-write` for unsubscribe (`:delete-from`)
-- [ ] `com.yakread.app.subscriptions.add` — uses `:patch-docs`, `:put-docs` for feed/sub creation
-- [ ] `com.yakread.app.subscriptions.view` — uses `:patch-docs`, `:biff/upsert` for sub settings
-- [ ] `com.yakread.app.for-you` — uses `:biff/upsert` for skip records and reclist tracking
+- [x] `com.yakread.app.subscriptions.add` — uses `:biff.fx/sqlite` for feed/sub creation
+- [x] `com.yakread.app.subscriptions.view` — uses `:biff.fx/sqlite` for sub settings
+- [x] `com.yakread.app.for-you` — uses `:biff.fx/sqlite` for skip records and reclist tracking
 - [x] `com.yakread.app.admin.discover` — uses `:patch-docs` for feed moderation
-- [ ] `com.yakread.app.admin.advertise` — uses `:patch-docs`, `biffs/dual-write` for ad approval
+- [x] `com.yakread.app.admin.advertise` — uses `:biff.fx/sqlite` for ad approval
 
 ### UI Components
 - [x] `com.yakread.ui-components.item.read` — uses `biffs/dual-write` for read tracking (user-item updates)
@@ -65,7 +65,7 @@ Once all namespaces use `:biff.fx/sqlite`:
 ### Work Layer (Background Jobs)
 - [x] `com.yakread.work.materialized-views` — uses `:biff/upsert` for mv-sub and mv-user
 - [x] `com.yakread.work.train` — uses `:put-docs` for candidate items
-- [ ] `com.yakread.work.account` — uses `:erase-docs`, `:delete-docs`, `:put-docs` for account deletion
+- [x] `com.yakread.work.account` — uses `:biff.fx/sqlite` for account deletion
 - [ ] `com.yakread.work.digest` — uses `:put-docs`, `:patch-docs` for digest records and user updates
 - [ ] `com.yakread.work.subscription` — uses `:put-docs`, `:patch-docs` for feed sync and item ingestion
 

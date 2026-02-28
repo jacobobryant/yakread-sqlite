@@ -21,13 +21,17 @@
       :params/item {:item/id (t/uuid 1)}}}),
    :result
    {:status 204,
-    :biff.fx/tx
-    [[:patch-docs
-      :user-item
-      {:xt/id #uuid "1234b45f-d4d9-5138-3d93-cb799b3970be",
-       :user-item/user-id #uuid "12345678-0000-0000-0000-000000000000",
-       :user-item/item-id #uuid "00010000-0000-0000-0000-000000000001",
-       :user-item/viewed-at #time/instant "2000-01-01T00:00:00Z"}]]}}
+    :biff.fx/sqlite
+    [{:insert-into :user-item,
+      :values
+      [{:user-item/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+        :user-item/user-id
+        #uuid "12345678-0000-0000-0000-000000000000",
+        :user-item/item-id
+        #uuid "00010000-0000-0000-0000-000000000001",
+        :user-item/viewed-at #time/instant "2000-01-01T00:00:00Z"}],
+      :on-conflict [:user-item/user-id :user-item/item-id],
+      :do-update-set {:fields [:viewed-at]}}]}}
   _
   {:doc "mark-read existing, read",
    :eval
@@ -58,13 +62,17 @@
       :params/item {:item/id (t/uuid 1)}}}),
    :result
    {:status 204,
-    :biff.fx/tx
-    [[:patch-docs
-      :user-item
-      {:xt/id #uuid "1234b45f-d4d9-5138-3d93-cb799b3970be",
-       :user-item/user-id #uuid "12345678-0000-0000-0000-000000000000",
-       :user-item/item-id #uuid "00010000-0000-0000-0000-000000000001",
-       :user-item/viewed-at #time/instant "2000-01-01T00:00:00Z"}]]}}
+    :biff.fx/sqlite
+    [{:insert-into :user-item,
+      :values
+      [{:user-item/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+        :user-item/user-id
+        #uuid "12345678-0000-0000-0000-000000000000",
+        :user-item/item-id
+        #uuid "00010000-0000-0000-0000-000000000001",
+        :user-item/viewed-at #time/instant "2000-01-01T00:00:00Z"}],
+      :on-conflict [:user-item/user-id :user-item/item-id],
+      :do-update-set {:fields [:viewed-at]}}]}}
   _
   {:doc "mark-all-read",
    :eval
@@ -83,18 +91,21 @@
    :result
    {:status 303,
     :headers {"HX-Location" ["/subscription/sub1" nil]},
-    :biff.fx/tx
-    [[:biff/upsert
-      :user-item
-      [:user-item/user-id :user-item/item-id]
-      {:xt/id #uuid "1234b45f-d4d9-5138-3d93-cb799b3970be",
-       :user-item/user-id #uuid "12345678-0000-0000-0000-000000000000",
-       :user-item/item-id "item1",
-       :user-item/skipped-at #time/instant "2000-01-01T00:00:00Z"}
-      {:xt/id #uuid "1234c9f6-4f1d-f03a-8ce9-70b71df42503",
-       :user-item/user-id #uuid "12345678-0000-0000-0000-000000000000",
-       :user-item/item-id "item2",
-       :user-item/skipped-at #time/instant "2000-01-01T00:00:00Z"}]]}}
+    :biff.fx/sqlite
+    [{:insert-into :user-item,
+      :values
+      [{:user-item/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+        :user-item/user-id
+        #uuid "12345678-0000-0000-0000-000000000000",
+        :user-item/item-id "item1",
+        :user-item/skipped-at #time/instant "2000-01-01T00:00:00Z"}
+       {:user-item/id #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503",
+        :user-item/user-id
+        #uuid "12345678-0000-0000-0000-000000000000",
+        :user-item/item-id "item2",
+        :user-item/skipped-at #time/instant "2000-01-01T00:00:00Z"}],
+      :on-conflict [:user-item/user-id :user-item/item-id],
+      :do-update-set {:fields [:skipped-at]}}]}}
   _
   {:doc "read-page-route missing item",
    :eval
