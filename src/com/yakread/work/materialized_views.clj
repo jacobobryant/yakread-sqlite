@@ -1,6 +1,6 @@
 (ns com.yakread.work.materialized-views
   (:require
-   [com.yakread.util.biff-staging :as biffs]
+   [clojure.data.generators :as gen]
    [com.wsscode.pathom3.connect.operation :as pco :refer [?]]
    [com.yakread.lib.fx :as fx]
    [tick.core :as tick]))
@@ -25,11 +25,13 @@
     (let [{:sub/keys [id affinity-low* affinity-high* mv]} pathom]
       (when (not= [affinity-low* affinity-high*]
                   [(:mv-sub/affinity-low mv) (:mv-sub/affinity-high mv)])
-        {:biff.fx/tx [[:biff/upsert :mv-sub [:mv-sub/sub-id]
-                       {:xt/id (biffs/gen-uuid id)
-                        :mv-sub/sub-id id
-                        :mv-sub/affinity-low  affinity-low*
-                        :mv-sub/affinity-high affinity-high*}]]})))
+        {:biff.fx/sqlite [{:insert-into :mv-sub
+                           :values [{:mv-sub/id (gen/uuid)
+                                     :mv-sub/sub-id id
+                                     :mv-sub/affinity-low  affinity-low*
+                                     :mv-sub/affinity-high affinity-high*}]
+                           :on-conflict [:mv-sub/sub-id]
+                           :do-update-set {:fields [:affinity-low :affinity-high]}}]})))
 
   :current-item
   (fn [{:biff/keys [query job]}]
@@ -54,11 +56,13 @@
                                   (= item-id current-item))
                              ::remove)]
       (when new-current-item
-        {:biff.fx/tx [{:biff/upsert :mv-user [:mv-user/user-id]
-                       {:xt/id (biffs/gen-uuid user-id)
-                        :mv-user/user-id user-id
-                        :mv-user/current-item-id (when (not= new-current-item ::remove)
-                                                new-current-item)}}]}))))
+        {:biff.fx/sqlite [{:insert-into :mv-user
+                           :values [{:mv-user/id (gen/uuid)
+                                     :mv-user/user-id user-id
+                                     :mv-user/current-item-id (when (not= new-current-item ::remove)
+                                                                new-current-item)}]
+                           :on-conflict [:mv-user/user-id]
+                           :do-update-set {:fields [:current-item-id]}}]}))))
 
 (fx/defmachine on-tx
   :start

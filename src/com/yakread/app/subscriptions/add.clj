@@ -1,7 +1,7 @@
 (ns com.yakread.app.subscriptions.add
   (:require
+   [clojure.data.generators :as gen]
    [com.biffweb :as biff]
-   [com.biffweb.experimental :as biffx]
    [com.wsscode.pathom3.connect.operation :refer [?]]
    [com.yakread.lib.content :as lib.content]
    [com.yakread.lib.core :as lib.core]
@@ -11,8 +11,7 @@
    [com.yakread.lib.rss :as lib.rss]
    [com.yakread.lib.ui :as ui]
    [com.yakread.lib.user :as lib.user]
-   [com.yakread.routes :as routes]
-   [com.yakread.util.biff-staging :as biffs]))
+   [com.yakread.routes :as routes]))
 
 (let [response (fn [success username]
                  {:status 303
@@ -46,11 +45,9 @@
 
           :else
           (merge (response true username)
-                 {:biff.fx/tx [[:patch-docs :user
-                                {:user/id (:uid session)
-                                 :user/email-username username}]
-                               {:xt (biffx/assert-unique :user {:user/email-username username})
-                                :sqlite nil}]}))))))
+                 {:biff.fx/sqlite [{:update :user
+                                    :set {:user/email-username username}
+                                    :where [:= :user/id (:uid session)]}]}))))))
 
 (defn- subscribe-feeds-tx [{:keys [biff/query biff/now session]} feed-urls]
   (let [user-id (:uid session)
@@ -69,37 +66,29 @@
                                     results)
         new-feed-docs (for [url feed-urls
                             :when (not (url->feed url))]
-                        {:feed/id (biffs/gen-uuid)
+                        {:feed/id (gen/uuid)
                          :feed/url url})
         url->feed (into url->feed
                         (map (juxt :feed/url :feed/id))
                         new-feed-docs)
         new-sub-docs (for [feed (vals url->feed)
                            :when (not (existing-sub-feed-ids feed))]
-                       {:sub/id (biffs/gen-uuid user-id)
+                       {:sub/id (gen/uuid)
                         :sub/user-id user-id
                         :sub/created-at now
                         :sub/feed-id feed})]
     {:feed-ids (vals url->feed)
      :tx (concat
           (when (not-empty new-feed-docs)
-            [{:xt {:assert [:not-exists
-                            {:select [:inline 1]
-                             :from :feed
-                             :where [:in :feed/url (mapv :feed/url new-feed-docs)]
-                             :limit [:inline 1]}]}
-              :sqlite nil}
-             (into [:put-docs :feed] new-feed-docs)])
+            [{:insert-into :feed
+              :values (vec new-feed-docs)
+              :on-conflict [:feed/id]
+              :do-update-set {:fields [:url]}}])
           (when (not-empty new-sub-docs)
-            [{:xt {:assert [:not-exists
-                            {:select [:inline 1]
-                             :from :sub
-                             :where [:and
-                                     [:= :sub/user user-id]
-                                     [:in :sub/feed-id (mapv :sub/feed-id new-sub-docs)]]
-                             :limit [:inline 1]}]}
-              :sqlite nil}
-             (into [:put-docs :sub] new-sub-docs)]))}))
+            [{:insert-into :sub
+              :values (vec new-sub-docs)
+              :on-conflict [:sub/user-id :sub/email-from]
+              :do-update-set {:fields [:created-at :feed-id]}}]))}))
 
 (defn- sync-rss-jobs [feed-ids priority]
   {:jobs (for [id feed-ids]
@@ -125,7 +114,7 @@
       (if (empty? feed-urls)
         (redirect `page-route {:error "invalid-rss-feed" :url (:url http)})
         (let [{:keys [tx feed-ids]} (subscribe-feeds-tx ctx feed-urls)]
-          [{:biff.fx/tx tx}
+          [{:biff.fx/sqlite tx}
            {:biff.fx/queue (sync-rss-jobs feed-ids 0)
             :status 303
             :headers {"Location" (href `page-route {:added-feeds (count feed-urls)})}}])))))
@@ -140,7 +129,7 @@
   (fn [{:keys [biff.fx/slurp] :as ctx}]
     (if-some [urls (not-empty (lib.rss/extract-opml-urls slurp))]
       (let [{:keys [tx feed-ids]} (subscribe-feeds-tx ctx urls)]
-        [{:biff.fx/tx tx}
+        [{:biff.fx/sqlite tx}
          {:biff.fx/queue (sync-rss-jobs feed-ids 5)
           :status        303
           :headers       {"Location" (href `page-route {:added-feeds (count urls)})}}])

@@ -47,7 +47,8 @@
           [:feed/failed-syncs    ? :int]
           [:feed/moderation      ? [:enum :feed.moderation/approved :feed.moderation/blocked]]]
 
-   :sub [:map {:closed true}
+   :sub [:map {:closed true
+               :biff/unique [[:sub/user-id :sub/email-from]]}
          [:sub/id                     :uuid]
          [:sub/user-id      (r :user) :uuid]
          [:sub/created-at             inst?]
@@ -103,7 +104,8 @@
               [:redirect/url      ::string]
               [:redirect/item-id  (r :item) :uuid]]
 
-   :user-item [:map {:closed true}
+   :user-item [:map {:closed true
+                    :biff/unique [[:user-item/user-id :user-item/item-id]]}
                [:user-item/id                  :uuid]
                [:user-item/user-id   (r :user) :uuid]
                [:user-item/item-id   (r :item) :uuid]
@@ -138,13 +140,15 @@
                [:bulk-send/mailersend-id   :string]
                [:bulk-send/digests         [:vector :uuid]]]
 
-   :reclist [:map {:closed true}
+   :reclist [:map {:closed true
+                   :biff/unique [[:reclist/user-id :reclist/created-at]]}
              [:reclist/id                   :uuid]
              [:reclist/user-id    (r :user) :uuid]
              [:reclist/created-at           inst?]
              [:reclist/clicked              [:set :uuid]]]
 
-   :skip [:map {:closed true}
+   :skip [:map {:closed true
+                :biff/unique [[:skip/reclist-id :skip/item-id :skip/ad-id]]}
           [:skip/id                      :uuid]
           [:skip/reclist-id (r :reclist) :uuid]
           [:skip/item-id    (?r :item)   :uuid]
@@ -178,7 +182,8 @@
                                      [:exp_year  :int]
                                      [:exp_month :int]]]]
 
-   :ad-click [:map {:closed true}
+   :ad-click [:map {:closed true
+                   :biff/unique [[:ad-click/user-id :ad-click/ad-id]]}
               [:ad-click/id                      :uuid]
               [:ad-click/user-id       (r :user) :uuid]
               [:ad-click/ad-id         (r :ad)   :uuid]
@@ -201,7 +206,8 @@
                                                    :ad-credit.charge-status/confirmed
                                                    :ad-credit.charge-status/failed]]]
 
-   :mv-sub [:map {:closed true}
+   :mv-sub [:map {:closed true
+                  :biff/unique [[:mv-sub/sub-id]]}
             [:mv-sub/id                     :uuid]
             [:mv-sub/sub-id       (r :sub) :uuid]
             [:mv-sub/affinity-low     ?     :double]
@@ -210,7 +216,8 @@
             [:mv-sub/unread           ?     :int]
             [:mv-sub/n-read             ?     :int]]
 
-   :mv-user [:map {:closed true}
+   :mv-user [:map {:closed true
+                   :biff/unique [[:mv-user/user-id]]}
              [:mv-user/id                        :uuid]
              [:mv-user/user-id        (r :user) :uuid]
              [:mv-user/current-item-id (?r :item) :uuid]]
