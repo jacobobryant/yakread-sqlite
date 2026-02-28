@@ -29,7 +29,7 @@
                            {:select :ad-click/user-id
                             :from :ad-click
                             :where [:< t0 :ad-click/created-at]}]})
-         (mapv :user/id))))
+         (mapv (comp val first)))))
 
 ;; TODO modify sync waiting period based on :feed/failed-syncs
 (fx/defmachine sync-all-feeds!

@@ -25,10 +25,13 @@ The following TX operation formats are used:
 
 ## Migration Steps Per Namespace
 
-### 1. Remove Dual-Write Wrappers
-Replace `(biffs/dual-write ctx :update ...)` calls with direct SQLite-native TX operations:
-- `:update` → `[:patch-docs :table {:xt/id id ...}]` or equivalent
-- `:delete-from` → `[:delete-docs :table id]`
+### 1. Replace XTDB TX Operations with SQLite-Native Operations
+Replace `:put-docs`, `:patch-docs`, `:delete-docs`, `:erase-docs`, and `:biff/upsert` TX operations with `biffs/dual-write` calls (or direct SQLite-native operations):
+- `[:patch-docs :table {:xt/id id ...}]` → `(biffs/dual-write ctx :update :table {:where ...} {:set ...})` or equivalent
+- `[:delete-docs :table id]` → `(biffs/dual-write ctx :delete-from :table {:where ...})`
+- `[:put-docs :table {...}]` → `(biffs/dual-write ctx :insert :table {...})`
+
+The `biffs/dual-write` wrappers already exist and handle the SQLite-native format. The goal is to stop using the XTDB-compatible TX operations (`:put-docs`, `:patch-docs`, etc.).
 
 ### 2. Remove XTDB-Only TX Conditionals
 Remove `{:xt ... :sqlite nil}` patterns (e.g., `biffx/assert-unique` calls). SQLite has its own unique constraints in the schema.
@@ -36,8 +39,11 @@ Remove `{:xt ... :sqlite nil}` patterns (e.g., `biffx/assert-unique` calls). SQL
 ### 3. Verify Field Names
 Ensure all TX documents use new SQLite field names (see query-migration.md for the full mapping). Most should already be updated from the query migration pass.
 
-### 4. Update `biffs/submit-tx`
-Once all namespaces are migrated, simplify `biffs/submit-tx` to only target SQLite, removing the XTDB dual-write logic.
+### 4. Replace `biffs/submit-tx` with `com.biffweb.sqlite/execute`
+Once all namespaces are migrated to SQLite-native TX operations, stop using `biffs/submit-tx` entirely. Instead:
+1. Create a new fx handler `:biff.fx/sqlite` that calls `com.biffweb.sqlite/execute` directly
+2. Replace `:biff.fx/tx` with `:biff.fx/sqlite` in all namespaces
+3. Remove `biffs/submit-tx` and the XTDB dual-write logic from `biff_staging.clj`
 
 ## Namespace Checklist
 
@@ -85,7 +91,7 @@ The `biffs/dual-write` function in `biff_staging.clj` currently translates betwe
 `biffx/assert-unique` is used in SMTP for ensuring sub uniqueness. SQLite handles this via schema-level UNIQUE constraints, so these assertions can be removed.
 
 ### ID Generation
-`biffs/gen-uuid` is used throughout for generating deterministic UUIDs. This will continue to work with SQLite — no changes needed.
+`biffs/gen-uuid` was needed for XTDB 2 which required IDs to be prefixed in a certain way to ensure good locality. For SQLite, this is not needed — use regular random UUIDs (e.g., `(random-uuid)`) instead. All usages of `biffs/gen-uuid` should be replaced with `(random-uuid)`.
 
 ### Timestamps in TX Documents
 TX documents already use the correct timestamp format (ZonedDateTime or Instant) which `submit-tx` coerces for SQLite. After migration, ensure all timestamps are Instant-compatible.
