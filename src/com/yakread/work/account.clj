@@ -1,8 +1,8 @@
 (ns com.yakread.work.account
   (:require
-   [clojure.data.generators :as gen]
    [clojure.java.io :as io]
    [clojure.tools.logging :as log]
+   [com.yakread.util.biff-staging :as biffs]
    [com.wsscode.pathom3.connect.operation :refer [?]]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.fx :as fx]
@@ -85,19 +85,17 @@
                          :basic-auth [(secret :stripe/api-key)]
                          :socket-timeout 10000
                          :connection-timeout 10000})}
-       {:biff.fx/sqlite (vec (concat
-                              [{:delete-from :user :where [:= :user/id id]}]
-                              (when ad
-                                [{:delete-from :ad :where [:= :ad/id (:ad/id ad)]}])
-                              (for [{:keys [sub/id sub/feed-id]} subscriptions
-                                    :when feed-id]
-                                {:delete-from :sub :where [:= :sub/id id]})
-                              (when email-username
-                                [{:insert-into :deleted-user
-                                  :values [{:deleted-user/id (gen/uuid)
-                                            :deleted-user/email-username-hash (lib.core/sha256 email-username)}]
-                                  :on-conflict [:deleted-user/id]
-                                  :do-update-set {:fields [:email-username-hash]}}])))
+       {:biff.fx/tx (concat
+                     [[:erase-docs :user id]]
+                     (when ad
+                       [[:erase-docs :ad (:ad/id ad)]])
+                     (for [{:keys [sub/id sub/feed-id]} subscriptions
+                           :when feed-id]
+                       [:delete-docs :sub id])
+                     (when email-username
+                       [[:put-docs :deleted-user
+                         {:xt/id (biffs/gen-uuid)
+                          :deleted-user/email-username-hash (lib.core/sha256 email-username)}]]))
         :biff.fx/next :delete-email-batch}]))
 
   :delete-email-batch
@@ -114,9 +112,9 @@
                              (mapv :item/id)))
           batch (when (not-empty email-ids)
                   (query
-                   {:select [:item/id :item/content-key :item/email-raw-content-key]
-                    :from :item
-                    :where [:in :item/id (take 500 email-ids)]}))
+                           {:select [:item/id :item/content-key :item/email-raw-content-key]
+                            :from :item
+                            :where [:in :item/id (take 500 email-ids)]}))
           remaining (drop 500 email-ids)]
       (when (not-empty batch)
         [{:biff.fx/s3 (for [email batch
@@ -126,8 +124,7 @@
                         {:key (str (get email k))
                          :config-ns config-ns
                          :method "DELETE"})}
-         {:biff.fx/sqlite [{:delete-from :item
-                            :where [:in :item/id (mapv :item/id batch)]}]}
+         {:biff.fx/tx [(into [:erase-docs :item] (map :item/id) batch)]}
          {:biff.fx/next :delete-email-batch
           ::email-ids remaining}]))))
 

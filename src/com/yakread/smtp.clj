@@ -1,14 +1,15 @@
 (ns com.yakread.smtp
   (:require
-   [clojure.data.generators :as gen]
    [clojure.string :as str]
    [clojure.tools.logging :as log]
    [com.biffweb :as biff]
+   [com.biffweb.experimental :as biffx]
+   [com.yakread.util.biff-staging :as biffs]
    [com.yakread.lib.content :as lib.content]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.smtp :as lib.smtp]
-   [tick.core :as tick])
+   [tick.core :as tick]) 
   (:import
    [org.jsoup Jsoup]))
 
@@ -35,11 +36,11 @@
     (let [result (and (or (not domain) (= domain (:domain message)))
                       (not-empty
                        (query
-                        {:select 1
-                         :from :user
-                         :where [:=
-                                 :user/email-username
-                                 (str/lower-case (:username message))]})))
+                                {:select 1
+                                 :from :user
+                                 :where [:=
+                                         :user/email-username
+                                         (str/lower-case (:username message))]})))
           html (when result
                  (lib.smtp/extract-html message))]
       (log/info "receiving email for"
@@ -57,15 +58,15 @@
     (if-not html
       (do
         (log/warn "juice failed to parse message for" (:username message))
-        {:biff.fx/spit {:file (str "storage/juice-failed/"
+        {:biff.fx/spit {:file (str "storage/juice-failed/" 
                                    (inst-ms (tick/instant now))
                                    ".edn")
                         :content (pr-str message)}})
       (let [html (-> html
                      lib.content/normalize
                      (str/replace #"#transparent" "transparent"))
-            raw-content-key (gen/uuid)
-            parsed-content-key (gen/uuid)
+            raw-content-key (biffs/gen-uuid)
+            parsed-content-key (biffs/gen-uuid)
             from (some (fn [k]
                          (->> (concat (:from message)
                                       (:reply-to message)
@@ -79,16 +80,16 @@
             [{user-id :user/id
               sub-id :sub/id}]
             (query
-             {:select [:user/id
-                       :sub/id]
-              :from :user
-              :left-join [:sub [:and
-                                [:= :sub/user-id :user/id]
-                                [:= :sub/email-from from]]]
-              :where [:= :user/email-username (str/lower-case (:username message))]
-              :limit 1})
+                     {:select [:user/id
+                               :sub/id]
+                      :from :user
+                      :left-join [:sub [:and
+                                        [:= :sub/user-id :user/id]
+                                        [:= :sub/email-from from]]]
+                      :where [:= :user/email-username (str/lower-case (:username message))]
+                      :limit 1})
             new-sub (nil? sub-id)
-            sub-id (or sub-id (gen/uuid))
+            sub-id (or sub-id (biffs/gen-uuid user-id))
             first-header (fn [header-name]
                            (some lib.smtp/decode-header (get-in message [:headers header-name])))]
         [{:biff.fx/s3 [{:config-ns 'yakread.s3.emails
@@ -103,36 +104,30 @@
                         :body html
                         :headers {"x-amz-acl" "private"
                                   "content-type" "text/html"}}]}
-         {:biff.fx/sqlite (vec (concat
-                                [{:insert-into :item
-                                  :values [(lib.core/some-vals
-                                            {:item/id (gen/uuid)
-                                             :item/ingested-at now
-                                             :item/title (:subject message)
-                                             :item/url url
-                                             :item/content-key parsed-content-key
-                                             :item/published-at now
-                                             :item/excerpt (lib.content/excerpt text)
-                                             :item/author-name from
-                                             :item/lang (lib.content/lang html)
-                                             :item/length (count text)
-                                             :item/email-sub-id sub-id
-                                             :item/email-raw-content-key raw-content-key
-                                             :item/email-list-unsubscribe (first-header "list-unsubscribe")
-                                             :item/email-list-unsubscribe-post (first-header "list-unsubscribe-post")
-                                             :item/email-reply-to (some :address (:reply-to message))
-                                             :item/email-maybe-confirmation (or new-sub nil)})]
-                                  :on-conflict [:item/id]
-                                  :do-update-set {:fields [:ingested-at :title :url :content-key :published-at
-                                                           :excerpt :author-name :lang :length :email-sub-id
-                                                           :email-raw-content-key :email-list-unsubscribe
-                                                           :email-list-unsubscribe-post :email-reply-to
-                                                           :email-maybe-confirmation]}}]
-                                (when new-sub
-                                  [{:insert-into :sub
-                                    :values [{:sub/id sub-id
-                                              :sub/user-id user-id
-                                              :sub/email-from from
-                                              :sub/created-at now}]
-                                    :on-conflict [:sub/user-id :sub/email-from]
-                                    :do-update-set {:fields [:created-at]}}])))}]))))
+         {:biff.fx/tx (concat
+                       [[:put-docs :item
+                         (lib.core/some-vals
+                          {:xt/id (biffs/gen-uuid sub-id)
+                           :item/ingested-at now
+                           :item/title (:subject message)
+                           :item/url url
+                           :item/content-key parsed-content-key
+                           :item/published-at now
+                           :item/excerpt (lib.content/excerpt text)
+                           :item/author-name from
+                           :item/lang (lib.content/lang html)
+                           :item/length (count text)
+                           :item/email-sub-id sub-id
+                           :item/email-raw-content-key raw-content-key
+                           :item/email-list-unsubscribe (first-header "list-unsubscribe")
+                           :item/email-list-unsubscribe-post (first-header "list-unsubscribe-post")
+                           :item/email-reply-to (some :address (:reply-to message))
+                           :item/email-maybe-confirmation (or new-sub nil)})]]
+                       (when new-sub
+                         [[:put-docs :sub
+                           {:xt/id sub-id
+                            :sub/user-id user-id
+                            :sub/email-from from
+                            :sub/created-at now}]
+                          {:xt (biffx/assert-unique :sub {:sub/user-id user-id :sub/email-from from})
+                           :sqlite nil}]))}]))))

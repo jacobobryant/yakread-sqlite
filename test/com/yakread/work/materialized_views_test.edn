@@ -41,15 +41,14 @@
       :sub/mv {:mv-sub/affinity-low 0.2, :mv-sub/affinity-high 0.6}}}
     :sub-affinity-update),
    :result
-   {:biff.fx/sqlite
-    [{:insert-into :mv-sub,
-      :values
-      [{:mv-sub/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
-        :mv-sub/sub-id "abc123",
-        :mv-sub/affinity-low 0.2,
-        :mv-sub/affinity-high 0.5}],
-      :on-conflict [:mv-sub/sub-id],
-      :do-update-set {:fields [:affinity-low :affinity-high]}}]}}
+   {:biff.fx/tx
+    [[:biff/upsert
+      :mv-sub
+      [:mv-sub/sub-id]
+      {:xt/id #uuid "abc1b45f-d4d9-5138-3d93-cb799b3970be",
+       :mv-sub/sub-id "abc123",
+       :mv-sub/affinity-low 0.2,
+       :mv-sub/affinity-high 0.5}]]}}
   _
   {:doc "start with current-item view",
    :eval (update-views {:biff/job {:view :current-item}} :start),
@@ -61,23 +60,20 @@
    (t/with-sqlite
     [ctx {:user [{:user/id (t/uuid 1)}]}]
     (update-views
-     (merge
-      ctx
+     (merge ctx
       {:biff/job
        {:user-item/user-id (t/uuid 1),
         :user-item/item-id (t/uuid 10),
         :user-item/viewed-at (t/instant 2000)}})
      :current-item)),
    :result
-   {:biff.fx/sqlite
-    [{:insert-into :mv-user,
-      :values
-      [{:mv-user/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
-        :mv-user/user-id #uuid "00010000-0000-0000-0000-000000000001",
-        :mv-user/current-item-id
-        #uuid "00100000-0000-0000-0000-000000000010"}],
-      :on-conflict [:mv-user/user-id],
-      :do-update-set {:fields [:current-item-id]}}]}}
+   {:biff.fx/tx
+    [{:biff/upsert :mv-user,
+      [:mv-user/user-id]
+      {:xt/id #uuid "0001b45f-d4d9-5138-3d93-cb799b3970be",
+       :mv-user/user-id #uuid "00010000-0000-0000-0000-000000000001",
+       :mv-user/current-item-id
+       #uuid "00100000-0000-0000-0000-000000000010"}}]}}
   _
   {:doc
    "current-item: update current item when new item is more recent",
@@ -94,23 +90,20 @@
         :user-item/item-id (t/uuid 10),
         :user-item/viewed-at (t/instant 2000)}]}]
     (update-views
-     (merge
-      ctx
+     (merge ctx
       {:biff/job
        {:user-item/user-id (t/uuid 1),
         :user-item/item-id (t/uuid 11),
         :user-item/viewed-at (t/instant 2001)}})
      :current-item)),
    :result
-   {:biff.fx/sqlite
-    [{:insert-into :mv-user,
-      :values
-      [{:mv-user/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
-        :mv-user/user-id #uuid "00010000-0000-0000-0000-000000000001",
-        :mv-user/current-item-id
-        #uuid "00110000-0000-0000-0000-000000000011"}],
-      :on-conflict [:mv-user/user-id],
-      :do-update-set {:fields [:current-item-id]}}]}}
+   {:biff.fx/tx
+    [{:biff/upsert :mv-user,
+      [:mv-user/user-id]
+      {:xt/id #uuid "0001b45f-d4d9-5138-3d93-cb799b3970be",
+       :mv-user/user-id #uuid "00010000-0000-0000-0000-000000000001",
+       :mv-user/current-item-id
+       #uuid "00110000-0000-0000-0000-000000000011"}}]}}
   _
   {:doc "current-item: do not update when new item is older",
    :eval
@@ -126,8 +119,7 @@
         :user-item/item-id (t/uuid 10),
         :user-item/viewed-at (t/instant 2001)}]}]
     (update-views
-     (merge
-      ctx
+     (merge ctx
       {:biff/job
        {:user-item/user-id (t/uuid 1),
         :user-item/item-id (t/uuid 11),
@@ -150,22 +142,19 @@
         :user-item/item-id (t/uuid 10),
         :user-item/viewed-at (t/instant 2000)}]}]
     (update-views
-     (merge
-      ctx
+     (merge ctx
       {:biff/job
        {:user-item/user-id (t/uuid 1),
         :user-item/item-id (t/uuid 10),
         :user-item/viewed-at nil}})
      :current-item)),
    :result
-   {:biff.fx/sqlite
-    [{:insert-into :mv-user,
-      :values
-      [{:mv-user/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
-        :mv-user/user-id #uuid "00010000-0000-0000-0000-000000000001",
-        :mv-user/current-item-id nil}],
-      :on-conflict [:mv-user/user-id],
-      :do-update-set {:fields [:current-item-id]}}]}}
+   {:biff.fx/tx
+    [{:biff/upsert :mv-user,
+      [:mv-user/user-id]
+      {:xt/id #uuid "0001b45f-d4d9-5138-3d93-cb799b3970be",
+       :mv-user/user-id #uuid "00010000-0000-0000-0000-000000000001",
+       :mv-user/current-item-id nil}}]}}
   _
   {:doc
    "current-item: do not remove when viewed-at is nil but item doesn't match",
@@ -182,8 +171,7 @@
         :user-item/item-id (t/uuid 10),
         :user-item/viewed-at (t/instant 2000)}]}]
     (update-views
-     (merge
-      ctx
+     (merge ctx
       {:biff/job
        {:user-item/user-id (t/uuid 1),
         :user-item/item-id (t/uuid 11),
@@ -195,11 +183,9 @@
    "on-tx: user-item record with email sub queues sub-affinity and current-item",
    :eval
    (t/with-sqlite
-    [ctx
-     {:item [{:item/id (t/uuid 1), :item/email-sub-id (t/uuid 100)}]}]
+    [ctx {:item [{:item/id (t/uuid 1), :item/email-sub-id (t/uuid 100)}]}]
     (on-tx
-     (merge
-      ctx
+     (merge ctx
       {:record
        {:user-item/user-id (t/uuid 10),
         :user-item/item-id (t/uuid 1),
@@ -212,11 +198,10 @@
        {:view :sub-affinity,
         :sub/id #uuid "01000000-0000-0000-0000-000000000100"}]
       [:work.materialized-views/update
-       {:user-item/user-id
-        #uuid "00100000-0000-0000-0000-000000000010",
-        :user-item/item-id
-        #uuid "00010000-0000-0000-0000-000000000001",
-        :user-item/viewed-at #time/instant "2000-01-01T00:00:00Z",
+       {:user-item/user-id #uuid "00100000-0000-0000-0000-000000000010",
+        :user-item/item-id #uuid "00010000-0000-0000-0000-000000000001",
+        :user-item/viewed-at
+        #time/instant "2000-01-01T00:00:00.000Z",
         :view :current-item}])}}}
   _
   {:doc
@@ -230,8 +215,7 @@
         :sub/user-id (t/uuid 10),
         :sub/feed-id (t/uuid 50)}]}]
     (on-tx
-     (merge
-      ctx
+     (merge ctx
       {:record
        {:user-item/user-id (t/uuid 10),
         :user-item/item-id (t/uuid 1),
@@ -244,11 +228,10 @@
        {:view :sub-affinity,
         :sub/id #uuid "01000000-0000-0000-0000-000000000100"}]
       [:work.materialized-views/update
-       {:user-item/user-id
-        #uuid "00100000-0000-0000-0000-000000000010",
-        :user-item/item-id
-        #uuid "00010000-0000-0000-0000-000000000001",
-        :user-item/viewed-at #time/instant "2000-01-01T00:00:00Z",
+       {:user-item/user-id #uuid "00100000-0000-0000-0000-000000000010",
+        :user-item/item-id #uuid "00010000-0000-0000-0000-000000000001",
+        :user-item/viewed-at
+        #time/instant "2000-01-01T00:00:00.000Z",
         :view :current-item}])}}}
   _
   {:doc
@@ -257,8 +240,7 @@
    (t/with-sqlite
     [ctx {:item [{:item/id (t/uuid 1)}]}]
     (on-tx
-     (merge
-      ctx
+     (merge ctx
       {:record
        {:user-item/user-id (t/uuid 10),
         :user-item/item-id (t/uuid 1),
@@ -268,25 +250,21 @@
    {:biff.fx/queue
     {:jobs
      ([:work.materialized-views/update
-       {:user-item/user-id
-        #uuid "00100000-0000-0000-0000-000000000010",
-        :user-item/item-id
-        #uuid "00010000-0000-0000-0000-000000000001",
-        :user-item/viewed-at #time/instant "2000-01-01T00:00:00Z",
+       {:user-item/user-id #uuid "00100000-0000-0000-0000-000000000010",
+        :user-item/item-id #uuid "00010000-0000-0000-0000-000000000001",
+        :user-item/viewed-at
+        #time/instant "2000-01-01T00:00:00.000Z",
         :view :current-item}])}}}
   _
   {:doc "on-tx: skip record with email sub queues sub-affinity",
    :eval
    (t/with-sqlite
     [ctx
-     {:reclist
-      [{:reclist/id (t/uuid 1), :reclist/user-id (t/uuid 10)}],
+     {:reclist [{:reclist/id (t/uuid 1), :reclist/user-id (t/uuid 10)}],
       :item [{:item/id (t/uuid 2), :item/email-sub-id (t/uuid 100)}]}]
     (on-tx
-     (merge
-      ctx
-      {:record
-       {:skip/item-id (t/uuid 2), :skip/reclist-id (t/uuid 1)}})
+     (merge ctx
+      {:record {:skip/item-id (t/uuid 2), :skip/reclist-id (t/uuid 1)}})
      :start)),
    :result
    {:biff.fx/queue
@@ -299,18 +277,15 @@
    :eval
    (t/with-sqlite
     [ctx
-     {:reclist
-      [{:reclist/id (t/uuid 1), :reclist/user-id (t/uuid 10)}],
+     {:reclist [{:reclist/id (t/uuid 1), :reclist/user-id (t/uuid 10)}],
       :item [{:item/id (t/uuid 2), :item/feed-id (t/uuid 50)}],
       :sub
       [{:sub/id (t/uuid 100),
         :sub/user-id (t/uuid 10),
         :sub/feed-id (t/uuid 50)}]}]
     (on-tx
-     (merge
-      ctx
-      {:record
-       {:skip/item-id (t/uuid 2), :skip/reclist-id (t/uuid 1)}})
+     (merge ctx
+      {:record {:skip/item-id (t/uuid 2), :skip/reclist-id (t/uuid 1)}})
      :start)),
    :result
    {:biff.fx/queue
@@ -323,14 +298,11 @@
    :eval
    (t/with-sqlite
     [ctx
-     {:reclist
-      [{:reclist/id (t/uuid 1), :reclist/user-id (t/uuid 10)}],
+     {:reclist [{:reclist/id (t/uuid 1), :reclist/user-id (t/uuid 10)}],
       :item [{:item/id (t/uuid 2)}]}]
     (on-tx
-     (merge
-      ctx
-      {:record
-       {:skip/item-id (t/uuid 2), :skip/reclist-id (t/uuid 1)}})
+     (merge ctx
+      {:record {:skip/item-id (t/uuid 2), :skip/reclist-id (t/uuid 1)}})
      :start)),
    :result {:biff.fx/queue {:jobs ()}}}
   _]}

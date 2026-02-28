@@ -1,12 +1,12 @@
 (ns com.yakread.work.subscription
   (:require
-   [clojure.data.generators :as gen]
    [clojure.string :as str]
    [clojure.tools.logging :as log]
    [com.biffweb :as biff]
    [com.yakread.lib.content :as lib.content]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.fx :as fx]
+   [com.yakread.util.biff-staging :as biffs]
    [rum.core :as rum]
    [tick.core :as tick])
   (:import
@@ -17,18 +17,18 @@
 (defn active-user-ids [query now]
   (let [t0 (tick/instant (tick/<< now (tick/of-months 6)))]
     (->> (query
-          {:union [{:select :user/id
-                    :from :user
-                    :where [:< t0 :user/joined-at]}
-                   {:select :user-item/user-id
-                    :from :user-item
-                    :where [:< t0 :user-item/viewed-at]}
-                   {:select :ad/user-id
-                    :from :ad
-                    :where [:< t0 :ad/updated-at]}
-                   {:select :ad-click/user-id
-                    :from :ad-click
-                    :where [:< t0 :ad-click/created-at]}]})
+                  {:union [{:select :user/id
+                            :from :user
+                            :where [:< t0 :user/joined-at]}
+                           {:select :user-item/user-id
+                            :from :user-item
+                            :where [:< t0 :user-item/viewed-at]}
+                           {:select :ad/user-id
+                            :from :ad
+                            :where [:< t0 :ad/updated-at]}
+                           {:select :ad-click/user-id
+                            :from :ad-click
+                            :where [:< t0 :ad-click/created-at]}]})
          (mapv (comp val first)))))
 
 ;; TODO modify sync waiting period based on :feed/failed-syncs
@@ -39,14 +39,14 @@
       (let [user-ids (active-user-ids query now)
             t0 (tick/instant (tick/<< now (tick/of-hours 12)))
             feeds (query
-                   {:select :feed/id
-                    :from :sub
-                    :join [:feed [:= :sub/feed-id :feed/id]]
-                    :where [:and
-                            [:in :sub/user-id user-ids]
-                            [:or
-                             [:is :feed/synced-at nil]
-                             [:< :feed/synced-at t0]]]})]
+                           {:select :feed/id
+                            :from :sub
+                            :join [:feed [:= :sub/feed-id :feed/id]]
+                            :where [:and
+                                    [:in :sub/user-id user-ids]
+                                    [:or
+                                     [:is :feed/synced-at nil]
+                                     [:< :feed/synced-at t0]]]})]
         (log/info "Syncing" (count feeds) "feeds")
         {:biff.fx/queue {:jobs (for [{:keys [feed/id]} feeds]
                                  [:work.subscription/sync-feed {:feed/id id}])}}))))
@@ -70,11 +70,11 @@
   (fn [{:biff/keys [query base-url] {:keys [feed/id]} :biff/job}]
     (let [[{:feed/keys [url etag last-modified failed-syncs]}]
           (query {:select [:feed/url
-                           :feed/etag
-                           :feed/last-modified
-                           :feed/failed-syncs]
-                  :from :feed
-                  :where [:= :feed/id id]})]
+                                  :feed/etag
+                                  :feed/last-modified
+                                  :feed/failed-syncs]
+                         :from :feed
+                         :where [:= :feed/id id]})]
       {:biff.fx/next :parse
        :biff.fx/http {:method :get
                       :url url
@@ -100,17 +100,17 @@
           {:keys [title description image entries]} remus-output
 
           feed-title (some-> title (lib.content/truncate 100))
-          feed-tx [{:update :feed
-                    :set (into {}
-                               (filter (comp some? val))
-                               {:feed/synced-at     now
-                                :feed/failed-syncs  (if success 0 (inc (or failed-syncs 0)))
-                                :feed/title         (some-> title (lib.content/truncate 100))
-                                :feed/description   (some-> description (lib.content/truncate 300))
-                                :feed/image-url     (if (string? image) image (:url image))
-                                :feed/etag          (lib.core/pred-> (get headers "Etag") coll? first)
-                                :feed/last-modified (lib.core/pred-> (get headers "Last-Modified") coll? first)})
-                    :where [:= :feed/id feed-id]}]
+          feed-tx [[:patch-docs :feed
+                    (into {}
+                          (filter (comp some? val))
+                          {:xt/id              feed-id
+                           :feed/synced-at     now
+                           :feed/failed-syncs  (if success 0 (inc (or failed-syncs 0)))
+                           :feed/title         (some-> title (lib.content/truncate 100))
+                           :feed/description   (some-> description (lib.content/truncate 300))
+                           :feed/image-url     (if (string? image) image (:url image))
+                           :feed/etag          (lib.core/pred-> (get headers "Etag") coll? first)
+                           :feed/last-modified (lib.core/pred-> (get headers "Last-Modified") coll? first)})]]
 
           items    (doall
                     (for [entry (take 20 entries)
@@ -129,11 +129,11 @@
                           :when (some? html)]
                       (into {}
                             (remove (comp nil? val))
-                            {:item/id           (gen/uuid)
+                            {:xt/id             (biffs/gen-uuid feed-id)
                              :item/feed-id      feed-id
                              :item/title        title
                              :item/content-key  (when (< 1000 (count html))
-                                                  (gen/uuid))
+                                                  (biffs/gen-uuid))
                              :item/content      html
                              :item/ingested-at  now
                              :item/lang         (lib.content/lang html)
@@ -160,15 +160,15 @@
           guids    (not-empty (keep :item/feed-guid items))
           existing (when (or titles guids)
                      (query
-                      {:select [:item/title :item/feed-guid]
-                       :from :item
-                       :where [:and
-                               [:= :item/feed-id feed-id]
-                               (concat [:or]
-                                       (when titles
-                                         [[:in :item/title titles]])
-                                       (when guids
-                                         [[:in :item/feed-guid guids]]))]}))
+                              {:select [:item/title :item/feed-guid]
+                               :from :item
+                               :where [:and
+                                       [:= :item/feed-id feed-id]
+                                       (concat [:or]
+                                               (when titles
+                                                 [[:in :item/title titles]])
+                                               (when guids
+                                                 [[:in :item/feed-guid guids]]))]}))
           existing-titles (into #{} (keep :item/title) existing)
           existing-guids  (into #{} (keep :item/feed-guid) existing)
 
@@ -189,17 +189,9 @@
                             (cond-> item
                               (:item/content-key item) (dissoc :item/content)))
                           items)]
-      [{:biff.fx/sqlite feed-tx}
+      [{:biff.fx/tx feed-tx}
        {:biff.fx/s3 s3-inputs}
-       (when (not-empty items)
-         {:biff.fx/sqlite [{:insert-into :item
-                            :values (vec items)
-                            :on-conflict [:item/id]
-                            :do-update-set {:fields (vec (into #{}
-                                                               (comp (mapcat keys)
-                                                                     (remove #{:item/id})
-                                                                     (map #(keyword (name %))))
-                                                               items))}}]})])))
+       {:biff.fx/tx [(into [:put-docs :item] items)]}])))
 
 (def module
   {:tasks [{:task     #'sync-all-feeds!

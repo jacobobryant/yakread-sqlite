@@ -1,7 +1,7 @@
 (ns com.yakread.app.subscriptions.add
   (:require
-   [clojure.data.generators :as gen]
    [com.biffweb :as biff]
+   [com.biffweb.experimental :as biffx]
    [com.wsscode.pathom3.connect.operation :refer [?]]
    [com.yakread.lib.content :as lib.content]
    [com.yakread.lib.core :as lib.core]
@@ -11,7 +11,8 @@
    [com.yakread.lib.rss :as lib.rss]
    [com.yakread.lib.ui :as ui]
    [com.yakread.lib.user :as lib.user]
-   [com.yakread.routes :as routes]))
+   [com.yakread.routes :as routes]
+   [com.yakread.util.biff-staging :as biffs]))
 
 (let [response (fn [success username]
                  {:status 303
@@ -30,6 +31,7 @@
                                      [:is-not :user/email-username nil]]}))
           (response true nil)
 
+
           (or (empty? username)
               ;; TODO
               (not-empty
@@ -44,9 +46,11 @@
 
           :else
           (merge (response true username)
-                 {:biff.fx/sqlite [{:update :user
-                                    :set {:user/email-username username}
-                                    :where [:= :user/id (:uid session)]}]}))))))
+                 {:biff.fx/tx [[:patch-docs :user
+                                {:user/id (:uid session)
+                                 :user/email-username username}]
+                               {:xt (biffx/assert-unique :user {:user/email-username username})
+                                :sqlite nil}]}))))))
 
 (defn- subscribe-feeds-tx [{:keys [biff/query biff/now session]} feed-urls]
   (let [user-id (:uid session)
@@ -65,29 +69,37 @@
                                     results)
         new-feed-docs (for [url feed-urls
                             :when (not (url->feed url))]
-                        {:feed/id (gen/uuid)
+                        {:feed/id (biffs/gen-uuid)
                          :feed/url url})
         url->feed (into url->feed
                         (map (juxt :feed/url :feed/id))
                         new-feed-docs)
         new-sub-docs (for [feed (vals url->feed)
                            :when (not (existing-sub-feed-ids feed))]
-                       {:sub/id (gen/uuid)
+                       {:sub/id (biffs/gen-uuid user-id)
                         :sub/user-id user-id
                         :sub/created-at now
                         :sub/feed-id feed})]
     {:feed-ids (vals url->feed)
      :tx (concat
           (when (not-empty new-feed-docs)
-            [{:insert-into :feed
-              :values (vec new-feed-docs)
-              :on-conflict [:feed/id]
-              :do-update-set {:fields [:url]}}])
+            [{:xt {:assert [:not-exists
+                            {:select [:inline 1]
+                             :from :feed
+                             :where [:in :feed/url (mapv :feed/url new-feed-docs)]
+                             :limit [:inline 1]}]}
+              :sqlite nil}
+             (into [:put-docs :feed] new-feed-docs)])
           (when (not-empty new-sub-docs)
-            [{:insert-into :sub
-              :values (vec new-sub-docs)
-              :on-conflict [:sub/user-id :sub/email-from]
-              :do-update-set {:fields [:created-at :feed-id]}}]))}))
+            [{:xt {:assert [:not-exists
+                            {:select [:inline 1]
+                             :from :sub
+                             :where [:and
+                                     [:= :sub/user user-id]
+                                     [:in :sub/feed-id (mapv :sub/feed-id new-sub-docs)]]
+                             :limit [:inline 1]}]}
+              :sqlite nil}
+             (into [:put-docs :sub] new-sub-docs)]))}))
 
 (defn- sync-rss-jobs [feed-ids priority]
   {:jobs (for [id feed-ids]
@@ -113,7 +125,7 @@
       (if (empty? feed-urls)
         (redirect `page-route {:error "invalid-rss-feed" :url (:url http)})
         (let [{:keys [tx feed-ids]} (subscribe-feeds-tx ctx feed-urls)]
-          [{:biff.fx/sqlite tx}
+          [{:biff.fx/tx tx}
            {:biff.fx/queue (sync-rss-jobs feed-ids 0)
             :status 303
             :headers {"Location" (href `page-route {:added-feeds (count feed-urls)})}}])))))
@@ -128,7 +140,7 @@
   (fn [{:keys [biff.fx/slurp] :as ctx}]
     (if-some [urls (not-empty (lib.rss/extract-opml-urls slurp))]
       (let [{:keys [tx feed-ids]} (subscribe-feeds-tx ctx urls)]
-        [{:biff.fx/sqlite tx}
+        [{:biff.fx/tx tx}
          {:biff.fx/queue (sync-rss-jobs feed-ids 5)
           :status        303
           :headers       {"Location" (href `page-route {:added-feeds (count urls)})}}])
@@ -156,20 +168,20 @@
           [:div "Sign up for newsletters with "
            [:span.font-semibold username "@" domain]]
           (biff/form
-           {:action (href set-username)
-            :hx-indicator "#username-indicator"}
-           (ui/form-input
-            {:ui/label "Username"
-             :ui/description "You can subscribe to newsletters after you pick a username."
-             :ui/postfix (str "@" domain)
-             :ui/submit-text "Save"
-             :ui/indicator-id "username-indicator"
-             :ui/error (when (= (:error params) "username-unavailable")
-                         "That username is unavailable.")
-             :name "username"
-             :value (or (:email-username params)
-                        (:user/suggested-email-username user))
-             :required true}))))
+            {:action (href set-username)
+             :hx-indicator "#username-indicator"}
+            (ui/form-input
+             {:ui/label "Username"
+              :ui/description "You can subscribe to newsletters after you pick a username."
+              :ui/postfix (str "@" domain)
+              :ui/submit-text "Save"
+              :ui/indicator-id "username-indicator"
+              :ui/error (when (= (:error params) "username-unavailable")
+                          "That username is unavailable.")
+              :name "username"
+              :value (or (:email-username params)
+                         (:user/suggested-email-username user))
+              :required true}))))
        (ui/section
         {:title "RSS feeds"}
         (when-some [n (:added-feeds params)]
@@ -181,49 +193,49 @@
            "Subscribed to " (ui/pluralize n "feed") "."])
         (let [modal-open (ui/random-id)]
           (biff/form
-           {:action (href add-rss)
-            :hx-indicator (str "#" (ui/dom-id ::rss-indicator))}
-           (ui/modal
-            {:open modal-open
-             :title "Subscribe via bookmarklet"}
-            [:.p-4
-             [:p "You can install the bookmarklet by dragging this link on to your browser toolbar or
+            {:action (href add-rss)
+             :hx-indicator (str "#" (ui/dom-id ::rss-indicator))}
+            (ui/modal
+             {:open modal-open
+              :title "Subscribe via bookmarklet"}
+             [:.p-4
+              [:p "You can install the bookmarklet by dragging this link on to your browser toolbar or
                    bookmarks menu:"]
-             [:p.my-6 [:a.text-xl.text-blue-600
-                       {:href (str "javascript:window.location=\""
-                                   base-url
-                                   (href page-route)
-                                   "?url=\"+encodeURIComponent(document.location)")}
-                       "Subscribe | Yakread"]]
-             [:p.mb-0 "Then click the bookmarklet to subscribe to the RSS feed for the current page."]])
-           (ui/form-input
-            {:ui/label "Website or feed URL" ; TODO spinner icon
-             :ui/submit-text "Subscribe"
-             :ui/description [:<> "You can also "
-                              [:button.link {:type "button"
-                                             :data-on-click (str "$" modal-open " = true")}
-                               "subscribe via bookmarklet"] "."]
-             :ui/indicator-id (ui/dom-id ::rss-indicator)
-             :ui/error (when (= (:error params) "invalid-rss-feed")
-                         "We weren't able to subscribe to that URL.")
-             :name "url"
-             :value (:url params)
-             :required true})))
+              [:p.my-6 [:a.text-xl.text-blue-600
+                        {:href (str "javascript:window.location=\""
+                                    base-url
+                                    (href page-route)
+                                    "?url=\"+encodeURIComponent(document.location)")}
+                        "Subscribe | Yakread"]]
+              [:p.mb-0 "Then click the bookmarklet to subscribe to the RSS feed for the current page."]])
+            (ui/form-input
+             {:ui/label "Website or feed URL" ; TODO spinner icon
+              :ui/submit-text "Subscribe"
+              :ui/description [:<> "You can also "
+                               [:button.link {:type "button"
+                                              :data-on-click (str "$" modal-open " = true")}
+                                "subscribe via bookmarklet"] "."]
+              :ui/indicator-id (ui/dom-id ::rss-indicator)
+              :ui/error (when (= (:error params) "invalid-rss-feed")
+                          "We weren't able to subscribe to that URL.")
+              :name "url"
+              :value (:url params)
+              :required true})))
         (biff/form
-         {:action (href add-opml)
-          :hx-indicator (str "#" (ui/dom-id ::opml-indicator))
-          :enctype "multipart/form-data"}
-         (ui/form-input
-          {:ui/label "OPML file"
-           :ui/submit-text "Import"
-           :ui/submit-opts {:class '["w-[92px]"]}
-           :ui/indicator-id (ui/dom-id ::opml-indicator)
-           :ui/error (when (= (:error params) "invalid-opml-file")
-                       "We weren't able to import that file.")
-           :name "opml"
-           :type "file"
-           :accept ".opml"
-           :required true}))))])))
+          {:action (href add-opml)
+           :hx-indicator (str "#" (ui/dom-id ::opml-indicator))
+           :enctype "multipart/form-data"}
+          (ui/form-input
+           {:ui/label "OPML file"
+            :ui/submit-text "Import"
+            :ui/submit-opts {:class '["w-[92px]"]}
+            :ui/indicator-id (ui/dom-id ::opml-indicator)
+            :ui/error (when (= (:error params) "invalid-opml-file")
+                        "We weren't able to import that file.")
+            :name "opml"
+            :type "file"
+            :accept ".opml"
+            :required true}))))])))
 
 (def module
   {:routes [page-route

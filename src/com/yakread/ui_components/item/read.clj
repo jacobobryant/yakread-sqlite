@@ -7,7 +7,8 @@
    [com.yakread.lib.middleware :as lib.middle]
    [com.yakread.lib.route :refer [href]]
    [com.yakread.lib.ui :as ui]
-   [com.yakread.routes :as routes]))
+   [com.yakread.routes :as routes]
+   [com.yakread.util.biff-staging :as biffs]))
 
 (fx/defroute-pathom mark-unread
   [{:params/item [{:item/user-item [:user-item/id]}]}
@@ -17,14 +18,15 @@
   (fn [_ {:keys [params/item params/redirect-url]}]
     {:status 204
      :headers {"HX-Location" redirect-url}
-     :biff.fx/sqlite [{:update :user-item
-                       :set {:user-item/viewed-at nil
-                             :user-item/favorited-at nil
-                             :user-item/disliked-at nil
-                             :user-item/reported-at nil
-                             :user-item/report-reason nil
-                             :user-item/skipped-at nil}
-                       :where [:= :user-item/id (get-in item [:item/user-item :user-item/id])]}]}))
+     :biff.fx/tx [(biffs/dual-write
+                   {:update :user-item
+                    :set {:user-item/viewed-at nil
+                          :user-item/favorited-at nil
+                          :user-item/disliked-at nil
+                          :user-item/reported-at nil
+                          :user-item/report-reason nil
+                          :user-item/skipped-at nil}
+                    :where [:= :xt/id (get-in item [:item/user-item :user-item/id])]})]}))
 
 (fx/defroute-pathom toggle-favorite
   [{:params/item
@@ -40,12 +42,13 @@
       {:status 200
        :headers {"Content-Type" "text/html"}
        :body ((:item/like-button* item) {:active (not favorited)})
-       :biff.fx/sqlite [{:update :user-item
-                         :set {:user-item/favorited-at (when-not favorited now)
-                               :user-item/disliked-at nil
-                               :user-item/reported-at nil
-                               :user-item/report-reason nil}
-                         :where [:= :user-item/id (:user-item/id user-item)]}]})))
+       :biff.fx/tx [(biffs/dual-write
+                     {:update :user-item
+                      :set {:user-item/favorited-at (when-not favorited now)
+                            :user-item/disliked-at nil
+                            :user-item/reported-at nil
+                            :user-item/report-reason nil}
+                      :where [:= :xt/id (:user-item/id user-item)]})]})))
 
 (fx/defroute-pathom not-interested
   [{:params/item [{:item/user-item [:user-item/id]}]}
@@ -55,10 +58,11 @@
   (fn [{:keys [biff/now]} {:params/keys [item redirect-url]}]
     {:status 204
      :headers {"HX-Location" redirect-url}
-     :biff.fx/sqlite [{:update :user-item
-                       :set {:user-item/favorited-at nil
-                             :user-item/disliked-at now}
-                       :where [:= :user-item/id (get-in item [:item/user-item :user-item/id])]}]}))
+     :biff.fx/tx [(biffs/dual-write
+                   {:update :user-item
+                    :set {:user-item/favorited-at nil
+                          :user-item/disliked-at now}
+                    :where [:= :xt/id (get-in item [:item/user-item :user-item/id])]})]}))
 
 (defn bar-button-icon-label [icon text]
   [:.flex.justify-center
@@ -147,6 +151,7 @@
         ;;  (some (or item {}) [:item.rss/feed-url :item/inferred-feed-url])
         ;;  [:.flex-1 (subscribe-button ctx)])
         [:.flex-1 like-button]
+
 
         (ui/overflow-menu
          {:ui/direction :up}
