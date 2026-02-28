@@ -83,12 +83,12 @@
                 [{:insert-into :feed
                   :values new-feed-docs
                   :on-conflict [:feed/url]
-                  :do-update-set {:feed/url :feed/url}}])
+                  :do-nothing true}])
               (when (not-empty new-sub-docs)
                 [{:insert-into :sub
                   :values new-sub-docs
-                  :on-conflict [:sub/user-id :sub/feed-id]
-                  :do-update-set {:sub/user-id :sub/user-id}}]))}))
+                  :on-conflict [:sub/user-id :sub/feed-id :sub/email-from]
+                  :do-nothing true}]))}))
 
 (defn- sync-rss-jobs [feed-ids priority]
   {:jobs (for [id feed-ids]

@@ -49,7 +49,7 @@
           [:feed/moderation      ? [:enum :feed.moderation/approved :feed.moderation/blocked]]]
 
    :sub [:map {:closed true
-              :biff/unique [[:sub/user-id :sub/feed-id]]}
+              :biff/unique [[:sub/user-id :sub/feed-id :sub/email-from]]}
          [:sub/id                     :uuid]
          [:sub/user-id      (r :user) :uuid]
          [:sub/created-at             inst?]
