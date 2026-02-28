@@ -365,7 +365,7 @@
   [table-props]
   (into []
         (map (fn [cols]
-               (let [col-names (str/join ", " (mapv (comp sql-name name) cols))]
+               (let [col-names (str/join ", " (mapv sql-name cols))]
                  {:line (str "UNIQUE(" col-names ")")})))
         (:biff/unique table-props)))
 
