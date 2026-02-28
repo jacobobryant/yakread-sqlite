@@ -201,7 +201,8 @@
                                                    :ad-credit.charge-status/confirmed
                                                    :ad-credit.charge-status/failed]]]
 
-   :mv-sub [:map {:closed true}
+   :mv-sub [:map {:closed true
+                  :biff/unique [[:mv-sub/sub-id]]}
             [:mv-sub/id                     :uuid]
             [:mv-sub/sub-id       (r :sub) :uuid]
             [:mv-sub/affinity-low     ?     :double]
@@ -210,7 +211,8 @@
             [:mv-sub/unread           ?     :int]
             [:mv-sub/n-read             ?     :int]]
 
-   :mv-user [:map {:closed true}
+   :mv-user [:map {:closed true
+                   :biff/unique [[:mv-user/user-id]]}
              [:mv-user/id                        :uuid]
              [:mv-user/user-id        (r :user) :uuid]
              [:mv-user/current-item-id (?r :item) :uuid]]
