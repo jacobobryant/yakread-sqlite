@@ -50,9 +50,9 @@ Once all namespaces use `:biff.fx/sqlite`:
 ## Namespace Checklist
 
 ### App Layer
-- [ ] `com.yakread.app.settings` — uses `biffs/dual-write` for user settings updates
-- [ ] `com.yakread.app.advertise` — uses `biffs/dual-write` for ad CRUD, `:biff/upsert` for ad-credits
-- [ ] `com.yakread.app.subscriptions` — uses `biffs/dual-write` for unsubscribe (`:delete-from`)
+- [x] `com.yakread.app.settings` — uses `biffs/dual-write` for user settings updates
+- [x] `com.yakread.app.advertise` — uses `biffs/dual-write` for ad CRUD, `:biff/upsert` for ad-credits
+- [x] `com.yakread.app.subscriptions` — uses `biffs/dual-write` for unsubscribe (`:delete-from`)
 - [ ] `com.yakread.app.subscriptions.add` — uses `:patch-docs`, `:put-docs` for feed/sub creation
 - [ ] `com.yakread.app.subscriptions.view` — uses `:patch-docs`, `:biff/upsert` for sub settings
 - [ ] `com.yakread.app.for-you` — uses `:biff/upsert` for skip records and reclist tracking
@@ -73,7 +73,7 @@ Once all namespaces use `:biff.fx/sqlite`:
 - [ ] `com.yakread.smtp` — uses `:put-docs` for email items and subs, plus `biffx/assert-unique`
 
 ### Library/Infrastructure
-- [ ] `com.yakread.lib.fx` — Create `:biff.fx/sqlite` handler calling `com.biffweb.sqlite/execute`
+- [x] `com.yakread.lib.fx` — Create `:biff.fx/sqlite` handler calling `com.biffweb.sqlite/execute`
 - [ ] `com.yakread.lib.item` — uses `:put-docs` for content ingestion
 - [ ] `com.yakread.util.biff-staging` — Remove dual-write logic once all namespaces migrated
 
@@ -91,6 +91,14 @@ Once all namespaces use `:biff.fx/sqlite`, remove the old infrastructure:
 
 ### Unique Constraints
 `biffx/assert-unique` is used in SMTP for ensuring sub uniqueness. SQLite handles this via schema-level UNIQUE constraints, so these assertions can be removed.
+
+When using `ON CONFLICT` / upsert patterns in `:biff.fx/sqlite`, the target column(s) must have a UNIQUE constraint in the schema. Add `:biff/unique` to the table definition in `model/schema.clj`:
+```clojure
+:my-table [:map {:closed true
+                 :biff/unique [[:my-table/some-col]]}
+           ...]
+```
+Then regenerate `resources/schema.sql`. For composite uniqueness constraints, use multiple keys in the inner vector: `:biff/unique [[:col-a :col-b]]`.
 
 ### ID Generation
 `biffs/gen-uuid` was needed for XTDB 2 which required IDs to be prefixed in a certain way to ensure good locality. For SQLite, this is not needed — use regular random UUIDs (e.g., `(random-uuid)`) instead. All usages of `biffs/gen-uuid` should be replaced with `(random-uuid)`.

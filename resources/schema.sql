@@ -19,7 +19,8 @@ CREATE TABLE ad (
   session_id TEXT,
   payment_method TEXT,
   card_details BLOB,
-  FOREIGN KEY(user_id) REFERENCES user(id)
+  FOREIGN KEY(user_id) REFERENCES user(id),
+  UNIQUE(user_id)
 ) STRICT;
 
 CREATE TABLE ad_click (

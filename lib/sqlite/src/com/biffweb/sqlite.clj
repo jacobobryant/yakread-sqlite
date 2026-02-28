@@ -59,6 +59,13 @@
                        :definition-2 (m2 conflicting-attr)})))
     (merge m1 m2)))
 
+(defn- table-props
+  "Extract map-level properties (e.g. :biff/unique) from the first table AST."
+  [table-key malli-opts]
+  (some-> (table-asts table-key malli-opts)
+          first
+          :properties))
+
 (defn schema-info
   "Extract schema info: map of table-key -> attrs map."
   [malli-opts]
@@ -351,15 +358,27 @@
                                 (sql-name ref-target) "(id)")}))))
         attrs))
 
+(defn- generate-unique-constraints
+  "Generate UNIQUE constraints from :biff/unique table property.
+   :biff/unique is a vector of vectors, where each inner vector is a list of
+   column keywords that form a unique constraint."
+  [table-props]
+  (into []
+        (map (fn [cols]
+               (let [col-names (str/join ", " (mapv sql-name cols))]
+                 {:line (str "UNIQUE(" col-names ")")})))
+        (:biff/unique table-props)))
+
 (defn- generate-create-table
   "Generate a CREATE TABLE statement for a table."
-  [table-key attrs]
+  [table-key attrs table-props]
   (let [col-defs (->> attrs
                       (sort-by (comp :order second))
                       (mapv (fn [[attr-key ast]]
                               (generate-column-def table-key attr-key ast))))
         fk-constraints (generate-foreign-keys attrs)
-        lines (concat col-defs fk-constraints)
+        unique-constraints (generate-unique-constraints table-props)
+        lines (concat col-defs fk-constraints unique-constraints)
         lines (into []
                     (map-indexed (fn [i {:keys [line] comment* :comment}]
                                    (str "  "
@@ -411,7 +430,7 @@
               (for [table table-order
                     :let [attrs (get info table)]
                     :when attrs]
-                (generate-create-table table attrs)))))
+                (generate-create-table table attrs (table-props table malli-opts))))))
 
 ;; ============================================================================
 ;; Connection Pool & Queries

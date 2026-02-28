@@ -23,21 +23,13 @@
      {:session/user
       {:user/ad {:ad/id "ad1", :ad/payment-method "xyz"}}}}),
    :result
-   [{:biff.fx/tx
-     [{:xt
-       {:update :ad,
-        :set
-        {:ad/payment-method nil,
-         :ad/card-details nil,
-         :ad/updated-at #time/instant "2000-01-01T00:00:00Z"},
-        :where [:= :xt/id "ad1"]},
-       :sqlite
-       {:update :ad,
-        :set
-        {:ad/payment-method nil,
-         :ad/card-details nil,
-         :ad/updated-at 946684800000},
-        :where [:= :id "ad1"]}}]}
+   [{:biff.fx/sqlite
+     [{:update :ad,
+       :set
+       {:ad/payment-method nil,
+        :ad/card-details nil,
+        :ad/updated-at #time/instant "2000-01-01T00:00:00Z"},
+       :where [:= :ad/id "ad1"]}]}
     {:biff.fx/http
      {:method :post,
       :url "https://api.stripe.com/v1/payment_methods/xyz/detach",
@@ -84,23 +76,14 @@
      :biff/now (t/instant 2000),
      :ad/id "ad2"}),
    :result
-   {:biff.fx/tx
-    [{:xt
-      {:update :ad,
-       :set
-       {:ad/session-id nil,
-        :ad/payment-method nil,
-        :ad/card-details [:lift nil],
-        :ad/updated-at #time/instant "2000-01-01T00:00:00Z"},
-       :where [:= :xt/id "ad2"]},
-      :sqlite
-      {:update :ad,
-       :set
-       {:ad/session-id nil,
-        :ad/payment-method nil,
-        :ad/card-details nil,
-        :ad/updated-at 946684800000},
-       :where [:= :id "ad2"]}}],
+   {:biff.fx/sqlite
+    [{:update :ad,
+      :set
+      {:ad/session-id nil,
+       :ad/payment-method nil,
+       :ad/card-details [:lift nil],
+       :ad/updated-at #time/instant "2000-01-01T00:00:00Z"},
+      :where [:= :ad/id "ad2"]}],
     :biff.fx/next :redirect}}
   _
   {:doc "add-payment-method :post existing customer",
@@ -143,18 +126,20 @@
      :biff/now (t/instant 2000),
      :session {:uid t/zero-uuid}}),
    :result
-   {:biff.fx/tx
-    [[:biff/upsert
-      :ad
-      [:ad/user-id]
-      {:ad/user-id #uuid "00000000-0000-0000-0000-000000000000",
-       :ad/customer-id "customer-id",
-       :ad/updated-at #time/instant "2000-01-01T00:00:00Z",
-       :biff/on-insert
-       {:xt/id #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
-        :ad/approve-state :ad.approve-state/pending,
+   {:biff.fx/sqlite
+    [{:insert-into :ad,
+      :values
+      [{:ad/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+        :ad/user-id #uuid "00000000-0000-0000-0000-000000000000",
+        :ad/customer-id "customer-id",
+        :ad/updated-at #time/instant "2000-01-01T00:00:00Z",
+        :ad/approve-state [:lift :ad.approve-state/pending],
         :ad/balance 0,
-        :ad/recent-cost 0}}]],
+        :ad/recent-cost 0}],
+      :on-conflict [:ad/user-id],
+      :do-update-set
+      {:ad/customer-id "customer-id",
+       :ad/updated-at #time/instant "2000-01-01T00:00:00Z"}}],
     :biff.fx/next :create-session,
     :ad/customer-id "customer-id"}}
   _
@@ -194,13 +179,17 @@
      :session {:uid "user1"},
      :biff/now (t/instant 2000)}),
    :result
-   {:biff.fx/tx
-    [[:biff/upsert
-      :ad
-      [:ad/user-id]
-      {:ad/user-id "user1",
-       :ad/session-id "session-id",
-       :ad/updated-at #time/instant "2000-01-01T00:00:00Z"}]],
+   {:biff.fx/sqlite
+    [{:insert-into :ad,
+      :values
+      [{:ad/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+        :ad/user-id "user1",
+        :ad/session-id "session-id",
+        :ad/updated-at #time/instant "2000-01-01T00:00:00Z"}],
+      :on-conflict [:ad/user-id],
+      :do-update-set
+      {:ad/session-id "session-id",
+       :ad/updated-at #time/instant "2000-01-01T00:00:00Z"}}],
     :status 303,
     :headers {"Location" "https://example.com"}}}
   _
@@ -219,24 +208,33 @@
    :result
    {:status 303,
     :headers {"Location" ["/advertise" {:saved true}]},
-    :biff.fx/tx
-    [[:biff/upsert
-      :ad
-      [:ad/user-id]
+    :biff.fx/sqlite
+    [{:insert-into :ad,
+      :values
+      [{:ad/balance 0,
+        :ad/updated-at #time/instant "2000-01-01T00:00:00Z",
+        :ad/approve-state [:lift :ad.approve-state/pending],
+        :ad/paused nil,
+        :ad/title "hey",
+        :ad/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+        :ad/user-id #uuid "00000000-0000-0000-0000-000000000000",
+        :ad/description nil,
+        :ad/recent-cost 0,
+        :ad/url "https://example.com",
+        :ad/image-url nil,
+        :ad/budget 3500,
+        :ad/bid 350}],
+      :on-conflict [:ad/user-id],
+      :do-update-set
       {:ad/updated-at #time/instant "2000-01-01T00:00:00Z",
-       :biff/on-insert
-       {:xt/id #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
-        :ad/balance 0,
-        :ad/recent-cost 0},
-       :ad/approve-state :ad.approve-state/pending,
+       :ad/approve-state [:lift :ad.approve-state/pending],
        :ad/paused nil,
        :ad/title "hey",
-       :ad/user-id #uuid "00000000-0000-0000-0000-000000000000",
        :ad/description nil,
        :ad/url "https://example.com",
        :ad/image-url nil,
        :ad/budget 3500,
-       :ad/bid 350}]]}}
+       :ad/bid 350}}]}}
   _
   {:doc "save-ad still approved",
    :eval
@@ -264,24 +262,33 @@
    :result
    {:status 303,
     :headers {"Location" ["/advertise" {:saved true}]},
-    :biff.fx/tx
-    [[:biff/upsert
-      :ad
-      [:ad/user-id]
+    :biff.fx/sqlite
+    [{:insert-into :ad,
+      :values
+      [{:ad/balance 0,
+        :ad/updated-at #time/instant "2000-01-01T00:00:00Z",
+        :ad/approve-state [:lift :ad.approve-state/approved],
+        :ad/paused nil,
+        :ad/title "Title",
+        :ad/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+        :ad/user-id #uuid "00000000-0000-0000-0000-000000000000",
+        :ad/description "Description",
+        :ad/recent-cost 0,
+        :ad/url "https:/example.com",
+        :ad/image-url "https://example.com/image.png",
+        :ad/budget 3500,
+        :ad/bid 350}],
+      :on-conflict [:ad/user-id],
+      :do-update-set
       {:ad/updated-at #time/instant "2000-01-01T00:00:00Z",
-       :biff/on-insert
-       {:xt/id #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
-        :ad/balance 0,
-        :ad/recent-cost 0},
-       :ad/approve-state :ad.approve-state/approved,
+       :ad/approve-state [:lift :ad.approve-state/approved],
        :ad/paused nil,
        :ad/title "Title",
-       :ad/user-id #uuid "00000000-0000-0000-0000-000000000000",
        :ad/description "Description",
        :ad/url "https:/example.com",
        :ad/image-url "https://example.com/image.png",
        :ad/budget 3500,
-       :ad/bid 350}]]}}
+       :ad/bid 350}}]}}
   _
   {:doc "upload-image :post",
    :eval

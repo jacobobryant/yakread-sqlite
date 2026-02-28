@@ -13,9 +13,8 @@
    :result
    {:status 204,
     :headers {"HX-Location" ["/subscriptions" nil]},
-    :biff.fx/tx
-    [{:xt {:delete-from :sub, :where [:= :xt/id "sub1"]},
-      :sqlite {:delete-from :sub, :where [:= :id "sub1"]}}]}}
+    :biff.fx/sqlite
+    [{:delete-from :sub, :where [:= :sub/id "sub1"]}]}}
   _
   {:doc "unsubscribe email subscription with one-click URL",
    :eval
@@ -35,12 +34,11 @@
    :result
    {:status 204,
     :headers {"HX-Location" ["/subscriptions" nil]},
-    :biff.fx/tx
-    [[:patch-docs
-      :sub
-      {:sub/id "sub1",
-       :sub/email-unsubscribed-at
-       #time/instant "2000-01-01T00:00:00Z"}]],
+    :biff.fx/sqlite
+    [{:update :sub,
+      :set {:sub/email-unsubscribed-at
+            #time/instant "2000-01-01T00:00:00Z"},
+      :where [:= :sub/id "sub1"]}],
     :biff.fx/http
     {:url "https://example.com/unsub",
      :method :post,
@@ -62,12 +60,11 @@
    :result
    {:status 204,
     :headers {"HX-Location" ["/subscriptions" nil]},
-    :biff.fx/tx
-    [[:patch-docs
-      :sub
-      {:sub/id "sub1",
-       :sub/email-unsubscribed-at
-       #time/instant "2000-01-01T00:00:00Z"}]],
+    :biff.fx/sqlite
+    [{:update :sub,
+      :set {:sub/email-unsubscribed-at
+            #time/instant "2000-01-01T00:00:00Z"},
+      :where [:= :sub/id "sub1"]}],
     :biff.fx/email {:to "unsub@example.com", :subject "unsubscribe"}}}
   _
   {:doc "unsubscribe email subscription with URL (non-one-click)",
@@ -90,12 +87,11 @@
     {"HX-Location" ["/subscriptions" nil],
      "HX-Trigger"
      "{\"yak/open-new-tab\":\"https://example.com/unsub\"}"},
-    :biff.fx/tx
-    [[:patch-docs
-      :sub
-      {:sub/id "sub1",
-       :sub/email-unsubscribed-at
-       #time/instant "2000-01-01T00:00:00Z"}]]}}
+    :biff.fx/sqlite
+    [{:update :sub,
+      :set {:sub/email-unsubscribed-at
+            #time/instant "2000-01-01T00:00:00Z"},
+      :where [:= :sub/id "sub1"]}]}}
   _
   {:doc "resubscribe moves subs back",
    :eval
@@ -106,15 +102,10 @@
      {:params.checked/subscriptions
       [{:sub/id "sub1"} {:sub/id "sub2"}]}}),
    :result
-   {:biff.fx/tx
-    [{:xt
-      {:update :sub,
-       :set {:sub.email/unsubscribed-at nil},
-       :where [:in :xt/id ["sub1" "sub2"]]},
-      :sqlite
-      {:update :sub,
-       :set {:sub/email-unsubscribed-at nil},
-       :where [:in :id ["sub1" "sub2"]]}}],
+   {:biff.fx/sqlite
+    [{:update :sub,
+      :set {:sub/email-unsubscribed-at nil},
+      :where [:in :sub/id ["sub1" "sub2"]]}],
     :status 204,
     :headers {"HX-Redirect" ["/subscriptions/unsubscribed" nil]}}}
   _]}

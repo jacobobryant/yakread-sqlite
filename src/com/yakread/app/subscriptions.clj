@@ -8,8 +8,7 @@
    [com.yakread.lib.middleware :as lib.mid]
    [com.yakread.lib.route :as lib.route :refer [href]]
    [com.yakread.lib.ui :as ui]
-   [com.yakread.routes :as routes]
-   [com.yakread.util.biff-staging :as biffs]))
+   [com.yakread.routes :as routes]))
 
 (fx/defroute-pathom unsubscribe
   [{:params/sub [:sub/id
@@ -28,7 +27,7 @@
       (case record-type
         :sub.record-type/feed
         (merge base
-               {:biff.fx/tx [(biffs/dual-write {:delete-from :sub :where [:= :xt/id id]})]})
+               {:biff.fx/sqlite [{:delete-from :sub :where [:= :sub/id id]}]})
 
         :sub.record-type/email
         (let [{:item/keys [email-list-unsubscribe email-list-unsubscribe-post]} latest-item
@@ -36,9 +35,9 @@
               email (second (re-find #"<mailto:([^>]+)>" (or email-list-unsubscribe "")))]
           (merge-with merge
                       base
-                      {:biff.fx/tx [[:patch-docs :sub
-                                     {:sub/id id
-                                      :sub/email-unsubscribed-at now}]]}
+                      {:biff.fx/sqlite [{:update :sub
+                                         :set {:sub/email-unsubscribed-at now}
+                                         :where [:= :sub/id id]}]}
                       (cond
                         (and url (= (some-> email-list-unsubscribe-post str/lower-case)
                                     "list-unsubscribe=one-click"))
@@ -58,10 +57,9 @@
   :post
   (fn [{:keys [biff/now]} {{:sub/keys [id pinned-at record-type]}
           :params/sub}]
-    {:biff.fx/tx [(biffs/dual-write
-                   {:update :sub
-                    :set {:sub/pinned-at (when-not pinned-at now)}
-                    :where [:= :xt/id id]})]
+    {:biff.fx/sqlite [{:update :sub
+                       :set {:sub/pinned-at (when-not pinned-at now)}
+                       :where [:= :sub/id id]}]
      :biff.fx/render {:route-sym `page-content-route
                       :request-method :get}
      :biff.fx/next :return})
@@ -77,10 +75,9 @@
 
   :post
   (fn [_ {:keys [params.checked/subscriptions]}]
-    {:biff.fx/tx [(biffs/dual-write
-                   {:update :sub
-                    :set {:sub.email/unsubscribed-at nil}
-                    :where [:in :xt/id (mapv :sub/id subscriptions)]})]
+    {:biff.fx/sqlite [{:update :sub
+                       :set {:sub/email-unsubscribed-at nil}
+                       :where [:in :sub/id (mapv :sub/id subscriptions)]}]
      :status 204
      :headers {"HX-Redirect" (href `unsubs-page)}}))
 

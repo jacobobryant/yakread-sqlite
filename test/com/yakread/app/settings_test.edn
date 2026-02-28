@@ -13,14 +13,14 @@
       :user/timezone "America/New_York",
       :user/use-original-links true}}),
    :result
-   {:biff.fx/tx
-    [[:patch-docs
-      :user
-      {:user/id "user1",
-       :user/use-original-links true,
+   {:biff.fx/sqlite
+    [{:update :user,
+      :set
+      {:user/use-original-links true,
        :user/digest-days #{:wednesday :friday :monday},
        :user/send-digest-at 8,
-       :user/timezone "America/New_York"}]],
+       :user/timezone "America/New_York"},
+      :where [:= :user/id "user1"]}],
     :status 303,
     :headers {"location" ["/settings" nil]}}}
   _
@@ -35,14 +35,14 @@
       :user/send-digest-at 14,
       :user/timezone "America/Denver"}}),
    :result
-   {:biff.fx/tx
-    [[:patch-docs
-      :user
-      {:user/id "user1",
-       :user/use-original-links false,
+   {:biff.fx/sqlite
+    [{:update :user,
+      :set
+      {:user/use-original-links false,
        :user/digest-days #{:tuesday},
        :user/send-digest-at 14,
-       :user/timezone "America/Denver"}]],
+       :user/timezone "America/Denver"},
+      :where [:= :user/id "user1"]}],
     :status 303,
     :headers {"location" ["/settings" nil]}}}
   _
@@ -54,9 +54,9 @@
     {:session {:uid "user1"},
      :biff.form/params {:user/timezone "Europe/London"}}),
    :result
-   {:biff.fx/tx
-    [[:patch-docs
-      :user
-      {:user/id "user1", :user/timezone "Europe/London"}]],
+   {:biff.fx/sqlite
+    [{:update :user,
+      :set {:user/timezone "Europe/London"},
+      :where [:= :user/id "user1"]}],
     :status 204}}
   _]}
