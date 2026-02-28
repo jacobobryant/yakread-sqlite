@@ -1,5 +1,6 @@
 (ns com.yakread.app.advertise
   (:require
+   [clojure.data.generators :as gen]
    [clojure.string :as str]
    [com.biffweb :as biff]
    [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
@@ -9,8 +10,7 @@
    [com.yakread.lib.middleware :as lib.mid]
    [com.yakread.lib.route :as lib.route :refer [href]]
    [com.yakread.lib.ui :as ui]
-   [com.yakread.routes :as routes]
-   [com.yakread.util.biff-staging :as biffs]))
+   [com.yakread.routes :as routes]))
 
 (declare page-route)
 
@@ -40,13 +40,11 @@
 
   :post
   (fn [{:biff/keys [secret now]} {{{:ad/keys [id payment-method]} :user/ad} :session/user}]
-    [{:biff.fx/tx [(biffs/dual-write
-                    {:update :ad
-                     :set {:ad/payment-method nil
-                           :ad/card-details nil
-                           :ad/updated-at now}
-                     :where [:= :xt/id id]})]}
-     {:biff.fx/http {:method :post
+    [{:biff.fx/sqlite [{:update :ad
+                        :set {:ad/payment-method nil
+                              :ad/card-details nil
+                              :ad/updated-at now}
+                        :where [:= :ad/id id]}]}     {:biff.fx/http {:method :post
                      :url (str "https://api.stripe.com/v1/payment_methods/" payment-method "/detach")
                      :basic-auth [(secret :stripe/api-key)]}}
 
@@ -74,16 +72,15 @@
   :save-payment-method
   (fn [{:keys [biff.fx/http biff/now] ad-id :ad/id}]
     (let [pm (get-in http [:body :setup_intent :payment_method])]
-      {:biff.fx/tx [(biffs/dual-write
-                     {:update :ad
-                      :set {:ad/session-id nil
-                            :ad/payment-method (:id pm)
-                            :ad/card-details [:lift
-                                              (-> (:card pm)
-                                                  (select-keys [:brand :last4 :exp_year :exp_month])
-                                                  not-empty)]
-                            :ad/updated-at now}
-                      :where [:= :xt/id ad-id]})]
+      {:biff.fx/sqlite [{:update :ad
+                         :set {:ad/session-id nil
+                               :ad/payment-method (:id pm)
+                               :ad/card-details [:lift
+                                                 (-> (:card pm)
+                                                     (select-keys [:brand :last4 :exp_year :exp_month])
+                                                     not-empty)]
+                               :ad/updated-at now}
+                         :where [:= :ad/id ad-id]}]
        :biff.fx/next :redirect}))
 
   :redirect
@@ -111,14 +108,17 @@
   :create-customer
   (fn [{:keys [biff.fx/http biff/now session]} _]
     (let [customer-id (get-in http [:body :id])]
-      {:biff.fx/tx [[:biff/upsert :ad [:ad/user-id]
-                     {:ad/user-id (:uid session)
-                      :ad/customer-id customer-id
-                      :ad/updated-at now
-                      :biff/on-insert {:xt/id (biffs/gen-uuid (:uid session))
-                                       :ad/approve-state :ad.approve-state/pending
-                                       :ad/balance 0
-                                       :ad/recent-cost 0}}]]
+      {:biff.fx/sqlite [{:insert-into :ad
+                         :values [{:ad/id (gen/uuid)
+                                   :ad/user-id (:uid session)
+                                   :ad/customer-id customer-id
+                                   :ad/updated-at now
+                                   :ad/approve-state [:lift :ad.approve-state/pending]
+                                   :ad/balance 0
+                                   :ad/recent-cost 0}]
+                         :on-conflict [:ad/user-id]
+                         :do-update-set {:ad/customer-id customer-id
+                                         :ad/updated-at now}}]
        :biff.fx/next :create-session
        :ad/customer-id customer-id}))
 
@@ -142,10 +142,14 @@
   :redirect
   (fn [{:keys [biff.fx/http session biff/now]} _]
     (let [{:keys [url id]} (:body http)]
-      {:biff.fx/tx [[:biff/upsert :ad [:ad/user-id]
-                     {:ad/user-id (:uid session)
-                      :ad/session-id id
-                      :ad/updated-at now}]]
+      {:biff.fx/sqlite [{:insert-into :ad
+                         :values [{:ad/id (gen/uuid)
+                                   :ad/user-id (:uid session)
+                                   :ad/session-id id
+                                   :ad/updated-at now}]
+                         :on-conflict [:ad/user-id]
+                         :do-update-set {:ad/session-id id
+                                         :ad/updated-at now}}]
        :status 303
        :headers {"Location" url}})))
 
@@ -180,23 +184,28 @@
                             [:ad/url :ad/title :ad/description :ad/image-url])
                   (:ad/approve-state old-ad :ad.approve-state/pending)
                   :ad.approve-state/pending)
-          tx [[:biff/upsert :ad [:ad/user-id]
-               (merge {:ad/user-id (:user/id user)
-                       :ad/approve-state state
-                       :ad/updated-at now
-                       :biff/on-insert {:xt/id (biffs/gen-uuid (:user/id user))
-                                        :ad/balance 0
-                                        :ad/recent-cost 0}}
-                      new-ad)]]]
+          update-set (merge {:ad/approve-state [:lift state]
+                             :ad/updated-at now}
+                            new-ad)
+          sqlite [{:insert-into :ad
+                   :values [(merge {:ad/id (gen/uuid)
+                                    :ad/user-id (:user/id user)
+                                    :ad/approve-state [:lift state]
+                                    :ad/updated-at now
+                                    :ad/balance 0
+                                    :ad/recent-cost 0}
+                                   new-ad)]
+                   :on-conflict [:ad/user-id]
+                   :do-update-set update-set}]]
       {:status 303
        :headers {"Location" (href page-route {:saved true})}
-       :biff.fx/tx tx})))
+       :biff.fx/sqlite sqlite})))
 (obfuscate-url! #'save-ad)
 
 (fx/defroute upload-image
   :post
   (fn [{:keys [biff/base-url yakread.s3.images/edge biff.form/params multipart-params]}]
-    (let [image-id (biffs/gen-uuid)
+    (let [image-id (gen/uuid)
           file-info (get multipart-params "image-file")
           url (str edge "/" image-id)]
       [{:biff.fx/s3 {:config-ns 'yakread.s3.images

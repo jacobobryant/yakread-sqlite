@@ -9,7 +9,6 @@
    [com.yakread.lib.middleware :as lib.mid]
    [com.yakread.lib.route :as lib.route :refer [href]]
    [com.yakread.lib.ui :as ui]
-   [com.yakread.util.biff-staging :as biffs]
    [tick.core :as tick])
   (:import
    [java.time LocalTime ZoneId]
@@ -31,21 +30,21 @@
 (fx/defroute set-timezone
   :post
   (fn [{:keys [session biff.form/params]}]
-    {:biff.fx/tx [[:patch-docs :user
-                   {:user/id (:uid session)
-                    :user/timezone (:user/timezone params)}]]
+    {:biff.fx/sqlite [{:update :user
+                       :set {:user/timezone (:user/timezone params)}
+                       :where [:= :user/id (:uid session)]}]
      :status 204}))
 
 (fx/defroute save-settings
   :post
   (fn [{:keys [session biff.form/params]}]
-    {:biff.fx/tx [[:patch-docs :user
-                   (merge {:user/id (:uid session)
-                           :user/use-original-links false}
-                          (select-keys params [:user/digest-days
-                                               :user/send-digest-at
-                                               :user/timezone
-                                               :user/use-original-links]))]]
+    {:biff.fx/sqlite [{:update :user
+                       :set (merge {:user/use-original-links false}
+                                   (select-keys params [:user/digest-days
+                                                        :user/send-digest-at
+                                                        :user/timezone
+                                                        :user/use-original-links]))
+                       :where [:= :user/id (:uid session)]}]
      :status 303
      :headers {"location" (href page)}}))
 
@@ -72,13 +71,12 @@
                                 {:select :user/id
                                  :from :user
                                  :where [:= :user/customer-id customer]})]
-      {:biff.fx/tx [(biffs/dual-write
-                    {:update :user
-                     :set {:user/plan [:lift plan]
-                           :user/cancel-at (when cancel_at
-                                             (tick/in (tick/instant (* cancel_at 1000))
-                                                      "UTC"))}
-                     :where [:= :xt/id user-id]})]
+      {:biff.fx/sqlite [{:update :user
+                         :set {:user/plan [:lift plan]
+                               :user/cancel-at (when cancel_at
+                                                 (tick/in (tick/instant (* cancel_at 1000))
+                                                          "UTC"))}
+                         :where [:= :user/id user-id]}]
        :status 204}))
 
   :delete-plan
@@ -88,11 +86,10 @@
                                 {:select :user/id
                                  :from :user
                                  :where [:= :user/customer-id customer]})]
-      {:biff.fx/tx [(biffs/dual-write
-                      {:update :user
-                       :set {:user/plan nil
-                             :user/cancel-at nil}
-                       :where [:= :xt/id user-id]})]
+      {:biff.fx/sqlite [{:update :user
+                         :set {:user/plan nil
+                               :user/cancel-at nil}
+                         :where [:= :user/id user-id]}]
        :status 204})))
 
 (fx/defroute-pathom manage-premium
@@ -157,9 +154,9 @@
                      quarter-price-id
                      annual-price-id)]
       [(when http
-         {:biff.fx/tx [[:patch-docs :user
-                        {:user/id (:uid session)
-                         :user/customer-id customer-id}]]})
+         {:biff.fx/sqlite [{:update :user
+                            :set {:user/customer-id customer-id}
+                            :where [:= :user/id (:uid session)]}]})
        {:biff.fx/http {:method :post
                        :url "https://api.stripe.com/v1/checkout/sessions"
                        :basic-auth [(secret :stripe/api-key)]
@@ -370,9 +367,9 @@
     (let [{:keys [action user/id]} safe-params]
       (if (not= action :action/unsubscribe)
         (ui/on-error {:status 400})
-        {:biff.fx/tx [[:patch-docs :user
-                       {:user/id id
-                        :user/digest-days #{}}]]
+        {:biff.fx/sqlite [{:update :user
+                          :set {:user/digest-days #{}}
+                          :where [:= :user/id id]}]
          :status 303
          :headers {"location" (href unsubscribe-success)}}))))
 

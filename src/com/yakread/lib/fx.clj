@@ -8,6 +8,7 @@
    [com.biffweb :as biff]
    [com.wsscode.pathom3.interface.eql :as p.eql]
    [com.yakread.lib.s3 :as lib.s3]
+   [com.yakread.lib.sqlite :as lib.sqlite]
    [com.yakread.util.biff-staging :as biffs]))
 
 (defn- truncate-str
@@ -216,6 +217,11 @@
                     ;; features, so we use :biff.pipe/http there instead.
                     (send-email ctx input))
    :biff.fx/tx biffs/submit-tx
+   :biff.fx/sqlite (fn [ctx input]
+                     (let [stmts (if (map? input) [input] input)]
+                       (doseq [stmt stmts]
+                         (lib.sqlite/execute ctx stmt))
+                       nil))
    :biff.fx/pathom (fn [ctx input]
                      (let [{:keys [entity query]} (if (map? input)
                                                     input
