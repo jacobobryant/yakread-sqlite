@@ -50,9 +50,9 @@ Once all namespaces use `:biff.fx/sqlite`:
 ## Namespace Checklist
 
 ### App Layer
-- [ ] `com.yakread.app.settings` — uses `biffs/dual-write` for user settings updates
-- [ ] `com.yakread.app.advertise` — uses `biffs/dual-write` for ad CRUD, `:biff/upsert` for ad-credits
-- [ ] `com.yakread.app.subscriptions` — uses `biffs/dual-write` for unsubscribe (`:delete-from`)
+- [x] `com.yakread.app.settings` — uses `biffs/dual-write` for user settings updates
+- [x] `com.yakread.app.advertise` — uses `biffs/dual-write` for ad CRUD, `:biff/upsert` for ad-credits
+- [x] `com.yakread.app.subscriptions` — uses `biffs/dual-write` for unsubscribe (`:delete-from`)
 - [ ] `com.yakread.app.subscriptions.add` — uses `:patch-docs`, `:put-docs` for feed/sub creation
 - [ ] `com.yakread.app.subscriptions.view` — uses `:patch-docs`, `:biff/upsert` for sub settings
 - [ ] `com.yakread.app.for-you` — uses `:biff/upsert` for skip records and reclist tracking
@@ -73,7 +73,7 @@ Once all namespaces use `:biff.fx/sqlite`:
 - [ ] `com.yakread.smtp` — uses `:put-docs` for email items and subs, plus `biffx/assert-unique`
 
 ### Library/Infrastructure
-- [ ] `com.yakread.lib.fx` — Create `:biff.fx/sqlite` handler calling `com.biffweb.sqlite/execute`
+- [x] `com.yakread.lib.fx` — Create `:biff.fx/sqlite` handler calling `com.biffweb.sqlite/execute`
 - [ ] `com.yakread.lib.item` — uses `:put-docs` for content ingestion
 - [ ] `com.yakread.util.biff-staging` — Remove dual-write logic once all namespaces migrated
 

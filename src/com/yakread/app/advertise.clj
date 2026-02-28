@@ -44,7 +44,8 @@
                         :set {:ad/payment-method nil
                               :ad/card-details nil
                               :ad/updated-at now}
-                        :where [:= :ad/id id]}]}     {:biff.fx/http {:method :post
+                        :where [:= :ad/id id]}]}
+     {:biff.fx/http {:method :post
                      :url (str "https://api.stripe.com/v1/payment_methods/" payment-method "/detach")
                      :basic-auth [(secret :stripe/api-key)]}}
 
