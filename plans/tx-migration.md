@@ -26,7 +26,7 @@ The following TX operation formats are used:
 ## Migration Steps
 
 ### 1. Create `:biff.fx/sqlite` fx handler
-Create a new fx handler `:biff.fx/sqlite` in `com.yakread.lib.fx` that calls `com.biffweb.sqlite/execute` directly. This bypasses `biffs/submit-tx` and the dual-write layer entirely.
+Create a new fx handler `:biff.fx/sqlite` in `com.yakread.lib.fx` that calls `com.biffweb.sqlite/execute` directly. This bypasses `biffs/submit-tx` and the dual-write layer entirely. The handler accepts a vector of HoneySQL maps and executes them against the SQLite connection.
 
 ### 2. Migrate each namespace
 For each namespace, replace all TX operations with `:biff.fx/sqlite` calls using HoneySQL maps:
@@ -35,8 +35,8 @@ For each namespace, replace all TX operations with `:biff.fx/sqlite` calls using
 - `[:delete-docs :table id]` → `{:delete-from :table :where [:= :table/id id]}`
 - `[:erase-docs :table id]` → same as delete
 - `[:biff/upsert :table [:unique-key] {...}]` → `{:insert-into :table :values [{...}] :on-conflict {:unique-key ...} :do-update-set {...}}`
-- `(biffs/dual-write ctx :update ...)` → same HoneySQL `:update` map
-- `(biffs/dual-write ctx :delete-from ...)` → same HoneySQL `:delete-from` map
+- `(biffs/dual-write ctx :update :table {:where ...} {:set ...})` → `{:update :table :set {...} :where [...]}`
+- `(biffs/dual-write ctx :delete-from :table {:where ...})` → `{:delete-from :table :where [...]}`
 - Remove `{:xt [...] :sqlite nil}` patterns (e.g., `biffx/assert-unique`). SQLite has schema-level UNIQUE constraints.
 
 Also verify field names match the new SQLite schema (see query-migration.md for the full mapping).
