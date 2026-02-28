@@ -153,51 +153,57 @@
        [{:item/id (t/uuid 5)} {:item/id (t/uuid 6)}]}}
      :end)),
    :result
-   [{:biff.fx/tx
-     ([:patch-docs
-       :user
-       {:xt/id #uuid "00000000-0000-0000-0000-000000000000",
-        :user/digest-last-sent
-        #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}]
-      [:put-docs
-       :digest
-       {:xt/id #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
-        :digest/user-id #uuid "00000000-0000-0000-0000-000000000000",
-        :digest/sent-at #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-        :digest/subject-id
-        #uuid "00010000-0000-0000-0000-000000000001",
-        :digest/ad-id #uuid "00020000-0000-0000-0000-000000000002"}]
-      [:put-docs
-       :digest-item
-       {:xt/id #uuid "0003c9f6-4f1d-f03a-8ce9-70b71df42503",
-        :digest-item/digest-id
-        #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
-        :digest-item/item-id
-        #uuid "00030000-0000-0000-0000-000000000003",
-        :digest-item/kind :icymi}
-       {:xt/id #uuid "0004ba3d-c812-a76d-554d-cd2b40b5f04b",
-        :digest-item/digest-id
-        #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
-        :digest-item/item-id
-        #uuid "00040000-0000-0000-0000-000000000004",
-        :digest-item/kind :icymi}
-       {:xt/id #uuid "0005c222-9cef-e94d-fc1e-932efb9a0f58",
-        :digest-item/digest-id
-        #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
-        :digest-item/item-id
-        #uuid "00050000-0000-0000-0000-000000000005",
-        :digest-item/kind :discover}
-       {:xt/id #uuid "00061b08-05e8-b107-f0f5-b4f22d0cd0f1",
-        :digest-item/digest-id
-        #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
-        :digest-item/item-id
-        #uuid "00060000-0000-0000-0000-000000000006",
-        :digest-item/kind :discover}])}
+   [{:biff.fx/sqlite
+     [{:update :user,
+       :set
+       {:user/digest-last-sent
+        #time/zoned-date-time "2000-01-01T00:00Z[UTC]"},
+       :where
+       [:= :user/id #uuid "00000000-0000-0000-0000-000000000000"]}
+      {:insert-into :digest,
+       :values
+       [{:digest/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+         :digest/user-id #uuid "00000000-0000-0000-0000-000000000000",
+         :digest/sent-at
+         #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
+         :digest/subject-id
+         #uuid "00010000-0000-0000-0000-000000000001",
+         :digest/ad-id #uuid "00020000-0000-0000-0000-000000000002"}],
+       :on-conflict [:digest/id],
+       :do-update-set {:fields [:user-id :sent-at :subject-id :ad-id]}}
+      {:insert-into :digest-item,
+       :values
+       [{:digest-item/id #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503",
+         :digest-item/digest-id
+         #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+         :digest-item/item-id
+         #uuid "00030000-0000-0000-0000-000000000003",
+         :digest-item/kind [:lift :icymi]}
+        {:digest-item/id #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
+         :digest-item/digest-id
+         #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+         :digest-item/item-id
+         #uuid "00040000-0000-0000-0000-000000000004",
+         :digest-item/kind [:lift :icymi]}
+        {:digest-item/id #uuid "629bc222-9cef-e94d-fc1e-932efb9a0f58",
+         :digest-item/digest-id
+         #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+         :digest-item/item-id
+         #uuid "00050000-0000-0000-0000-000000000005",
+         :digest-item/kind [:lift :discover]}
+        {:digest-item/id #uuid "e1121b08-05e8-b107-f0f5-b4f22d0cd0f1",
+         :digest-item/digest-id
+         #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+         :digest-item/item-id
+         #uuid "00060000-0000-0000-0000-000000000006",
+         :digest-item/kind [:lift :discover]}],
+       :on-conflict [:digest-item/id],
+       :do-update-set {:fields [:digest-id :item-id :kind]}}]}
     {:biff.fx/queue
      {:id :work.digest/send-digest,
       :job
       {:user/email "user1@example.com",
-       :digest/id #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
+       :digest/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
        :digest/payload {:foo "bar"}}}}]}
   _
   {:eval
@@ -306,21 +312,26 @@
      :com.yakread.work.digest/digest-ids ["digest1" "digest2"]}
     :record-bulk-send),
    :result
-   [{:biff.fx/tx
-     [[:put-docs
-       :bulk-send
-       {:xt/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
-        :bulk-send/sent-at
-        #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-        :bulk-send/payload-size 11,
-        :bulk-send/mailersend-id "abc123"}]
-      [:patch-docs
-       :digest
-       {:xt/id "digest1",
-        :digest/bulk-send-id
-        #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"}
-       {:xt/id "digest2",
-        :digest/bulk-send-id
-        #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"}]]}
+   [{:biff.fx/sqlite
+     [{:insert-into :bulk-send,
+       :values
+       [{:bulk-send/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+         :bulk-send/sent-at
+         #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
+         :bulk-send/payload-size 11,
+         :bulk-send/mailersend-id "abc123"}],
+       :on-conflict [:bulk-send/id],
+       :do-update-set
+       {:fields [:sent-at :payload-size :mailersend-id]}}
+      {:update :digest,
+       :set
+       {:digest/bulk-send-id
+        #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"},
+       :where [:= :digest/id "digest1"]}
+      {:update :digest,
+       :set
+       {:digest/bulk-send-id
+        #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"},
+       :where [:= :digest/id "digest2"]}]}
     {:biff.fx/sleep 7666}]}
   _]}

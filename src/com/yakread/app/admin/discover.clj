@@ -46,27 +46,27 @@
      [:.h-6]
      [:.max-sm:mx-4
       (biff/form
-        {:action (href save-moderation)
-         :hidden (lib.route/nippy-params {:all-items (mapv :item/id next-batch)})}
-        [:div.grid.xl:grid-cols-2.gap-6
-         (for [{:item/keys [id ui-read-more-card url]
-                :keys [item/n-likes]} next-batch]
-           [:<>
-            [:div
-             [:div (str n-likes) " likes"]
-             [:.h-2]
-             [:div url]
-             (ui-read-more-card {:show-author true
-                                 :new-tab true})]
-            (ui/checkbox {:ui/label "block?"
-                          :ui/size :large
-                          :name "block"
-                          :value id})])
-         (ui/button {:type "submit"
-                     :ui/size :large
-                     :ui/type :primary
-                     :class '[w-full]}
-           "Save")])]]))
+       {:action (href save-moderation)
+        :hidden (lib.route/nippy-params {:all-items (mapv :item/id next-batch)})}
+       [:div.grid.xl:grid-cols-2.gap-6
+        (for [{:item/keys [id ui-read-more-card url]
+               :keys [item/n-likes]} next-batch]
+          [:<>
+           [:div
+            [:div (str n-likes) " likes"]
+            [:.h-2]
+            [:div url]
+            (ui-read-more-card {:show-author true
+                                :new-tab true})]
+           (ui/checkbox {:ui/label "block?"
+                         :ui/size :large
+                         :name "block"
+                         :value id})])
+        (ui/button {:type "submit"
+                    :ui/size :large
+                    :ui/type :primary
+                    :class '[w-full]}
+                   "Save")])]]))
 
 (fx/defroute-pathom page-route "/admin/discover"
   [:app.shell/app-shell]

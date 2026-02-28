@@ -58,26 +58,26 @@
         :headers {"hx-refresh" "true"}
         :biff.fx/sqlite (vec (concat
                       ;; record succeeded payment
-                      (for [{:ad-credit/keys [id amount ad]} succeeded
-                            :let [{ad-id :ad/id} ad]
-                            op [{:update :ad-credit
-                                 :set {:ad-credit/charge-status [:lift :ad-credit.charge-status/confirmed]}
-                                 :where [:= :ad-credit/id id]}
-                                {:update :ad
-                                 :set {:ad/balance [:- :ad/balance amount]}
-                                 :where [:= :ad/id ad-id]}]]
-                        op)
+                              (for [{:ad-credit/keys [id amount ad]} succeeded
+                                    :let [{ad-id :ad/id} ad]
+                                    op [{:update :ad-credit
+                                         :set {:ad-credit/charge-status [:lift :ad-credit.charge-status/confirmed]}
+                                         :where [:= :ad-credit/id id]}
+                                        {:update :ad
+                                         :set {:ad/balance [:- :ad/balance amount]}
+                                         :where [:= :ad/id ad-id]}]]
+                                op)
 
                       ;; record failed payment
-                      (for [{:ad-credit/keys [id ad]} failed
-                            :let [{ad-id :ad/id} ad]
-                            op [{:update :ad-credit
-                                 :set {:ad-credit/charge-status [:lift :ad-credit.charge-status/failed]}
-                                 :where [:= :ad-credit/id id]}
-                                {:update :ad
-                                 :set {:ad/payment-failed true}
-                                 :where [:= :ad/id ad-id]}]]
-                        op)))}
+                              (for [{:ad-credit/keys [id ad]} failed
+                                    :let [{ad-id :ad/id} ad]
+                                    op [{:update :ad-credit
+                                         :set {:ad-credit/charge-status [:lift :ad-credit.charge-status/failed]}
+                                         :where [:= :ad-credit/id id]}
+                                        {:update :ad
+                                         :set {:ad/payment-failed true}
+                                         :where [:= :ad/id ad-id]}]]
+                                op)))}
 
        ;; create payment intent
        (for [{:ad-credit/keys [id amount ad]} new*
@@ -115,7 +115,7 @@
                         :hx-target "closest .pending-ad"
                         :hx-swap "outerHTML"
                         :ui/icon icon}
-              label))]
+                       label))]
          [:.max-w-screen-sm ui-preview-card]])])})
 
 (defresolver ads-table [{:keys [biff/now]}
@@ -150,34 +150,34 @@
       [:div.flex.gap-4
        (ui/button {:hx-post (href create-pending-charges {:tx charge-tx})
                    :disabled (empty? charge-tx)}
-         "Create pending charges")
+                  "Create pending charges")
        (ui/button {:hx-post (href handle-pending-charges)
                    :disabled (empty? pending-ads)}
-         "Handle pending charges")]
+                  "Handle pending charges")]
       (ui/table
-        ["Email" "Title" "State" "Balance" "Bid" "Budget" "Updated" "Chargeable" "Pending" "Stripe status"]
-        (for [{:ad/keys [user title state balance bid budget updated-at chargeable amount-pending pending-charge]}
-              (sort-by (fn [{:ad/keys [chargeable amount-pending updated-at balance]}]
-                         (if (or chargeable amount-pending)
-                           [0 (- balance)]
-                           [1 (- (inst-ms updated-at))]))
-                       ads)]
-          [(:user/email user)
-           title
-           [:div.px-1 {:class [(case state
-                                 :running "bg-tealv-50"
-                                 (:paused :incomplete) "bg-yellv-50"
-                                 (:rejected :payment-failed) "bg-redv-50"
-                                 nil)]}
-            (name state)]
-           (some-> balance ui/fmt-cents)
-           (some-> bid ui/fmt-cents)
-           (some-> budget ui/fmt-cents)
-           (tick/date (tick/in updated-at (tick/zone (:user/timezone admin))))
-           (when chargeable
-             (lib.icons/base "check-solid" {:class "w-4 h-4"}))
-           (some-> amount-pending ui/fmt-cents)
-           (:ad-credit/stripe-status pending-charge)]))))})
+       ["Email" "Title" "State" "Balance" "Bid" "Budget" "Updated" "Chargeable" "Pending" "Stripe status"]
+       (for [{:ad/keys [user title state balance bid budget updated-at chargeable amount-pending pending-charge]}
+             (sort-by (fn [{:ad/keys [chargeable amount-pending updated-at balance]}]
+                        (if (or chargeable amount-pending)
+                          [0 (- balance)]
+                          [1 (- (inst-ms updated-at))]))
+                      ads)]
+         [(:user/email user)
+          title
+          [:div.px-1 {:class [(case state
+                                :running "bg-tealv-50"
+                                (:paused :incomplete) "bg-yellv-50"
+                                (:rejected :payment-failed) "bg-redv-50"
+                                nil)]}
+           (name state)]
+          (some-> balance ui/fmt-cents)
+          (some-> bid ui/fmt-cents)
+          (some-> budget ui/fmt-cents)
+          (tick/date (tick/in updated-at (tick/zone (:user/timezone admin))))
+          (when chargeable
+            (lib.icons/base "check-solid" {:class "w-4 h-4"}))
+          (some-> amount-pending ui/fmt-cents)
+          (:ad-credit/stripe-status pending-charge)]))))})
 
 (fx/defroute-pathom page-content-route "/admin/advertise/content"
   [::pending-ads

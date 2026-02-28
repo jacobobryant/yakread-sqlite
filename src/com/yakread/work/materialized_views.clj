@@ -41,10 +41,10 @@
            current-item-viewed-at :user-item/viewed-at}
           (first
            (query
-                    {:select [:user-item/item-id :user-item/viewed-at]
-                     :from :mv-user
-                     :join [:user-item [:= :user-item/item-id :mv-user/current-item-id]]
-                     :where [:= :mv-user/user-id user-id]}))
+            {:select [:user-item/item-id :user-item/viewed-at]
+             :from :mv-user
+             :join [:user-item [:= :user-item/item-id :mv-user/current-item-id]]
+             :where [:= :mv-user/user-id user-id]}))
 
           new-current-item (cond
                              (and viewed-at

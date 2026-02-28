@@ -105,7 +105,7 @@
               [:redirect/item-id  (r :item) :uuid]]
 
    :user-item [:map {:closed true
-                    :biff/unique [[:user-item/user-id :user-item/item-id]]}
+                     :biff/unique [[:user-item/user-id :user-item/item-id]]}
                [:user-item/id                  :uuid]
                [:user-item/user-id   (r :user) :uuid]
                [:user-item/item-id   (r :item) :uuid]
@@ -183,7 +183,7 @@
                                      [:exp_month :int]]]]
 
    :ad-click [:map {:closed true
-                   :biff/unique [[:ad-click/user-id :ad-click/ad-id]]}
+                    :biff/unique [[:ad-click/user-id :ad-click/ad-id]]}
               [:ad-click/id                      :uuid]
               [:ad-click/user-id       (r :user) :uuid]
               [:ad-click/ad-id         (r :ad)   :uuid]

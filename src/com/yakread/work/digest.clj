@@ -46,14 +46,14 @@
     ;; though. Queues should probably expose the number of in-progress jobs.
     (when (and enabled (= 0 (.size (:work.digest/prepare-digest queues))))
       (let [users (->> (query
-                                {:select [:user/id
-                                          :user/email
-                                          :user/digest-last-sent
-                                          :user/suppressed-at
-                                          :user/digest-days
-                                          :user/send-digest-at
-                                          :user/timezone]
-                                 :from :user})
+                        {:select [:user/id
+                                  :user/email
+                                  :user/digest-last-sent
+                                  :user/suppressed-at
+                                  :user/digest-days
+                                  :user/send-digest-at
+                                  :user/timezone]
+                         :from :user})
                        (filterv #(send-digest? {:biff/now now :user %}))
                        (sort-by :user/email))]
         (when (not-empty users)
@@ -89,23 +89,23 @@
                             :digest-item/item-id (:item/id item)
                             :digest-item/kind [:lift kind]})
             tx (vec (concat
-                [{:update :user
-                  :set {:user/digest-last-sent now}
-                  :where [:= :user/id (:user/id user)]}
-                 {:insert-into :digest
-                  :values [(into {:digest/id          digest-id
-                                  :digest/user-id    (:user/id user)
-                                  :digest/sent-at now}
-                                 (filter (comp lib.core/something? val))
-                                 {:digest/subject-id  (get-in pathom [:digest/subject-item :item/id])
-                                  :digest/ad-id       (get-in pathom [:user/ad-rec :ad/id])})]
-                  :on-conflict [:digest/id]
-                  :do-update-set {:fields [:user-id :sent-at :subject-id :ad-id]}}]
-                (when (not-empty digest-items)
-                  [{:insert-into :digest-item
-                    :values (vec digest-items)
-                    :on-conflict [:digest-item/id]
-                    :do-update-set {:fields [:digest-id :item-id :kind]}}])))]
+                     [{:update :user
+                       :set {:user/digest-last-sent now}
+                       :where [:= :user/id (:user/id user)]}
+                      {:insert-into :digest
+                       :values [(into {:digest/id          digest-id
+                                       :digest/user-id    (:user/id user)
+                                       :digest/sent-at now}
+                                      (filter (comp lib.core/something? val))
+                                      {:digest/subject-id  (get-in pathom [:digest/subject-item :item/id])
+                                       :digest/ad-id       (get-in pathom [:user/ad-rec :ad/id])})]
+                       :on-conflict [:digest/id]
+                       :do-update-set {:fields [:user-id :sent-at :subject-id :ad-id]}}]
+                     (when (not-empty digest-items)
+                       [{:insert-into :digest-item
+                         :values (vec digest-items)
+                         :on-conflict [:digest-item/id]
+                         :do-update-set {:fields [:digest-id :item-id :kind]}}])))]
         [{:biff.fx/sqlite tx}
          {:biff.fx/queue {:id :work.digest/send-digest
                           :job {:user/email (:user/email user)
@@ -177,17 +177,17 @@
   (fn [{:keys [biff/now ::digest-ids ::payload-size biff.fx/http]}]
     (let [bulk-send-id (gen/uuid)]
       [{:biff.fx/sqlite (vec (concat
-                         [{:insert-into :bulk-send
-                           :values [{:bulk-send/id bulk-send-id
-                                     :bulk-send/sent-at now
-                                     :bulk-send/payload-size payload-size
-                                     :bulk-send/mailersend-id (get-in http [:body :bulk_email_id])}]
-                           :on-conflict [:bulk-send/id]
-                           :do-update-set {:fields [:sent-at :payload-size :mailersend-id]}}]
-                         (for [id digest-ids]
-                           {:update :digest
-                            :set {:digest/bulk-send-id bulk-send-id}
-                            :where [:= :digest/id id]})))}
+                              [{:insert-into :bulk-send
+                                :values [{:bulk-send/id bulk-send-id
+                                          :bulk-send/sent-at now
+                                          :bulk-send/payload-size payload-size
+                                          :bulk-send/mailersend-id (get-in http [:body :bulk_email_id])}]
+                                :on-conflict [:bulk-send/id]
+                                :do-update-set {:fields [:sent-at :payload-size :mailersend-id]}}]
+                              (for [id digest-ids]
+                                {:update :digest
+                                 :set {:digest/bulk-send-id bulk-send-id}
+                                 :where [:= :digest/id id]})))}
        ;; Mailersend limits bulk request to 15 / minute.
        ;; https://developers.mailersend.com/api/v1/email.html#send-bulk-emails
        {:biff.fx/sleep (long (+ (/ 60000 9) 1000))}])))
@@ -212,5 +212,4 @@
                         :where [[user :user/email email]]}
                       ;; insert emails here
                       [])]
-        (biff/submit-job ctx :work.digest/prepare-digest user))))
-  )
+        (biff/submit-job ctx :work.digest/prepare-digest user)))))

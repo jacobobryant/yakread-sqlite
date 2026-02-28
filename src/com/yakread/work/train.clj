@@ -68,7 +68,5 @@
 (comment
   (time
    (do
-    (retrain (biff/merge-context @com.yakread/system))
-    :done))
-
-  )
+     (retrain (biff/merge-context @com.yakread/system))
+     :done)))

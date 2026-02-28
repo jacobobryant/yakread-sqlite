@@ -65,7 +65,7 @@
                                        :skip/reclist-id reclist-id}
                                       skip)))
                 :on-conflict [:skip/reclist-id :skip/item-id :skip/ad-id]
-                :do-update-set {:fields [:reclist-id]}}])))))))))
+                :do-update-set {:fields [:reclist-id]}}]))))))))
 
 (fx/defroute record-item-click
   :post
@@ -75,27 +75,27 @@
         (ui/on-error {:status 400})
         {:status 204
          :biff.fx/sqlite (vec (concat
-                      (skip-tx {:biff/query query
-                                :user/id user-id
-                                :rec/id item-id
-                                :skip-items skip-items
-                                :skip-ads skip-ads
-                                :t t})
-                      (when (empty? (query
-                                     {:select 1
-                                      :from :user-item
-                                      :where [:and
-                                              [:= :user-item/user-id user-id]
-                                              [:= :user-item/item-id item-id]
-                                              [:is-not :user-item/viewed-at nil]]
-                                      :limit 1}))
-                        [{:insert-into :user-item
-                          :values [{:user-item/id (gen/uuid)
-                                    :user-item/user-id user-id
-                                    :user-item/item-id item-id
-                                    :user-item/viewed-at now}]
-                          :on-conflict [:user-item/user-id :user-item/item-id]
-                          :do-update-set {:fields [:viewed-at]}}])))}))))
+                               (skip-tx {:biff/query query
+                                         :user/id user-id
+                                         :rec/id item-id
+                                         :skip-items skip-items
+                                         :skip-ads skip-ads
+                                         :t t})
+                               (when (empty? (query
+                                              {:select 1
+                                               :from :user-item
+                                               :where [:and
+                                                       [:= :user-item/user-id user-id]
+                                                       [:= :user-item/item-id item-id]
+                                                       [:is-not :user-item/viewed-at nil]]
+                                               :limit 1}))
+                                 [{:insert-into :user-item
+                                   :values [{:user-item/id (gen/uuid)
+                                             :user-item/user-id user-id
+                                             :user-item/item-id item-id
+                                             :user-item/viewed-at now}]
+                                   :on-conflict [:user-item/user-id :user-item/item-id]
+                                   :do-update-set {:fields [:viewed-at]}}])))}))))
 
 (fx/defroute record-ad-click
   :post
@@ -107,29 +107,29 @@
         (ui/on-error {:status 400})
         {:status 204
          :biff.fx/sqlite (vec (concat
-                      (skip-tx {:biff/query query
-                                :user/id user-id
-                                :rec/id ad-id
-                                :skip-items skip-items
-                                :skip-ads skip-ads
-                                :t t})
-                      (when (empty?
-                             (query
-                              {:select 1
-                               :from :ad-click
-                               :where [:and
-                                       [:= :ad-click/user-id user-id]
-                                       [:= :ad-click/ad-id ad-id]]
-                               :limit 1}))
-                        [{:insert-into :ad-click
-                          :values [{:ad-click/id (gen/uuid)
-                                    :ad-click/user-id user-id
-                                    :ad-click/ad-id ad-id
-                                    :ad-click/created-at now
-                                    :ad-click/cost click-cost
-                                    :ad-click/source [:lift (or source :ad-click.source/web)]}]
-                          :on-conflict [:ad-click/user-id :ad-click/ad-id]
-                          :do-update-set {:fields [:created-at :cost :source]}}])))}))))
+                               (skip-tx {:biff/query query
+                                         :user/id user-id
+                                         :rec/id ad-id
+                                         :skip-items skip-items
+                                         :skip-ads skip-ads
+                                         :t t})
+                               (when (empty?
+                                      (query
+                                       {:select 1
+                                        :from :ad-click
+                                        :where [:and
+                                                [:= :ad-click/user-id user-id]
+                                                [:= :ad-click/ad-id ad-id]]
+                                        :limit 1}))
+                                 [{:insert-into :ad-click
+                                   :values [{:ad-click/id (gen/uuid)
+                                             :ad-click/user-id user-id
+                                             :ad-click/ad-id ad-id
+                                             :ad-click/created-at now
+                                             :ad-click/cost click-cost
+                                             :ad-click/source [:lift (or source :ad-click.source/web)]}]
+                                   :on-conflict [:ad-click/user-id :ad-click/ad-id]
+                                   :do-update-set {:fields [:created-at :cost :source]}}])))}))))
 
 (fx/defroute-pathom page-content-route "/for-you/content"
   [{(? :session/user)

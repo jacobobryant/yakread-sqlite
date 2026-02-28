@@ -51,7 +51,7 @@
          {:biff.fx/sqlite [{:insert-into :user-item
                             :values (vec items)
                             :on-conflict [:user-item/user-id :user-item/item-id]
-                            :do-update-set {:fields [:skipped-at]}}]}))))
+                            :do-update-set {:fields [:skipped-at]}}]})))))
 
 (fx/defroute-pathom read-content-route "/sub-item/:item-id/content"
   [{(? :params/item) [:item/ui-read-content
@@ -124,12 +124,12 @@
       (ui/button {:ui/type :secondary
                   :ui/size :small
                   :hx-post (href mark-all-read {:sub/id id})}
-        "Mark all as read")
+                 "Mark all as read")
       (ui/button {:ui/type :secondary
                   :ui/size :small
                   :hx-post (href routes/unsubscribe! {:sub/id id})
                   :hx-confirm (ui/confirm-unsub-msg title)}
-        "Unsubscribe")]
+                 "Unsubscribe")]
      [:.h-6]
      [:div {:class '[flex flex-col gap-6
                      max-w-screen-sm]}

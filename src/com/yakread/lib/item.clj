@@ -121,8 +121,8 @@
                                     {user-item-key now})]
                     :on-conflict [:user-item/user-id :user-item/item-id]
                     :do-update-set {:fields [:favorited-at :disliked-at :bookmarked-at
-                                            :reported-at :report-reason
-                                            (keyword (name user-item-key))]}}]}
+                                             :reported-at :report-reason
+                                             (keyword (name user-item-key))]}}]}
                  (some-> redirect-to (hx-redirect {:added true}))))
 
         :on-error

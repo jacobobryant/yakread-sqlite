@@ -86,18 +86,18 @@
                          :socket-timeout 10000
                          :connection-timeout 10000})}
        {:biff.fx/sqlite (vec (concat
-                         [{:delete-from :user :where [:= :user/id id]}]
-                         (when ad
-                           [{:delete-from :ad :where [:= :ad/id (:ad/id ad)]}])
-                         (for [{:keys [sub/id sub/feed-id]} subscriptions
-                               :when feed-id]
-                           {:delete-from :sub :where [:= :sub/id id]})
-                         (when email-username
-                           [{:insert-into :deleted-user
-                             :values [{:deleted-user/id (gen/uuid)
-                                       :deleted-user/email-username-hash (lib.core/sha256 email-username)}]
-                             :on-conflict [:deleted-user/id]
-                             :do-update-set {:fields [:email-username-hash]}}])))
+                              [{:delete-from :user :where [:= :user/id id]}]
+                              (when ad
+                                [{:delete-from :ad :where [:= :ad/id (:ad/id ad)]}])
+                              (for [{:keys [sub/id sub/feed-id]} subscriptions
+                                    :when feed-id]
+                                {:delete-from :sub :where [:= :sub/id id]})
+                              (when email-username
+                                [{:insert-into :deleted-user
+                                  :values [{:deleted-user/id (gen/uuid)
+                                            :deleted-user/email-username-hash (lib.core/sha256 email-username)}]
+                                  :on-conflict [:deleted-user/id]
+                                  :do-update-set {:fields [:email-username-hash]}}])))
         :biff.fx/next :delete-email-batch}]))
 
   :delete-email-batch
@@ -114,9 +114,9 @@
                              (mapv :item/id)))
           batch (when (not-empty email-ids)
                   (query
-                           {:select [:item/id :item/content-key :item/email-raw-content-key]
-                            :from :item
-                            :where [:in :item/id (take 500 email-ids)]}))
+                   {:select [:item/id :item/content-key :item/email-raw-content-key]
+                    :from :item
+                    :where [:in :item/id (take 500 email-ids)]}))
           remaining (drop 500 email-ids)]
       (when (not-empty batch)
         [{:biff.fx/s3 (for [email batch
@@ -127,7 +127,7 @@
                          :config-ns config-ns
                          :method "DELETE"})}
          {:biff.fx/sqlite [{:delete-from :item
-                           :where [:in :item/id (mapv :item/id batch)]}]}
+                            :where [:in :item/id (mapv :item/id batch)]}]}
          {:biff.fx/next :delete-email-batch
           ::email-ids remaining}]))))
 

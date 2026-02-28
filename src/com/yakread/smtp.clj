@@ -35,11 +35,11 @@
     (let [result (and (or (not domain) (= domain (:domain message)))
                       (not-empty
                        (query
-                                {:select 1
-                                 :from :user
-                                 :where [:=
-                                         :user/email-username
-                                         (str/lower-case (:username message))]})))
+                        {:select 1
+                         :from :user
+                         :where [:=
+                                 :user/email-username
+                                 (str/lower-case (:username message))]})))
           html (when result
                  (lib.smtp/extract-html message))]
       (log/info "receiving email for"
@@ -57,7 +57,7 @@
     (if-not html
       (do
         (log/warn "juice failed to parse message for" (:username message))
-        {:biff.fx/spit {:file (str "storage/juice-failed/" 
+        {:biff.fx/spit {:file (str "storage/juice-failed/"
                                    (inst-ms (tick/instant now))
                                    ".edn")
                         :content (pr-str message)}})
@@ -79,14 +79,14 @@
             [{user-id :user/id
               sub-id :sub/id}]
             (query
-                     {:select [:user/id
-                               :sub/id]
-                      :from :user
-                      :left-join [:sub [:and
-                                        [:= :sub/user-id :user/id]
-                                        [:= :sub/email-from from]]]
-                      :where [:= :user/email-username (str/lower-case (:username message))]
-                      :limit 1})
+             {:select [:user/id
+                       :sub/id]
+              :from :user
+              :left-join [:sub [:and
+                                [:= :sub/user-id :user/id]
+                                [:= :sub/email-from from]]]
+              :where [:= :user/email-username (str/lower-case (:username message))]
+              :limit 1})
             new-sub (nil? sub-id)
             sub-id (or sub-id (gen/uuid))
             first-header (fn [header-name]
@@ -104,35 +104,35 @@
                         :headers {"x-amz-acl" "private"
                                   "content-type" "text/html"}}]}
          {:biff.fx/sqlite (vec (concat
-                        [{:insert-into :item
-                          :values [(lib.core/some-vals
-                                    {:item/id (gen/uuid)
-                                     :item/ingested-at now
-                                     :item/title (:subject message)
-                                     :item/url url
-                                     :item/content-key parsed-content-key
-                                     :item/published-at now
-                                     :item/excerpt (lib.content/excerpt text)
-                                     :item/author-name from
-                                     :item/lang (lib.content/lang html)
-                                     :item/length (count text)
-                                     :item/email-sub-id sub-id
-                                     :item/email-raw-content-key raw-content-key
-                                     :item/email-list-unsubscribe (first-header "list-unsubscribe")
-                                     :item/email-list-unsubscribe-post (first-header "list-unsubscribe-post")
-                                     :item/email-reply-to (some :address (:reply-to message))
-                                     :item/email-maybe-confirmation (or new-sub nil)})]
-                          :on-conflict [:item/id]
-                          :do-update-set {:fields [:ingested-at :title :url :content-key :published-at
-                                                   :excerpt :author-name :lang :length :email-sub-id
-                                                   :email-raw-content-key :email-list-unsubscribe
-                                                   :email-list-unsubscribe-post :email-reply-to
-                                                   :email-maybe-confirmation]}}]
-                        (when new-sub
-                          [{:insert-into :sub
-                            :values [{:sub/id sub-id
-                                      :sub/user-id user-id
-                                      :sub/email-from from
-                                      :sub/created-at now}]
-                            :on-conflict [:sub/user-id :sub/email-from]
-                            :do-update-set {:fields [:created-at]}}])))}]))))
+                                [{:insert-into :item
+                                  :values [(lib.core/some-vals
+                                            {:item/id (gen/uuid)
+                                             :item/ingested-at now
+                                             :item/title (:subject message)
+                                             :item/url url
+                                             :item/content-key parsed-content-key
+                                             :item/published-at now
+                                             :item/excerpt (lib.content/excerpt text)
+                                             :item/author-name from
+                                             :item/lang (lib.content/lang html)
+                                             :item/length (count text)
+                                             :item/email-sub-id sub-id
+                                             :item/email-raw-content-key raw-content-key
+                                             :item/email-list-unsubscribe (first-header "list-unsubscribe")
+                                             :item/email-list-unsubscribe-post (first-header "list-unsubscribe-post")
+                                             :item/email-reply-to (some :address (:reply-to message))
+                                             :item/email-maybe-confirmation (or new-sub nil)})]
+                                  :on-conflict [:item/id]
+                                  :do-update-set {:fields [:ingested-at :title :url :content-key :published-at
+                                                           :excerpt :author-name :lang :length :email-sub-id
+                                                           :email-raw-content-key :email-list-unsubscribe
+                                                           :email-list-unsubscribe-post :email-reply-to
+                                                           :email-maybe-confirmation]}}]
+                                (when new-sub
+                                  [{:insert-into :sub
+                                    :values [{:sub/id sub-id
+                                              :sub/user-id user-id
+                                              :sub/email-from from
+                                              :sub/created-at now}]
+                                    :on-conflict [:sub/user-id :sub/email-from]
+                                    :do-update-set {:fields [:created-at]}}])))}]))))
