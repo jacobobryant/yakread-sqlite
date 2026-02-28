@@ -1,5 +1,6 @@
 (ns com.yakread.app.admin.advertise
   (:require
+   [clojure.data.generators :as gen]
    [clojure.tools.logging :as log]
    [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
    [com.yakread.lib.admin :as lib]
@@ -8,7 +9,6 @@
    [com.yakread.lib.middleware :as lib.mid]
    [com.yakread.lib.route :as lib.route :refer [href]]
    [com.yakread.lib.ui :as ui]
-   [com.yakread.util.biff-staging :as biffs]
    [tick.core :as tick])
   (:import
    [java.time ZonedDateTime]))
@@ -18,14 +18,21 @@
 (fx/defroute update-ad
   :post
   (fn [{{:keys [ad]} :params}]
-    {:biff.fx/tx [[:patch-docs :ad ad]]
-     :status 200
-     :body ""}))
+    (let [id (:ad/id ad)
+          set-fields (cond-> (dissoc ad :ad/id)
+                       (:ad/approve-state ad)
+                       (update :ad/approve-state
+                               #([:lift (keyword "ad.approve-state" (name %))])))]
+      {:biff.fx/sqlite [{:update :ad
+                          :set set-fields
+                          :where [:= :ad/id id]}]
+       :status 200
+       :body ""})))
 
 (fx/defroute create-pending-charges
   :post
   (fn [{{:keys [tx]} :params}]
-    {:biff.fx/tx tx
+    {:biff.fx/sqlite tx
      :headers {"hx-refresh" "true"}
      :status 204}))
 
@@ -51,23 +58,26 @@
       (concat
        {:status 204
         :headers {"hx-refresh" "true"}
-        :biff.fx/tx (concat
-                     ;; record succeeded payment
-                     (for [{:ad-credit/keys [id amount ad]} succeeded
-                           :let [{ad-id :ad/id} ad]]
-                       [[:patch-docs :ad-credit {:ad-credit/id id
-                                                 :ad-credit/charge-status :ad-credit.charge-status/confirmed}]
-                        (biffs/dual-write
-                         {:update :ad
-                          :set {:ad/balance [:- :ad/balance amount]}
-                          :where [:= :ad/id ad-id]})])
+        :biff.fx/sqlite (concat
+                         ;; record succeeded payment
+                         (for [{:ad-credit/keys [id amount ad]} succeeded
+                               :let [{ad-id :ad/id} ad]]
+                           [{:update :ad-credit
+                             :set {:ad-credit/charge-status [:lift :ad-credit.charge-status/confirmed]}
+                             :where [:= :ad-credit/id id]}
+                            {:update :ad
+                             :set {:ad/balance [:- :ad/balance amount]}
+                             :where [:= :ad/id ad-id]}])
 
-                     ;; record failed payment
-                     (for [{:ad-credit/keys [id ad]} failed
-                           :let [{ad-id :ad/id} ad]]
-                       [[:patch-docs :ad-credit {:ad-credit/id id
-                                                 :ad-credit/charge-status :ad-credit.charge-status/failed}]
-                        [:patch-docs :ad {:ad/id ad-id :ad/payment-failed true}]]))}
+                         ;; record failed payment
+                         (for [{:ad-credit/keys [id ad]} failed
+                               :let [{ad-id :ad/id} ad]]
+                           [{:update :ad-credit
+                             :set {:ad-credit/charge-status [:lift :ad-credit.charge-status/failed]}
+                             :where [:= :ad-credit/id id]}
+                            {:update :ad
+                             :set {:ad/payment-failed true}
+                             :where [:= :ad/id ad-id]}]))}
 
        ;; create payment intent
        (for [{:ad-credit/keys [id amount ad]} new*
@@ -127,13 +137,13 @@
    (let [pending-ads (filterv :ad/pending-charge ads)
          charge-tx (for [{:ad/keys [id balance chargeable]} ads
                          :when chargeable]
-                     ;; TODO I don't think this works
-                     {:db/doc-type :ad-credit
-                      :ad-credit/ad id
-                      :ad-credit/source :ad-credit.source/charge
-                      :ad-credit/amount balance
-                      :ad-credit/created-at now
-                      :ad-credit/charge-status :ad-credit.charge-status/pending})]
+                     {:insert-into :ad-credit
+                      :values [{:ad-credit/id (gen/uuid)
+                                :ad-credit/ad-id id
+                                :ad-credit/source [:lift :ad-credit.source/charge]
+                                :ad-credit/amount balance
+                                :ad-credit/created-at now
+                                :ad-credit/charge-status [:lift :ad-credit.charge-status/pending]}]})]
      (ui/wide-page-well
       [:div.flex.gap-4
        (ui/button {:hx-post (href create-pending-charges {:tx charge-tx})

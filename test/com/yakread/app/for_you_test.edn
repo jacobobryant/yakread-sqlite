@@ -18,31 +18,36 @@
      :biff/now (t/instant 2000)}),
    :result
    {:status 204,
-    :biff.fx/tx
-    ([:biff/upsert
-      :reclist
-      [:reclist/user-id :reclist/created-at]
-      {:reclist/user-id #uuid "00000000-0000-0000-0000-000000000000",
-       :reclist/created-at #time/instant "2000-01-01T00:00:00Z",
-       :reclist/clicked
-       #{#uuid "00010000-0000-0000-0000-000000000001"},
-       :xt/id #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be"}]
-     [:biff/upsert
-      :skip
-      [:skip/reclist-id :skip/item-id :skip/ad-id]
-      {:skip/reclist-id #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
-       :xt/id #uuid "0000c9f6-4f1d-f03a-8ce9-70b71df42503",
-       :skip/item-id #uuid "00020000-0000-0000-0000-000000000002"}
-      {:skip/reclist-id #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
-       :xt/id #uuid "0000ba3d-c812-a76d-554d-cd2b40b5f04b",
-       :skip/item-id #uuid "00030000-0000-0000-0000-000000000003"}]
-     [:biff/upsert
-      :user-item
-      [:user-item/user-id :user-item/item-id]
-      {:user-item/user-id #uuid "00000000-0000-0000-0000-000000000000",
-       :user-item/item-id #uuid "00010000-0000-0000-0000-000000000001",
-       :user-item/viewed-at #time/instant "2000-01-01T00:00:00Z",
-       :xt/id #uuid "0000c222-9cef-e94d-fc1e-932efb9a0f58"}])}}
+    :biff.fx/sqlite
+    ({:insert-into :reclist,
+      :values
+      [{:reclist/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+        :reclist/user-id #uuid "00000000-0000-0000-0000-000000000000",
+        :reclist/created-at #time/instant "2000-01-01T00:00:00Z",
+        :reclist/clicked
+        #{#uuid "00010000-0000-0000-0000-000000000001"}}],
+      :on-conflict [:reclist/user-id :reclist/created-at],
+      :do-update-set {:fields [:clicked]}}
+     {:insert-into :skip,
+      :values
+      [{:skip/id #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503",
+        :skip/reclist-id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+        :skip/item-id #uuid "00020000-0000-0000-0000-000000000002"}
+       {:skip/id #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
+        :skip/reclist-id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+        :skip/item-id #uuid "00030000-0000-0000-0000-000000000003"}],
+      :on-conflict [:skip/reclist-id :skip/item-id :skip/ad-id],
+      :do-update-set {:skip/reclist-id :skip/reclist-id}}
+     {:insert-into :user-item,
+      :values
+      [{:user-item/id #uuid "629bc222-9cef-e94d-fc1e-932efb9a0f58",
+        :user-item/user-id
+        #uuid "00000000-0000-0000-0000-000000000000",
+        :user-item/item-id
+        #uuid "00010000-0000-0000-0000-000000000001",
+        :user-item/viewed-at #time/instant "2000-01-01T00:00:00Z"}],
+      :on-conflict [:user-item/user-id :user-item/item-id],
+      :do-update-set {:fields [:viewed-at]}})}}
   _
   {:doc "record-item-click with existing skips",
    :eval
@@ -71,28 +76,31 @@
      :biff/now (t/instant 2000)}),
    :result
    {:status 204,
-    :biff.fx/tx
-    ([:biff/upsert
-      :reclist
-      [:reclist/user-id :reclist/created-at]
-      {:reclist/user-id #uuid "00050000-0000-0000-0000-000000000005",
-       :reclist/created-at #time/instant "2000-01-01T00:00:00Z",
-       :reclist/clicked
-       #{#uuid "00010000-0000-0000-0000-000000000001"
-         #uuid "00030000-0000-0000-0000-000000000003"
-         #uuid "00040000-0000-0000-0000-000000000004"},
-       :xt/id #uuid "00000000-0000-0000-0000-000000000000"}]
-     {:xt [:delete :skip #uuid "00110000-0000-0000-0000-000000000011"],
-      :sqlite
-      {:delete-from :skip,
-       :where [:in :id [#bytes "00110000000000000000000000000011"]]}}
-     [:biff/upsert
-      :user-item
-      [:user-item/user-id :user-item/item-id]
-      {:user-item/user-id #uuid "00050000-0000-0000-0000-000000000005",
-       :user-item/item-id #uuid "00030000-0000-0000-0000-000000000003",
-       :user-item/viewed-at #time/instant "2000-01-01T00:00:00Z",
-       :xt/id #uuid "0005b45f-d4d9-5138-3d93-cb799b3970be"}])}}
+    :biff.fx/sqlite
+    ({:insert-into :reclist,
+      :values
+      [{:reclist/id #uuid "00000000-0000-0000-0000-000000000000",
+        :reclist/user-id #uuid "00050000-0000-0000-0000-000000000005",
+        :reclist/created-at #time/instant "2000-01-01T00:00:00Z",
+        :reclist/clicked
+        #{#uuid "00010000-0000-0000-0000-000000000001"
+          #uuid "00030000-0000-0000-0000-000000000003"
+          #uuid "00040000-0000-0000-0000-000000000004"}}],
+      :on-conflict [:reclist/user-id :reclist/created-at],
+      :do-update-set {:fields [:clicked]}}
+     {:delete-from :skip,
+      :where
+      [:in :skip/id [#uuid "00110000-0000-0000-0000-000000000011"]]}
+     {:insert-into :user-item,
+      :values
+      [{:user-item/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+        :user-item/user-id
+        #uuid "00050000-0000-0000-0000-000000000005",
+        :user-item/item-id
+        #uuid "00030000-0000-0000-0000-000000000003",
+        :user-item/viewed-at #time/instant "2000-01-01T00:00:00Z"}],
+      :on-conflict [:user-item/user-id :user-item/item-id],
+      :do-update-set {:fields [:viewed-at]}})}}
   _
   {:doc "record-ad-click",
    :eval
@@ -111,15 +119,17 @@
      :biff/now (t/instant 2000)}),
    :result
    {:status 204,
-    :biff.fx/tx
-    ([:biff/upsert
-      :ad-click
-      [:ad-click/user-id :ad-click/ad-id]
-      {:ad-click/user-id #uuid "00000000-0000-0000-0000-000000000000",
-       :ad-click/ad-id #uuid "00010000-0000-0000-0000-000000000001",
-       :ad-click/created-at #time/instant "2000-01-01T00:00:00Z",
-       :ad-click/cost 50,
-       :ad-click/source :email}])}}
+    :biff.fx/sqlite
+    ({:insert-into :ad-click,
+      :values
+      [{:ad-click/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+        :ad-click/user-id #uuid "00000000-0000-0000-0000-000000000000",
+        :ad-click/ad-id #uuid "00010000-0000-0000-0000-000000000001",
+        :ad-click/created-at #time/instant "2000-01-01T00:00:00Z",
+        :ad-click/cost 50,
+        :ad-click/source [:lift :email]}],
+      :on-conflict [:ad-click/user-id :ad-click/ad-id],
+      :do-update-set {:fields [:created-at :cost :source]}})}}
   _
   {:doc "record-ad-click with ad skips",
    :eval
@@ -138,27 +148,31 @@
      :biff/now (t/instant 2000)}),
    :result
    {:status 204,
-    :biff.fx/tx
-    ([:biff/upsert
-      :reclist
-      [:reclist/user-id :reclist/created-at]
-      {:reclist/user-id #uuid "00000000-0000-0000-0000-000000000000",
-       :reclist/created-at #time/instant "2000-01-01T00:00:00Z",
-       :reclist/clicked
-       #{#uuid "00010000-0000-0000-0000-000000000001"},
-       :xt/id #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be"}]
-     [:biff/upsert
-      :skip
-      [:skip/reclist-id :skip/item-id :skip/ad-id]
-      {:skip/reclist-id #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
-       :xt/id #uuid "0000c9f6-4f1d-f03a-8ce9-70b71df42503",
-       :skip/ad-id #uuid "00020000-0000-0000-0000-000000000002"}]
-     [:biff/upsert
-      :ad-click
-      [:ad-click/user-id :ad-click/ad-id]
-      {:ad-click/user-id #uuid "00000000-0000-0000-0000-000000000000",
-       :ad-click/ad-id #uuid "00010000-0000-0000-0000-000000000001",
-       :ad-click/created-at #time/instant "2000-01-01T00:00:00Z",
-       :ad-click/cost 50,
-       :ad-click/source :email}])}}
+    :biff.fx/sqlite
+    ({:insert-into :reclist,
+      :values
+      [{:reclist/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+        :reclist/user-id #uuid "00000000-0000-0000-0000-000000000000",
+        :reclist/created-at #time/instant "2000-01-01T00:00:00Z",
+        :reclist/clicked
+        #{#uuid "00010000-0000-0000-0000-000000000001"}}],
+      :on-conflict [:reclist/user-id :reclist/created-at],
+      :do-update-set {:fields [:clicked]}}
+     {:insert-into :skip,
+      :values
+      [{:skip/id #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503",
+        :skip/reclist-id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+        :skip/ad-id #uuid "00020000-0000-0000-0000-000000000002"}],
+      :on-conflict [:skip/reclist-id :skip/item-id :skip/ad-id],
+      :do-update-set {:skip/reclist-id :skip/reclist-id}}
+     {:insert-into :ad-click,
+      :values
+      [{:ad-click/id #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
+        :ad-click/user-id #uuid "00000000-0000-0000-0000-000000000000",
+        :ad-click/ad-id #uuid "00010000-0000-0000-0000-000000000001",
+        :ad-click/created-at #time/instant "2000-01-01T00:00:00Z",
+        :ad-click/cost 50,
+        :ad-click/source [:lift :email]}],
+      :on-conflict [:ad-click/user-id :ad-click/ad-id],
+      :do-update-set {:fields [:created-at :cost :source]}})}}
   _]}

@@ -1,12 +1,12 @@
 (ns com.yakread.app.subscriptions.view
   (:require
+   [clojure.data.generators :as gen]
    [com.wsscode.pathom3.connect.operation :refer [?]]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.middleware :as lib.middle]
    [com.yakread.lib.route :as lib.route :refer [href]]
    [com.yakread.lib.ui :as ui]
-   [com.yakread.routes :as routes]
-   [com.yakread.util.biff-staging :as biffs]))
+   [com.yakread.routes :as routes]))
 
 (fx/defroute-pathom mark-read
   [{:session/user [:user/id]}
@@ -22,11 +22,13 @@
                                          [:= :user-item/item-id (:item/id item)]
                                          [:is-not :user-item/viewed-at nil]]
                                  :limit 1}))
-             {:biff.fx/tx [[:patch-docs :user-item
-                            {:xt/id (biffs/gen-uuid (:user/id user))
-                             :user-item/user-id (:user/id user)
-                             :user-item/item-id (:item/id item)
-                             :user-item/viewed-at now}]]}))))
+             {:biff.fx/sqlite [{:insert-into :user-item
+                                 :values [{:user-item/id (gen/uuid)
+                                           :user-item/user-id (:user/id user)
+                                           :user-item/item-id (:item/id item)
+                                           :user-item/viewed-at now}]
+                                 :on-conflict [:user-item/user-id :user-item/item-id]
+                                 :do-update-set {:fields [:viewed-at]}}]}))))
 
 (fx/defroute-pathom mark-all-read
   [{:session/user [:user/id]}
@@ -38,13 +40,15 @@
   (fn [{:keys [biff/now]} {:keys [session/user params/sub]}]
     {:status 303
      :headers {"HX-Location" (href `page-route (:sub/id sub))}
-     :biff.fx/tx [(into [:biff/upsert :user-item [:user-item/user-id :user-item/item-id]]
-                        (for [{:item/keys [id unread]} (:sub/items sub)
-                              :when unread]
-                          {:xt/id (biffs/gen-uuid (:user/id user))
-                           :user-item/user-id (:user/id user)
-                           :user-item/item-id id
-                           :user-item/skipped-at now}))]}))
+     :biff.fx/sqlite [{:insert-into :user-item
+                        :values (vec (for [{:item/keys [id unread]} (:sub/items sub)
+                                           :when unread]
+                                       {:user-item/id (gen/uuid)
+                                        :user-item/user-id (:user/id user)
+                                        :user-item/item-id id
+                                        :user-item/skipped-at now}))
+                        :on-conflict [:user-item/user-id :user-item/item-id]
+                        :do-update-set {:fields [:skipped-at]}}]}))
 
 (fx/defroute-pathom read-content-route "/sub-item/:item-id/content"
   [{(? :params/item) [:item/ui-read-content
