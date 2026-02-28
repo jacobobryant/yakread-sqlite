@@ -32,25 +32,31 @@
    :result false}
   _
   {:eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [ctx
      {:user
-      [{:xt/id "user1", :user/email "user1@example.com"}
-       {:xt/id "user2",
+      [{:user/id (t/uuid 1), :user/email "user1@example.com"}
+       {:user/id (t/uuid 2),
         :user/email "user2@example.com",
-        :user/digest-last-sent
-        #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}]}]
+        :user/digest-last-sent (t/instant 2000)}]}]
     (queue-prepare-digest
-     {:biff/conn node,
-      :biff/now #time/zoned-date-time "2000-01-01T16:00:01Z[UTC]",
-      :biff/queues {:work.digest/prepare-digest (t/queue)},
-      :yakread.work.digest/enabled true}
+     (merge
+      ctx
+      {:biff/now #time/zoned-date-time "2000-01-01T16:00:01Z[UTC]",
+       :biff/queues {:work.digest/prepare-digest (t/queue)},
+       :yakread.work.digest/enabled true})
      :start)),
    :result
    {:biff.fx/queue
     {:jobs
      ([:work.digest/prepare-digest
-       {:xt/id "user1", :user/email "user1@example.com"}])}}}
+       {:user/id #uuid "00010000-0000-0000-0000-000000000001",
+        :user/email "user1@example.com",
+        :user/digest-last-sent nil,
+        :user/suppressed-at nil,
+        :user/digest-days nil,
+        :user/send-digest-at nil,
+        :user/timezone nil}])}}}
   _
   {:eval
    (send-digest?
@@ -109,7 +115,7 @@
       #time/zoned-date-time "2025-07-13T03:44:57Z[UTC]"}}),
    :result false}
   _
-  {:eval (prepare-digest {:biff/job {:xt/id "user1"}} :start),
+  {:eval (prepare-digest {:biff/job {:user/id "user1"}} :start),
    :result
    {:biff.fx/pathom
     {:entity {:user/id "user1"},
@@ -136,7 +142,7 @@
     [gen/*rnd* (java.util.Random. 0)]
     (prepare-digest
      {:biff/now (t/zdt 2000),
-      :biff/job {:xt/id (t/uuid 0), :user/email "user1@example.com"},
+      :biff/job {:user/id (t/uuid 0), :user/email "user1@example.com"},
       :biff.fx/pathom
       {:digest/payload {:foo "bar"},
        :digest/subject-item
@@ -156,31 +162,36 @@
       [:put-docs
        :digest
        {:xt/id #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
-        :digest/user #uuid "00000000-0000-0000-0000-000000000000",
+        :digest/user-id #uuid "00000000-0000-0000-0000-000000000000",
         :digest/sent-at #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-        :digest/subject #uuid "00010000-0000-0000-0000-000000000001",
-        :digest/ad #uuid "00020000-0000-0000-0000-000000000002"}]
+        :digest/subject-id
+        #uuid "00010000-0000-0000-0000-000000000001",
+        :digest/ad-id #uuid "00020000-0000-0000-0000-000000000002"}]
       [:put-docs
        :digest-item
        {:xt/id #uuid "0003c9f6-4f1d-f03a-8ce9-70b71df42503",
-        :digest-item/digest
+        :digest-item/digest-id
         #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
-        :digest-item/item #uuid "00030000-0000-0000-0000-000000000003",
+        :digest-item/item-id
+        #uuid "00030000-0000-0000-0000-000000000003",
         :digest-item/kind :icymi}
        {:xt/id #uuid "0004ba3d-c812-a76d-554d-cd2b40b5f04b",
-        :digest-item/digest
+        :digest-item/digest-id
         #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
-        :digest-item/item #uuid "00040000-0000-0000-0000-000000000004",
+        :digest-item/item-id
+        #uuid "00040000-0000-0000-0000-000000000004",
         :digest-item/kind :icymi}
        {:xt/id #uuid "0005c222-9cef-e94d-fc1e-932efb9a0f58",
-        :digest-item/digest
+        :digest-item/digest-id
         #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
-        :digest-item/item #uuid "00050000-0000-0000-0000-000000000005",
+        :digest-item/item-id
+        #uuid "00050000-0000-0000-0000-000000000005",
         :digest-item/kind :discover}
        {:xt/id #uuid "00061b08-05e8-b107-f0f5-b4f22d0cd0f1",
-        :digest-item/digest
+        :digest-item/digest-id
         #uuid "0000b45f-d4d9-5138-3d93-cb799b3970be",
-        :digest-item/item #uuid "00060000-0000-0000-0000-000000000006",
+        :digest-item/item-id
+        #uuid "00060000-0000-0000-0000-000000000006",
         :digest-item/kind :discover}])}
     {:biff.fx/queue
      {:id :work.digest/send-digest,
@@ -306,9 +317,10 @@
       [:patch-docs
        :digest
        {:xt/id "digest1",
-        :digest/bulk-send #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"}
+        :digest/bulk-send-id
+        #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"}
        {:xt/id "digest2",
-        :digest/bulk-send
+        :digest/bulk-send-id
         #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"}]]}
     {:biff.fx/sleep 7666}]}
   _]}

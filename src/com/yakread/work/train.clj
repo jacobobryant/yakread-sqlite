@@ -2,7 +2,6 @@
   (:require
    [clojure.tools.logging :as log]
    [com.biffweb :as biff]
-   [com.biffweb.experimental :as biffx]
    [com.yakread.util.biff-staging :as biffs]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.fx :as fx]
@@ -29,13 +28,13 @@
                                       {:xt/id (biffs/gen-uuid "0000")
                                        :item/url url
                                        :item/ingested-at now
-                                       :item/doc-type :item/direct
-                                       :item.direct/candidate-status :ingest-failed}]]}
+                                       :item/record-type :item.record-type/direct
+                                       :item/direct-candidate-status :ingest-failed}]]}
                        {:biff.fx/sleep 2000}])))}))
 
 (fx/defmachine queue-add-candidate
   :start
-  (fn [{:keys [biff/conn biff/queues yakread.work.queue-add-candidate/enabled]}]
+  (fn [{:keys [biff/query biff/queues yakread.work.queue-add-candidate/enabled]}]
     (when-let [urls (and enabled
                          (= 0 (.size (:work.train/add-candidate queues)))
                          (->> {:select :item/url
@@ -44,10 +43,11 @@
                                        :item/url
                                        {:select :item/url
                                         :from :item
-                                        :join [:user-item [:= :item._id :user-item/item]]
+                                        :join [:user-item [:= :item/id :user-item/item-id]]
                                         :where [:is-not :user-item/favorited-at nil]}]
-                               :having [:not [:bool_or [:coalesce [:= :item/doc-type "item/direct"] false]]]}
-                              (biffx/q conn)
+                               :group-by :item/url
+                               :having [:not [:max [:coalesce [:= :item/record-type [:lift :item.record-type/direct]] false]]]}
+                              (query)
                               (mapv :item/url)
                               not-empty))]
       (log/info "Found" (count urls) "candidate URLs")
