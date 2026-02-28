@@ -23,27 +23,29 @@ The following TX operation formats are used:
 - **`(biffs/dual-write ctx :update ...)` / `(biffs/dual-write ctx :delete-from ...)`** — Generates both XTDB and SQLite TX operations
 - **`{:xt [...] :sqlite nil}`** — Conditional TX operation (XTDB-only, e.g., `assert-unique`)
 
-## Migration Steps Per Namespace
+## Migration Steps
 
-### 1. Replace XTDB TX Operations with SQLite-Native Operations
-Replace `:put-docs`, `:patch-docs`, `:delete-docs`, `:erase-docs`, and `:biff/upsert` TX operations with `biffs/dual-write` calls (or direct SQLite-native operations):
-- `[:patch-docs :table {:xt/id id ...}]` → `(biffs/dual-write ctx :update :table {:where ...} {:set ...})` or equivalent
-- `[:delete-docs :table id]` → `(biffs/dual-write ctx :delete-from :table {:where ...})`
-- `[:put-docs :table {...}]` → `(biffs/dual-write ctx :insert :table {...})`
+### 1. Create `:biff.fx/sqlite` fx handler
+Create a new fx handler `:biff.fx/sqlite` in `com.yakread.lib.fx` that calls `com.biffweb.sqlite/execute` directly. This bypasses `biffs/submit-tx` and the dual-write layer entirely.
 
-The `biffs/dual-write` wrappers already exist and handle the SQLite-native format. The goal is to stop using the XTDB-compatible TX operations (`:put-docs`, `:patch-docs`, etc.).
+### 2. Migrate each namespace
+For each namespace, replace all TX operations with `:biff.fx/sqlite` calls using HoneySQL maps:
+- `[:put-docs :table {...}]` → `{:insert-into :table :values [{...}]}`
+- `[:patch-docs :table {:xt/id id ...}]` → `{:update :table :set {...} :where [:= :table/id id]}`
+- `[:delete-docs :table id]` → `{:delete-from :table :where [:= :table/id id]}`
+- `[:erase-docs :table id]` → same as delete
+- `[:biff/upsert :table [:unique-key] {...}]` → `{:insert-into :table :values [{...}] :on-conflict {:unique-key ...} :do-update-set {...}}`
+- `(biffs/dual-write ctx :update ...)` → same HoneySQL `:update` map
+- `(biffs/dual-write ctx :delete-from ...)` → same HoneySQL `:delete-from` map
+- Remove `{:xt [...] :sqlite nil}` patterns (e.g., `biffx/assert-unique`). SQLite has schema-level UNIQUE constraints.
 
-### 2. Remove XTDB-Only TX Conditionals
-Remove `{:xt ... :sqlite nil}` patterns (e.g., `biffx/assert-unique` calls). SQLite has its own unique constraints in the schema.
+Also verify field names match the new SQLite schema (see query-migration.md for the full mapping).
 
-### 3. Verify Field Names
-Ensure all TX documents use new SQLite field names (see query-migration.md for the full mapping). Most should already be updated from the query migration pass.
-
-### 4. Replace `biffs/submit-tx` with `com.biffweb.sqlite/execute`
-Once all namespaces are migrated to SQLite-native TX operations, stop using `biffs/submit-tx` entirely. Instead:
-1. Create a new fx handler `:biff.fx/sqlite` that calls `com.biffweb.sqlite/execute` directly
-2. Replace `:biff.fx/tx` with `:biff.fx/sqlite` in all namespaces
-3. Remove `biffs/submit-tx` and the XTDB dual-write logic from `biff_staging.clj`
+### 3. Clean up old infrastructure
+Once all namespaces use `:biff.fx/sqlite`:
+1. Remove `:biff.fx/tx` handler and `biffs/submit-tx`
+2. Remove the dual-write logic from `biff_staging.clj`
+3. Remove the `xt->sqlite-key` mapping
 
 ## Namespace Checklist
 
@@ -71,21 +73,21 @@ Once all namespaces are migrated to SQLite-native TX operations, stop using `bif
 - [ ] `com.yakread.smtp` — uses `:put-docs` for email items and subs, plus `biffx/assert-unique`
 
 ### Library/Infrastructure
+- [ ] `com.yakread.lib.fx` — Create `:biff.fx/sqlite` handler calling `com.biffweb.sqlite/execute`
 - [ ] `com.yakread.lib.item` — uses `:put-docs` for content ingestion
-- [ ] `com.yakread.lib.fx` — TX handler registration (`:biff.fx/tx` → `biffs/submit-tx`)
-- [ ] `com.yakread.util.biff-staging` — Core dual-write translation logic; simplify to SQLite-only
+- [ ] `com.yakread.util.biff-staging` — Remove dual-write logic once all namespaces migrated
 
 ### Migration Utilities
 - [ ] `com.yakread.lib.migrate.xtdb2` — uses `:put-docs`, `:delete-docs` for data migration
 
 ## Key Considerations
 
-### Dual-Write Removal
-The `biffs/dual-write` function in `biff_staging.clj` currently translates between XTDB and SQLite field names and formats. Once the migration is complete:
-1. Remove the XTDB code path from `submit-tx`
-2. Remove the `xt->sqlite-key` mapping
+### Infrastructure Cleanup
+Once all namespaces use `:biff.fx/sqlite`, remove the old infrastructure:
+1. Remove `biffs/submit-tx` and the `:biff.fx/tx` handler
+2. Remove the `xt->sqlite-key` mapping from `biff_staging.clj`
 3. Remove the `:xt`/`:sqlite` conditional TX pattern
-4. Simplify `submit-tx` to call SQLite directly
+4. Remove `biffs/dual-write` — no longer needed
 
 ### Unique Constraints
 `biffx/assert-unique` is used in SMTP for ensuring sub uniqueness. SQLite handles this via schema-level UNIQUE constraints, so these assertions can be removed.
