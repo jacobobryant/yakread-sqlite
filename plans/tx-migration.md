@@ -56,15 +56,15 @@ Once all namespaces use `:biff.fx/sqlite`:
 - [ ] `com.yakread.app.subscriptions.add` — uses `:patch-docs`, `:put-docs` for feed/sub creation
 - [ ] `com.yakread.app.subscriptions.view` — uses `:patch-docs`, `:biff/upsert` for sub settings
 - [ ] `com.yakread.app.for-you` — uses `:biff/upsert` for skip records and reclist tracking
-- [ ] `com.yakread.app.admin.discover` — uses `:patch-docs` for feed moderation
+- [x] `com.yakread.app.admin.discover` — uses `:patch-docs` for feed moderation
 - [ ] `com.yakread.app.admin.advertise` — uses `:patch-docs`, `biffs/dual-write` for ad approval
 
 ### UI Components
-- [ ] `com.yakread.ui-components.item.read` — uses `biffs/dual-write` for read tracking (user-item updates)
+- [x] `com.yakread.ui-components.item.read` — uses `biffs/dual-write` for read tracking (user-item updates)
 
 ### Work Layer (Background Jobs)
-- [ ] `com.yakread.work.materialized-views` — uses `:biff/upsert` for mv-sub and mv-user
-- [ ] `com.yakread.work.train` — uses `:put-docs` for candidate items
+- [x] `com.yakread.work.materialized-views` — uses `:biff/upsert` for mv-sub and mv-user
+- [x] `com.yakread.work.train` — uses `:put-docs` for candidate items
 - [ ] `com.yakread.work.account` — uses `:erase-docs`, `:delete-docs`, `:put-docs` for account deletion
 - [ ] `com.yakread.work.digest` — uses `:put-docs`, `:patch-docs` for digest records and user updates
 - [ ] `com.yakread.work.subscription` — uses `:put-docs`, `:patch-docs` for feed sync and item ingestion
