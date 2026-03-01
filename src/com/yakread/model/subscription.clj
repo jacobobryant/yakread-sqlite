@@ -17,7 +17,7 @@
                                      :where [:= :sub/user-id id]})
                               (group-by (comp some? :sub/email-unsubscribed-at)))]
     {:user/subscriptions (mapv #(select-keys % [:sub/id]) (or subbed []))
-     :user/unsubscribed (mapv #(select-keys % [:sub/id]) unsubbed)}))
+     :user/unsubscribed (mapv #(select-keys % [:sub/id]) (or unsubbed []))}))
 
 (defresolver email-title [{:keys [sub.email/from]}]
   {:sub/title (str/replace from #"\s<.*>" "")})
