@@ -22,9 +22,6 @@
        {:ad-click/id (t/uuid 2),
         :ad-click/ad-id (t/uuid 20),
         :ad-click/user-id (t/uuid 102)}
-       {:ad-click/id (t/uuid 3),
-        :ad-click/ad-id (t/uuid 20),
-        :ad-click/user-id (t/uuid 102)}
        {:ad-click/id (t/uuid 4),
         :ad-click/ad-id (t/uuid 20),
         :ad-click/user-id (t/uuid 103)}

@@ -7,10 +7,10 @@
    [clojure.tools.namespace.repl :as tn-repl]
    [com.biffweb :as biff]
    [com.biffweb.experimental :as biffx]
-   [com.biffweb.experimental.auth :as biffx-auth]
    [com.wsscode.pathom3.connect.indexes :as pci]
    [com.wsscode.pathom3.connect.planner :as pcp]
    [com.yakread.lib.core :as lib.core]
+   [com.yakread.lib.auth :as lib.auth]
    [com.yakread.lib.email :as lib.email]
    [com.yakread.lib.sqlite :as lib.sqlite]
    [com.yakread.model.schema :as sqlite-schema]
@@ -59,7 +59,7 @@
 
 (def modules
   (concat modules/modules
-          [(biffx-auth/module
+          [(lib.auth/module
             #:biff.auth{:app-path (href routes/for-you)
                         :check-state false})]))
 

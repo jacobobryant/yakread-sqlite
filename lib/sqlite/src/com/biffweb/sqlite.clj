@@ -238,14 +238,21 @@
 
 (defn build-all-read-coercions
   "Build read coercions for all tables from schema-info.
-   Returns a map from SQL column name (string) to coerce-fn."
+   Returns a map from SQL column name (string) to coerce-fn.
+   Includes both table-qualified ('table.column') and unqualified ('column')
+   entries. Table-qualified entries are preferred during lookup to avoid
+   collisions when multiple tables have columns with the same name but
+   different types (e.g., enum columns)."
   [info]
   (into {}
-        (mapcat (fn [[_table-key attrs]]
-                  (let [{:keys [read]} (build-coercions attrs)]
-                    (map (fn [[attr coerce-fn]]
-                           [(str/replace (name attr) "-" "_") coerce-fn])
-                         read))))
+        (mapcat (fn [[table-key attrs]]
+                  (let [{:keys [read]} (build-coercions attrs)
+                        table-name (str/replace (name table-key) "-" "_")]
+                    (mapcat (fn [[attr coerce-fn]]
+                              (let [col-name (str/replace (name attr) "-" "_")]
+                                [[(str table-name "." col-name) coerce-fn]
+                                 [col-name coerce-fn]]))
+                            read))))
         info))
 
 (defn build-enum-val->int
@@ -276,12 +283,18 @@
    read-coercions is a map from SQL column name (string) to coerce-fn.
    inferred-columns is an optional vector of inferred column maps from
    inference/infer-columns, used as a fallback when column name is not found
-   in read-coercions."
+   in read-coercions.
+   Prefers table-qualified lookups ('table.column') to avoid collisions when
+   multiple tables have columns with the same unqualified name."
   [read-coercions inferred-columns]
   (fn [builder ^ResultSet rs ^Integer i]
-    (let [col-name (.getColumnLabel (.getMetaData rs) i)
+    (let [meta (.getMetaData rs)
+          col-name (.getColumnLabel meta i)
+          table-name (.getTableName meta i)
           value (.getObject rs i)
-          coerce-fn (or (get read-coercions col-name)
+          coerce-fn (or (when (and table-name (not= table-name ""))
+                          (get read-coercions (str table-name "." col-name)))
+                        (get read-coercions col-name)
                         (when-let [{:keys [column]} (get inferred-columns (dec i))]
                           (when (and column (not= "*" column))
                             (get read-coercions column))))

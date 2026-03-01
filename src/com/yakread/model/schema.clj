@@ -225,7 +225,14 @@
 
    :deleted-user [:map {:closed true}
                   [:deleted-user/id                    :uuid]
-                  [:deleted-user/email-username-hash   :string]]})
+                  [:deleted-user/email-username-hash   :string]]
+
+   :auth-code [:map {:closed true}
+               [:auth-code/id              :uuid]
+               [:auth-code/email           :string]
+               [:auth-code/code            :string]
+               [:auth-code/created-at      inst?]
+               [:auth-code/failed-attempts :int]]})
 
 (def module
   {})

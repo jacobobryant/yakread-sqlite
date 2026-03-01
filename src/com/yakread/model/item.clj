@@ -269,7 +269,8 @@
          :output [:item/doc-type]}
   (cond
     feed-id {:item/doc-type :item/feed}
-    email-sub-id {:item/doc-type :item/email}))
+    email-sub-id {:item/doc-type :item/email}
+    :else {:item/doc-type :item/direct}))
 
 (defresolver digest-url [{:biff/keys [base-url href-safe]} {:item/keys [id url rec-type]}]
   {::pco/input [:item/id
