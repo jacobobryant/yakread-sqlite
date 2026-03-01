@@ -68,6 +68,11 @@
     :sub.record-type/feed feed-id
     :sub.record-type/email id))
 
+(defn- row-source-id
+  "Extract the source-id from a query result row."
+  [row]
+  (or (:item/email-sub-id row) (:item/feed-id row)))
+
 (defresolver total [{:biff/keys [query]} inputs]
   {::pco/input [:sub/id :sub/record-type (? :sub/feed-id)]
    ::pco/output [:sub/total]
@@ -78,14 +83,14 @@
                            (for [[record-type subs*] (group-by :sub/record-type inputs)
                                  :let [source-key (record-type->source-key record-type)
                                        source-ids (mapv sub-source-id subs*)]]
-                             (query {:select [[source-key :source-id]
+                             (query {:select [source-key
                                               [:%count.* :total]]
                                      :from :item
                                      :where [:in source-key source-ids]
                                      :group-by source-key})))
-                     (mapv (fn [{:keys [source-id total]}]
-                             {:sub/id (source->sub-id source-id)
-                              :sub/total total})))]
+                     (mapv (fn [row]
+                             {:sub/id (source->sub-id (row-source-id row))
+                              :sub/total (:total row)})))]
     (lib.core/restore-order inputs
                             :sub/id
                             results
@@ -104,7 +109,7 @@
                                  [record-type subs*] (group-by :sub/record-type subs-by-user)
                                  :let [source-key (record-type->source-key record-type)
                                        source-ids (mapv sub-source-id subs*)]]
-                             (query {:select [[source-key :source-id]
+                             (query {:select [source-key
                                               [[:count :user-item/id] :items-read]]
                                      :from :user-item
                                      :join [:item [:= :item/id :user-item/item-id]]
@@ -119,9 +124,12 @@
                                                        :user-item/reported-at]
                                               nil]]
                                      :group-by [source-key]})))
-                     (mapv (fn [{:keys [source-id items-read]}]
-                             {:sub/id (source->sub-id source-id)
-                               :sub/items-read items-read})))]
+                     (mapv (fn [row]
+                             {:sub/id (source->sub-id (row-source-id row))
+                              :sub/items-read (:items-read row)})))]
+
+
+
     (lib.core/restore-order inputs
                             :sub/id
                             results

@@ -27,80 +27,123 @@
   _
   {:doc "latest-email-item",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [ctx
      {:item
-      [{:xt/id "item1",
-        :item.email/sub "sub1",
-        :item/ingested-at (t/zdt 2000)}
-       {:xt/id "item2",
-        :item.email/sub "sub1",
-        :item/ingested-at (t/zdt 2001)}
-       {:xt/id "item3",
-        :item.email/sub "sub2",
-        :item/ingested-at (t/zdt 2002)}]}]
-    {:email-doc-type
+      [{:item/id (t/uuid 1),
+        :item/email-sub-id (t/uuid 100),
+        :item/ingested-at (t/instant 2000),
+        :item/record-type [:lift :item.record-type/email]}
+       {:item/id (t/uuid 2),
+        :item/email-sub-id (t/uuid 100),
+        :item/ingested-at (t/instant 2001),
+        :item/record-type [:lift :item.record-type/email]}
+       {:item/id (t/uuid 3),
+        :item/email-sub-id (t/uuid 200),
+        :item/ingested-at (t/instant 2002),
+        :item/record-type [:lift :item.record-type/email]}]}]
+    {:email
      (latest-email-item
-      {:biff/conn node}
-      {:sub/doc-type :sub/email, :sub/id "sub1"}),
-     :feed-doc-type
+      ctx
+      {:sub/record-type :sub.record-type/email, :sub/id (t/uuid 100)}),
+     :feed
      (latest-email-item
-      {:biff/conn node}
-      {:sub/doc-type :sub/feed, :sub/id "sub1"}),
+      ctx
+      {:sub/record-type :sub.record-type/feed, :sub/id (t/uuid 100)}),
      :no-items
      (latest-email-item
-      {:biff/conn node}
-      {:sub/doc-type :sub/email, :sub/id "sub3"})}),
+      ctx
+      {:sub/record-type :sub.record-type/email,
+       :sub/id (t/uuid 300)})}),
    :result
-   {:email-doc-type {:sub.email/latest-item {:xt/id "item2"}},
-    :feed-doc-type nil,
+   {:email
+    {:sub/latest-item
+     {:item/id #uuid "00020000-0000-0000-0000-000000000002"}},
+    :feed nil,
     :no-items nil}}
   _
   {:doc "total",
    :eval
-   (t/with-node
-    [node
-     {:item
-      [{:xt/id "item1", :item.email/sub "sub1"}
-       {:xt/id "item2", :item.email/sub "sub1"}
-       {:xt/id "item3", :item.feed/feed "feed1"}]}]
+   (t/with-sqlite
+    [ctx
+     {:feed [{:feed/id (t/uuid 100)} {:feed/id (t/uuid 200)}],
+      :item
+      [{:item/id (t/uuid 1),
+        :item/email-sub-id (t/uuid 10),
+        :item/ingested-at (t/instant 2000),
+        :item/record-type [:lift :item.record-type/email]}
+       {:item/id (t/uuid 2),
+        :item/email-sub-id (t/uuid 10),
+        :item/ingested-at (t/instant 2000),
+        :item/record-type [:lift :item.record-type/email]}
+       {:item/id (t/uuid 3),
+        :item/feed-id (t/uuid 100),
+        :item/ingested-at (t/instant 2000),
+        :item/record-type [:lift :item.record-type/feed]}]}]
     (total
-     {:biff/conn node}
-     [{:sub/source-id "sub1", :sub/doc-type :sub/email}
-      {:sub/source-id "feed1", :sub/doc-type :sub/feed}
-      {:sub/source-id "feed2", :sub/doc-type :sub/feed}])),
+     ctx
+     [{:sub/id (t/uuid 10), :sub/record-type :sub.record-type/email}
+      {:sub/id (t/uuid 20),
+       :sub/record-type :sub.record-type/feed,
+       :sub/feed-id (t/uuid 100)}
+      {:sub/id (t/uuid 30),
+       :sub/record-type :sub.record-type/feed,
+       :sub/feed-id (t/uuid 200)}])),
    :result
-   [{:sub/source-id "sub1", :sub/total 2}
-    {:sub/source-id "feed1", :sub/total 1}
-    {:sub/source-id "feed2", :sub/total 0}]}
+   [{:sub/id #uuid "00100000-0000-0000-0000-000000000010",
+     :sub/total 2}
+    {:sub/id #uuid "00200000-0000-0000-0000-000000000020",
+     :sub/total 1}
+    {:sub/id #uuid "00300000-0000-0000-0000-000000000030",
+     :sub/total 0}]}
   _
   {:doc "items-read",
    :eval
-   (t/with-node
-    [node
-     {:item
-      [{:xt/id "item1", :item.email/sub "sub1"}
-       {:xt/id "item2", :item.email/sub "sub1"}
-       {:xt/id "item3", :item.feed/feed "feed1"}],
+   (t/with-sqlite
+    [ctx
+     {:user [{:user/id (t/uuid 1)}],
+      :feed [{:feed/id (t/uuid 100)}],
+      :sub
+      [{:sub/id (t/uuid 10),
+        :sub/user-id (t/uuid 1),
+        :sub/created-at (t/instant 2000),
+        :sub/record-type [:lift :sub.record-type/email]}
+       {:sub/id (t/uuid 20),
+        :sub/user-id (t/uuid 1),
+        :sub/feed-id (t/uuid 100),
+        :sub/created-at (t/instant 2000),
+        :sub/record-type [:lift :sub.record-type/feed]}],
+      :item
+      [{:item/id (t/uuid 1),
+        :item/email-sub-id (t/uuid 10),
+        :item/ingested-at (t/instant 2000),
+        :item/record-type [:lift :item.record-type/email]}
+       {:item/id (t/uuid 2),
+        :item/email-sub-id (t/uuid 10),
+        :item/ingested-at (t/instant 2000),
+        :item/record-type [:lift :item.record-type/email]}
+       {:item/id (t/uuid 3),
+        :item/feed-id (t/uuid 100),
+        :item/ingested-at (t/instant 2000),
+        :item/record-type [:lift :item.record-type/feed]}],
       :user-item
-      [{:xt/id "user-item1",
-        :user-item/user "user1",
-        :user-item/item "item1",
-        :user-item/viewed-at (t/zdt 2000)}]}]
+      [{:user-item/id (t/uuid 50),
+        :user-item/user-id (t/uuid 1),
+        :user-item/item-id (t/uuid 1),
+        :user-item/viewed-at (t/instant 2000)}]}]
     (items-read
-     {:biff/conn node}
-     [{:sub/source-id "sub1",
-       :sub/doc-type :sub/email,
-       :sub/user {:xt/id "user1"}}
-      {:sub/source-id "feed1",
-       :sub/doc-type :sub/feed,
-       :sub/user {:xt/id "user1"}}])),
+     ctx
+     [{:sub/id (t/uuid 10),
+       :sub/user-id (t/uuid 1),
+       :sub/record-type :sub.record-type/email}
+      {:sub/id (t/uuid 20),
+       :sub/user-id (t/uuid 1),
+       :sub/record-type :sub.record-type/feed,
+       :sub/feed-id (t/uuid 100)}])),
    :result
-   [{:sub/user {:xt/id "user1"},
-     :sub/source-id "sub1",
+   [{:sub/id #uuid "00100000-0000-0000-0000-000000000010",
      :sub/items-read 1}
-    {:sub/user {:xt/id "user1"},
-     :sub/source-id "feed1",
+    {:sub/id #uuid "00200000-0000-0000-0000-000000000020",
      :sub/items-read 0}]}
   _
   {:doc "items-unread",
@@ -109,170 +152,210 @@
   _
   {:doc "published-at",
    :eval
-   (t/with-node
-    [node
-     {:item
-      [{:xt/id "item1",
-        :item.email/sub "sub1",
-        :item/ingested-at (t/zdt 2000)}
-       {:xt/id "item2",
-        :item.email/sub "sub1",
-        :item/published-at (t/zdt 2001)}
-       {:xt/id "item3",
-        :item.feed/feed "feed1",
-        :item/ingested-at (t/zdt 2002)}]}]
+   (t/with-sqlite
+    [ctx
+     {:feed [{:feed/id (t/uuid 100)} {:feed/id (t/uuid 200)}],
+      :item
+      [{:item/id (t/uuid 1),
+        :item/email-sub-id (t/uuid 10),
+        :item/ingested-at (t/instant 2000),
+        :item/record-type [:lift :item.record-type/email]}
+       {:item/id (t/uuid 2),
+        :item/email-sub-id (t/uuid 10),
+        :item/published-at (t/instant 2001),
+        :item/ingested-at (t/instant 2000),
+        :item/record-type [:lift :item.record-type/email]}
+       {:item/id (t/uuid 3),
+        :item/feed-id (t/uuid 100),
+        :item/ingested-at (t/instant 2002),
+        :item/record-type [:lift :item.record-type/feed]}]}]
     (published-at
-     {:biff/conn node}
-     [{:sub/source-id "sub1",
-       :sub/doc-type :sub/email,
-       :sub/created-at (t/zdt 2003)}
-      {:sub/source-id "feed1",
-       :sub/doc-type :sub/feed,
-       :sub/created-at (t/zdt 2004)}
-      {:sub/source-id "feed2",
-       :sub/doc-type :sub/feed,
-       :sub/created-at (t/zdt 2005)}])),
+     ctx
+     [{:sub/id (t/uuid 10),
+       :sub/record-type :sub.record-type/email,
+       :sub/created-at (t/instant 2003)}
+      {:sub/id (t/uuid 20),
+       :sub/record-type :sub.record-type/feed,
+       :sub/feed-id (t/uuid 100),
+       :sub/created-at (t/instant 2004)}
+      {:sub/id (t/uuid 30),
+       :sub/record-type :sub.record-type/feed,
+       :sub/feed-id (t/uuid 200),
+       :sub/created-at (t/instant 2005)}])),
    :result
-   [{:sub/source-id "sub1",
-     :sub/published-at #time/zoned-date-time "2001-01-01T00:00Z[UTC]"}
-    {:sub/source-id "feed1",
-     :sub/published-at #time/zoned-date-time "2002-01-01T00:00Z[UTC]"}
-    {:sub/source-id "feed2",
-     :sub/published-at
-     #time/zoned-date-time "2005-01-01T00:00Z[UTC]"}]}
+   [{:sub/id #uuid "00100000-0000-0000-0000-000000000010",
+     :sub/published-at #time/instant "2003-01-01T00:00:00Z"}
+    {:sub/id #uuid "00200000-0000-0000-0000-000000000020",
+     :sub/published-at #time/instant "2004-01-01T00:00:00Z"}
+    {:sub/id #uuid "00300000-0000-0000-0000-000000000030",
+     :sub/published-at #time/instant "2005-01-01T00:00:00Z"}]}
   _
   {:doc "items",
    :eval
-   (t/with-node
-    [node
-     {:item
-      [{:xt/id "item1", :item.email/sub "sub1"}
-       {:xt/id "item2", :item.email/sub "sub1"}
-       {:xt/id "item3", :item.feed/feed "feed1"}]}]
+   (t/with-sqlite
+    [ctx
+     {:feed [{:feed/id (t/uuid 100)} {:feed/id (t/uuid 200)}],
+      :item
+      [{:item/id (t/uuid 1),
+        :item/email-sub-id (t/uuid 10),
+        :item/ingested-at (t/instant 2000),
+        :item/record-type [:lift :item.record-type/email]}
+       {:item/id (t/uuid 2),
+        :item/email-sub-id (t/uuid 10),
+        :item/ingested-at (t/instant 2000),
+        :item/record-type [:lift :item.record-type/email]}
+       {:item/id (t/uuid 3),
+        :item/feed-id (t/uuid 100),
+        :item/ingested-at (t/instant 2000),
+        :item/record-type [:lift :item.record-type/feed]}]}]
     (items
-     {:biff/conn node}
-     [{:sub/source-id "sub1", :sub/doc-type :sub/email}
-      {:sub/source-id "feed1", :sub/doc-type :sub/feed}
-      {:sub/source-id "feed2", :sub/doc-type :sub/feed}])),
+     ctx
+     [{:sub/id (t/uuid 10), :sub/record-type :sub.record-type/email}
+      {:sub/id (t/uuid 20),
+       :sub/record-type :sub.record-type/feed,
+       :sub/feed-id (t/uuid 100)}
+      {:sub/id (t/uuid 30),
+       :sub/record-type :sub.record-type/feed,
+       :sub/feed-id (t/uuid 200)}])),
    :result
-   [{:sub/source-id "sub1",
-     :sub/items [{:xt/id "item2"} {:xt/id "item1"}]}
-    {:sub/source-id "feed1", :sub/items [{:xt/id "item3"}]}
-    {:sub/source-id "feed2", :sub/items []}]}
-  _
-  {:doc "latest-item",
-   :eval
-   (t/with-node
-    [node
-     {:item
-      [{:xt/id "item1",
-        :item.email/sub "sub1",
-        :item/ingested-at (t/zdt 2000)}
-       {:xt/id "item2",
-        :item.email/sub "sub1",
-        :item/published-at (t/zdt 2001)}
-       {:xt/id "item3",
-        :item.feed/feed "feed1",
-        :item/ingested-at (t/zdt 2002)}]}]
-    (latest-item
-     {:biff/conn node}
-     [{:sub/source-id "sub1",
-       :sub/doc-type :sub/email,
-       :sub/published-at (t/zdt 2001)}
-      {:sub/source-id "feed1",
-       :sub/doc-type :sub/feed,
-       :sub/published-at (t/zdt 2002)}])),
-   :result
-   [{:sub/source-id "sub1", :sub/latest-item {:xt/id "item2"}}
-    {:sub/source-id "feed1", :sub/latest-item {:xt/id "item3"}}]}
+   [{:sub/id #uuid "00100000-0000-0000-0000-000000000010",
+     :sub/items []}
+    {:sub/id #uuid "00200000-0000-0000-0000-000000000020",
+     :sub/items []}
+    {:sub/id #uuid "00300000-0000-0000-0000-000000000030",
+     :sub/items []}]}
   _
   {:doc "from-params",
    :eval
-   (t/with-node
-    [node
-     {:sub
-      [{:xt/id "sub1", :sub/user "user1"}
-       {:xt/id "sub2",
-        :sub/user "user1",
-        :sub.email/unsubscribed-at (t/zdt 2000)}]}]
+   (t/with-sqlite
+    [ctx
+     {:user [{:user/id (t/uuid 1)}],
+      :sub
+      [{:sub/id (t/uuid 10),
+        :sub/user-id (t/uuid 1),
+        :sub/created-at (t/instant 2000),
+        :sub/record-type [:lift :sub.record-type/feed]}
+       {:sub/id (t/uuid 20),
+        :sub/user-id (t/uuid 1),
+        :sub/created-at (t/instant 2000),
+        :sub/record-type [:lift :sub.record-type/email],
+        :sub/email-unsubscribed-at (t/instant 2000)}]}]
     (doall
      (for
-      [user-id ["user1" "user2"]]
+      [user-id [(t/uuid 1) (t/uuid 2)]]
       (from-params
-       {:biff/conn node,
-        :session {:uid user-id},
-        :params {:sub/id "sub1"}}
+       (merge
+        ctx
+        {:session {:uid user-id}, :params {:sub/id (t/uuid 10)}})
        {})))),
    :result
-   ({:params/sub {:xt/id "sub1", :sub/user {:xt/id "user1"}}} nil)}
+   ({:params/sub
+     {:sub/id #uuid "00100000-0000-0000-0000-000000000010",
+      :sub/user-id #uuid "00010000-0000-0000-0000-000000000001"}}
+    nil)}
   _
   {:doc "params-checked",
    :eval
-   (t/with-node
-    [node
-     {:sub
-      [{:xt/id (t/uuid 0), :sub/user "user1"}
-       {:xt/id (t/uuid 1),
-        :sub/user "user1",
-        :sub.email/unsubscribed-at (t/zdt 2000)}
-       {:xt/id (t/uuid 2), :sub/user "user2"}]}]
+   (t/with-sqlite
+    [ctx
+     {:user [{:user/id (t/uuid 1)} {:user/id (t/uuid 2)}],
+      :sub
+      [{:sub/id (t/uuid 10),
+        :sub/user-id (t/uuid 1),
+        :sub/created-at (t/instant 2000),
+        :sub/record-type [:lift :sub.record-type/feed]}
+       {:sub/id (t/uuid 20),
+        :sub/user-id (t/uuid 1),
+        :sub/created-at (t/instant 2000),
+        :sub/record-type [:lift :sub.record-type/email],
+        :sub/email-unsubscribed-at (t/instant 2000)}
+       {:sub/id (t/uuid 30),
+        :sub/user-id (t/uuid 2),
+        :sub/created-at (t/instant 2000),
+        :sub/record-type [:lift :sub.record-type/feed]}]}]
     {:valid
      (params-checked
-      {:biff/conn node,
-       :session {:uid "user1"},
-       :params {:subs {(str (t/uuid 0)) nil, (str (t/uuid 1)) nil}}}
+      (merge
+       ctx
+       {:session {:uid (t/uuid 1)},
+        :params
+        {:subs {(str (t/uuid 10)) nil, (str (t/uuid 20)) nil}}})
       {}),
      :unauthorized
      (params-checked
-      {:biff/conn node,
-       :session {:uid "user1"},
-       :params {:subs {(str (t/uuid 0)) nil, (str (t/uuid 2)) nil}}}
+      (merge
+       ctx
+       {:session {:uid (t/uuid 1)},
+        :params
+        {:subs {(str (t/uuid 10)) nil, (str (t/uuid 30)) nil}}})
       {}),
      :missing
      (params-checked
-      {:biff/conn node,
-       :session {:uid "user1"},
-       :params {:subs {(str (t/uuid 0)) nil, (str (t/uuid 3)) nil}}}
+      (merge
+       ctx
+       {:session {:uid (t/uuid 1)},
+        :params
+        {:subs {(str (t/uuid 10)) nil, (str (t/uuid 40)) nil}}})
       {})}),
    :result
    {:valid
     {:params.checked/subscriptions
-     [{:sub/id #uuid "00000000-0000-0000-0000-000000000000",
-       :sub/user {:xt/id "user1"}}
-      {:sub/id #uuid "00010000-0000-0000-0000-000000000001",
-       :sub/user {:xt/id "user1"}}]},
+     [{:sub/id #uuid "00100000-0000-0000-0000-000000000010"}
+      {:sub/id #uuid "00200000-0000-0000-0000-000000000020"}]},
     :unauthorized nil,
     :missing nil}}
   _
   {:doc "unread-items",
    :eval
-   (t/with-node
-    [node
-     {:item
-      [{:xt/id "item1", :item.email/sub "sub1"}
-       {:xt/id "item2", :item.email/sub "sub1"}
-       {:xt/id "item3", :item.feed/feed "feed1"}],
+   (t/with-sqlite
+    [ctx
+     {:user [{:user/id (t/uuid 1)}],
+      :feed [{:feed/id (t/uuid 100)}],
       :sub
-      [{:xt/id "sub1", :sub/user "user1"}
-       {:xt/id "feed1", :sub/user "user1"}],
+      [{:sub/id (t/uuid 10),
+        :sub/user-id (t/uuid 1),
+        :sub/created-at (t/instant 2000),
+        :sub/record-type [:lift :sub.record-type/email]}],
+      :item
+      [{:item/id (t/uuid 1),
+        :item/email-sub-id (t/uuid 10),
+        :item/ingested-at (t/instant 2000),
+        :item/record-type [:lift :item.record-type/email]}
+       {:item/id (t/uuid 2),
+        :item/email-sub-id (t/uuid 10),
+        :item/ingested-at (t/instant 2000),
+        :item/record-type [:lift :item.record-type/email]}
+       {:item/id (t/uuid 3),
+        :item/feed-id (t/uuid 100),
+        :item/ingested-at (t/instant 2000),
+        :item/record-type [:lift :item.record-type/feed]}],
       :user-item
-      [{:xt/id "user-item1",
-        :user-item/user "user1",
-        :user-item/item "item1",
-        :user-item/viewed-at (t/zdt 2000)}]}]
+      [{:user-item/id (t/uuid 50),
+        :user-item/user-id (t/uuid 1),
+        :user-item/item-id (t/uuid 1),
+        :user-item/viewed-at (t/instant 2000)}]}]
     (unread-items
-     {:biff/conn node}
-     [{:sub/user {:xt/id "user1"},
-       :sub/items [{:xt/id "item1"} {:xt/id "item2"}]}
-      {:sub/user {:xt/id "user1"}, :sub/items [{:xt/id "item3"}]}])),
+     ctx
+     [{:sub/user-id (t/uuid 1),
+       :sub/items [{:item/id (t/uuid 1)} {:item/id (t/uuid 2)}]}
+      {:sub/user-id (t/uuid 1), :sub/items [{:item/id (t/uuid 3)}]}])),
    :result
-   [{:sub/unread-items [{:xt/id "item2"}]}
-    {:sub/unread-items [{:xt/id "item3"}]}]}
+   [{:sub/unread-items
+     [{:item/id #uuid "00020000-0000-0000-0000-000000000002"}]}
+    {:sub/unread-items
+     [{:item/id #uuid "00030000-0000-0000-0000-000000000003"}]}]}
   _
   {:doc :mv,
    :eval
-   (t/with-node
-    [node {:mv-sub [{:xt/id "mv-sub1", :mv.sub/sub "sub1"}]}]
-    (mv {:biff/conn node} [{:xt/id "sub1"}])),
-   :result [{:xt/id "sub1", :sub/mv {:xt/id "mv-sub1"}}]}
+   (t/with-sqlite
+    [ctx
+     {:user [{:user/id (t/uuid 1)}],
+      :sub
+      [{:sub/id (t/uuid 10),
+        :sub/user-id (t/uuid 1),
+        :sub/created-at (t/instant 2000),
+        :sub/record-type [:lift :sub.record-type/feed]}],
+      :mv-sub [{:mv-sub/id (t/uuid 60), :mv-sub/sub-id (t/uuid 10)}]}]
+    (mv ctx [{:sub/id (t/uuid 10)}])),
+   :result [{}]}
   _]}

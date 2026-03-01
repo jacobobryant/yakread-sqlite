@@ -122,7 +122,7 @@
           (str "Schema for " k " is invalid: " (pr-str (ex-data ex)))))
 
 (def pathom-env (pci/register (->> (mapcat :resolvers modules)
-                                   (concat (biffs/xtdb2-resolvers malli-opts))
+                                   (concat (lib.sqlite/sqlite-resolvers malli-opts*))
                                    (mapv lib.pathom/wrap-debug))))
 
 (defn merge-context [{:keys [yakread/model
@@ -138,7 +138,7 @@
                 :biff.fx/handlers fx/handlers
                 ;:biff/db (:biff/db snapshots)
                 ;:biff.index/snapshots snapshots
-                :biff/now (tick/in (tick/zoned-date-time) "UTC")
+                :biff/now (tick/instant)
                 :com.yakread/sign-redirect (fn [url]
                                              {:redirect url
                                               :redirect-sig (biffs/signature (jwt-secret) url)})
