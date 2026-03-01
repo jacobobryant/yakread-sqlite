@@ -31,7 +31,8 @@ CREATE TABLE ad_click (
   cost INT NOT NULL,
   source INT NOT NULL CHECK (source IN (0, 1)), -- web (0), email (1)
   FOREIGN KEY(user_id) REFERENCES user(id),
-  FOREIGN KEY(ad_id) REFERENCES ad(id)
+  FOREIGN KEY(ad_id) REFERENCES ad(id),
+  UNIQUE(user_id, ad_id)
 ) STRICT;
 
 CREATE TABLE ad_credit (
@@ -89,7 +90,8 @@ CREATE TABLE feed (
   etag TEXT,
   last_modified TEXT,
   failed_syncs INT,
-  moderation INT CHECK (moderation IN (0, 1)) -- approved (0), blocked (1)
+  moderation INT CHECK (moderation IN (0, 1)), -- approved (0), blocked (1)
+  UNIQUE(url)
 ) STRICT;
 
 CREATE TABLE item (
@@ -133,7 +135,8 @@ CREATE TABLE mv_sub (
   last_published INT,
   unread INT,
   n_read INT,
-  FOREIGN KEY(sub_id) REFERENCES sub(id)
+  FOREIGN KEY(sub_id) REFERENCES sub(id),
+  UNIQUE(sub_id)
 ) STRICT;
 
 CREATE TABLE mv_user (
@@ -141,7 +144,8 @@ CREATE TABLE mv_user (
   user_id BLOB NOT NULL,
   current_item_id BLOB,
   FOREIGN KEY(user_id) REFERENCES user(id),
-  FOREIGN KEY(current_item_id) REFERENCES item(id)
+  FOREIGN KEY(current_item_id) REFERENCES item(id),
+  UNIQUE(user_id)
 ) STRICT;
 
 CREATE TABLE reclist (
@@ -149,7 +153,8 @@ CREATE TABLE reclist (
   user_id BLOB NOT NULL,
   created_at INT NOT NULL,
   clicked BLOB NOT NULL,
-  FOREIGN KEY(user_id) REFERENCES user(id)
+  FOREIGN KEY(user_id) REFERENCES user(id),
+  UNIQUE(user_id, created_at)
 ) STRICT;
 
 CREATE TABLE redirect (
@@ -166,7 +171,8 @@ CREATE TABLE skip (
   ad_id BLOB,
   FOREIGN KEY(reclist_id) REFERENCES reclist(id),
   FOREIGN KEY(item_id) REFERENCES item(id),
-  FOREIGN KEY(ad_id) REFERENCES ad(id)
+  FOREIGN KEY(ad_id) REFERENCES ad(id),
+  UNIQUE(reclist_id, item_id, ad_id)
 ) STRICT;
 
 CREATE TABLE sub (
@@ -179,7 +185,8 @@ CREATE TABLE sub (
   email_from TEXT,
   email_unsubscribed_at INT,
   FOREIGN KEY(user_id) REFERENCES user(id),
-  FOREIGN KEY(feed_id) REFERENCES feed(id)
+  FOREIGN KEY(feed_id) REFERENCES feed(id),
+  UNIQUE(user_id, feed_id, email_from)
 ) STRICT;
 
 CREATE TABLE user (
@@ -212,7 +219,8 @@ CREATE TABLE user_item (
   reported_at INT,
   report_reason TEXT,
   FOREIGN KEY(user_id) REFERENCES user(id),
-  FOREIGN KEY(item_id) REFERENCES item(id)
+  FOREIGN KEY(item_id) REFERENCES item(id),
+  UNIQUE(user_id, item_id)
 ) STRICT;
 
 CREATE INDEX idx_user_email ON user(email);

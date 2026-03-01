@@ -65,37 +65,45 @@
         :ad-click/cost 200,
         :ad-click/source [:lift :ad-click.source/web]}]}]
     (ads (merge ctx {:biff/now (t/instant 2000)}) {})),
-   :result
-   {:com.yakread.lib.spark/all-ads
-    [{:ad/id #uuid "00010000-0000-0000-0000-000000000001",
-      :ad/approve-state :ad.approve-state/approved,
-      :ad/paused nil,
-      :ad/payment-failed nil,
-      :ad/payment-method "some-payment-method",
-      :ad/budget 2000,
-      :ad/recent-cost 0}
-     {:ad/id #uuid "00020000-0000-0000-0000-000000000002",
-      :ad/approve-state nil,
-      :ad/paused nil,
-      :ad/payment-failed nil,
-      :ad/payment-method nil,
-      :ad/budget nil,
-      :ad/recent-cost 300}
-     {:ad/id #uuid "00030000-0000-0000-0000-000000000003",
-      :ad/approve-state nil,
-      :ad/paused nil,
-      :ad/payment-failed nil,
-      :ad/payment-method nil,
-      :ad/budget nil,
-      :ad/recent-cost 0}],
-    :com.yakread.lib.spark/ad-candidates
-    [{:ad/id #uuid "00010000-0000-0000-0000-000000000001",
-      :ad/approve-state :ad.approve-state/approved,
-      :ad/paused nil,
-      :ad/payment-failed nil,
-      :ad/payment-method "some-payment-method",
-      :ad/budget 2000,
-      :ad/recent-cost 0}]}}
+   :ex #error {
+ :cause "[SQLITE_CONSTRAINT_UNIQUE] A UNIQUE constraint failed (UNIQUE constraint failed: ad_click.user_id, ad_click.ad_id)"
+ :via
+ [{:type org.sqlite.SQLiteException
+   :message "[SQLITE_CONSTRAINT_UNIQUE] A UNIQUE constraint failed (UNIQUE constraint failed: ad_click.user_id, ad_click.ad_id)"
+   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
+ :trace
+ [[org.sqlite.core.DB newSQLException "DB.java" 1179]
+  [org.sqlite.core.DB newSQLException "DB.java" 1190]
+  [org.sqlite.core.DB execute "DB.java" 985]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement lambda$execute$0 "JDBC3PreparedStatement.java" 59]
+  [org.sqlite.jdbc3.JDBC3Statement withConnectionTimeout "JDBC3Statement.java" 458]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement execute "JDBC3PreparedStatement.java" 53]
+  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
+  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
+  [next.jdbc.result_set$eval14846$fn__14854 invoke "result_set.clj" 904]
+  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.biffweb.sqlite$execute$run__49524 invoke "sqlite.clj" 512]
+  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 514]
+  [com.biffweb.sqlite$execute invoke "sqlite.clj" 493]
+  [com.yakread.lib.sqlite$execute invokeStatic "sqlite.clj" 37]
+  [com.yakread.lib.sqlite$execute invoke "sqlite.clj" 33]
+  [clojure.lang.AFn applyToHelper "AFn.java" 156]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.core$apply invokeStatic "core.clj" 669]
+  [clojure.core$apply invoke "core.clj" 662]
+  [com.yakread.lib.test$execute invokeStatic "test.clj" 57]
+  [com.yakread.lib.test$execute doInvoke "test.clj" 56]
+  [clojure.lang.RestFn invoke "RestFn.java" 426]
+  [com.yakread.lib.test$start_test_sqlite invokeStatic "test.clj" 73]
+  [com.yakread.lib.test$start_test_sqlite invoke "test.clj" 62]
+  [tmp478015$eval108136 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp478015$eval108136 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "ad-ratings - empty database",
    :eval
@@ -146,27 +154,45 @@
         :ad-click/source [:lift :ad-click.source/web]}]}]
     {:input (ad-interaction-info (:biff/query ctx)),
      :ratings (ad-ratings ctx {})}),
-   :result
-   {:input
-    [{:last-clicked #time/instant "2002-01-01T00:00:00Z",
-      :ad-id #uuid "00010000-0000-0000-0000-000000000001",
-      :user-id #uuid "00300000-0000-0000-0000-000000000030",
-      :n-skips 1,
-      :last-skipped #time/instant "2000-01-01T00:00:00Z"}
-     {:n-skips 2,
-      :last-skipped #time/instant "2003-01-01T00:00:00Z",
-      :ad-id #uuid "00010000-0000-0000-0000-000000000001",
-      :user-id #uuid "00310000-0000-0000-0000-000000000031"}],
-    :ratings
-    {:com.yakread.lib.spark/ad-ratings
-     [{:rating/candidate #uuid "00010000-0000-0000-0000-000000000001",
-       :rating/user #uuid "00300000-0000-0000-0000-000000000030",
-       :rating/value 0.75,
-       :rating/created-at #time/instant "2002-01-01T00:00:00Z"}
-      {:rating/candidate #uuid "00010000-0000-0000-0000-000000000001",
-       :rating/user #uuid "00310000-0000-0000-0000-000000000031",
-       :rating/value 0.3,
-       :rating/created-at #time/instant "2003-01-01T00:00:00Z"}]}}}
+   :ex #error {
+ :cause "[SQLITE_CONSTRAINT_UNIQUE] A UNIQUE constraint failed (UNIQUE constraint failed: ad_click.user_id, ad_click.ad_id)"
+ :via
+ [{:type org.sqlite.SQLiteException
+   :message "[SQLITE_CONSTRAINT_UNIQUE] A UNIQUE constraint failed (UNIQUE constraint failed: ad_click.user_id, ad_click.ad_id)"
+   :at [org.sqlite.core.DB newSQLException "DB.java" 1179]}]
+ :trace
+ [[org.sqlite.core.DB newSQLException "DB.java" 1179]
+  [org.sqlite.core.DB newSQLException "DB.java" 1190]
+  [org.sqlite.core.DB execute "DB.java" 985]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement lambda$execute$0 "JDBC3PreparedStatement.java" 59]
+  [org.sqlite.jdbc3.JDBC3Statement withConnectionTimeout "JDBC3Statement.java" 458]
+  [org.sqlite.jdbc3.JDBC3PreparedStatement execute "JDBC3PreparedStatement.java" 53]
+  [next.jdbc.result_set$stmt__GT_result_set invokeStatic "result_set.clj" 675]
+  [next.jdbc.result_set$stmt__GT_result_set invoke "result_set.clj" 670]
+  [next.jdbc.result_set$eval14846$fn__14854 invoke "result_set.clj" 904]
+  [next.jdbc.protocols$eval13884$fn__13900$G__13875__13909 invoke "protocols.clj" 34]
+  [next.jdbc$execute_BANG_ invokeStatic "jdbc.clj" 272]
+  [next.jdbc$execute_BANG_ invoke "jdbc.clj" 254]
+  [com.biffweb.sqlite$execute$run__49524 invoke "sqlite.clj" 512]
+  [com.biffweb.sqlite$execute invokeStatic "sqlite.clj" 514]
+  [com.biffweb.sqlite$execute invoke "sqlite.clj" 493]
+  [com.yakread.lib.sqlite$execute invokeStatic "sqlite.clj" 37]
+  [com.yakread.lib.sqlite$execute invoke "sqlite.clj" 33]
+  [clojure.lang.AFn applyToHelper "AFn.java" 156]
+  [clojure.lang.AFn applyTo "AFn.java" 144]
+  [clojure.core$apply invokeStatic "core.clj" 669]
+  [clojure.core$apply invoke "core.clj" 662]
+  [com.yakread.lib.test$execute invokeStatic "test.clj" 57]
+  [com.yakread.lib.test$execute doInvoke "test.clj" 56]
+  [clojure.lang.RestFn invoke "RestFn.java" 426]
+  [com.yakread.lib.test$start_test_sqlite invokeStatic "test.clj" 73]
+  [com.yakread.lib.test$start_test_sqlite invoke "test.clj" 62]
+  [tmp478015$eval108142 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp478015$eval108142 invoke "NO_SOURCE_FILE" -1]
+  [clojure.lang.Compiler eval "Compiler.java" 7700]
+  [clojure.lang.Compiler eval "Compiler.java" 7655]
+  [clojure.core$eval invokeStatic "core.clj" 3232]
+  [clojure.core$eval invoke "core.clj" 3228]]}}
   _
   {:doc "dedupe-item-id",
    :eval

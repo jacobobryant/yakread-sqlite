@@ -57,11 +57,33 @@
         (assoc :biff/conn datasource)
         (update :biff/stop conj #(.close datasource)))))
 
+(declare system)
+
+(defn- sqlite-get-user-id [_node email]
+  (some-> (lib.sqlite/execute @system {:select :user/id
+                                       :from :user
+                                       :where [:= :user/email email]
+                                       :limit 1})
+          first
+          :user/id))
+
+(defn- sqlite-new-user-tx [ctx email]
+  (lib.sqlite/execute ctx
+    {:insert-into :user
+     :values [{:user/id (random-uuid)
+               :user/email email
+               :user/joined-at (tick/instant)}]
+     :on-conflict [:user/id]
+     :do-nothing true})
+  [])
+
 (def modules
   (concat modules/modules
           [(biffx-auth/module
             #:biff.auth{:app-path (href routes/for-you)
-                        :check-state false})]))
+                        :check-state false
+                        :get-user-id sqlite-get-user-id
+                        :new-user-tx sqlite-new-user-tx})]))
 
 (def router (reitit-ring/router
              [["" {:middleware lib.mid/default-site-middleware}
