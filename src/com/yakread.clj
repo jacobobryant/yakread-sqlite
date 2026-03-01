@@ -7,10 +7,10 @@
    [clojure.tools.namespace.repl :as tn-repl]
    [com.biffweb :as biff]
    [com.biffweb.experimental :as biffx]
-   [com.biffweb.experimental.auth :as biffx-auth]
    [com.wsscode.pathom3.connect.indexes :as pci]
    [com.wsscode.pathom3.connect.planner :as pcp]
    [com.yakread.lib.core :as lib.core]
+   [com.yakread.lib.auth :as lib.auth]
    [com.yakread.lib.email :as lib.email]
    [com.yakread.lib.sqlite :as lib.sqlite]
    [com.yakread.model.schema :as sqlite-schema]
@@ -59,7 +59,7 @@
 
 (def modules
   (concat modules/modules
-          [(biffx-auth/module
+          [(lib.auth/module
             #:biff.auth{:app-path (href routes/for-you)
                         :check-state false})]))
 
@@ -93,9 +93,7 @@
   (when-not (:clojure.tools.namespace.reload/error (biff/eval-files! sys))
     (generate-assets! sys)
     ;(test/run-all-tests #"com.yakread.*-test")
-    (time ((requiring-resolve 'com.yakread.lib.test/run-examples!)
-           {:ext "materialized_views_test.edn"}
-           ))
+    (time ((requiring-resolve 'com.yakread.lib.test/run-examples!) {}))
     (log/info :done)))
 
 (def malli-opts
@@ -124,7 +122,7 @@
           (str "Schema for " k " is invalid: " (pr-str (ex-data ex)))))
 
 (def pathom-env (pci/register (->> (mapcat :resolvers modules)
-                                   (concat (biffs/xtdb2-resolvers malli-opts))
+                                   (concat (lib.sqlite/sqlite-resolvers malli-opts*))
                                    (mapv lib.pathom/wrap-debug))))
 
 (defn merge-context [{:keys [yakread/model
@@ -135,16 +133,19 @@
     (-> ctx
         ;;(biff/assoc-db)
         (merge pathom-env
+               {:yakread.model/get-candidates (constantly {})
+                :yakread.model/item-candidate-ids #{}}
                (some-> model deref)
                {:biff/router router
                 :biff.fx/handlers fx/handlers
                 ;:biff/db (:biff/db snapshots)
                 ;:biff.index/snapshots snapshots
-                :biff/now (tick/in (tick/zoned-date-time) "UTC")
+                :biff/now (tick/instant)
                 :com.yakread/sign-redirect (fn [url]
                                              {:redirect url
                                               :redirect-sig (biffs/signature (jwt-secret) url)})
-                :biff/href-safe (partial lib.route/href-safe ctx)})
+                :biff/href-safe (partial lib.route/href-safe ctx)
+                :biff/query  (partial lib.sqlite/execute ctx)})
         (pcp/with-plan-cache (atom {})))))
 
 ;; TODO use a lib.pipe thing for this
@@ -189,11 +190,11 @@
    use-error-reporting
    biffx/use-xtdb2
    lib.sqlite/use-sqlite
-   lib.spark/use-spark
-   biff/use-queues
+   ;lib.spark/use-spark
+   ;biff/use-queues
    ;biffx/use-xtdb2-listener
    biff/use-jetty
-   biff/use-chime
+   ;biff/use-chime
    biff/use-beholder
    lib.smtp/use-server])
 

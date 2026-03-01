@@ -1,37 +1,37 @@
 (ns com.yakread.app.subscriptions.view
   (:require
-   [com.biffweb.experimental :as biffx]
+   [clojure.data.generators :as gen]
    [com.wsscode.pathom3.connect.operation :refer [?]]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.middleware :as lib.middle]
    [com.yakread.lib.route :as lib.route :refer [href]]
    [com.yakread.lib.ui :as ui]
-   [com.yakread.routes :as routes]
-   [com.yakread.util.biff-staging :as biffs]))
+   [com.yakread.routes :as routes]))
 
 (fx/defroute-pathom mark-read
-  [{:session/user [:xt/id]}
-   {:params/item [:xt/id]}]
+  [{:session/user [:user/id]}
+   {:params/item [:item/id]}]
 
   :post
-  (fn [{:biff/keys [conn now]} {:keys [session/user params/item]}]
+  (fn [{:biff/keys [query now]} {:keys [session/user params/item]}]
     (merge {:status 204}
-           (when (empty? (biffx/q conn
-                                     {:select :xt/id
-                                      :from :user-item
-                                      :where [:and
-                                              [:= :user-item/user (:xt/id user)]
-                                              [:= :user-item/item (:xt/id item)]
-                                              [:is-not :user-item/viewed-at nil]]
-                                      :limit 1}))
-             {:biff.fx/tx [[:patch-docs :user-item
-                            {:xt/id (biffs/gen-uuid (:xt/id user))
-                             :user-item/user (:xt/id user)
-                             :user-item/item (:xt/id item)
-                             :user-item/viewed-at now}]]}))))
+           (when (empty? (query {:select 1
+                                 :from :user-item
+                                 :where [:and
+                                         [:= :user-item/user-id (:user/id user)]
+                                         [:= :user-item/item-id (:item/id item)]
+                                         [:is-not :user-item/viewed-at nil]]
+                                 :limit 1}))
+             {:biff.fx/sqlite [{:insert-into :user-item
+                                 :values [{:user-item/id (gen/uuid)
+                                           :user-item/user-id (:user/id user)
+                                           :user-item/item-id (:item/id item)
+                                           :user-item/viewed-at now}]
+                                 :on-conflict [:user-item/user-id :user-item/item-id]
+                                 :do-update-set {:fields [:viewed-at]}}]}))))
 
 (fx/defroute-pathom mark-all-read
-  [{:session/user [:xt/id]}
+  [{:session/user [:user/id]}
    {:params/sub [:sub/id
                  {:sub/items [:item/id
                               :item/unread]}]}]
@@ -40,13 +40,15 @@
   (fn [{:keys [biff/now]} {:keys [session/user params/sub]}]
     {:status 303
      :headers {"HX-Location" (href `page-route (:sub/id sub))}
-     :biff.fx/tx [(into [:biff/upsert :user-item [:user-item/user :user-item/item]]
-                        (for [{:item/keys [id unread]} (:sub/items sub)
-                              :when unread]
-                          {:xt/id (biffs/gen-uuid (:xt/id user))
-                           :user-item/user (:xt/id user)
-                           :user-item/item id
-                           :user-item/skipped-at now}))]}))
+     :biff.fx/sqlite [{:insert-into :user-item
+                        :values (vec (for [{:item/keys [id unread]} (:sub/items sub)
+                                           :when unread]
+                                       {:user-item/id (gen/uuid)
+                                        :user-item/user-id (:user/id user)
+                                        :user-item/item-id id
+                                        :user-item/skipped-at now}))
+                        :on-conflict [:user-item/user-id :user-item/item-id]
+                        :do-update-set {:fields [:skipped-at]}}]}))
 
 (fx/defroute-pathom read-content-route "/sub-item/:item-id/content"
   [{(? :params/item) [:item/ui-read-content

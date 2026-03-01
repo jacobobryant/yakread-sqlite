@@ -1,29 +1,91 @@
 -- Auto-generated; do not edit.
 
-CREATE TABLE user (
-  id BLOB PRIMARY KEY NOT NULL,
-  email TEXT NOT NULL,
-  roles BLOB,
-  joined_at INT,
-  digest_days BLOB,
-  send_digest_at TEXT,
-  timezone TEXT,
-  digest_last_sent INT,
-  from_the_sample INT,
-  use_original_links INT,
-  suppressed_at INT,
-  email_username TEXT,
-  customer_id TEXT,
-  plan INT CHECK (plan IN (0, 1)), -- quarter (0), annual (1)
-  cancel_at INT
-) STRICT;
-
-CREATE TABLE reclist (
+CREATE TABLE ad (
   id BLOB PRIMARY KEY NOT NULL,
   user_id BLOB NOT NULL,
+  approve_state INT NOT NULL CHECK (approve_state IN (0, 1, 2)), -- pending (0), approved (1), rejected (2)
+  updated_at INT NOT NULL,
+  balance INT NOT NULL,
+  recent_cost INT NOT NULL,
+  bid INT,
+  budget INT,
+  url TEXT,
+  title TEXT,
+  description TEXT,
+  image_url TEXT,
+  paused INT,
+  payment_failed INT,
+  customer_id TEXT,
+  session_id TEXT,
+  payment_method TEXT,
+  card_details BLOB,
+  FOREIGN KEY(user_id) REFERENCES user(id),
+  UNIQUE(user_id)
+) STRICT;
+
+CREATE TABLE ad_click (
+  id BLOB PRIMARY KEY NOT NULL,
+  user_id BLOB NOT NULL,
+  ad_id BLOB NOT NULL,
   created_at INT NOT NULL,
-  clicked BLOB NOT NULL,
-  FOREIGN KEY(user_id) REFERENCES user(id)
+  cost INT NOT NULL,
+  source INT NOT NULL CHECK (source IN (0, 1)), -- web (0), email (1)
+  FOREIGN KEY(user_id) REFERENCES user(id),
+  FOREIGN KEY(ad_id) REFERENCES ad(id),
+  UNIQUE(user_id, ad_id)
+) STRICT;
+
+CREATE TABLE ad_credit (
+  id BLOB PRIMARY KEY NOT NULL,
+  ad_id BLOB NOT NULL,
+  source INT NOT NULL CHECK (source IN (0, 1)), -- charge (0), manual (1)
+  amount INT NOT NULL,
+  created_at INT NOT NULL,
+  charge_status INT CHECK (charge_status IN (0, 1, 2)), -- pending (0), confirmed (1), failed (2)
+  FOREIGN KEY(ad_id) REFERENCES ad(id)
+) STRICT;
+
+CREATE TABLE auth_code (
+  id BLOB PRIMARY KEY NOT NULL,
+  email TEXT NOT NULL,
+  code TEXT NOT NULL,
+  created_at INT NOT NULL,
+  failed_attempts INT NOT NULL
+) STRICT;
+
+CREATE TABLE bulk_send (
+  id BLOB PRIMARY KEY NOT NULL,
+  sent_at INT NOT NULL,
+  payload_size INT NOT NULL,
+  mailersend_id TEXT NOT NULL,
+  digests BLOB NOT NULL
+) STRICT;
+
+CREATE TABLE deleted_user (
+  id BLOB PRIMARY KEY NOT NULL,
+  email_username_hash TEXT NOT NULL
+) STRICT;
+
+CREATE TABLE digest (
+  id BLOB PRIMARY KEY NOT NULL,
+  user_id BLOB NOT NULL,
+  sent_at INT NOT NULL,
+  subject_id BLOB,
+  ad_id BLOB,
+  bulk_send_id BLOB,
+  FOREIGN KEY(user_id) REFERENCES user(id),
+  FOREIGN KEY(subject_id) REFERENCES item(id),
+  FOREIGN KEY(ad_id) REFERENCES ad(id),
+  FOREIGN KEY(bulk_send_id) REFERENCES bulk_send(id)
+) STRICT;
+
+CREATE TABLE digest_item (
+  id BLOB PRIMARY KEY NOT NULL,
+  digest_id BLOB NOT NULL,
+  item_id BLOB NOT NULL,
+  kind INT NOT NULL CHECK (kind IN (0, 1)), -- icymi (0), discover (1)
+  FOREIGN KEY(digest_id) REFERENCES digest(id),
+  FOREIGN KEY(item_id) REFERENCES item(id)
 ) STRICT;
 
 CREATE TABLE feed (
@@ -36,20 +98,8 @@ CREATE TABLE feed (
   etag TEXT,
   last_modified TEXT,
   failed_syncs INT,
-  moderation INT CHECK (moderation IN (0, 1)) -- approved (0), blocked (1)
-) STRICT;
-
-CREATE TABLE sub (
-  id BLOB PRIMARY KEY NOT NULL,
-  user_id BLOB NOT NULL,
-  created_at INT NOT NULL,
-  pinned_at INT,
-  record_type INT NOT NULL CHECK (record_type IN (0, 1)), -- feed (0), email (1)
-  feed_id BLOB,
-  email_from TEXT,
-  email_unsubscribed_at INT,
-  FOREIGN KEY(user_id) REFERENCES user(id),
-  FOREIGN KEY(feed_id) REFERENCES feed(id)
+  moderation INT CHECK (moderation IN (0, 1)), -- approved (0), blocked (1)
+  UNIQUE(url)
 ) STRICT;
 
 CREATE TABLE item (
@@ -85,34 +135,34 @@ CREATE TABLE item (
   FOREIGN KEY(email_sub_id) REFERENCES sub(id)
 ) STRICT;
 
-CREATE TABLE skip (
+CREATE TABLE mv_sub (
   id BLOB PRIMARY KEY NOT NULL,
-  reclist_id BLOB NOT NULL,
-  item_id BLOB NOT NULL,
-  FOREIGN KEY(reclist_id) REFERENCES reclist(id),
-  FOREIGN KEY(item_id) REFERENCES item(id)
+  sub_id BLOB NOT NULL,
+  affinity_low REAL,
+  affinity_high REAL,
+  last_published INT,
+  unread INT,
+  n_read INT,
+  FOREIGN KEY(sub_id) REFERENCES sub(id),
+  UNIQUE(sub_id)
 ) STRICT;
 
-CREATE TABLE ad (
+CREATE TABLE mv_user (
   id BLOB PRIMARY KEY NOT NULL,
   user_id BLOB NOT NULL,
-  approve_state INT NOT NULL CHECK (approve_state IN (0, 1, 2)), -- pending (0), approved (1), rejected (2)
-  updated_at INT NOT NULL,
-  balance INT NOT NULL,
-  recent_cost INT NOT NULL,
-  bid INT,
-  budget INT,
-  url TEXT,
-  title TEXT,
-  description TEXT,
-  image_url TEXT,
-  paused INT,
-  payment_failed INT,
-  customer_id TEXT,
-  session_id TEXT,
-  payment_method TEXT,
-  card_details BLOB,
-  FOREIGN KEY(user_id) REFERENCES user(id)
+  current_item_id BLOB,
+  FOREIGN KEY(user_id) REFERENCES user(id),
+  FOREIGN KEY(current_item_id) REFERENCES item(id),
+  UNIQUE(user_id)
+) STRICT;
+
+CREATE TABLE reclist (
+  id BLOB PRIMARY KEY NOT NULL,
+  user_id BLOB NOT NULL,
+  created_at INT NOT NULL,
+  clicked BLOB NOT NULL,
+  FOREIGN KEY(user_id) REFERENCES user(id),
+  UNIQUE(user_id, created_at)
 ) STRICT;
 
 CREATE TABLE redirect (
@@ -122,53 +172,47 @@ CREATE TABLE redirect (
   FOREIGN KEY(item_id) REFERENCES item(id)
 ) STRICT;
 
-CREATE TABLE ad_click (
+CREATE TABLE skip (
   id BLOB PRIMARY KEY NOT NULL,
-  user_id BLOB NOT NULL,
-  ad_id BLOB NOT NULL,
-  created_at INT NOT NULL,
-  cost INT NOT NULL,
-  source INT NOT NULL CHECK (source IN (0, 1)), -- web (0), email (1)
-  FOREIGN KEY(user_id) REFERENCES user(id),
-  FOREIGN KEY(ad_id) REFERENCES ad(id)
-) STRICT;
-
-CREATE TABLE bulk_send (
-  id BLOB PRIMARY KEY NOT NULL,
-  sent_at INT NOT NULL,
-  payload_size INT NOT NULL,
-  mailersend_id TEXT NOT NULL,
-  digests BLOB NOT NULL
-) STRICT;
-
-CREATE TABLE digest (
-  id BLOB PRIMARY KEY NOT NULL,
-  user_id BLOB NOT NULL,
-  sent_at INT NOT NULL,
-  subject_id BLOB,
+  reclist_id BLOB NOT NULL,
+  item_id BLOB,
   ad_id BLOB,
-  bulk_send_id BLOB,
-  FOREIGN KEY(user_id) REFERENCES user(id),
-  FOREIGN KEY(subject_id) REFERENCES item(id),
+  FOREIGN KEY(reclist_id) REFERENCES reclist(id),
+  FOREIGN KEY(item_id) REFERENCES item(id),
   FOREIGN KEY(ad_id) REFERENCES ad(id),
-  FOREIGN KEY(bulk_send_id) REFERENCES bulk_send(id)
+  UNIQUE(reclist_id, item_id, ad_id)
 ) STRICT;
 
-CREATE TABLE mv_user (
+CREATE TABLE sub (
   id BLOB PRIMARY KEY NOT NULL,
   user_id BLOB NOT NULL,
-  current_item_id BLOB,
+  created_at INT NOT NULL,
+  pinned_at INT,
+  record_type INT NOT NULL CHECK (record_type IN (0, 1)), -- feed (0), email (1)
+  feed_id BLOB,
+  email_from TEXT,
+  email_unsubscribed_at INT,
   FOREIGN KEY(user_id) REFERENCES user(id),
-  FOREIGN KEY(current_item_id) REFERENCES item(id)
+  FOREIGN KEY(feed_id) REFERENCES feed(id),
+  UNIQUE(user_id, feed_id, email_from)
 ) STRICT;
 
-CREATE TABLE digest_item (
+CREATE TABLE user (
   id BLOB PRIMARY KEY NOT NULL,
-  digest_id BLOB NOT NULL,
-  item_id BLOB NOT NULL,
-  kind INT NOT NULL CHECK (kind IN (0, 1)), -- icymi (0), discover (1)
-  FOREIGN KEY(digest_id) REFERENCES digest(id),
-  FOREIGN KEY(item_id) REFERENCES item(id)
+  email TEXT NOT NULL,
+  roles BLOB,
+  joined_at INT,
+  digest_days BLOB,
+  send_digest_at TEXT,
+  timezone TEXT,
+  digest_last_sent INT,
+  from_the_sample INT,
+  use_original_links INT,
+  suppressed_at INT,
+  email_username TEXT,
+  customer_id TEXT,
+  plan INT CHECK (plan IN (0, 1)), -- quarter (0), annual (1)
+  cancel_at INT
 ) STRICT;
 
 CREATE TABLE user_item (
@@ -183,33 +227,8 @@ CREATE TABLE user_item (
   reported_at INT,
   report_reason TEXT,
   FOREIGN KEY(user_id) REFERENCES user(id),
-  FOREIGN KEY(item_id) REFERENCES item(id)
-) STRICT;
-
-CREATE TABLE mv_sub (
-  id BLOB PRIMARY KEY NOT NULL,
-  sub_id BLOB NOT NULL,
-  affinity_low REAL,
-  affinity_high REAL,
-  last_published INT,
-  unread INT,
-  n_read INT,
-  FOREIGN KEY(sub_id) REFERENCES sub(id)
-) STRICT;
-
-CREATE TABLE ad_credit (
-  id BLOB PRIMARY KEY NOT NULL,
-  ad_id BLOB NOT NULL,
-  source INT NOT NULL CHECK (source IN (0, 1)), -- charge (0), manual (1)
-  amount INT NOT NULL,
-  created_at INT NOT NULL,
-  charge_status INT CHECK (charge_status IN (0, 1, 2)), -- pending (0), confirmed (1), failed (2)
-  FOREIGN KEY(ad_id) REFERENCES ad(id)
-) STRICT;
-
-CREATE TABLE deleted_user (
-  id BLOB PRIMARY KEY NOT NULL,
-  email_username_hash TEXT NOT NULL
+  FOREIGN KEY(item_id) REFERENCES item(id),
+  UNIQUE(user_id, item_id)
 ) STRICT;
 
 CREATE INDEX idx_user_email ON user(email);

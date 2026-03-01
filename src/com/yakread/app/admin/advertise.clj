@@ -1,5 +1,6 @@
 (ns com.yakread.app.admin.advertise
   (:require
+   [clojure.data.generators :as gen]
    [clojure.tools.logging :as log]
    [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
    [com.yakread.lib.admin :as lib]
@@ -8,7 +9,7 @@
    [com.yakread.lib.middleware :as lib.mid]
    [com.yakread.lib.route :as lib.route :refer [href]]
    [com.yakread.lib.ui :as ui]
-   [com.yakread.util.biff-staging :as biffs])
+   [tick.core :as tick])
   (:import
    [java.time ZonedDateTime]))
 
@@ -17,23 +18,30 @@
 (fx/defroute update-ad
   :post
   (fn [{{:keys [ad]} :params}]
-    {:biff.fx/tx [[:patch-docs :ad ad]]
-     :status 200
-     :body ""}))
+    (let [id (:ad/id ad)
+          set-fields (cond-> (dissoc ad :ad/id)
+                       (:ad/approve-state ad)
+                       (update :ad/approve-state
+                               (fn [v] [:lift (keyword "ad.approve-state" (name v))])))]
+      {:biff.fx/sqlite [{:update :ad
+                          :set set-fields
+                          :where [:= :ad/id id]}]
+       :status 200
+       :body ""})))
 
 (fx/defroute create-pending-charges
   :post
   (fn [{{:keys [tx]} :params}]
-    {:biff.fx/tx tx
+    {:biff.fx/sqlite tx
      :headers {"hx-refresh" "true"}
      :status 204}))
 
 (fx/defroute-pathom handle-pending-charges
   [{:admin/pending-charges
-    [:xt/id
-     (? :ad.credit/stripe-status)
-     :ad.credit/amount
-     {:ad.credit/ad [:xt/id
+    [:ad-credit/id
+     (? :ad-credit/stripe-status)
+     :ad-credit/amount
+     {:ad-credit/ad [:xt/id
                      :ad/title
                      :ad/customer-id
                      :ad/payment-method
@@ -43,32 +51,36 @@
   (fn [{:keys [biff/secret]} output]
     (let [{new* nil succeeded "succeeded" failed "requires_payment_method"
            :as charges-by-status}
-          (group-by :ad.credit/stripe-status (:admin/pending-charges output))]
+          (group-by :ad-credit/stripe-status (:admin/pending-charges output))]
       (log/info "handling pending charges" {:new (count new*)
                                             :succeeded (count succeeded)
                                             :faild (count failed)})
       (concat
        {:status 204
         :headers {"hx-refresh" "true"}
-        :biff.fx/tx (concat
-                     ;; record succeeded payment
-                     (for [{:keys [xt/id] :ad.credit/keys [amount ad]} succeeded
-                           :let [{ad-id :xt/id} ad]]
-                       [[:patch-docs :ad-credit {:xt/id id :ad.credit/charge-status :confirmed}]
-                        (biffs/dual-write
-                         {:update :ad
-                          :set {:ad/balance [:- :ad/balance amount]}
-                          :where [:= :xt/id ad-id]})])
+        :biff.fx/sqlite (concat
+                         ;; record succeeded payment
+                         (for [{:ad-credit/keys [id amount ad]} succeeded
+                               :let [{ad-id :ad/id} ad]]
+                           [{:update :ad-credit
+                             :set {:ad-credit/charge-status [:lift :ad-credit.charge-status/confirmed]}
+                             :where [:= :ad-credit/id id]}
+                            {:update :ad
+                             :set {:ad/balance [:- :ad/balance amount]}
+                             :where [:= :ad/id ad-id]}])
 
-                     ;; record failed payment
-                     (for [{:keys [xt/id] :ad.credit/keys [ad]} failed
-                           :let [{ad-id :xt/id} ad]]
-                       [[:patch-docs :ad-credit {:xt/id id :ad.credit/charge-status :failed}]
-                        [:patch-docs :ad {:xt/id ad-id :ad/payment-failed true}]]))}
+                         ;; record failed payment
+                         (for [{:ad-credit/keys [id ad]} failed
+                               :let [{ad-id :ad/id} ad]]
+                           [{:update :ad-credit
+                             :set {:ad-credit/charge-status [:lift :ad-credit.charge-status/failed]}
+                             :where [:= :ad-credit/id id]}
+                            {:update :ad
+                             :set {:ad/payment-failed true}
+                             :where [:= :ad/id ad-id]}]))}
 
        ;; create payment intent
-       (for [{:keys [xt/id]
-              :ad.credit/keys [amount ad]} new*
+       (for [{:ad-credit/keys [id amount ad]} new*
              :let [{:ad/keys [customer-id payment-method user]} ad
                    {:user/keys [email]} user]]
          {:biff.fx/http {:method :post
@@ -87,27 +99,28 @@
                                        :metadata {:charge_id (str id)}}}})))))
 
 (defresolver pending-ads [{:keys [admin/ads]}]
-  {::pco/input [{:admin/ads [:xt/id
+  {::pco/input [{:admin/ads [:ad/id
                              :ad/state
                              (? :ad/ui-preview-card)]}]
    ::pco/output [::pending-ads]}
   {::pending-ads
    (let [pending (filterv #(= :pending (:ad/state %)) ads)]
      [:.flex.flex-wrap
-      (for [{:ad/keys [ui-preview-card] id :xt/id} pending]
+      (for [{:ad/keys [id ui-preview-card]} pending]
         [:.pending-ad.flex.flex-col.gap-4.mb-8.mr-8
          [:.flex.gap-2
           (for [[state label icon] [[:approved "Approve" "check-solid"]
                                     [:rejected "Reject" "xmark-solid"]]]
-            (ui/button {:hx-post (href update-ad {:ad {:xt/id id :ad/approve-state state}})
+            (ui/button {:hx-post (href update-ad {:ad {:ad/id id :ad/approve-state state}})
                         :hx-target "closest .pending-ad"
                         :hx-swap "outerHTML"
                         :ui/icon icon}
               label))]
          [:.max-w-screen-sm ui-preview-card]])])})
 
-(defresolver ads-table [{:keys [admin/ads] admin :session/user}]
-  {::pco/input [{:admin/ads [:xt/id
+(defresolver ads-table [{:keys [biff/now]}
+                        {:keys [admin/ads] admin :session/user}]
+  {::pco/input [{:admin/ads [:ad/id
                              {:ad/user [:user/email]}
                              (? :ad/title)
                              :ad/state
@@ -117,19 +130,20 @@
                              :ad/updated-at
                              (? :ad/chargeable)
                              (? :ad/amount-pending)
-                             {(? :ad/pending-charge) [:xt/id
-                                                      (? :ad.credit/stripe-status)]}]}
+                             {(? :ad/pending-charge) [:ad-credit/id
+                                                      (? :ad-credit/stripe-status)]}]}
                 {:session/user [:user/timezone]}]}
   {::ads-table
    (let [pending-ads (filterv :ad/pending-charge ads)
-         charge-tx (for [{:keys [xt/id ad/balance ad/chargeable]} ads
+         charge-tx (for [{:ad/keys [id balance chargeable]} ads
                          :when chargeable]
-                     {:db/doc-type :ad.credit
-                      :ad.credit/ad id
-                      :ad.credit/source :charge
-                      :ad.credit/amount balance
-                      :ad.credit/created-at :db/now
-                      :ad.credit/charge-status :pending})]
+                     {:insert-into :ad-credit
+                      :values [{:ad-credit/id (gen/uuid)
+                                :ad-credit/ad-id id
+                                :ad-credit/source [:lift :ad-credit.source/charge]
+                                :ad-credit/amount balance
+                                :ad-credit/created-at now
+                                :ad-credit/charge-status [:lift :ad-credit.charge-status/pending]}]})]
      (ui/wide-page-well
       [:div.flex.gap-4
        (ui/button {:hx-post (href create-pending-charges {:tx charge-tx})
@@ -157,11 +171,11 @@
            (some-> balance ui/fmt-cents)
            (some-> bid ui/fmt-cents)
            (some-> budget ui/fmt-cents)
-           (.toLocalDate (ZonedDateTime/ofInstant updated-at (:user/timezone admin)))
+           (tick/date (tick/in updated-at (tick/zone (:user/timezone admin))))
            (when chargeable
              (lib.icons/base "check-solid" {:class "w-4 h-4"}))
            (some-> amount-pending ui/fmt-cents)
-           (:ad.credit/stripe-status pending-charge)]))))})
+           (:ad-credit/stripe-status pending-charge)]))))})
 
 (fx/defroute-pathom page-content-route "/admin/advertise/content"
   [::pending-ads

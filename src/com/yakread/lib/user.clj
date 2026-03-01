@@ -1,7 +1,6 @@
 (ns com.yakread.lib.user
   (:require
    [clojure.string :as str]
-   [com.biffweb.experimental :as biffx]
    [com.yakread.lib.core :as lib.core]))
 
 (let [reserved #{"hello"
@@ -21,8 +20,8 @@
       (when-not (reserved username)
         username))))
 
-(defn email-username-taken? [conn username]
-  (-> (biffx/q conn
+(defn email-username-taken? [query username]
+  (pos? (-> (query
                {:select [[[:or
                            [:exists
                             {:select [[[:inline 1]]]
@@ -35,5 +34,5 @@
                              :where [:= :deleted-user/email-username-hash (lib.core/sha256 username)]
                              :limit [:inline 1]}]]
                           :taken]]})
-      first
-      :taken))
+            first
+            :taken)))

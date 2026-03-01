@@ -1,9 +1,8 @@
 (ns com.yakread.work.train
   (:require
+   [clojure.data.generators :as gen]
    [clojure.tools.logging :as log]
    [com.biffweb :as biff]
-   [com.biffweb.experimental :as biffx]
-   [com.yakread.util.biff-staging :as biffs]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.item :as lib.item]
@@ -25,17 +24,19 @@
                       (do
                         (log/warn "Received status 429 when fetching candidate" url)
                         {:biff.fx/sleep 10000})
-                      [{:biff.fx/tx [[:put-docs :item
-                                      {:xt/id (biffs/gen-uuid "0000")
-                                       :item/url url
-                                       :item/ingested-at now
-                                       :item/doc-type :item/direct
-                                       :item.direct/candidate-status :ingest-failed}]]}
+                      [{:biff.fx/sqlite [{:insert-into :item
+                                          :values [{:item/id (gen/uuid)
+                                                    :item/url url
+                                                    :item/ingested-at now
+                                                    :item/record-type [:lift :item.record-type/direct]
+                                                    :item/direct-candidate-status [:lift :ingest-failed]}]
+                                          :on-conflict [:item/id]
+                                          :do-update-set {:fields [:url :ingested-at :record-type :direct-candidate-status]}}]}
                        {:biff.fx/sleep 2000}])))}))
 
 (fx/defmachine queue-add-candidate
   :start
-  (fn [{:keys [biff/conn biff/queues yakread.work.queue-add-candidate/enabled]}]
+  (fn [{:keys [biff/query biff/queues yakread.work.queue-add-candidate/enabled]}]
     (when-let [urls (and enabled
                          (= 0 (.size (:work.train/add-candidate queues)))
                          (->> {:select :item/url
@@ -44,10 +45,11 @@
                                        :item/url
                                        {:select :item/url
                                         :from :item
-                                        :join [:user-item [:= :item._id :user-item/item]]
+                                        :join [:user-item [:= :item/id :user-item/item-id]]
                                         :where [:is-not :user-item/favorited-at nil]}]
-                               :having [:not [:bool_or [:coalesce [:= :item/doc-type "item/direct"] false]]]}
-                              (biffx/q conn)
+                               :group-by :item/url
+                               :having [:not [:max [:coalesce [:= :item/record-type [:lift :item.record-type/direct]] false]]]}
+                              (query)
                               (mapv :item/url)
                               not-empty))]
       (log/info "Found" (count urls) "candidate URLs")
@@ -66,7 +68,5 @@
 (comment
   (time
    (do
-    (retrain (biff/merge-context @com.yakread/system))
-    :done))
-
-  )
+     (retrain (biff/merge-context @com.yakread/system))
+     :done)))

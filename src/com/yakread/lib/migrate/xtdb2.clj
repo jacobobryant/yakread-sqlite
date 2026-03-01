@@ -313,6 +313,9 @@
     {:new-doc (dissoc doc :digest/icymi :digest/discover)
      :table->component-docs {:digest-item digest-items}}))
 
+;; MIGRATION TODO: skip table now has separate :skip/item-id and :skip/ad-id columns.
+;; :skip/item in the skip docs below needs to be split into :skip/item-id or :skip/ad-id
+;; depending on whether the skipped entity is an item or an ad.
 (defn convert-reclist {:table :reclist}
   [doc _]
   (let [skips (for [item (:skip/items doc)

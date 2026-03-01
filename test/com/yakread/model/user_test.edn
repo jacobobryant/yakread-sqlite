@@ -4,9 +4,16 @@
   [com.yakread.model.user :refer :all]],
  :tests
  [{:eval
-   (t/with-node
-    [node {:mv-user [{:xt/id "mv-user1", :mv.user/user "user1"}]}]
-    {:exists (mv {:biff/conn node} {:user/id "user1"}),
-     :not-exists (mv {:biff/conn node} {:user/id "user2"})}),
-   :result {:exists {:user/mv {:xt/id "mv-user1"}}, :not-exists nil}}
+   (t/with-sqlite
+    [ctx
+     {:user [{:user/id (t/uuid 1)}],
+      :mv-user
+      [{:mv-user/id (t/uuid 10), :mv-user/user-id (t/uuid 1)}]}]
+    {:exists (mv ctx {:user/id (t/uuid 1)}),
+     :not-exists (mv ctx {:user/id (t/uuid 2)})}),
+   :result
+   {:exists
+    {:user/mv
+     {:mv-user/id #uuid "00100000-0000-0000-0000-000000000010"}},
+    :not-exists nil}}
   _]}

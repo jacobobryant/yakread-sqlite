@@ -82,7 +82,7 @@
           html (some-> message lib.smtp/extract-html)]
       (if (nil? message)
         {:status 303
-         :headers {"location" (str "/admin/parse-email?issue=" (rand-nth (vec issues)))}}   
+         :headers {"location" (str "/admin/parse-email?issue=" (rand-nth (vec issues)))}}
         (do
           (println)
           (infer-post-url headers html)

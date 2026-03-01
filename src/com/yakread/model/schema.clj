@@ -32,10 +32,11 @@
           [:user/suppressed-at       ? inst?]
           [:user/email-username      ? ::string]
           [:user/customer-id         ? :string]
-          [:user/plan                ? [:enum :quarter :annual]]
+          [:user/plan                ? [:enum :user.plan/quarter :user.plan/annual]]
           [:user/cancel-at           ? inst?]]
 
-   :feed [:map {:closed true}
+   :feed [:map {:closed true
+               :biff/unique [[:feed/url]]}
           [:feed/id                :uuid]
           [:feed/url               ::string]
           [:feed/synced-at       ? inst?]
@@ -45,14 +46,15 @@
           [:feed/etag            ? ::string]
           [:feed/last-modified   ? ::string]
           [:feed/failed-syncs    ? :int]
-          [:feed/moderation      ? [:enum :approved :blocked]]]
+          [:feed/moderation      ? [:enum :feed.moderation/approved :feed.moderation/blocked]]]
 
-   :sub [:map {:closed true}
+   :sub [:map {:closed true
+              :biff/unique [[:sub/user-id :sub/feed-id :sub/email-from]]}
          [:sub/id                     :uuid]
          [:sub/user-id      (r :user) :uuid]
          [:sub/created-at             inst?]
          [:sub/pinned-at    ?         inst?]
-         [:sub/record-type            [:enum :feed :email]]
+         [:sub/record-type            [:enum :sub.record-type/feed :sub.record-type/email]]
          ;; feed sub fields
          [:sub/feed-id      (?r :feed) :uuid]
          ;; email sub fields
@@ -78,7 +80,10 @@
           [:item/length            ? :int]
           [:item/image-url         ? ::string]
           [:item/paywalled         ? :boolean]
-          [:item/record-type         [:enum :feed :email :direct]]
+          [:item/record-type         [:enum
+                                      :item.record-type/feed
+                                      :item.record-type/email
+                                      :item.record-type/direct]]
           ;; feed item fields
           [:item/feed-id           (?r :feed) :uuid]
           [:item/feed-guid         ? ::string]
@@ -90,14 +95,18 @@
           [:item/email-reply-to    ? ::string]
           [:item/email-maybe-confirmation ? :boolean]
           ;; direct item fields
-          [:item/direct-candidate-status ? [:enum :ingest-failed :blocked :approved]]]
+          [:item/direct-candidate-status ? [:enum
+                                            :item.direct-candidate-status/ingest-failed
+                                            :item.direct-candidate-status/blocked
+                                            :item.direct-candidate-status/approved]]]
 
    :redirect [:map {:closed true}
               [:redirect/id       :uuid]
               [:redirect/url      ::string]
               [:redirect/item-id  (r :item) :uuid]]
 
-   :user-item [:map {:closed true}
+   :user-item [:map {:closed true
+                    :biff/unique [[:user-item/user-id :user-item/item-id]]}
                [:user-item/id                  :uuid]
                [:user-item/user-id   (r :user) :uuid]
                [:user-item/item-id   (r :item) :uuid]
@@ -121,7 +130,9 @@
                  [:digest-item/id                  :uuid]
                  [:digest-item/digest-id (r :digest) :uuid]
                  [:digest-item/item-id   (r :item)   :uuid]
-                 [:digest-item/kind      [:enum :icymi :discover]]]
+                 [:digest-item/kind      [:enum
+                                          :digest-item.kind/icymi
+                                          :digest-item.kind/discover]]]
 
    :bulk-send [:map {:closed true}
                [:bulk-send/id              :uuid]
@@ -130,21 +141,28 @@
                [:bulk-send/mailersend-id   :string]
                [:bulk-send/digests         [:vector :uuid]]]
 
-   :reclist [:map {:closed true}
+   :reclist [:map {:closed true
+                  :biff/unique [[:reclist/user-id :reclist/created-at]]}
              [:reclist/id                   :uuid]
              [:reclist/user-id    (r :user) :uuid]
              [:reclist/created-at           inst?]
              [:reclist/clicked              [:set :uuid]]]
 
-   :skip [:map {:closed true}
+   :skip [:map {:closed true
+               :biff/unique [[:skip/reclist-id :skip/item-id :skip/ad-id]]}
           [:skip/id                      :uuid]
           [:skip/reclist-id (r :reclist) :uuid]
-          [:skip/item-id    (r :item)    :uuid]]
+          [:skip/item-id    (?r :item)   :uuid]
+          [:skip/ad-id      (?r :ad)     :uuid]]
 
-   :ad [:map {:closed true}
+   :ad [:map {:closed true
+              :biff/unique [[:ad/user-id]]}
         [:ad/id                     :uuid]
         [:ad/user-id      (r :user) :uuid]
-        [:ad/approve-state          [:enum :pending :approved :rejected]]
+        [:ad/approve-state          [:enum
+                                     :ad.approve-state/pending
+                                     :ad.approve-state/approved
+                                     :ad.approve-state/rejected]]
         [:ad/updated-at             inst?]
         [:ad/balance                :int]
         [:ad/recent-cost            :int]
@@ -165,23 +183,32 @@
                                      [:exp_year  :int]
                                      [:exp_month :int]]]]
 
-   :ad-click [:map {:closed true}
+   :ad-click [:map {:closed true
+                   :biff/unique [[:ad-click/user-id :ad-click/ad-id]]}
               [:ad-click/id                      :uuid]
               [:ad-click/user-id       (r :user) :uuid]
               [:ad-click/ad-id         (r :ad)   :uuid]
               [:ad-click/created-at              inst?]
               [:ad-click/cost                    :int]
-              [:ad-click/source                  [:enum :web :email]]]
+              [:ad-click/source                  [:enum
+                                                  :ad-click.source/web
+                                                  :ad-click.source/email]]]
 
    :ad-credit [:map {:closed true}
                [:ad-credit/id                     :uuid]
                [:ad-credit/ad-id         (r :ad) :uuid]
-               [:ad-credit/source                 [:enum :charge :manual]]
+               [:ad-credit/source                 [:enum
+                                                   :ad-credit.source/charge
+                                                   :ad-credit.source/manual]]
                [:ad-credit/amount                 :int]
                [:ad-credit/created-at             inst?]
-               [:ad-credit/charge-status ?        [:enum :pending :confirmed :failed]]]
+               [:ad-credit/charge-status ?        [:enum
+                                                   :ad-credit.charge-status/pending
+                                                   :ad-credit.charge-status/confirmed
+                                                   :ad-credit.charge-status/failed]]]
 
-   :mv-sub [:map {:closed true}
+   :mv-sub [:map {:closed true
+                  :biff/unique [[:mv-sub/sub-id]]}
             [:mv-sub/id                     :uuid]
             [:mv-sub/sub-id       (r :sub) :uuid]
             [:mv-sub/affinity-low     ?     :double]
@@ -190,14 +217,22 @@
             [:mv-sub/unread           ?     :int]
             [:mv-sub/n-read             ?     :int]]
 
-   :mv-user [:map {:closed true}
+   :mv-user [:map {:closed true
+                   :biff/unique [[:mv-user/user-id]]}
              [:mv-user/id                        :uuid]
              [:mv-user/user-id        (r :user) :uuid]
              [:mv-user/current-item-id (?r :item) :uuid]]
 
    :deleted-user [:map {:closed true}
                   [:deleted-user/id                    :uuid]
-                  [:deleted-user/email-username-hash   :string]]})
+                  [:deleted-user/email-username-hash   :string]]
+
+   :auth-code [:map {:closed true}
+               [:auth-code/id              :uuid]
+               [:auth-code/email           :string]
+               [:auth-code/code            :string]
+               [:auth-code/created-at      inst?]
+               [:auth-code/failed-attempts :int]]})
 
 (def module
   {})

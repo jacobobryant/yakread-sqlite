@@ -72,3 +72,26 @@ jobs:
 
       - name: Install sqlite3def
         run: ./setup-sqlite3def.sh
+
+      - name: Install Babashka
+        run: |
+          curl -sLO https://raw.githubusercontent.com/babashka/babashka/master/install
+          chmod +x install
+          sudo ./install
+          rm install
+
+      - name: Install bbin and clojure-mcp-light tools
+        run: |
+          curl -o- -L https://raw.githubusercontent.com/babashka/bbin/v0.2.4/bbin > /usr/local/bin/bbin
+          chmod +x /usr/local/bin/bbin
+          # Pre-download Clojure tools for babashka deps (avoids SSL issues in some environments)
+          BB_CLJ_VERSION=$(bb -e '(System/getProperty "babashka.deps.clojure.tools.version")' 2>/dev/null || echo "1.12.4.1597")
+          TOOLS_DIR="$HOME/.deps.clj/${BB_CLJ_VERSION}/ClojureTools"
+          if [ ! -f "${TOOLS_DIR}/clojure-tools-${BB_CLJ_VERSION}.jar" ]; then
+            mkdir -p "${TOOLS_DIR}"
+            curl -L -o "${TOOLS_DIR}/clojure-tools.zip" \
+              "https://github.com/clojure/brew-install/releases/download/${BB_CLJ_VERSION}/clojure-tools.zip"
+            cd "${TOOLS_DIR}" && unzip -o clojure-tools.zip && mv ClojureTools/* . 2>/dev/null; true
+          fi
+          bbin install https://github.com/bhauman/clojure-mcp-light.git --tag v0.2.1 --as clj-paren-repair --main-opts '["-m" "clojure-mcp-light.paren-repair"]'
+          bbin install https://github.com/bhauman/clojure-mcp-light.git --tag v0.2.1 --as clj-nrepl-eval --main-opts '["-m" "clojure-mcp-light.nrepl-eval"]'

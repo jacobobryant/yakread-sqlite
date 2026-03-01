@@ -14,16 +14,17 @@
  :tests
  [{:doc "deliver* invalid domain",
    :eval
-   (t/with-node
-    [node {:user [{:xt/id "user1", :user/email-username "hello"}]}]
+   (t/with-sqlite
+    [ctx {:user [{:user/id (t/uuid 1), :user/email-username "hello"}]}]
     (let
      [f
       (fn
        [message-overrides]
        (deliver*
-        {:biff/conn node,
-         :yakread/domain "example.com",
-         :biff.smtp/message (merge message message-overrides)}
+        (merge
+         ctx
+         {:yakread/domain "example.com",
+          :biff.smtp/message (merge message message-overrides)})
         :start))]
      {:invalid-domain (f {:domain "1.example.com", :username "hello"}),
       :invalid-username (f {:domain "example.com", :username "hi"}),
@@ -52,19 +53,20 @@
   _
   {:doc "deliver* :end existing sub",
    :eval
-   (t/with-node
-    [node
-     {:user [{:xt/id (t/uuid 0), :user/email-username "bob"}],
+   (t/with-sqlite
+    [ctx
+     {:user [{:user/id (t/uuid 0), :user/email-username "bob"}],
       :sub
-      [{:xt/id (t/uuid 1),
-        :sub.email/from "alice@example.com",
-        :sub/user (t/uuid 0)}]}]
+      [{:sub/id (t/uuid 1),
+        :sub/email-from "alice@example.com",
+        :sub/user-id (t/uuid 0)}]}]
     (deliver*
-     {:biff.smtp/message message,
-      :biff/conn node,
-      :biff/now (t/zdt 2000),
-      :com.yakread.smtp/url "https://example.com/p/example-post",
-      :com.yakread.fx/js {:html html}}
+     (merge
+      ctx
+      {:biff.smtp/message message,
+       :biff/now (t/zdt 2000),
+       :com.yakread.smtp/url "https://example.com/p/example-post",
+       :com.yakread.fx/js {:html html}})
      :end)),
    :result
    [{:biff.fx/s3
@@ -80,36 +82,39 @@
        :body
        "<!doctype html>\n<html>\n <head>\n  <title></title>\n </head>\n <body>\n  <div>\n   the quick brown fox jumps over the lazy dog\n  </div>\n </body>\n</html>",
        :headers {"x-amz-acl" "private", "content-type" "text/html"}}]}
-    {:biff.fx/tx
-     ([:put-docs
-       :item
-       {:item/excerpt "the quick brown fox jumps over the lazy dog",
-        :item/published-at
-        #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-        :item.email/sub #uuid "00010000-0000-0000-0000-000000000001",
-        :item/url "https://example.com/p/example-post",
-        :item/length 43,
-        :item/content-key #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503",
-        :item/lang "en",
-        :item/author-name "alice@example.com",
-        :item.email/reply-to "alice@example.com",
-        :xt/id #uuid "0001ba3d-c812-a76d-554d-cd2b40b5f04b",
-        :item/title "subject line",
-        :item/ingested-at
-        #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-        :item.email/raw-content-key
-        #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"}])}]}
+    {:biff.fx/sqlite
+     ({:insert-into :item,
+       :values
+       [{:item/excerpt "the quick brown fox jumps over the lazy dog",
+         :item/email-reply-to "alice@example.com",
+         :item/id #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
+         :item/published-at
+         #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
+         :item/url "https://example.com/p/example-post",
+         :item/length 43,
+         :item/content-key
+         #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503",
+         :item/email-raw-content-key
+         #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+         :item/lang "en",
+         :item/author-name "alice@example.com",
+         :item/title "subject line",
+         :item/ingested-at
+         #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
+         :item/email-sub-id
+         #uuid "00010000-0000-0000-0000-000000000001"}]})}]}
   _
   {:doc "deliver* :end new sub",
    :eval
-   (t/with-node
-    [node {:user [{:xt/id (t/uuid 0), :user/email-username "bob"}]}]
+   (t/with-sqlite
+    [ctx {:user [{:user/id (t/uuid 0), :user/email-username "bob"}]}]
     (deliver*
-     {:biff.smtp/message message,
-      :biff/conn node,
-      :biff/now (t/zdt 2000),
-      :com.yakread.smtp/url "https://example.com/p/example-post",
-      :com.yakread.fx/js {:html html}}
+     (merge
+      ctx
+      {:biff.smtp/message message,
+       :biff/now (t/zdt 2000),
+       :com.yakread.smtp/url "https://example.com/p/example-post",
+       :com.yakread.fx/js {:html html}})
      :end)),
    :result
    [{:biff.fx/s3
@@ -125,37 +130,35 @@
        :body
        "<!doctype html>\n<html>\n <head>\n  <title></title>\n </head>\n <body>\n  <div>\n   the quick brown fox jumps over the lazy dog\n  </div>\n </body>\n</html>",
        :headers {"x-amz-acl" "private", "content-type" "text/html"}}]}
-    {:biff.fx/tx
-     ([:put-docs
-       :item
-       {:item/excerpt "the quick brown fox jumps over the lazy dog",
-        :item/published-at
-        #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-        :item.email/sub #uuid "0000ba3d-c812-a76d-554d-cd2b40b5f04b",
-        :item/url "https://example.com/p/example-post",
-        :item/length 43,
-        :item.email/maybe-confirmation true,
-        :item/content-key #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503",
-        :item/lang "en",
-        :item/author-name "alice@example.com",
-        :item.email/reply-to "alice@example.com",
-        :xt/id #uuid "0000c222-9cef-e94d-fc1e-932efb9a0f58",
-        :item/title "subject line",
-        :item/ingested-at
-        #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
-        :item.email/raw-content-key
-        #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be"}]
-      [:put-docs
-       :sub
-       {:xt/id #uuid "0000ba3d-c812-a76d-554d-cd2b40b5f04b",
-        :sub/user #uuid "00000000-0000-0000-0000-000000000000",
-        :sub.email/from "alice@example.com",
-        :sub/created-at
-        #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}]
-      {:xt
-       ["ASSERT ? >= (SELECT COUNT(*) FROM sub WHERE (\"sub$user\" = ?) AND (\"sub$email$from\" = ?))"
-        1
-        #uuid "00000000-0000-0000-0000-000000000000"
-        "alice@example.com"],
-       :sqlite nil})}]}
+    {:biff.fx/sqlite
+     ({:insert-into :item,
+       :values
+       [{:item/excerpt "the quick brown fox jumps over the lazy dog",
+         :item/email-reply-to "alice@example.com",
+         :item/id #uuid "629bc222-9cef-e94d-fc1e-932efb9a0f58",
+         :item/published-at
+         #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
+         :item/url "https://example.com/p/example-post",
+         :item/length 43,
+         :item/email-maybe-confirmation true,
+         :item/content-key
+         #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503",
+         :item/email-raw-content-key
+         #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+         :item/lang "en",
+         :item/author-name "alice@example.com",
+         :item/title "subject line",
+         :item/ingested-at
+         #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
+         :item/email-sub-id
+         #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b"}]}
+      {:insert-into :sub,
+       :values
+       [{:sub/id #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
+         :sub/user-id #uuid "00000000-0000-0000-0000-000000000000",
+         :sub/email-from "alice@example.com",
+         :sub/created-at
+         #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}],
+       :on-conflict [:sub/user-id :sub/feed-id :sub/email-from],
+       :do-nothing true})}]}
   _]}

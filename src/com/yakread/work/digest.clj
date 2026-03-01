@@ -1,22 +1,20 @@
 (ns com.yakread.work.digest
   (:require
    [cheshire.core :as cheshire]
+   [clojure.data.generators :as gen]
    [clojure.string :as str]
-   [com.yakread.util.biff-staging :as biffs]
    [clojure.tools.logging :as log]
    [com.biffweb :as biff]
-   [com.biffweb.experimental :as biffx]
    [com.wsscode.pathom3.connect.operation :as pco :refer [?]]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.fx :as fx]
    [tick.core :as tick]))
 
 (defn in-send-time-window? [{:keys [biff/now user]}]
-  (let [{:user/keys [digest-days send-digest-at timezone]
-         ;; TODO rely on pathom for defaults
-         :or {digest-days #{:sunday :monday :tuesday :wednesday :thursday :friday :saturday}
-              send-digest-at (tick/time "08:00")
-              timezone "US/Pacific"}} user
+  (let [{:user/keys [digest-days send-digest-at timezone]} user
+        digest-days (or digest-days #{:sunday :monday :tuesday :wednesday :thursday :friday :saturday})
+        send-digest-at (or send-digest-at (tick/time "08:00"))
+        timezone (or timezone "US/Pacific")
 
         timezone (java.time.ZoneId/of timezone)
         now-date (tick/date (tick/in now timezone))
@@ -33,13 +31,13 @@
 
 (defn send-digest? [{:keys [biff/now user]}]
   (and (tick/<= (tick/of-hours 18)
-                (tick/between (:user/digest-last-sent user lib.core/epoch) now))
+                (tick/between (or (:user/digest-last-sent user) lib.core/epoch) now))
        (in-send-time-window? {:biff/now now :user user})
        (not (:user/suppressed-at user))))
 
 (fx/defmachine queue-prepare-digest
   :start
-  (fn [{:keys [biff/conn biff/queues yakread.work.digest/enabled biff/now]}]
+  (fn [{:keys [biff/query biff/queues yakread.work.digest/enabled biff/now]}]
     ;; There is a small race condition where the queue could be empty even though the
     ;; :work.digest/prepare-digest consumer(s) are still processing jobs, in which case the
     ;; corresponding users could receive two digests. To deal with that, we could
@@ -47,8 +45,8 @@
     ;; each user and make sure it isn't within the past e.g. 6 hours. Probably doesn't matter
     ;; though. Queues should probably expose the number of in-progress jobs.
     (when (and enabled (= 0 (.size (:work.digest/prepare-digest queues))))
-      (let [users (->> (biffx/q conn
-                                {:select [:xt/id
+      (let [users (->> (query
+                                {:select [:user/id
                                           :user/email
                                           :user/digest-last-sent
                                           :user/suppressed-at
@@ -68,7 +66,7 @@
 (fx/defmachine prepare-digest
   :start
   (fn [{user :biff/job}]
-    {:biff.fx/pathom {:entity {:user/id (:xt/id user)}
+    {:biff.fx/pathom {:entity {:user/id (:user/id user)}
                       :query  [(? :digest/payload)
                                {(? :digest/subject-item)       [:item/id
                                                                 :item/title]}
@@ -77,33 +75,34 @@
                                {(? :user/digest-discover-recs) [:item/id]}]}
      :biff.fx/next :end
      ;; hack until model code is refactored to not use session.
-     :session {:uid (:xt/id user)}})
+     :session {:uid (:user/id user)}})
 
   :end
   (fn [{:keys [biff.fx/pathom biff/now] user :biff/job}]
     (when (:digest/payload pathom)
-      (let [digest-id (biffs/gen-uuid (:xt/id user))
-            digest-items (for [[k kind] [[:user/icymi-recs :icymi]
-                                         [:user/digest-discover-recs :discover]]
+      (let [digest-id (gen/uuid)
+            digest-items (for [[k kind] [[:user/icymi-recs :digest-item.kind/icymi]
+                                         [:user/digest-discover-recs :digest-item.kind/discover]]
                                item (get pathom k)]
-                           {:xt/id (biffs/gen-uuid (:item/id item))
-                            :digest-item/digest digest-id
-                            :digest-item/item (:item/id item)
-                            :digest-item/kind kind})
-            tx (concat
-                [[:patch-docs :user
-                  {:xt/id (:xt/id user)
-                   :user/digest-last-sent now}]
-                 [:put-docs :digest
-                  (into {:xt/id          digest-id
-                         :digest/user    (:xt/id user)
-                         :digest/sent-at now}
-                        (filter (comp lib.core/something? val))
-                        {:digest/subject  (get-in pathom [:digest/subject-item :item/id])
-                         :digest/ad       (get-in pathom [:user/ad-rec :ad/id])})]]
-                (when (not-empty digest-items)
-                  [(into [:put-docs :digest-item] digest-items)]))]
-        [{:biff.fx/tx tx}
+                           {:digest-item/id (gen/uuid)
+                            :digest-item/digest-id digest-id
+                            :digest-item/item-id (:item/id item)
+                            :digest-item/kind [:lift kind]})
+            sqlite (concat
+                    [{:update :user
+                      :set {:user/digest-last-sent now}
+                      :where [:= :user/id (:user/id user)]}
+                     {:insert-into :digest
+                      :values [(into {:digest/id       digest-id
+                                      :digest/user-id  (:user/id user)
+                                      :digest/sent-at  now}
+                                     (filter (comp lib.core/something? val))
+                                     {:digest/subject-id  (get-in pathom [:digest/subject-item :item/id])
+                                      :digest/ad-id       (get-in pathom [:user/ad-rec :ad/id])})]}]
+                    (when (not-empty digest-items)
+                      [{:insert-into :digest-item
+                        :values (vec digest-items)}]))]
+        [{:biff.fx/sqlite sqlite}
          {:biff.fx/queue {:id :work.digest/send-digest
                           :job {:user/email (:user/email user)
                                 :digest/id digest-id
@@ -172,16 +171,15 @@
 
   :record-bulk-send
   (fn [{:keys [biff/now ::digest-ids ::payload-size biff.fx/http]}]
-    (let [bulk-send-id (biffs/gen-uuid)]
-      [{:biff.fx/tx [[:put-docs :bulk-send
-                      {:xt/id bulk-send-id
-                       :bulk-send/sent-at now
-                       :bulk-send/payload-size payload-size
-                       :bulk-send/mailersend-id (get-in http [:body :bulk_email_id])}]
-                     (into [:patch-docs :digest]
-                           (for [id digest-ids]
-                             {:xt/id id
-                              :digest/bulk-send bulk-send-id}))]}
+    (let [bulk-send-id (gen/uuid)]
+      [{:biff.fx/sqlite [{:insert-into :bulk-send
+                          :values [{:bulk-send/id bulk-send-id
+                                    :bulk-send/sent-at now
+                                    :bulk-send/payload-size payload-size
+                                    :bulk-send/mailersend-id (get-in http [:body :bulk_email_id])}]}
+                         {:update :digest
+                          :set {:digest/bulk-send-id bulk-send-id}
+                          :where [:in :digest/id digest-ids]}]}
        ;; Mailersend limits bulk request to 15 / minute.
        ;; https://developers.mailersend.com/api/v1/email.html#send-bulk-emails
        {:biff.fx/sleep (long (+ (/ 60000 9) 1000))}])))

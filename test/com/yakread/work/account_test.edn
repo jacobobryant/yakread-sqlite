@@ -89,12 +89,12 @@
        {:com.wsscode.pathom3.connect.operation/optional? true})
       {(:user/subscriptions
         {:com.wsscode.pathom3.connect.operation/optional? true})
-       [:xt/id
-        (:sub.feed/feed
+       [:sub/id
+        (:sub/feed-id
          {:com.wsscode.pathom3.connect.operation/optional? true})]}
       {(:user/ad
         {:com.wsscode.pathom3.connect.operation/optional? true})
-       [:xt/id
+       [:ad/id
         (:ad/customer-id
          {:com.wsscode.pathom3.connect.operation/optional? true})]}
       (:user/customer-id
@@ -108,9 +108,9 @@
      {:user/id "user123",
       :user/customer-id "cus_user123",
       :user/subscriptions
-      [{:xt/id "sub1", :sub.feed/feed "feed1"}
-       {:xt/id "sub2", :sub.feed/feed nil}],
-      :user/ad {:xt/id "ad1", :ad/customer-id "cus_ad123"},
+      [{:sub/id "sub1", :sub/feed-id "feed1"}
+       {:sub/id "sub2", :sub/feed-id nil}],
+      :user/ad {:ad/id "ad1", :ad/customer-id "cus_ad123"},
       :user/email-username "user@example.com"},
      :biff/secret {:stripe/api-key "sk_test_123"}}
     :delete),
@@ -126,15 +126,15 @@
        :basic-auth ["sk_test_123"],
        :socket-timeout 10000,
        :connection-timeout 10000})}
-    {:biff.fx/tx
-     ([:erase-docs :user "user123"]
-      [:erase-docs :ad "ad1"]
-      [:delete-docs :sub "sub1"]
-      [:put-docs
-       :deleted-user
-       {:xt/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
-        :deleted-user/email-username-hash
-        "b4c9a289323b21a01c3e940f150eb9b8c542587f1abfd8f0e1cc1ffc5e475514"}]),
+    {:biff.fx/sqlite
+     ({:delete-from :user, :where [:= :user/id "user123"]}
+      {:delete-from :ad, :where [:= :ad/id "ad1"]}
+      {:delete-from :sub, :where [:= :sub/id "sub1"]}
+      {:insert-into :deleted-user,
+       :values
+       [{:deleted-user/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+         :deleted-user/email-username-hash
+         "b4c9a289323b21a01c3e940f150eb9b8c542587f1abfd8f0e1cc1ffc5e475514"}]}),
      :biff.fx/next :delete-email-batch}]}
   _
   {:doc "delete-account: delete state with only user customer id",
@@ -155,7 +155,8 @@
        :basic-auth ["sk_test_123"],
        :socket-timeout 10000,
        :connection-timeout 10000})}
-    {:biff.fx/tx ([:erase-docs :user "user123"]),
+    {:biff.fx/sqlite
+     ({:delete-from :user, :where [:= :user/id "user123"]}),
      :biff.fx/next :delete-email-batch}]}
   _
   {:doc "delete-account: delete state with no customer ids",
@@ -171,13 +172,14 @@
     :delete),
    :result
    [{:biff.fx/http ()}
-    {:biff.fx/tx ([:erase-docs :user "user123"]),
+    {:biff.fx/sqlite
+     ({:delete-from :user, :where [:= :user/id "user123"]}),
      :biff.fx/next :delete-email-batch}]}
   _
   {:doc "delete-account: delete-email-batch with no emails",
    :eval
    (delete-account
-    {:biff/conn nil,
+    {:biff/query nil,
      :biff/job {:user/id "user123"},
      :session {:uid "user123"},
      :com.yakread.work.account/email-ids []}
@@ -186,76 +188,81 @@
   _
   {:doc "delete-account: delete-email-batch with email items",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [ctx
      {:item
-      [{:xt/id (t/uuid 2),
-        :item/content-key "content-key-1",
-        :item.email/raw-content-key "raw-key-1"}
-       {:xt/id (t/uuid 3), :item/content-key "content-key-2"}]}]
+      [{:item/id (t/uuid 2),
+        :item/content-key (t/uuid 20),
+        :item/email-raw-content-key (t/uuid 21)}
+       {:item/id (t/uuid 3), :item/content-key (t/uuid 30)}]}]
     (delete-account
-     {:biff/conn node,
-      :biff/job {:user/id (t/uuid 10)},
-      :session {:uid (t/uuid 10)},
-      :com.yakread.work.account/email-ids [(t/uuid 2) (t/uuid 3)]}
+     (merge
+      ctx
+      {:biff/job {:user/id (t/uuid 10)},
+       :session {:uid (t/uuid 10)},
+       :com.yakread.work.account/email-ids [(t/uuid 2) (t/uuid 3)]})
      :delete-email-batch)),
    :result
    [{:biff.fx/s3
-     ({:key "content-key-1",
+     ({:key "00200000-0000-0000-0000-000000000020",
        :config-ns yakread.s3.content,
        :method "DELETE"}
-      {:key "raw-key-1",
+      {:key "00210000-0000-0000-0000-000000000021",
        :config-ns yakread.s3.emails,
        :method "DELETE"}
-      {:key "content-key-2",
+      {:key "00300000-0000-0000-0000-000000000030",
        :config-ns yakread.s3.content,
        :method "DELETE"})}
-    {:biff.fx/tx
-     [[:erase-docs
-       :item
-       #uuid "00020000-0000-0000-0000-000000000002"
-       #uuid "00030000-0000-0000-0000-000000000003"]]}
+    {:biff.fx/sqlite
+     [{:delete-from :item,
+       :where
+       [:in
+        :item/id
+        [#uuid "00020000-0000-0000-0000-000000000002"
+         #uuid "00030000-0000-0000-0000-000000000003"]]}]}
     {:biff.fx/next :delete-email-batch,
      :com.yakread.work.account/email-ids ()}]}
   _
   {:doc
    "delete-account: delete-email-batch queries email items from SQL when email-ids not set",
    :eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [ctx
      {:sub
-      [{:xt/id (t/uuid 1),
-        :sub/user (t/uuid 10),
-        :sub.email/from "sender@example.com"}],
+      [{:sub/id (t/uuid 1),
+        :sub/user-id (t/uuid 10),
+        :sub/email-from "sender@example.com"}],
       :item
-      [{:xt/id (t/uuid 2),
-        :item.email/sub (t/uuid 1),
-        :item/content-key "content-key-1",
-        :item.email/raw-content-key "raw-key-1"}
-       {:xt/id (t/uuid 3),
-        :item.email/sub (t/uuid 1),
-        :item/content-key "content-key-2"}]}]
+      [{:item/id (t/uuid 2),
+        :item/email-sub-id (t/uuid 1),
+        :item/content-key (t/uuid 20),
+        :item/email-raw-content-key (t/uuid 21)}
+       {:item/id (t/uuid 3),
+        :item/email-sub-id (t/uuid 1),
+        :item/content-key (t/uuid 30)}]}]
     (delete-account
-     {:biff/conn node,
-      :biff/job {:user/id (t/uuid 10)},
-      :session {:uid (t/uuid 10)}}
+     (merge
+      ctx
+      {:biff/job {:user/id (t/uuid 10)}, :session {:uid (t/uuid 10)}})
      :delete-email-batch)),
    :result
    [{:biff.fx/s3
-     ({:key "content-key-1",
+     ({:key "00200000-0000-0000-0000-000000000020",
        :config-ns yakread.s3.content,
        :method "DELETE"}
-      {:key "raw-key-1",
+      {:key "00210000-0000-0000-0000-000000000021",
        :config-ns yakread.s3.emails,
        :method "DELETE"}
-      {:key "content-key-2",
+      {:key "00300000-0000-0000-0000-000000000030",
        :config-ns yakread.s3.content,
        :method "DELETE"})}
-    {:biff.fx/tx
-     [[:erase-docs
-       :item
-       #uuid "00020000-0000-0000-0000-000000000002"
-       #uuid "00030000-0000-0000-0000-000000000003"]]}
+    {:biff.fx/sqlite
+     [{:delete-from :item,
+       :where
+       [:in
+        :item/id
+        [#uuid "00020000-0000-0000-0000-000000000002"
+         #uuid "00030000-0000-0000-0000-000000000003"]]}]}
     {:biff.fx/next :delete-email-batch,
      :com.yakread.work.account/email-ids ()}]}
   _]}

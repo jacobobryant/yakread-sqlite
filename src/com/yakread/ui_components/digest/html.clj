@@ -70,7 +70,7 @@
                  :text-decoration "none"}} "Change settings"] "."]})
 
 (defresolver sponsored [{:user/keys [ad-rec id]}]
-  {::pco/input [{:user/ad-rec [:xt/id
+  {::pco/input [{:user/ad-rec [:ad/id
                                :ad/title
                                :ad/host
                                :ad/description

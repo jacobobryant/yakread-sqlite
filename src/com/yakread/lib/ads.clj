@@ -6,7 +6,7 @@
                           payment-method
                           recent-cost
                           budget]}]
-  (and (= :approved approve-state)
+  (and (= :ad.approve-state/approved approve-state)
        (not paused)
        (not payment-failed)
        (some? payment-method)

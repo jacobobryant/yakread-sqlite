@@ -3,14 +3,12 @@
    [clojure.string :as str]
    [clojure.tools.logging :as log]
    [com.biffweb :as biff]
-   [com.biffweb.experimental :as biffx]
    [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
    [com.yakread.lib.form :as lib.form]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.middleware :as lib.mid]
    [com.yakread.lib.route :as lib.route :refer [href]]
    [com.yakread.lib.ui :as ui]
-   [com.yakread.util.biff-staging :as biffs]
    [tick.core :as tick])
   (:import
    [java.time LocalTime ZoneId]
@@ -32,21 +30,21 @@
 (fx/defroute set-timezone
   :post
   (fn [{:keys [session biff.form/params]}]
-    {:biff.fx/tx [[:patch-docs :user
-                   {:xt/id (:uid session)
-                    :user/timezone* (:user/timezone* params)}]]
+    {:biff.fx/sqlite [{:update :user
+                       :set {:user/timezone (:user/timezone params)}
+                       :where [:= :user/id (:uid session)]}]
      :status 204}))
 
 (fx/defroute save-settings
   :post
   (fn [{:keys [session biff.form/params]}]
-    {:biff.fx/tx [[:patch-docs :user
-                   (merge {:xt/id (:uid session)
-                           :user/use-original-links false}
-                          (select-keys params [:user/digest-days
-                                               :user/send-digest-at
-                                               :user/timezone*
-                                               :user/use-original-links]))]]
+    {:biff.fx/sqlite [{:update :user
+                       :set (merge {:user/use-original-links false}
+                                   (select-keys params [:user/digest-days
+                                                        :user/send-digest-at
+                                                        :user/timezone
+                                                        :user/use-original-links]))
+                       :where [:= :user/id (:uid session)]}]
      :status 303
      :headers {"location" (href page)}}))
 
@@ -63,37 +61,35 @@
       {:status 204}))
 
   :update-plan
-  (fn [{:keys [biff/conn stripe/quarter-price-id body-params]}]
+  (fn [{:keys [biff/query stripe/quarter-price-id body-params]}]
     (let [{:keys [customer items cancel_at]} (get-in body-params [:data :object])
           price-id (get-in items [:data 0 :price :id])
           plan (if (= quarter-price-id price-id)
-                 :quarter
-                 :annual)
-          [{user-id :xt/id}] (biffx/q conn
-                                      {:select :xt/id
-                                       :from :user
-                                       :where [:= :user/customer-id customer]})]
-      {:biff.fx/tx [(biffs/dual-write
-                    {:update :user
-                     :set {:user/plan [:lift plan]
-                           :user/cancel-at (when cancel_at
-                                             (tick/in (tick/instant (* cancel_at 1000))
-                                                      "UTC"))}
-                     :where [:= :xt/id user-id]})]
+                 :user.plan/quarter
+                 :user.plan/annual)
+          [{user-id :user/id}] (query
+                                {:select :user/id
+                                 :from :user
+                                 :where [:= :user/customer-id customer]})]
+      {:biff.fx/sqlite [{:update :user
+                         :set {:user/plan [:lift plan]
+                               :user/cancel-at (when cancel_at
+                                                 (tick/in (tick/instant (* cancel_at 1000))
+                                                          "UTC"))}
+                         :where [:= :user/id user-id]}]
        :status 204}))
 
   :delete-plan
-  (fn [{:keys [biff/conn body-params]}]
+  (fn [{:keys [biff/query body-params]}]
     (let [{:keys [customer]} (get-in body-params [:data :object])
-          [{user-id :xt/id}] (biffx/q conn
-                                      {:select :xt/id
-                                       :from :user
-                                       :where [:= :user/customer-id customer]})]
-      {:biff.fx/tx [(biffs/dual-write
-                      {:update :user
-                       :set {:user/plan nil
-                             :user/cancel-at nil}
-                       :where [:= :xt/id user-id]})]
+          [{user-id :user/id}] (query
+                                {:select :user/id
+                                 :from :user
+                                 :where [:= :user/customer-id customer]})]
+      {:biff.fx/sqlite [{:update :user
+                         :set {:user/plan nil
+                               :user/cancel-at nil}
+                         :where [:= :user/id user-id]}]
        :status 204})))
 
 (fx/defroute-pathom manage-premium
@@ -158,9 +154,9 @@
                      quarter-price-id
                      annual-price-id)]
       [(when http
-         {:biff.fx/tx [[:patch-docs :user
-                        {:xt/id (:uid session)
-                         :user/customer-id customer-id}]]})
+         {:biff.fx/sqlite [{:update :user
+                            :set {:user/customer-id customer-id}
+                            :where [:= :user/id (:uid session)]}]})
        {:biff.fx/http {:method :post
                        :url "https://api.stripe.com/v1/checkout/sessions"
                        :basic-auth [(secret :stripe/api-key)]
@@ -190,7 +186,7 @@
      :status 204}))
 
 (fx/defroute-pathom delete-account
-  [{:session/user [:xt/id
+  [{:session/user [:user/id
                    :user/email
                    :user/account-deletable
                    (? :user/account-deletable-message)]}]
@@ -210,7 +206,7 @@
 
         :else
         {:biff.fx/queue {:id :work.account/delete-account
-                         :job {:user/id (:xt/id user)}}
+                         :job {:user/id (:user/id user)}}
          :status 204
          :headers {"hx-redirect" (href account-deleted)}
          :session {}}))))
@@ -219,7 +215,7 @@
   (.format local-time (DateTimeFormatter/ofPattern "h:mm a")))
 
 (defresolver main-settings [{:keys [session/user]}]
-  {::pco/input [{(? :session/user) [:xt/id
+  {::pco/input [{(? :session/user) [:user/id
                                     :user/email
                                     :user/digest-days
                                     :user/send-digest-at
@@ -278,8 +274,8 @@
              [:<>
               "You're on the "
               (case plan
-                :quarter "$30 / 3 months"
-                :annual "$60 / 12 months"
+                :user.plan/quarter "$30 / 3 months"
+                :user.plan/annual "$60 / 12 months"
                 "premium")
               " plan. "])
            (biff/form
@@ -329,7 +325,7 @@
 
 (fx/defroute-pathom page "/settings"
   [:app.shell/app-shell
-   {(? :session/user) [:xt/id]}
+   {(? :session/user) [:user/id]}
    ::main-settings
    ::premium
    ::account]
@@ -371,9 +367,9 @@
     (let [{:keys [action user/id]} safe-params]
       (if (not= action :action/unsubscribe)
         (ui/on-error {:status 400})
-        {:biff.fx/tx [[:patch-docs :user
-                       {:xt/id id
-                        :user/digest-days #{}}]]
+        {:biff.fx/sqlite [{:update :user
+                          :set {:user/digest-days #{}}
+                          :where [:= :user/id id]}]
          :status 303
          :headers {"location" (href unsubscribe-success)}}))))
 

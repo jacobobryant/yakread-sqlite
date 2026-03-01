@@ -7,32 +7,30 @@
    [com.yakread.lib.middleware :as lib.middle]
    [com.yakread.lib.route :refer [href]]
    [com.yakread.lib.ui :as ui]
-   [com.yakread.routes :as routes]
-   [com.yakread.util.biff-staging :as biffs]))
+   [com.yakread.routes :as routes]))
 
 (fx/defroute-pathom mark-unread
-  [{:params/item [{:item/user-item [:xt/id]}]}
+  [{:params/item [{:item/user-item [:user-item/id]}]}
    :params/redirect-url]
 
   :post
   (fn [_ {:keys [params/item params/redirect-url]}]
     {:status 204
      :headers {"HX-Location" redirect-url}
-     :biff.fx/tx [(biffs/dual-write
-                   {:update :user-item
-                    :set {:user-item/viewed-at nil
-                          :user-item/favorited-at nil
-                          :user-item/disliked-at nil
-                          :user-item/reported-at nil
-                          :user-item/report-reason nil
-                          :user-item/skipped-at nil}
-                    :where [:= :xt/id (get-in item [:item/user-item :xt/id])]})]}))
+     :biff.fx/sqlite [{:update :user-item
+                       :set {:user-item/viewed-at nil
+                             :user-item/favorited-at nil
+                             :user-item/disliked-at nil
+                             :user-item/reported-at nil
+                             :user-item/report-reason nil
+                             :user-item/skipped-at nil}
+                       :where [:= :user-item/id (get-in item [:item/user-item :user-item/id])]}]}))
 
 (fx/defroute-pathom toggle-favorite
   [{:params/item
     [:item/like-button*
      {:item/user-item
-      [:xt/id
+      [:user-item/id
        (? :user-item/favorited-at)]}]}]
 
   :post
@@ -42,27 +40,25 @@
       {:status 200
        :headers {"Content-Type" "text/html"}
        :body ((:item/like-button* item) {:active (not favorited)})
-       :biff.fx/tx [(biffs/dual-write
-                     {:update :user-item
-                      :set {:user-item/favorited-at (when-not favorited now)
-                            :user-item/disliked-at nil
-                            :user-item/reported-at nil
-                            :user-item/report-reason nil}
-                      :where [:= :xt/id (:xt/id user-item)]})]})))
+       :biff.fx/sqlite [{:update :user-item
+                         :set {:user-item/favorited-at (when-not favorited now)
+                               :user-item/disliked-at nil
+                               :user-item/reported-at nil
+                               :user-item/report-reason nil}
+                         :where [:= :user-item/id (:user-item/id user-item)]}]})))
 
 (fx/defroute-pathom not-interested
-  [{:params/item [{:item/user-item [:xt/id]}]}
+  [{:params/item [{:item/user-item [:user-item/id]}]}
    :params/redirect-url]
 
   :post
   (fn [{:keys [biff/now]} {:params/keys [item redirect-url]}]
     {:status 204
      :headers {"HX-Location" redirect-url}
-     :biff.fx/tx [(biffs/dual-write
-                   {:update :user-item
-                    :set {:user-item/favorited-at nil
-                          :user-item/disliked-at now}
-                    :where [:= :xt/id (get-in item [:item/user-item :xt/id])]})]}))
+     :biff.fx/sqlite [{:update :user-item
+                       :set {:user-item/favorited-at nil
+                             :user-item/disliked-at now}
+                       :where [:= :user-item/id (get-in item [:item/user-item :user-item/id])]}]}))
 
 (defn bar-button-icon-label [icon text]
   [:.flex.justify-center
@@ -120,13 +116,12 @@
           (str/replace "+" "%20")))
 
 (defresolver button-bar [{:keys [com.yakread/sign-redirect]}
-                         {:item/keys [id title sub like-button share-button]
-                          :item.email/keys [reply-to]}]
+                         {:item/keys [id title sub like-button share-button email-reply-to]}]
   #::pco{:input [:item/id
                  :item/like-button
                  (? :item/title)
                  (? :item/share-button)
-                 (? :item.email/reply-to)
+                 (? :item/email-reply-to)
                  {(? :item/sub) [:sub/id :sub/title]}]}
   {:item/ui-button-bar
    (fn [{:keys [leave-item-redirect
@@ -141,18 +136,17 @@
               :style {:box-shadow "0 -4px 6px -1px rgb(0 0 0 / 0.1), 0 -2px 4px -2px rgb(0 0 0 / 0.1)"}}
         (when share-button
           [:.flex-1 share-button])
-        (when reply-to
+        (when email-reply-to
           [:.flex-1
            (bar-button
             {:ui/icon "reply-regular"
-             :href (str "mailto:" (query-encode reply-to) "?subject=" (query-encode (str "Re: " title)))}
+             :href (str "mailto:" (query-encode email-reply-to) "?subject=" (query-encode (str "Re: " title)))}
             "Reply")])
 
         ;;(cond
         ;;  (some (or item {}) [:item.rss/feed-url :item/inferred-feed-url])
         ;;  [:.flex-1 (subscribe-button ctx)])
         [:.flex-1 like-button]
-
 
         (ui/overflow-menu
          {:ui/direction :up}

@@ -1,10 +1,8 @@
 (ns com.yakread.work.materialized-views
   (:require
-   [com.yakread.util.biff-staging :as biffs]
-   [com.biffweb.experimental :as biffx]
+   [clojure.data.generators :as gen]
    [com.wsscode.pathom3.connect.operation :as pco :refer [?]]
    [com.yakread.lib.fx :as fx]
-   [xtdb.api :as-alias xt]
    [tick.core :as tick]))
 
 (fx/defmachine update-views
@@ -18,91 +16,93 @@
                       :query [:sub/id
                               :sub/affinity-low*
                               :sub/affinity-high*
-                              {(? :sub/mv) [(? :mv.sub/affinity-low)
-                                            (? :mv.sub/affinity-high)]}]}
+                              {(? :sub/mv) [(? :mv-sub/affinity-low)
+                                            (? :mv-sub/affinity-high)]}]}
      :biff.fx/next :sub-affinity-update})
 
   :sub-affinity-update
   (fn [{:keys [biff.fx/pathom]}]
     (let [{:sub/keys [id affinity-low* affinity-high* mv]} pathom]
       (when (not= [affinity-low* affinity-high*]
-                  [(:mv.sub/affinity-low mv) (:mv.sub/affinity-high mv)])
-        {:biff.fx/tx [[:biff/upsert :mv-sub [:mv.sub/sub]
-                       {:xt/id (biffs/gen-uuid id)
-                        :mv.sub/sub id
-                        :mv.sub/affinity-low  affinity-low*
-                        :mv.sub/affinity-high affinity-high*}]]})))
+                  [(:mv-sub/affinity-low mv) (:mv-sub/affinity-high mv)])
+        {:biff.fx/sqlite [{:insert-into :mv-sub
+                           :values [{:mv-sub/id (gen/uuid)
+                                     :mv-sub/sub-id id
+                                     :mv-sub/affinity-low affinity-low*
+                                     :mv-sub/affinity-high affinity-high*}]
+                           :on-conflict [:mv-sub/sub-id]
+                           :do-update-set {:fields [:affinity-low :affinity-high]}}]})))
 
   :current-item
-  (fn [{:biff/keys [conn job]}]
-    (let [{:user-item/keys [user item viewed-at]} job
+  (fn [{:biff/keys [query job]}]
+    (let [{:user-item/keys [user-id item-id viewed-at]} job
 
-          {current-item :user-item/item
+          {current-item :user-item/item-id
            current-item-viewed-at :user-item/viewed-at}
           (first
-           (biffx/q conn
-                    {:select [:user-item/item :user-item/viewed-at]
-                     :from :mv-user
-                     :join [:user-item [:= :user-item/item :mv.user/current-item]]
-                     :where [:= :mv.user/user user]}))
+           (query
+            {:select [:user-item/item-id :user-item/viewed-at]
+             :from :mv-user
+             :join [:user-item [:= :user-item/item-id :mv-user/current-item-id]]
+             :where [:= :mv-user/user-id user-id]}))
 
           new-current-item (cond
                              (and viewed-at
                                   (or (not current-item-viewed-at)
                                       (tick/<= current-item-viewed-at viewed-at)))
-                             item
+                             item-id
 
                              (and (not viewed-at)
-                                  (= item current-item))
+                                  (= item-id current-item))
                              ::remove)]
       (when new-current-item
-        {:biff.fx/tx [{:biff/upsert :mv-user [:mv.user/user]
-                       {:xt/id (biffs/gen-uuid user)
-                        :mv.user/user user
-                        :mv.user/current-item (when (not= new-current-item ::remove)
-                                                new-current-item)}}]}))))
+        {:biff.fx/sqlite [{:insert-into :mv-user
+                           :values [{:mv-user/id (gen/uuid)
+                                     :mv-user/user-id user-id
+                                     :mv-user/current-item-id (when (not= new-current-item ::remove)
+                                                                new-current-item)}]
+                           :on-conflict [:mv-user/user-id]
+                           :do-update-set {:fields [:current-item-id]}}]}))))
 
 (fx/defmachine on-tx
   :start
-  (fn [{:keys [biff/conn record]}]
+  (fn [{:keys [biff/query record]}]
     {:biff.fx/queue
      {:jobs
       (for [job
             (distinct
              (cond
-               (:user-item/user record)
+               (:user-item/user-id record)
                (concat
-                (when-some [sub-id (-> (biffx/q
-                                        conn
-                                        {:select [[[:coalesce :item.email/sub :sub._id]
-                                                   :sub/id]]
+                (when-some [sub-id (-> (query
+                                        {:select [[[:coalesce :item/email-sub-id :sub/id]
+                                                   :sub-id]]
                                          :from :item
-                                         :where [:= :item._id (:user-item/item record)]
+                                         :where [:= :item/id (:user-item/item-id record)]
                                          :left-join [:sub [:and
-                                                           [:is-not :item.feed/feed nil]
-                                                           [:= :sub.feed/feed :item.feed/feed]
-                                                           [:= :sub/user (:user-item/user record)]]]
+                                                           [:is-not :item/feed-id nil]
+                                                           [:= :sub/feed-id :item/feed-id]
+                                                           [:= :sub/user-id (:user-item/user-id record)]]]
                                          :limit 1})
                                        first
-                                       :sub/id)]
+                                       :sub-id)]
                   [{:view :sub-affinity :sub/id sub-id}])
                 [(merge record {:view :current-item})])
 
-               (:skip/item record)
-               (when-some [sub-id (-> (biffx/q
-                                       conn
-                                       {:select [[[:coalesce :item.email/sub :sub._id]
-                                                  :sub/id]]
+               (:skip/item-id record)
+               (when-some [sub-id (-> (query
+                                       {:select [[[:coalesce :item/email-sub-id :sub/id]
+                                                  :sub-id]]
                                         :from :reclist
-                                        :where [:= :reclist._id (:skip/reclist record)]
-                                        :join [:item [:= :item._id (:skip/item record)]]
+                                        :where [:= :reclist/id (:skip/reclist-id record)]
+                                        :join [:item [:= :item/id (:skip/item-id record)]]
                                         :left-join [:sub [:and
-                                                          [:is-not :item.feed/feed nil]
-                                                          [:= :sub.feed/feed :item.feed/feed]
-                                                          [:= :sub/user :reclist/user]]]
+                                                          [:is-not :item/feed-id nil]
+                                                          [:= :sub/feed-id :item/feed-id]
+                                                          [:= :sub/user-id :reclist/user-id]]]
                                         :limit 1})
                                       first
-                                      :sub/id)]
+                                      :sub-id)]
                  [{:view :sub-affinity :sub/id sub-id}])))]
         [:work.materialized-views/update job])}}))
 

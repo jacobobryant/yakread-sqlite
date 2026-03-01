@@ -4,38 +4,44 @@
   [com.yakread.model.digest :refer :all]],
  :tests
  [{:eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [ctx
      {:item
-      [{:xt/id "item1", :item/ingested-at (t/zdt 2001)}
-       {:xt/id "item2", :item/ingested-at (t/zdt 2003)}]}]
+      [{:item/id (t/uuid 1), :item/ingested-at (t/instant 2001)}
+       {:item/id (t/uuid 2), :item/ingested-at (t/instant 2003)}]}]
     (digest-sub-items
-     {:biff/conn node, :biff/now (t/zdt 2003 1 10)}
+     (merge ctx {:biff/now (t/instant 2003 1 10)})
      {:user/subscriptions
-      [{:sub/items [{:xt/id "item1"} {:xt/id "item2"}]}]})),
-   :result {:user/digest-sub-items [{:xt/id "item2"}]}}
+      [{:sub/items [{:item/id (t/uuid 1)} {:item/id (t/uuid 2)}]}]})),
+   :result
+   {:user/digest-sub-items
+    [{:item/id #uuid "00020000-0000-0000-0000-000000000002"}]}}
   _
   {:eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [ctx
      {:item
-      [{:xt/id "item1", :item/ingested-at (t/zdt 2003 1 4)}
-       {:xt/id "item2", :item/ingested-at (t/zdt 2003 1 6)}]}]
+      [{:item/id (t/uuid 1), :item/ingested-at (t/instant 2003 1 4)}
+       {:item/id (t/uuid 2), :item/ingested-at (t/instant 2003 1 6)}]}]
     (digest-sub-items
-     {:biff/conn node, :biff/now (t/zdt 2003 1 10)}
-     {:user/digest-last-sent (t/zdt 2003 1 5),
+     (merge ctx {:biff/now (t/instant 2003 1 10)})
+     {:user/digest-last-sent (t/instant 2003 1 5),
       :user/subscriptions
-      [{:sub/items [{:xt/id "item1"} {:xt/id "item2"}]}]})),
-   :result {:user/digest-sub-items [{:xt/id "item2"}]}}
+      [{:sub/items [{:item/id (t/uuid 1)} {:item/id (t/uuid 2)}]}]})),
+   :result
+   {:user/digest-sub-items
+    [{:item/id #uuid "00020000-0000-0000-0000-000000000002"}]}}
   _
   {:eval
-   (t/with-node
-    [node
+   (t/with-sqlite
+    [ctx
      {:item
-      [{:xt/id "item1", :item/ingested-at (t/zdt 2001)}
-       {:xt/id "item2", :item/ingested-at (t/zdt 2003)}]}]
+      [{:item/id (t/uuid 1), :item/ingested-at (t/instant 2001)}
+       {:item/id (t/uuid 2), :item/ingested-at (t/instant 2003)}]}]
     (digest-bookmarks
-     {:biff/conn node, :biff/now (t/zdt 2003 1 10)}
-     {:user/bookmarks [{:xt/id "item1"} {:xt/id "item2"}]})),
-   :result {:user/digest-bookmarks [{:xt/id "item2"}]}}
+     (merge ctx {:biff/now (t/instant 2003 1 10)})
+     {:user/bookmarks [{:item/id (t/uuid 1)} {:item/id (t/uuid 2)}]})),
+   :result
+   {:user/digest-bookmarks
+    [{:item/id #uuid "00020000-0000-0000-0000-000000000002"}]}}
   _]}

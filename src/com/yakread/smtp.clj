@@ -1,15 +1,13 @@
 (ns com.yakread.smtp
   (:require
+   [clojure.data.generators :as gen]
    [clojure.string :as str]
    [clojure.tools.logging :as log]
    [com.biffweb :as biff]
-   [com.biffweb.experimental :as biffx]
-   [com.yakread.util.biff-staging :as biffs]
    [com.yakread.lib.content :as lib.content]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.smtp :as lib.smtp]
-   [xtdb.api :as-alias xt]
    [tick.core :as tick]) 
   (:import
    [org.jsoup Jsoup]))
@@ -33,10 +31,10 @@
 
 (fx/defmachine deliver*
   :start
-  (fn [{:keys [biff/conn yakread/domain biff.smtp/message]}]
+  (fn [{:keys [biff/query yakread/domain biff.smtp/message]}]
     (let [result (and (or (not domain) (= domain (:domain message)))
                       (not-empty
-                       (biffx/q conn
+                       (query
                                 {:select 1
                                  :from :user
                                  :where [:=
@@ -54,7 +52,7 @@
          ::url (infer-post-url (:headers message) html)})))
 
   :end
-  (fn [{:keys [biff.smtp/message biff/conn biff/now ::url]
+  (fn [{:keys [biff.smtp/message biff/query biff/now ::url]
         {:keys [html]} :com.yakread.fx/js}]
     (if-not html
       (do
@@ -66,8 +64,8 @@
       (let [html (-> html
                      lib.content/normalize
                      (str/replace #"#transparent" "transparent"))
-            raw-content-key (biffs/gen-uuid)
-            parsed-content-key (biffs/gen-uuid)
+            raw-content-key (gen/uuid)
+            parsed-content-key (gen/uuid)
             from (some (fn [k]
                          (->> (concat (:from message)
                                       (:reply-to message)
@@ -80,17 +78,17 @@
 
             [{user-id :user/id
               sub-id :sub/id}]
-            (biffx/q conn
-                     {:select [[:user._id :user/id]
-                               [:sub._id :sub/id]]
+            (query
+                     {:select [:user/id
+                               :sub/id]
                       :from :user
                       :left-join [:sub [:and
-                                        [:= :sub/user :user._id]
-                                        [:= :sub.email/from from]]]
+                                        [:= :sub/user-id :user/id]
+                                        [:= :sub/email-from from]]]
                       :where [:= :user/email-username (str/lower-case (:username message))]
                       :limit 1})
             new-sub (nil? sub-id)
-            sub-id (or sub-id (biffs/gen-uuid user-id))
+            sub-id (or sub-id (gen/uuid))
             first-header (fn [header-name]
                            (some lib.smtp/decode-header (get-in message [:headers header-name])))]
         [{:biff.fx/s3 [{:config-ns 'yakread.s3.emails
@@ -105,30 +103,30 @@
                         :body html
                         :headers {"x-amz-acl" "private"
                                   "content-type" "text/html"}}]}
-         {:biff.fx/tx (concat
-                       [[:put-docs :item
-                         (lib.core/some-vals
-                          {:xt/id (biffs/gen-uuid sub-id)
-                           :item/ingested-at now
-                           :item/title (:subject message)
-                           :item/url url
-                           :item/content-key parsed-content-key
-                           :item/published-at now
-                           :item/excerpt (lib.content/excerpt text)
-                           :item/author-name from
-                           :item/lang (lib.content/lang html)
-                           :item/length (count text)
-                           :item.email/sub sub-id
-                           :item.email/raw-content-key raw-content-key
-                           :item.email/list-unsubscribe (first-header "list-unsubscribe")
-                           :item.email/list-unsubscribe-post (first-header "list-unsubscribe-post")
-                           :item.email/reply-to (some :address (:reply-to message))
-                           :item.email/maybe-confirmation (or new-sub nil)})]]
-                       (when new-sub
-                         [[:put-docs :sub
-                           {:xt/id sub-id
-                            :sub/user user-id
-                            :sub.email/from from
-                            :sub/created-at now}]
-                          {:xt (biffx/assert-unique :sub {:sub/user user-id :sub.email/from from})
-                           :sqlite nil}]))}]))))
+         {:biff.fx/sqlite (concat
+                           [{:insert-into :item
+                             :values [(lib.core/some-vals
+                                       {:item/id (gen/uuid)
+                                        :item/ingested-at now
+                                        :item/title (:subject message)
+                                        :item/url url
+                                        :item/content-key parsed-content-key
+                                        :item/published-at now
+                                        :item/excerpt (lib.content/excerpt text)
+                                        :item/author-name from
+                                        :item/lang (lib.content/lang html)
+                                        :item/length (count text)
+                                        :item/email-sub-id sub-id
+                                        :item/email-raw-content-key raw-content-key
+                                        :item/email-list-unsubscribe (first-header "list-unsubscribe")
+                                        :item/email-list-unsubscribe-post (first-header "list-unsubscribe-post")
+                                        :item/email-reply-to (some :address (:reply-to message))
+                                        :item/email-maybe-confirmation (or new-sub nil)})]}]
+                           (when new-sub
+                             [{:insert-into :sub
+                               :values [{:sub/id sub-id
+                                         :sub/user-id user-id
+                                         :sub/email-from from
+                                         :sub/created-at now}]
+                               :on-conflict [:sub/user-id :sub/feed-id :sub/email-from]
+                               :do-nothing true}]))}]))))

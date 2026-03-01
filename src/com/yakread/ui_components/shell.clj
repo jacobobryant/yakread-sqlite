@@ -50,8 +50,8 @@
                                                :active (str/starts-with? route-ns (namespace route-sym))})))))})
 
 (defresolver app-head [{user :session/user}]
-  #::pco{:input [{(? :session/user) [:xt/id
-                                     (? :user/timezone*)]}]}
+  #::pco{:input [{(? :session/user) [:user/id
+                                     (? :user/timezone)]}]}
   {:app.shell/app-head
    [[:link {:rel "stylesheet" :href (css-path)}]
     [:script {:src "/vendor/cdn.jsdelivr.net/npm/htmx.org@2.0.5/dist/htmx.min.js"}]
@@ -72,7 +72,7 @@
     [:link {:rel "mask-icon", :href "/safari-pinned-tab.svg", :color "#5bbad5"}]
     [:meta {:name "msapplication-TileColor", :content "#da532c"}]
     [:meta {:name "theme-color", :content "#222222"}]
-    (when (and user (not (:user/timezone* user)))
+    (when (and user (not (:user/timezone user)))
       [:script
        (biff/unsafe
         (str "set_timezone('" (href routes/set-timezone) "', '" csrf/*anti-forgery-token* "');"))])]})

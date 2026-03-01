@@ -14,28 +14,20 @@
    [com.stuartsierra.dependency :as dep]
    [com.yakread :as main]
    [com.yakread.lib.route :as lib.route]
+   [com.yakread.lib.sqlite :as lib.sqlite]
    [com.yakread.util.biff-staging :as biffs]
    [malli.experimental.time.generator]
    [malli.generator :as malli.g]
+   [next.jdbc :as jdbc]
    [tick.core :as tick]
    [time-literals.read-write :as time-literals]
    [xtdb.api :as xt]
-   [xtdb.node :as xtn])
+   [xtdb.node :as xtn]
+   [com.yakread :as main])
   (:import
    [java.time Instant]))
 
 (def zero-uuid #uuid "00000000-0000-0000-0000-000000000000")
-
-(defn submit-tx [node tx]
-  (->> tx
-       (biffs/resolve-tx-ops {:biff/conn node})
-       (mapcat (fn [op]
-                 (if (and (map? op) (contains? op :xt))
-                   (when-let [xt-val (:xt op)]
-                     [xt-val])
-                   [op])))
-       (mapv biffx/format-query)
-       (xt/submit-tx node)))
 
 (defn- truncate-str
   "Truncates a string s to be at most n characters long, appending an ellipsis if any characters were removed."
@@ -61,11 +53,38 @@
   `(with-open [~node-sym (start-test-node ~db-contents)]
      ~@body))
 
+(defn execute [conn & args]
+  (apply lib.sqlite/execute
+         {:biff/malli-opts* com.yakread/malli-opts*
+          :biff/conn* conn}
+         args))
+
+(defn start-test-sqlite [table->records]
+  (let [conn (jdbc/get-connection "jdbc:sqlite::memory:")]
+    (doseq [statement (-> (io/resource "schema.sql")
+                          slurp
+                          (str/replace #"NOT NULL" "")
+                          (str/replace #"(?m)--.*$" "")
+                          (str/split #";"))
+            :let [statement (not-empty (str/trim statement))]
+            :when statement]
+      (jdbc/execute! conn [statement]))
+    (doseq [[table records] table->records]
+      (execute conn {:insert-into table :values records}))
+    conn))
+
+(defmacro with-sqlite [[ctx-sym db-contents] & body]
+  `(with-open [conn# (start-test-sqlite ~db-contents)]
+     (let [~ctx-sym {:biff/conn* conn#
+                     :biff/malli-opts* main/malli-opts*
+                     :biff/query (partial execute conn#)}]
+       ~@body)))
+
 (defn test-route [route method & args]
   (let [[state opts] (if (keyword? (first args))
                        args
                        [method (first args)])
-        {:keys [db] :as ctx} opts
+        {:keys [db db*] :as ctx} opts
         [_ {f method :as handlers}] route]
     (assert (some? handlers) "invalid route")
     (assert (some? f)
@@ -74,10 +93,13 @@
               ":request-method is required"))
     ;; TODO use a var from this namespace maybe?
     (binding [lib.route/*testing* true]
-      (if db
-        (with-node [node db]
-          (f (assoc ctx :biff/conn node) state))
-        (f ctx state)))))
+      (cond
+        db* (with-sqlite [ctx* db*]
+              (f (merge ctx ctx*) state))
+        db (with-node [node db]
+             (f (assoc ctx :biff/conn node) state))
+        :else (f ctx state)))))
+
 
 (defn- read-string* [s & [extra-readers]]
   (edn/read-string {:readers (merge time-literals/tags

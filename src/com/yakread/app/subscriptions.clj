@@ -8,40 +8,38 @@
    [com.yakread.lib.middleware :as lib.mid]
    [com.yakread.lib.route :as lib.route :refer [href]]
    [com.yakread.lib.ui :as ui]
-   [com.yakread.routes :as routes]
-   [com.yakread.util.biff-staging :as biffs]
-   [xtdb.api :as-alias xt]))
+   [com.yakread.routes :as routes]))
 
 (fx/defroute-pathom unsubscribe
   [{:params/sub [:sub/id
-                 :sub/doc-type
+                 :sub/record-type
                  {(? :sub/latest-item)
                   [:item/id
-                   (? :item.email/list-unsubscribe)
-                   (? :item.email/list-unsubscribe-post)]}]}
+                   (? :item/email-list-unsubscribe)
+                   (? :item/email-list-unsubscribe-post)]}]}
    (? :params/redirect-url)]
 
   :post
-  (fn [{:keys [biff/now]} {{:sub/keys [id doc-type latest-item] :as sub} :params/sub
+  (fn [{:keys [biff/now]} {{:sub/keys [id record-type latest-item] :as sub} :params/sub
           :keys [params/redirect-url]}]
     (let [base {:status 204
                 :headers {"HX-Location" (or redirect-url (href routes/subs-page))}}]
-      (case doc-type
-        :sub/feed
+      (case record-type
+        :sub.record-type/feed
         (merge base
-               {:biff.fx/tx [(biffs/dual-write {:delete-from :sub :where [:= :xt/id id]})]})
+               {:biff.fx/sqlite [{:delete-from :sub :where [:= :sub/id id]}]})
 
-        :sub/email
-        (let [{:item.email/keys [list-unsubscribe list-unsubscribe-post]} latest-item
-              url (second (re-find #"<(http[^>]+)>" (or list-unsubscribe "")))
-              email (second (re-find #"<mailto:([^>]+)>" (or list-unsubscribe "")))]
+        :sub.record-type/email
+        (let [{:item/keys [email-list-unsubscribe email-list-unsubscribe-post]} latest-item
+              url (second (re-find #"<(http[^>]+)>" (or email-list-unsubscribe "")))
+              email (second (re-find #"<mailto:([^>]+)>" (or email-list-unsubscribe "")))]
           (merge-with merge
                       base
-                      {:biff.fx/tx [[:patch-docs :sub
-                                     {:xt/id id
-                                      :sub.email/unsubscribed-at now}]]}
+                      {:biff.fx/sqlite [{:update :sub
+                                         :set {:sub/email-unsubscribed-at now}
+                                         :where [:= :sub/id id]}]}
                       (cond
-                        (and url (= (some-> list-unsubscribe-post str/lower-case)
+                        (and url (= (some-> email-list-unsubscribe-post str/lower-case)
                                     "list-unsubscribe=one-click"))
                         {:biff.fx/http {:url url :method :post :throw-exceptions false}}
 
@@ -53,16 +51,15 @@
 
 (fx/defroute-pathom toggle-pin
   [{:params/sub [:sub/id
-                 :sub/doc-type
+                 :sub/record-type
                  (? :sub/pinned-at)]}]
 
   :post
-  (fn [{:keys [biff/now]} {{:sub/keys [id pinned-at doc-type]}
+  (fn [{:keys [biff/now]} {{:sub/keys [id pinned-at record-type]}
           :params/sub}]
-    {:biff.fx/tx [(biffs/dual-write
-                   {:update :sub
-                    :set {:sub/pinned-at (when-not pinned-at now)}
-                    :where [:= :xt/id id]})]
+    {:biff.fx/sqlite [{:update :sub
+                       :set {:sub/pinned-at (when-not pinned-at now)}
+                       :where [:= :sub/id id]}]
      :biff.fx/render {:route-sym `page-content-route
                       :request-method :get}
      :biff.fx/next :return})
@@ -78,20 +75,17 @@
 
   :post
   (fn [_ {:keys [params.checked/subscriptions]}]
-    {:biff.fx/tx [(biffs/dual-write
-                   {:update :sub
-                    :set {:sub.email/unsubscribed-at nil}
-                    :where [:in :xt/id (mapv :sub/id subscriptions)]})]
+    {:biff.fx/sqlite [{:update :sub
+                       :set {:sub/email-unsubscribed-at nil}
+                       :where [:in :sub/id (mapv :sub/id subscriptions)]}]
      :status 204
      :headers {"HX-Redirect" (href `unsubs-page)}}))
 
-(defresolver sub-card [{:sub/keys [id title unread pinned-at]
-                        :keys [sub.feed/feed sub.email/from]}]
+(defresolver sub-card [{:sub/keys [id title unread pinned-at record-type]}]
   #::pco{:input [:sub/id
                  :sub/title
                  :sub/unread
-                 {(? :sub.feed/feed) [:feed/url]}
-                 (? :sub.email/from)
+                 :sub/record-type
                  (? :sub/pinned-at)]}
   {:sub.view/card
    [:.relative
@@ -123,9 +117,9 @@
      [:.text-neut-600.mr-6 unread " unread posts"
       ui/interpunct
       [:span.underline
-       (cond
-         feed "rss"
-         from "email")]]]]})
+       (case record-type
+         :sub.record-type/feed "rss"
+         :sub.record-type/email "email")]]]]})
 
 (defn- empty-state []
   (ui/empty-page-state {:icons ["envelope-regular-sharp"
@@ -142,7 +136,7 @@
     [{:user/unsubscribed
       [:sub/id
        :sub/title
-       :sub.email/unsubscribed-at]}]}]
+       :sub/email-unsubscribed-at]}]}]
 
   :get
   (fn [_ {:keys [app.shell/app-shell]
@@ -158,7 +152,7 @@
                    "These newsletters are hidden from your subscriptions list. Even if you move a
                     newsletter back to your subscriptions, you won't receive new posts unless you
                     re-subscribe on the newsletter's website.")
-       (for [{:sub/keys [id title]} (sort-by :sub.email/unsubscribed-at #(compare %2 %1) unsubscribed)]
+       (for [{:sub/keys [id title]} (sort-by :sub/email-unsubscribed-at #(compare %2 %1) unsubscribed)]
          (ui/checkbox {:name (str "subs[" id "]") :ui/label title}))
        (ui/button {:type "submit"} "Move to subscriptions")]))))
 
