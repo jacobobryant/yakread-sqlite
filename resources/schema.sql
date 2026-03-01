@@ -45,6 +45,14 @@ CREATE TABLE ad_credit (
   FOREIGN KEY(ad_id) REFERENCES ad(id)
 ) STRICT;
 
+CREATE TABLE auth_code (
+  id BLOB PRIMARY KEY NOT NULL,
+  email TEXT NOT NULL,
+  code TEXT NOT NULL,
+  created_at INT NOT NULL,
+  failed_attempts INT NOT NULL
+) STRICT;
+
 CREATE TABLE bulk_send (
   id BLOB PRIMARY KEY NOT NULL,
   sent_at INT NOT NULL,
@@ -222,16 +230,3 @@ CREATE TABLE user_item (
   FOREIGN KEY(item_id) REFERENCES item(id),
   UNIQUE(user_id, item_id)
 ) STRICT;
-
-CREATE INDEX idx_user_email ON user(email);
-CREATE INDEX idx_user_item_user_id ON user_item(user_id);
-
--- CREATE INDEX idx_sub_user_id ON sub(user_id);
--- CREATE INDEX idx_sub_feed_id ON sub(feed_id);
--- CREATE INDEX idx_item_feed_id ON item(feed_id);
--- CREATE INDEX idx_item_email_sub_id ON item(email_sub_id);
--- CREATE INDEX idx_item_candidate_status ON item(candidate_status);
--- CREATE INDEX idx_item_kind ON item(kind);
--- CREATE INDEX idx_user_item_item_id ON user_item(item_id);
--- CREATE INDEX idx_user_item_user_id ON user_item(user_id);
--- CREATE INDEX idx_user_item_favorited_at ON user_item(favorited_at);

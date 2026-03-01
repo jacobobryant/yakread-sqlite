@@ -7,10 +7,10 @@
    [clojure.tools.namespace.repl :as tn-repl]
    [com.biffweb :as biff]
    [com.biffweb.experimental :as biffx]
-   [com.biffweb.experimental.auth :as biffx-auth]
    [com.wsscode.pathom3.connect.indexes :as pci]
    [com.wsscode.pathom3.connect.planner :as pcp]
    [com.yakread.lib.core :as lib.core]
+   [com.yakread.lib.auth :as lib.auth]
    [com.yakread.lib.email :as lib.email]
    [com.yakread.lib.sqlite :as lib.sqlite]
    [com.yakread.model.schema :as sqlite-schema]
@@ -57,33 +57,11 @@
         (assoc :biff/conn datasource)
         (update :biff/stop conj #(.close datasource)))))
 
-(declare system)
-
-(defn- sqlite-get-user-id [_node email]
-  (some-> (lib.sqlite/execute @system {:select :user/id
-                                       :from :user
-                                       :where [:= :user/email email]
-                                       :limit 1})
-          first
-          :user/id))
-
-(defn- sqlite-new-user-tx [ctx email]
-  (lib.sqlite/execute ctx
-    {:insert-into :user
-     :values [{:user/id (random-uuid)
-               :user/email email
-               :user/joined-at (tick/instant)}]
-     :on-conflict [:user/id]
-     :do-nothing true})
-  [])
-
 (def modules
   (concat modules/modules
-          [(biffx-auth/module
+          [(lib.auth/module
             #:biff.auth{:app-path (href routes/for-you)
-                        :check-state false
-                        :get-user-id sqlite-get-user-id
-                        :new-user-tx sqlite-new-user-tx})]))
+                        :check-state false})]))
 
 (def router (reitit-ring/router
              [["" {:middleware lib.mid/default-site-middleware}
