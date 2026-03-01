@@ -67,6 +67,14 @@ if ! command -v mc &> /dev/null; then
   chmod +x /usr/local/bin/mc
 fi
 
+echo "=== Installing Tailwind CSS standalone CLI ==="
+TAILWIND_BIN="/usr/local/bin/tailwindcss"
+if [ ! -f "$TAILWIND_BIN" ]; then
+  curl -fsSL -o "$TAILWIND_BIN" https://github.com/tailwindlabs/tailwindcss/releases/download/v3.4.17/tailwindcss-linux-x64
+  chmod +x "$TAILWIND_BIN"
+fi
+echo "Tailwind CSS installed at $TAILWIND_BIN"
+
 echo "=== Downloading vendor JS dependencies ==="
 ./download-vendor-deps.sh
 
@@ -112,6 +120,22 @@ exec clojure -M:dev-server
 STARTEOF
 chmod +x "$REPO_DIR/start-yakread.sh"
 
+echo "=== Creating start-tailwind.sh ==="
+cat > "$REPO_DIR/start-tailwind.sh" << 'TWEOF'
+#!/usr/bin/env bash
+cd /home/sprite/repo
+mkdir -p target/resources/public/css
+# Keep stdin open with a pipe so --watch doesn't exit in service mode
+tail -f /dev/null | exec tailwindcss \
+  -c resources/tailwind.config.js \
+  -i resources/tailwind.css \
+  -o target/resources/public/css/main.css \
+  --minify \
+  --watch \
+  --poll
+TWEOF
+chmod +x "$REPO_DIR/start-tailwind.sh"
+
 echo "=== Creating MinIO sprite service ==="
 sprite-env services create minio \
   --cmd /usr/local/bin/minio \
@@ -136,11 +160,29 @@ mc mb --ignore-existing local/yakread-emails 2>/dev/null || true
 mc mb --ignore-existing local/yakread-images 2>/dev/null || true
 mc mb --ignore-existing local/yakread-export 2>/dev/null || true
 
+echo "=== Creating Tailwind CSS sprite service ==="
+sprite-env services create tailwind \
+  --cmd "$REPO_DIR/start-tailwind.sh" \
+  --dir "$REPO_DIR" 2>/dev/null || echo "tailwind service may already exist"
+
+# Wait for initial CSS compilation
+echo "Waiting for Tailwind CSS to compile..."
+for i in $(seq 1 30); do
+  if [ -f "$REPO_DIR/target/resources/public/css/main.css" ]; then
+    echo "Tailwind CSS compiled successfully"
+    break
+  fi
+  if [ "$i" -eq 30 ]; then
+    echo "WARNING: Tailwind CSS not compiled after 30 seconds"
+  fi
+  sleep 1
+done
+
 echo "=== Creating Yakread app sprite service ==="
 sprite-env services create yakread \
   --cmd "$REPO_DIR/start-yakread.sh" \
   --dir "$REPO_DIR" \
-  --needs minio \
+  --needs minio,tailwind \
   --http-port 8080 \
   --duration 90s
 

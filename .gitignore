@@ -29,3 +29,4 @@ test-results/
 playwright-report/
 package-lock.json
 /start-yakread.sh
+/start-tailwind.sh
