@@ -66,19 +66,16 @@ Once all namespaces use `:biff.fx/sqlite`:
 - [x] `com.yakread.work.materialized-views` — uses `:biff/upsert` for mv-sub and mv-user
 - [x] `com.yakread.work.train` — uses `:put-docs` for candidate items
 - [x] `com.yakread.work.account` — uses `:biff.fx/sqlite` for account deletion
-- [ ] `com.yakread.work.digest` — uses `:put-docs`, `:patch-docs` for digest records and user updates
-- [ ] `com.yakread.work.subscription` — uses `:put-docs`, `:patch-docs` for feed sync and item ingestion
+- [x] `com.yakread.work.digest` — uses `:biff.fx/sqlite` for digest records and user updates
+- [x] `com.yakread.work.subscription` — uses `:biff.fx/sqlite` for feed sync and item ingestion
 
 ### SMTP
-- [ ] `com.yakread.smtp` — uses `:put-docs` for email items and subs, plus `biffx/assert-unique`
+- [x] `com.yakread.smtp` — uses `:biff.fx/sqlite` for email items and subs
 
 ### Library/Infrastructure
 - [x] `com.yakread.lib.fx` — Create `:biff.fx/sqlite` handler calling `com.biffweb.sqlite/execute`
-- [ ] `com.yakread.lib.item` — uses `:put-docs` for content ingestion
+- [x] `com.yakread.lib.item` — uses `:biff.fx/sqlite` for content ingestion
 - [ ] `com.yakread.util.biff-staging` — Remove dual-write logic once all namespaces migrated
-
-### Migration Utilities
-- [ ] `com.yakread.lib.migrate.xtdb2` — uses `:put-docs`, `:delete-docs` for data migration
 
 ## Key Considerations
 
