@@ -8,17 +8,16 @@
    [com.yakread.lib.serialize :as lib.serialize]
    [xtdb.api :as-alias xt]))
 
-(defresolver user-subs [{:keys [biff/conn]} {:keys [user/id]}]
-  #::pco{:output [{:user/subscriptions [:xt/id]}
-                  {:user/unsubscribed [:xt/id]}]}
+(defresolver user-subs [{:biff/keys [query]} {:keys [user/id]}]
+  #::pco{:output [{:user/subscriptions [:sub/id]}
+                  {:user/unsubscribed [:sub/id]}]}
   (let [{subbed false
-         unsubbed true} (->> (biffx/q conn
-                                       {:select [:xt/id :sub.email/unsubscribed-at]
-                                        :from :sub
-                                        :where [:= :sub/user id]})
-                              (group-by (comp some? :sub.email/unsubscribed-at)))]
-    {:user/subscriptions (or subbed [])
-     :user/unsubscribed (mapv #(select-keys % [:xt/id]) unsubbed)}))
+         unsubbed true} (->> (query {:select [:sub/id :sub/email-unsubscribed-at]
+                                     :from :sub
+                                     :where [:= :sub/user-id id]})
+                              (group-by (comp some? :sub/email-unsubscribed-at)))]
+    {:user/subscriptions (mapv #(select-keys % [:sub/id]) (or subbed []))
+     :user/unsubscribed (mapv #(select-keys % [:sub/id]) unsubbed)}))
 
 (defresolver email-title [{:keys [sub.email/from]}]
   {:sub/title (str/replace from #"\s<.*>" "")})
@@ -67,6 +66,11 @@
     {:sub/id id
      :sub/source-id (:xt/id feed)
      :sub/doc-type :sub/feed}))
+
+(defresolver record-type [{:sub/keys [doc-type]}]
+  {:sub/record-type (case doc-type
+                      :sub/feed :sub.record-type/feed
+                      :sub/email :sub.record-type/email)})
 
 (defn- doc-type->source-key [doc-type]
   (case doc-type
@@ -285,6 +289,7 @@
 (def module {:resolvers [user-subs
                          sub-info
                          sub-id->xt-id
+                         record-type
                          email-title
                          feed-sub-title
                          items-unread

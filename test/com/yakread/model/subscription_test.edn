@@ -5,17 +5,25 @@
  :tests
  [{:doc "user-subs",
    :eval
-   (t/with-node
-    [node
-     {:sub
-      [{:xt/id "sub1", :sub/user "user1"}
-       {:xt/id "sub2",
-        :sub/user "user1",
-        :sub.email/unsubscribed-at (t/zdt 2000)}]}]
-    (user-subs {:biff/conn node} {:user/id "user1"})),
+   (t/with-sqlite
+    [ctx
+     {:user [{:user/id (t/uuid 1)}],
+      :sub
+      [{:sub/id (t/uuid 10),
+        :sub/user-id (t/uuid 1),
+        :sub/created-at (t/instant 2000),
+        :sub/record-type [:lift :sub.record-type/feed]}
+       {:sub/id (t/uuid 20),
+        :sub/user-id (t/uuid 1),
+        :sub/created-at (t/instant 2000),
+        :sub/record-type [:lift :sub.record-type/email],
+        :sub/email-unsubscribed-at (t/instant 2000)}]}]
+    (user-subs ctx {:user/id (t/uuid 1)})),
    :result
-   {:user/subscriptions [{:xt/id "sub1"}],
-    :user/unsubscribed [{:xt/id "sub2"}]}}
+   {:user/subscriptions
+    [{:sub/id #uuid "00100000-0000-0000-0000-000000000010"}],
+    :user/unsubscribed
+    [{:sub/id #uuid "00200000-0000-0000-0000-000000000020"}]}}
   _
   {:doc "latest-email-item",
    :eval
