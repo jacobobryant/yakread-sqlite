@@ -472,7 +472,7 @@
                                       :ad/effective-bid
                                       :ad/approve-state
                                       (? :ad/paused)
-                                      {:ad/user-id [:user/id
+                                      {:ad/user [:user/id
                                                     (? :user/email)]}]}]
    ::pco/output [{:user/ad-rec [:ad/id
                                 :ad/click-cost
@@ -480,7 +480,7 @@
   (when-not premium
     (let [[first-ad second-ad] (->> candidates
                                     (remove (fn [{:ad/keys [id paused approve-state]
-                                                  ad-user :ad/user-id}]
+                                                  ad-user :ad/user}]
                                               (or (contains? clicked-ads id)
                                                   (not= approve-state :ad.approve-state/approved)
                                                 (= user-id (:user/id ad-user))

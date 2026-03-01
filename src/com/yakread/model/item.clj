@@ -88,6 +88,27 @@
                               {:item/id id
                                :item/n-skipped 0}))))
 
+(defresolver ad-n-skipped [{:biff/keys [query] :keys [session]} ads]
+  #::pco{:input [:ad/id]
+         :output [:item/n-skipped]
+         :batch? true}
+  (let [results (->> (query {:select [:skip/ad-id
+                                      [[:count :skip/id] :n-skipped]]
+                             :from :skip
+                             :join [:reclist [:= :skip/reclist-id :reclist/id]]
+                             :where [:and
+                                     [:= :reclist/user-id (:uid session)]
+                                     [:in :skip/ad-id (mapv :ad/id ads)]]
+                             :group-by :skip/ad-id})
+                     (mapv #(set/rename-keys % {:skip/ad-id :ad/id
+                                                :n-skipped :item/n-skipped})))]
+    (lib.core/restore-order ads
+                            :ad/id
+                            results
+                            (fn [{:keys [ad/id]}]
+                              {:ad/id id
+                               :item/n-skipped 0}))))
+
 (defresolver user-item [{:biff/keys [query] :keys [session]} items]
   #::pco{:input [:item/id]
          :output [{:item/user-item [:user-item/id]}]
@@ -104,7 +125,7 @@
 
 (defresolver image-from-feed [{:biff/keys [query]} items]
   #::pco{:input [(? :item/feed-url)
-                 {(? :item/feed-id) [:feed/image-url]}]
+                 {(? :item/feed) [:feed/image-url]}]
          :output [:item/image-url]
          :batch? true}
   (let [feed-urls (keep :item/feed-url items)
@@ -114,8 +135,8 @@
                            (query {:select [:feed/url :feed/image-url]
                                    :from :feed
                                    :where [:in :feed/url feed-urls]})))]
-    (mapv (fn [{:keys [item/feed-id item/feed-url]}]
-            (if-some [image (or (:feed/image-url feed-id)
+    (mapv (fn [{:keys [item/feed item/feed-url]}]
+            (if-some [image (or (:feed/image-url feed)
                                 (url->image feed-url))]
               {:item/image-url image}
               {}))
@@ -337,6 +358,7 @@
                user-item
                xt-id
                n-skipped
+               ad-n-skipped
                unread-bookmarks
                history-items
                current-item
