@@ -297,6 +297,5 @@
                          feed-sub-subtitle
                          latest-email-item
                          email-subtitle
-                         mv
                          total
                          items-read]})

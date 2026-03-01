@@ -29,17 +29,6 @@
 
 (def zero-uuid #uuid "00000000-0000-0000-0000-000000000000")
 
-(defn submit-tx [node tx]
-  (->> tx
-       (biffs/resolve-tx-ops {:biff/conn node})
-       (mapcat (fn [op]
-                 (if (and (map? op) (contains? op :xt))
-                   (when-let [xt-val (:xt op)]
-                     [xt-val])
-                   [op])))
-       (mapv biffx/format-query)
-       (xt/submit-tx node)))
-
 (defn- truncate-str
   "Truncates a string s to be at most n characters long, appending an ellipsis if any characters were removed."
   [s n]

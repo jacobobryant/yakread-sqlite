@@ -165,13 +165,19 @@
                   {:item/id item-id
                    :item/user-item {:user-item/id id}})))}))
 
-;; TODO why do I have to put ? in the input?
-(defresolver current-item [input]
-  #::pco{:input [{(? :user/mv) [(? :mv-user/current-item-id)]}]
+(defresolver current-item [{:biff/keys [query]} {:keys [user/id]}]
+  #::pco{:input [:user/id]
          :output [{:user/current-item [:item/id :item/rec-type]}]}
-  (when-some [id (get-in input [:user/mv :mv-user/current-item-id])]
+  (when-some [{:user-item/keys [item-id]}
+              (first (query {:select [:user-item/item-id]
+                             :from :user-item
+                             :where [:and
+                                     [:= :user-item/user-id id]
+                                     [:is-not :user-item/viewed-at nil]]
+                             :order-by [[:user-item/viewed-at :desc]]
+                             :limit 1}))]
     {:user/current-item
-     {:item/id id
+     {:item/id item-id
       :item/rec-type :item.rec-type/current}}))
 
 (defresolver source [{:keys [item/email-sub-id item/feed-id]}]
