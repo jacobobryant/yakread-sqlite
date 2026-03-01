@@ -21,7 +21,7 @@
   (let [{:keys [before]} (get-in params [:pathom-params :user/bookmarks])
         before (if (inst? before)
                  before
-                 now)
+                 (some-> now tick/instant))
         page-size 200
         results (into []
                       (map (fn [{:keys [user-item/id user-item/item-id]}]
@@ -45,7 +45,7 @@
   (let [{:keys [before]} (get-in params [:pathom-params :user/bookmarks])
         before (if (inst? before)
                  before
-                 now)
+                 (some-> now tick/instant))
         page-size 200
         results (into []
                       (map (fn [{:keys [user-item/id user-item/item-id]}]
