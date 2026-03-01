@@ -1,16 +1,15 @@
 (ns com.yakread.model.user
   (:require
    [clojure.string :as str]
-   [com.biffweb.experimental :as biffx]
    [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
    [com.yakread.lib.ui :as ui]
    [com.yakread.lib.user :as lib.user]
    [tick.core :as tick]))
 
 (defresolver session-user [{:keys [session]} _]
-  #::pco{:output [{:session/user [:xt/id]}]}
+  #::pco{:output [{:session/user [:user/id]}]}
   (when (:uid session)
-    {:session/user {:xt/id (:uid session)}}))
+    {:session/user {:user/id (:uid session)}}))
 
 (defresolver session-anon [{:keys [session]} _]
   #::pco{:output [{:session/anon []}]}
@@ -23,9 +22,9 @@
 
 ;; TODO switch everything to :session/user
 (defresolver current-user [{:keys [session]} _]
-  #::pco{:output [{:user/current [:xt/id]}]}
+  #::pco{:output [{:user/current [:user/id]}]}
   (when (:uid session)
-    {:user/current {:xt/id (:uid session)}}))
+    {:user/current {:user/id (:uid session)}}))
 
 (defresolver suggested-email-username [{:keys [biff/query]} {:user/keys [email email-username]}]
   #::pco{:input [:user/email (? :user/email-username)]
@@ -70,14 +69,13 @@
                        (or (not cancel-at)
                            (tick/<= now cancel-at))))})
 
-(defresolver mv [{:keys [biff/conn]} {:user/keys [id]}]
-  {::pco/output [{:user/mv [:xt/id]}]}
+(defresolver mv [{:biff/keys [query]} {:user/keys [id]}]
+  {::pco/output [{:user/mv [:mv-user/id]}]}
   (when-some [mv-user
-              (first (biffx/q conn
-                              {:select :xt/id
-                               :from :mv-user
-                               :where [:= :mv.user/user id]
-                               :limit 1}))]
+              (first (query {:select :mv-user/id
+                             :from :mv-user
+                             :where [:= :mv-user/user-id id]
+                             :limit 1}))]
     {:user/mv mv-user}))
 
 (defresolver account-deletable [{:user/keys [ad plan cancel-at]}]
