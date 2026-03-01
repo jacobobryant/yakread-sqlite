@@ -118,14 +118,14 @@
         :feed/image-url "image-url2"}]}]
     (image-from-feed
      ctx
-     [{:item/feed-id {:feed/image-url "image-url3"}}
-      {:item/feed-id {:feed/image-url "image-url4"},
+     [{:item/feed {:feed/image-url "image-url3"}}
+      {:item/feed {:feed/image-url "image-url4"},
        :item/feed-url "url1"}
       {:item/feed-url "url1"}
       {:item/feed-url "url3"}])),
    :result
-   [{}
-    {:item/image-url "image-url1"}
+   [{:item/image-url "image-url3"}
+    {:item/image-url "image-url4"}
     {:item/image-url "image-url1"}
     {}]}
   _
