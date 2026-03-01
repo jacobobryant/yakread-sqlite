@@ -219,9 +219,12 @@
        :sub/feed-id (t/uuid 200)}])),
    :result
    [{:sub/id #uuid "00100000-0000-0000-0000-000000000010",
-     :sub/items []}
+     :sub/items
+     [{:item/id #uuid "00010000-0000-0000-0000-000000000001"}
+      {:item/id #uuid "00020000-0000-0000-0000-000000000002"}]}
     {:sub/id #uuid "00200000-0000-0000-0000-000000000020",
-     :sub/items []}
+     :sub/items
+     [{:item/id #uuid "00030000-0000-0000-0000-000000000003"}]}
     {:sub/id #uuid "00300000-0000-0000-0000-000000000030",
      :sub/items []}]}
   _
@@ -357,5 +360,8 @@
         :sub/record-type [:lift :sub.record-type/feed]}],
       :mv-sub [{:mv-sub/id (t/uuid 60), :mv-sub/sub-id (t/uuid 10)}]}]
     (mv ctx [{:sub/id (t/uuid 10)}])),
-   :result [{}]}
+   :result
+   [{:sub/id #uuid "00100000-0000-0000-0000-000000000010",
+     :sub/mv
+     {:mv-sub/id #uuid "00600000-0000-0000-0000-000000000060"}}]}
   _]}

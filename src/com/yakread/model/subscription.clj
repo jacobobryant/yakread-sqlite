@@ -127,9 +127,6 @@
                      (mapv (fn [row]
                              {:sub/id (source->sub-id (row-source-id row))
                               :sub/items-read (:items-read row)})))]
-
-
-
     (lib.core/restore-order inputs
                             :sub/id
                             results
@@ -178,11 +175,11 @@
                            (for [[record-type subs*] (group-by :sub/record-type inputs)
                                  :let [source-key (record-type->source-key record-type)
                                        source-ids (mapv sub-source-id subs*)]]
-                             (query {:select [[source-key :source-id]
+                             (query {:select [source-key
                                               :item/id]
                                      :from :item
                                      :where [:in source-key source-ids]})))
-                     (group-by (comp source->sub-id :source-id))
+                     (group-by (comp source->sub-id row-source-id))
                      (mapv (fn [[sub-id items]]
                              {:sub/id sub-id
                               :sub/items (mapv #(select-keys % [:item/id]) items)})))]
@@ -202,7 +199,7 @@
                            cat
                            (for [[record-type subs*] (group-by :sub/record-type inputs)
                                  :let [source-key (record-type->source-key record-type)]]
-                             (query {:select [[source-key :source-id]
+                             (query {:select [source-key
                                               :item/id]
                                      :from :item
                                      :where [:in
@@ -211,9 +208,9 @@
                                                                      :item/ingested-at]]
                                              (for [sub subs*]
                                                [:composite (sub-source-id sub) (:sub/published-at sub)])]})))
-                     (mapv (fn [{:keys [source-id item/id]}]
-                             {:sub/id (source->sub-id source-id)
-                              :sub/latest-item {:item/id id}})))]
+                     (mapv (fn [row]
+                             {:sub/id (source->sub-id (row-source-id row))
+                              :sub/latest-item {:item/id (:item/id row)}})))]
     (lib.core/restore-order inputs
                             :sub/id
                             results)))
@@ -275,10 +272,10 @@
    ::pco/output [{:sub/mv [:mv-sub/id]}]
    ::pco/batch?  true}
   (let [sub-ids (mapv :sub/id subs*)
-        results (mapv (fn [{:keys [id sub-id]}]
+        results (mapv (fn [{:mv-sub/keys [id sub-id]}]
                         {:sub/id sub-id
                          :sub/mv {:mv-sub/id id}})
-                      (query {:select [[:mv-sub/id :id] [:mv-sub/sub-id :sub-id]]
+                      (query {:select [:mv-sub/id :mv-sub/sub-id]
                               :from :mv-sub
                               :where [:in :mv-sub/sub-id sub-ids]}))]
     (lib.core/restore-order subs* :sub/id results)))
