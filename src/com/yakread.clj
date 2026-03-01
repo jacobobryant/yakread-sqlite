@@ -133,6 +133,8 @@
     (-> ctx
         ;;(biff/assoc-db)
         (merge pathom-env
+               {:yakread.model/get-candidates (constantly {})
+                :yakread.model/item-candidate-ids #{}}
                (some-> model deref)
                {:biff/router router
                 :biff.fx/handlers fx/handlers

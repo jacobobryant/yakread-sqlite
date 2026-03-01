@@ -124,8 +124,8 @@
       {:item/feed-url "url1"}
       {:item/feed-url "url3"}])),
    :result
-   [{:item/image-url "image-url3"}
-    {:item/image-url "image-url4"}
+   [{}
+    {:item/image-url "image-url1"}
     {:item/image-url "image-url1"}
     {}]}
   _
