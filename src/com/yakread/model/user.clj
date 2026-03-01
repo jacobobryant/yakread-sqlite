@@ -112,5 +112,4 @@
                          default-send-digest-at
                          default-timezone
                          premium
-                         mv
                          account-deletable]})

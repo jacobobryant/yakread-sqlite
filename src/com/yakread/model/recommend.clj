@@ -172,14 +172,14 @@
 (defresolver selected-subs [{:user/keys [unread-subscriptions]}]
   {::pco/input [{:user/unread-subscriptions [:sub/id
                                              :sub/record-type
-                                             {(? :sub/mv) [(? :mv-sub/affinity-low)
-                                                           (? :mv-sub/affinity-high)]}
+                                             (? :sub/affinity-low*)
+                                             (? :sub/affinity-high*)
                                              (? :sub/pinned-at)
                                              (? :sub/published-at)]}]
    ::pco/output [{:user/selected-subs [:sub/id
                                        :item/rec-type]}]}
   (let [new? (fn [sub] (and (= (:sub/record-type sub) :sub.record-type/email)
-                            (nil? (get-in sub [:sub/mv :mv-sub/affinity-low]))))
+                            (nil? (:sub/affinity-low* sub))))
         {new-subs true old-subs false} (group-by new? (gen/shuffle unread-subscriptions))
         ;; We'll always show new subs first e.g. so the user will see any confirmation emails.
         new-subs (sort-by :sub/published-at #(compare %2 %1) new-subs)
@@ -189,8 +189,8 @@
                       (mapv #(assoc % :item/rec-type :item.rec-type/new-subscription)))
         {pinned true unpinned false} (->> (interleave-uniform
                                            ;; Do a mix of explore and exploit
-                                           (sort-by #(get-in % [:sub/mv :mv-sub/affinity-low] 0.0) > old-subs)
-                                           (sort-by #(get-in % [:sub/mv :mv-sub/affinity-high] 1.0) > old-subs))
+                                           (sort-by #(:sub/affinity-low* % 0.0) > old-subs)
+                                           (sort-by #(:sub/affinity-high* % 1.0) > old-subs))
                                           distinct
                                           (map-indexed (fn [i sub]
                                                          (assoc sub ::rank i)))
