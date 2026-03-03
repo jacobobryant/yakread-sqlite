@@ -110,31 +110,9 @@ else
   echo "config.env already exists, skipping"
 fi
 
-echo "=== Creating start-yakread.sh ==="
-cat > "$REPO_DIR/start-yakread.sh" << STARTEOF
-#!/usr/bin/env bash
-export JAVA_HOME=$JAVA_HOME
-export PATH=\$JAVA_HOME/bin:\$PATH
-cd $REPO_DIR
-exec clojure -M:dev-server
-STARTEOF
-chmod +x "$REPO_DIR/start-yakread.sh"
-
-echo "=== Creating start-tailwind.sh ==="
-cat > "$REPO_DIR/start-tailwind.sh" << 'TWEOF'
-#!/usr/bin/env bash
-cd /home/sprite/repo
-mkdir -p target/resources/public/css
-# Keep stdin open with a pipe so --watch doesn't exit in service mode
-tail -f /dev/null | exec tailwindcss \
-  -c resources/tailwind.config.js \
-  -i resources/tailwind.css \
-  -o target/resources/public/css/main.css \
-  --minify \
-  --watch \
-  --poll
-TWEOF
-chmod +x "$REPO_DIR/start-tailwind.sh"
+echo "=== Making scripts executable ==="
+chmod +x "$REPO_DIR/sprite/start-app.sh"
+chmod +x "$REPO_DIR/sprite/start-tailwind.sh"
 
 echo "=== Creating MinIO sprite service ==="
 sprite-env services create minio \
@@ -162,7 +140,7 @@ mc mb --ignore-existing local/yakread-export 2>/dev/null || true
 
 echo "=== Creating Tailwind CSS sprite service ==="
 sprite-env services create tailwind \
-  --cmd "$REPO_DIR/start-tailwind.sh" \
+  --cmd "$REPO_DIR/sprite/start-tailwind.sh" \
   --dir "$REPO_DIR" 2>/dev/null || echo "tailwind service may already exist"
 
 # Wait for initial CSS compilation
@@ -180,7 +158,7 @@ done
 
 echo "=== Creating Yakread app sprite service ==="
 sprite-env services create yakread \
-  --cmd "$REPO_DIR/start-yakread.sh" \
+  --cmd "$REPO_DIR/sprite/start-app.sh" \
   --dir "$REPO_DIR" \
   --needs minio,tailwind \
   --http-port 8080 \
