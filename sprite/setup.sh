@@ -67,6 +67,14 @@ if ! command -v mc &> /dev/null; then
   chmod +x /usr/local/bin/mc
 fi
 
+echo "=== Installing Tailwind CSS standalone CLI ==="
+TAILWIND_BIN="/usr/local/bin/tailwindcss"
+if [ ! -f "$TAILWIND_BIN" ]; then
+  curl -fsSL -o "$TAILWIND_BIN" https://github.com/tailwindlabs/tailwindcss/releases/download/v3.4.17/tailwindcss-linux-x64
+  chmod +x "$TAILWIND_BIN"
+fi
+echo "Tailwind CSS installed at $TAILWIND_BIN"
+
 echo "=== Downloading vendor JS dependencies ==="
 ./download-vendor-deps.sh
 
@@ -102,15 +110,9 @@ else
   echo "config.env already exists, skipping"
 fi
 
-echo "=== Creating start-yakread.sh ==="
-cat > "$REPO_DIR/start-yakread.sh" << STARTEOF
-#!/usr/bin/env bash
-export JAVA_HOME=$JAVA_HOME
-export PATH=\$JAVA_HOME/bin:\$PATH
-cd $REPO_DIR
-exec clojure -M:dev-server
-STARTEOF
-chmod +x "$REPO_DIR/start-yakread.sh"
+echo "=== Making scripts executable ==="
+chmod +x "$REPO_DIR/sprite/start-app.sh"
+chmod +x "$REPO_DIR/sprite/start-tailwind.sh"
 
 echo "=== Creating MinIO sprite service ==="
 sprite-env services create minio \
@@ -136,11 +138,29 @@ mc mb --ignore-existing local/yakread-emails 2>/dev/null || true
 mc mb --ignore-existing local/yakread-images 2>/dev/null || true
 mc mb --ignore-existing local/yakread-export 2>/dev/null || true
 
+echo "=== Creating Tailwind CSS sprite service ==="
+sprite-env services create tailwind \
+  --cmd "$REPO_DIR/sprite/start-tailwind.sh" \
+  --dir "$REPO_DIR" 2>/dev/null || echo "tailwind service may already exist"
+
+# Wait for initial CSS compilation
+echo "Waiting for Tailwind CSS to compile..."
+for i in $(seq 1 30); do
+  if [ -f "$REPO_DIR/target/resources/public/css/main.css" ]; then
+    echo "Tailwind CSS compiled successfully"
+    break
+  fi
+  if [ "$i" -eq 30 ]; then
+    echo "WARNING: Tailwind CSS not compiled after 30 seconds"
+  fi
+  sleep 1
+done
+
 echo "=== Creating Yakread app sprite service ==="
 sprite-env services create yakread \
-  --cmd "$REPO_DIR/start-yakread.sh" \
+  --cmd "$REPO_DIR/sprite/start-app.sh" \
   --dir "$REPO_DIR" \
-  --needs minio \
+  --needs minio,tailwind \
   --http-port 8080 \
   --duration 90s
 
