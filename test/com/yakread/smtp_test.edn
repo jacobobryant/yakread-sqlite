@@ -157,6 +157,7 @@
        [{:sub/id #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
          :sub/user-id #uuid "00000000-0000-0000-0000-000000000000",
          :sub/email-from "alice@example.com",
+         :sub/record-type [:lift :sub.record-type/email],
          :sub/created-at
          #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}],
        :on-conflict [:sub/user-id :sub/feed-id :sub/email-from],

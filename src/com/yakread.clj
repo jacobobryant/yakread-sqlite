@@ -191,7 +191,7 @@
    biffx/use-xtdb2
    lib.sqlite/use-sqlite
    ;lib.spark/use-spark
-   ;biff/use-queues
+   biff/use-queues
    ;biffx/use-xtdb2-listener
    biff/use-jetty
    ;biff/use-chime
