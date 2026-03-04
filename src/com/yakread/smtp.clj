@@ -127,6 +127,7 @@
                                :values [{:sub/id sub-id
                                          :sub/user-id user-id
                                          :sub/email-from from
+                                         :sub/record-type [:lift :sub.record-type/email]
                                          :sub/created-at now}]
                                :on-conflict [:sub/user-id :sub/feed-id :sub/email-from]
                                :do-nothing true}]))}]))))

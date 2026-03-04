@@ -76,6 +76,7 @@
                        {:sub/id (gen/uuid)
                         :sub/user-id user-id
                         :sub/created-at now
+                        :sub/record-type [:lift :sub.record-type/feed]
                         :sub/feed-id feed})]
     {:feed-ids (vals url->feed)
      :sqlite (concat
