@@ -82,9 +82,9 @@
  :com.yakread.fx.js/secret   #biff/secret CLOUD_FN_SECRET
  :com.yakread.fx.js/local     #biff/env CLOUD_FN_LOCAL
 
- :yakread.work.sync-all-feeds/enabled      #profile {:prod true :default false}
- :yakread.work.queue-add-candidate/enabled #profile {:prod true :default false}
- :yakread.work.digest/enabled              #profile {:prod true :default false}
+ :yakread.work.sync-all-feeds/enabled      #boolean #or [#biff/env ENABLE_SYNC_FEEDS "false"]
+ :yakread.work.queue-add-candidate/enabled #boolean #or [#biff/env ENABLE_ADD_CANDIDATES "false"]
+ :yakread.work.digest/enabled              #boolean #or [#biff/env ENABLE_SEND_DIGESTS "false"]
 
  :yakread.work.materialized-views/enabled #or [#biff/env MATERIALIZED_VIEWS_ENABLED true]
 
