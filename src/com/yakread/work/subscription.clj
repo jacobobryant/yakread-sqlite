@@ -81,8 +81,10 @@
                       :headers (into {}
                                      (remove (comp nil? val))
                                      {"User-Agent" base-url
-                                      "If-None-Match" etag
-                                      "If-Modified-Since" last-modified})
+                                      ;; Skip conditional headers when previous sync failed, so we
+                                      ;; get a fresh 200 response instead of a 304.
+                                      "If-None-Match" (when-not (pos? (or failed-syncs 0)) etag)
+                                      "If-Modified-Since" (when-not (pos? (or failed-syncs 0)) last-modified)})
                       :socket-timeout     5000
                       :connection-timeout 5000
                       :throw-exceptions false
@@ -92,10 +94,11 @@
   :parse
   (fn [{:keys [biff/query biff/job biff.fx/http biff/now feed/failed-syncs]}]
     (let [{feed-id :feed/id}          job
-          {:keys [headers exception]} http
-          remus-output                (when-not exception
+          {:keys [status headers exception]} http
+          not-modified                (= status 304)
+          remus-output                (when (and (not not-modified) (not exception))
                                         (biff/catchall (remus/parse-http-resp http)))
-          success                     (some? remus-output)
+          success                     (or not-modified (some? remus-output))
 
           {:keys [title description image entries]} remus-output
 
@@ -131,6 +134,7 @@
                             (remove (comp nil? val))
                             {:item/id            (gen/uuid)
                              :item/feed-id      feed-id
+                             :item/record-type  [:lift :item.record-type/feed]
                              :item/title        title
                              :item/content-key  (when (< 1000 (count html))
                                                   (gen/uuid))
@@ -140,7 +144,8 @@
                              :item/paywalled    (some-> text str/trim (str/ends-with? "Read more"))
                              :item/url          (some-> (:link entry) str/trim)
                              :item/published-at (some-> (some entry [:published-date :updated-date])
-                                                        (tick/in "UTC"))
+                                                        (tick/in "UTC")
+                                                        tick/instant)
                              :item/author-name  (or (-> entry :authors first :name)
                                                     feed-title)
                              :item/author-url   (some-> entry :authors first :uri str/trim)

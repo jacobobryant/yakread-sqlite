@@ -108,6 +108,7 @@
                              :values [(lib.core/some-vals
                                        {:item/id (gen/uuid)
                                         :item/ingested-at now
+                                        :item/record-type [:lift :item.record-type/email]
                                         :item/title (:subject message)
                                         :item/url url
                                         :item/content-key parsed-content-key

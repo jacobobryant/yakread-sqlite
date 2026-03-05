@@ -127,10 +127,7 @@
      :biff.fx/http
      {:method :get,
       :url "url2",
-      :headers
-      {"User-Agent" "https://example.com",
-       "If-None-Match" "abc123",
-       "If-Modified-Since" "2000"},
+      :headers {"User-Agent" "https://example.com"},
       :socket-timeout 5000,
       :connection-timeout 5000,
       :throw-exceptions false,
@@ -207,8 +204,7 @@
        [{:item/excerpt
          "I've been working on/preparing for migrating Biff…",
          :item/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
-         :item/published-at
-         #time/zoned-date-time "2025-11-09T11:00Z[UTC]",
+         :item/published-at #time/instant "2025-11-09T11:00:00Z",
          :item/paywalled false,
          :item/url "https://biffweb.com/p/xtdb2-prerelease/",
          :item/length 2020,
@@ -216,6 +212,7 @@
          #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503",
          :item/lang "en",
          :item/feed-guid "https://biffweb.com/p/xtdb2-prerelease/",
+         :item/record-type [:lift :item.record-type/feed],
          :item/feed-id #uuid "01000000-0000-0000-0000-000000000100",
          :item/author-name "Jacob O'Bryant",
          :item/title "Biff support for XTDB v2 is in pre-release",
@@ -224,8 +221,7 @@
         {:item/excerpt
          "I've recently finished a year-long rewrite of the…",
          :item/id #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
-         :item/published-at
-         #time/zoned-date-time "2025-09-06T12:30Z[UTC]",
+         :item/published-at #time/instant "2025-09-06T12:30:00Z",
          :item/paywalled false,
          :item/url "https://biffweb.com/p/yakread-relaunch/",
          :item/length 7951,
@@ -233,6 +229,7 @@
          #uuid "629bc222-9cef-e94d-fc1e-932efb9a0f58",
          :item/lang "en",
          :item/feed-guid "https://biffweb.com/p/yakread-relaunch/",
+         :item/record-type [:lift :item.record-type/feed],
          :item/feed-id #uuid "01000000-0000-0000-0000-000000000100",
          :item/author-name "Jacob O'Bryant",
          :item/title "Relaunching Yakread: an algorithmic reading app",
@@ -241,8 +238,7 @@
         {:item/excerpt
          "I've previously written about my latest approach …",
          :item/id #uuid "e1121b08-05e8-b107-f0f5-b4f22d0cd0f1",
-         :item/published-at
-         #time/zoned-date-time "2025-07-19T10:45Z[UTC]",
+         :item/published-at #time/instant "2025-07-19T10:45:00Z",
          :item/paywalled false,
          :item/url "https://biffweb.com/p/edn-tests/",
          :item/length 5495,
@@ -250,6 +246,7 @@
          #uuid "4663620f-501c-9270-20ff-67585e33a8f6",
          :item/lang "en",
          :item/feed-guid "https://biffweb.com/p/edn-tests/",
+         :item/record-type [:lift :item.record-type/feed],
          :item/feed-id #uuid "01000000-0000-0000-0000-000000000100",
          :item/author-name "Jacob O'Bryant",
          :item/title "Writing your tests in EDN files",
@@ -258,8 +255,7 @@
         {:item/excerpt
          "Merry solstice. After about a year, I'm roughly 8…",
          :item/id #uuid "2587af97-b486-5538-05f2-ef1f005ae0b4",
-         :item/published-at
-         #time/zoned-date-time "2025-06-20T19:36Z[UTC]",
+         :item/published-at #time/instant "2025-06-20T19:36:00Z",
          :item/paywalled false,
          :item/url "https://biffweb.com/p/edn-html-forms/",
          :item/length 4401,
@@ -267,6 +263,7 @@
          #uuid "8bf72308-025c-8f5f-f6e8-9c42901d787a",
          :item/lang "en",
          :item/feed-guid "https://biffweb.com/p/edn-html-forms/",
+         :item/record-type [:lift :item.record-type/feed],
          :item/feed-id #uuid "01000000-0000-0000-0000-000000000100",
          :item/author-name "Jacob O'Bryant",
          :item/title "EDN-infused plain html forms",
@@ -275,8 +272,7 @@
         {:item/excerpt
          "I've been making some progress on rewriting Yakre…",
          :item/id #uuid "1abfe6cb-40bc-f2e7-a009-97a449310e6c",
-         :item/published-at
-         #time/zoned-date-time "2025-01-28T20:15Z[UTC]",
+         :item/published-at #time/instant "2025-01-28T20:15:00Z",
          :item/paywalled false,
          :item/url
          "https://biffweb.com/p/structuring-large-codebases/",
@@ -286,6 +282,7 @@
          :item/lang "en",
          :item/feed-guid
          "https://biffweb.com/p/structuring-large-codebases/",
+         :item/record-type [:lift :item.record-type/feed],
          :item/feed-id #uuid "01000000-0000-0000-0000-000000000100",
          :item/author-name "Jacob O'Bryant",
          :item/title "Structuring large Clojure codebases with Biff",
@@ -294,8 +291,7 @@
         {:item/excerpt
          "An explanation of how I'm using Pathom to keep Ya…",
          :item/id #uuid "fda00200-b030-232e-7cbb-4a95de203044",
-         :item/published-at
-         #time/zoned-date-time "2024-12-21T13:30Z[UTC]",
+         :item/published-at #time/instant "2024-12-21T13:30:00Z",
          :item/paywalled false,
          :item/url "https://biffweb.com/p/yakread-pathom/",
          :item/length 116,
@@ -303,6 +299,7 @@
          "<div style=\"padding:56.25% 0 0 0;position:relativ…",
          :item/lang "en",
          :item/feed-guid "https://biffweb.com/p/yakread-pathom/",
+         :item/record-type [:lift :item.record-type/feed],
          :item/feed-id #uuid "01000000-0000-0000-0000-000000000100",
          :item/author-name "Jacob O'Bryant",
          :item/title "Yakread + Pathom [video]",
@@ -311,8 +308,7 @@
         {:item/excerpt
          "I've started open-sourcing Yakread. I'm going to …",
          :item/id #uuid "bf09ad1b-fb1f-38d6-bbaf-da9391edc490",
-         :item/published-at
-         #time/zoned-date-time "2024-12-07T10:30Z[UTC]",
+         :item/published-at #time/instant "2024-12-07T10:30:00Z",
          :item/paywalled false,
          :item/url "https://biffweb.com/p/yakread-schema/",
          :item/length 283,
@@ -320,6 +316,7 @@
          "<div style=\"padding:56.25% 0 0 0;position:relativ…",
          :item/lang "en",
          :item/feed-guid "https://biffweb.com/p/yakread-schema/",
+         :item/record-type [:lift :item.record-type/feed],
          :item/feed-id #uuid "01000000-0000-0000-0000-000000000100",
          :item/author-name "Jacob O'Bryant",
          :item/title "Yakread schema [video]",
@@ -328,8 +325,7 @@
         {:item/excerpt
          "Last time on Biff: The Newsletter: I've just bare…",
          :item/id #uuid "2249e190-8bcf-01f3-1543-93cf2f9d04a6",
-         :item/published-at
-         #time/zoned-date-time "2024-10-05T19:15Z[UTC]",
+         :item/published-at #time/instant "2024-10-05T19:15:00Z",
          :item/paywalled false,
          :item/url "https://biffweb.com/p/rocksdb-indexes-yakread/",
          :item/length 3162,
@@ -338,6 +334,7 @@
          :item/lang "en",
          :item/feed-guid
          "https://biffweb.com/p/rocksdb-indexes-yakread/",
+         :item/record-type [:lift :item.record-type/feed],
          :item/feed-id #uuid "01000000-0000-0000-0000-000000000100",
          :item/author-name "Jacob O'Bryant",
          :item/title
