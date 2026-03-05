@@ -131,6 +131,7 @@
                             (remove (comp nil? val))
                             {:item/id            (gen/uuid)
                              :item/feed-id      feed-id
+                             :item/record-type  [:lift :item.record-type/feed]
                              :item/title        title
                              :item/content-key  (when (< 1000 (count html))
                                                   (gen/uuid))
