@@ -127,10 +127,7 @@
      :biff.fx/http
      {:method :get,
       :url "url2",
-      :headers
-      {"User-Agent" "https://example.com",
-       "If-None-Match" "abc123",
-       "If-Modified-Since" "2000"},
+      :headers {"User-Agent" "https://example.com"},
       :socket-timeout 5000,
       :connection-timeout 5000,
       :throw-exceptions false,
