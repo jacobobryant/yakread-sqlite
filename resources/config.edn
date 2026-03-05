@@ -88,5 +88,7 @@
 
  :yakread.work.materialized-views/enabled #or [#biff/env MATERIALIZED_VIEWS_ENABLED true]
 
+ :yakread.import/enabled #boolean #or [#biff/env YAKREAD_IMPORT_ENABLED "false"]
+
  :biff/alert-email             #biff/env ALERT_EMAIL
  :biff.error-reporting/enabled #profile {:prod true}}
