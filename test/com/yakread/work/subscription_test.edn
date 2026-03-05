@@ -207,8 +207,7 @@
        [{:item/excerpt
          "I've been working on/preparing for migrating Biff…",
          :item/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
-         :item/published-at
-         #time/zoned-date-time "2025-11-09T11:00Z[UTC]",
+         :item/published-at #time/instant "2025-11-09T11:00:00Z",
          :item/paywalled false,
          :item/url "https://biffweb.com/p/xtdb2-prerelease/",
          :item/length 2020,
@@ -225,8 +224,7 @@
         {:item/excerpt
          "I've recently finished a year-long rewrite of the…",
          :item/id #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
-         :item/published-at
-         #time/zoned-date-time "2025-09-06T12:30Z[UTC]",
+         :item/published-at #time/instant "2025-09-06T12:30:00Z",
          :item/paywalled false,
          :item/url "https://biffweb.com/p/yakread-relaunch/",
          :item/length 7951,
@@ -243,8 +241,7 @@
         {:item/excerpt
          "I've previously written about my latest approach …",
          :item/id #uuid "e1121b08-05e8-b107-f0f5-b4f22d0cd0f1",
-         :item/published-at
-         #time/zoned-date-time "2025-07-19T10:45Z[UTC]",
+         :item/published-at #time/instant "2025-07-19T10:45:00Z",
          :item/paywalled false,
          :item/url "https://biffweb.com/p/edn-tests/",
          :item/length 5495,
@@ -261,8 +258,7 @@
         {:item/excerpt
          "Merry solstice. After about a year, I'm roughly 8…",
          :item/id #uuid "2587af97-b486-5538-05f2-ef1f005ae0b4",
-         :item/published-at
-         #time/zoned-date-time "2025-06-20T19:36Z[UTC]",
+         :item/published-at #time/instant "2025-06-20T19:36:00Z",
          :item/paywalled false,
          :item/url "https://biffweb.com/p/edn-html-forms/",
          :item/length 4401,
@@ -279,8 +275,7 @@
         {:item/excerpt
          "I've been making some progress on rewriting Yakre…",
          :item/id #uuid "1abfe6cb-40bc-f2e7-a009-97a449310e6c",
-         :item/published-at
-         #time/zoned-date-time "2025-01-28T20:15Z[UTC]",
+         :item/published-at #time/instant "2025-01-28T20:15:00Z",
          :item/paywalled false,
          :item/url
          "https://biffweb.com/p/structuring-large-codebases/",
@@ -299,8 +294,7 @@
         {:item/excerpt
          "An explanation of how I'm using Pathom to keep Ya…",
          :item/id #uuid "fda00200-b030-232e-7cbb-4a95de203044",
-         :item/published-at
-         #time/zoned-date-time "2024-12-21T13:30Z[UTC]",
+         :item/published-at #time/instant "2024-12-21T13:30:00Z",
          :item/paywalled false,
          :item/url "https://biffweb.com/p/yakread-pathom/",
          :item/length 116,
@@ -317,8 +311,7 @@
         {:item/excerpt
          "I've started open-sourcing Yakread. I'm going to …",
          :item/id #uuid "bf09ad1b-fb1f-38d6-bbaf-da9391edc490",
-         :item/published-at
-         #time/zoned-date-time "2024-12-07T10:30Z[UTC]",
+         :item/published-at #time/instant "2024-12-07T10:30:00Z",
          :item/paywalled false,
          :item/url "https://biffweb.com/p/yakread-schema/",
          :item/length 283,
@@ -335,8 +328,7 @@
         {:item/excerpt
          "Last time on Biff: The Newsletter: I've just bare…",
          :item/id #uuid "2249e190-8bcf-01f3-1543-93cf2f9d04a6",
-         :item/published-at
-         #time/zoned-date-time "2024-10-05T19:15Z[UTC]",
+         :item/published-at #time/instant "2024-10-05T19:15:00Z",
          :item/paywalled false,
          :item/url "https://biffweb.com/p/rocksdb-indexes-yakread/",
          :item/length 3162,
