@@ -246,13 +246,13 @@
   (cld/default-init!)
   (time-literals/print-time-literals-clj!)
   (alter-var-root #'gen/*rnd* (constantly (java.util.Random. (inst-ms (java.time.Instant/now)))))
-  (let [{:keys [biff.nrepl/args yakread.import/enabled biff/conn]} (start)]
+  (let [{:keys [biff.nrepl/args yakread.import/enabled] conn* :biff/conn*} (start)]
     (when enabled
       (future
         (biff/catchall-verbose
          (log/info "Starting XTDB->SQLite import...")
          (migrate.sqlite/import-from-nippy-files!
-          {:conn conn
+          {:conn conn*
            :dir "storage/migrate-xtdb"})
          (log/info "XTDB->SQLite import finished."))))
     (apply nrepl-cmd/-main args)))

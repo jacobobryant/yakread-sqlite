@@ -702,21 +702,27 @@
 (defn ensure-import-progress-table!
   "Create the _import_progress table if it doesn't exist."
   [conn]
-  (jdbc/execute! conn ["CREATE TABLE IF NOT EXISTS _import_progress (file_name TEXT PRIMARY KEY NOT NULL, completed_at INT NOT NULL)"]))
+  (jdbc/execute! conn (sql/format {:create-table [:_import_progress :if-not-exists]
+                                   :with-columns [[:file_name :text [:not nil] [:primary-key]]
+                                                  [:completed_at :int [:not nil]]]})))
 
 (defn imported-files
   "Return a set of file names that have already been imported."
   [conn]
   (into #{}
         (map :file_name)
-        (jdbc/execute! conn ["SELECT file_name FROM _import_progress"]
+        (jdbc/execute! conn (sql/format {:select [:file_name]
+                                         :from [:_import_progress]})
                        {:builder-fn rs/as-unqualified-maps})))
 
 (defn mark-file-imported!
   "Record that a file has been successfully imported."
   [conn file-name]
-  (jdbc/execute! conn ["INSERT OR IGNORE INTO _import_progress (file_name, completed_at) VALUES (?, ?)"
-                        file-name (inst-ms (Instant/now))]))
+  (jdbc/execute! conn (sql/format {:insert-into :_import_progress
+                                   :values [{:file_name file-name
+                                             :completed_at (inst-ms (Instant/now))}]
+                                   :on-conflict [:file_name]
+                                   :do-nothing true})))
 
 (defn import-from-nippy-files!
   "Import data from multiple nippy files (XTDB v1 transaction exports).
