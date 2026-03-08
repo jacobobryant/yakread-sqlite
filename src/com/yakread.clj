@@ -12,6 +12,7 @@
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.auth :as lib.auth]
    [com.yakread.lib.email :as lib.email]
+   [com.yakread.lib.migrate.sqlite.copilot :as migrate.sqlite]
    [com.yakread.lib.sqlite :as lib.sqlite]
    [com.yakread.model.schema :as sqlite-schema]
    [com.yakread.lib.fx :as fx]
@@ -245,11 +246,15 @@
   (cld/default-init!)
   (time-literals/print-time-literals-clj!)
   (alter-var-root #'gen/*rnd* (constantly (java.util.Random. (inst-ms (java.time.Instant/now)))))
-  (let [{:keys [biff.nrepl/args]} (start)]
-    #_(future
+  (let [{:keys [biff.nrepl/args yakread.import/enabled] conn* :biff/conn*} (start)]
+    (when enabled
+      (future
         (biff/catchall-verbose
-         (migrate.xtdb1/export node "storage/migrate-export")
-         (log/info "done exporting")))
+         (log/info "Starting XTDB->SQLite import...")
+         (migrate.sqlite/import-from-nippy-files!
+          {:conn conn*
+           :dir "storage/migrate-xtdb"})
+         (log/info "XTDB->SQLite import finished."))))
     (apply nrepl-cmd/-main args)))
 
 (defn refresh []

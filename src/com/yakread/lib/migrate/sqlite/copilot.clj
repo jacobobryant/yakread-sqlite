@@ -18,6 +18,7 @@
    [clojure.tools.logging :as log]
    [honey.sql :as sql]
    [next.jdbc :as jdbc]
+   [next.jdbc.result-set :as rs]
    [taoensso.nippy :as nippy]
    [time-literals.read-write :as time-literals])
   (:import
@@ -698,6 +699,31 @@
     (log/info "Processed" (count txs) "transactions from" edn-file)
     {:processed (count txs)}))
 
+(defn ensure-import-progress-table!
+  "Create the _import_progress table if it doesn't exist."
+  [conn]
+  (jdbc/execute! conn (sql/format {:create-table [:_import_progress :if-not-exists]
+                                   :with-columns [[:file_name :text [:not nil] [:primary-key]]
+                                                  [:completed_at :int [:not nil]]]})))
+
+(defn imported-files
+  "Return a set of file names that have already been imported."
+  [conn]
+  (into #{}
+        (map :file_name)
+        (jdbc/execute! conn (sql/format {:select [:file_name]
+                                         :from [:_import_progress]})
+                       {:builder-fn rs/as-unqualified-maps})))
+
+(defn mark-file-imported!
+  "Record that a file has been successfully imported."
+  [conn file-name]
+  (jdbc/execute! conn (sql/format {:insert-into :_import_progress
+                                   :values [{:file_name file-name
+                                             :completed_at (inst-ms (Instant/now))}]
+                                   :on-conflict [:file_name]
+                                   :do-nothing true})))
+
 (defn import-from-nippy-files!
   "Import data from multiple nippy files (XTDB v1 transaction exports).
 
@@ -718,27 +744,41 @@
    - Delete operations
    - Component entity tracking (digest-items, skips) across files
    - Valid time filtering
+   - Resuming from where it left off (tracks completed files in _import_progress table)
 
    Options:
-   - :conn - SQLite connection
+   - :conn - SQLite connection (HikariCP datasource)
    - :dir - Directory containing nippy files
    - :now - (optional) Reference time for valid time filtering, defaults to current time"
   [{:keys [conn dir now]}]
   (let [now (or now (Instant/now))
         files (tx-files dir)]
-    (log/info "Found" (count files) "nippy files in" dir)
-    (loop [remaining-files files
-           state empty-state]
-      (if (empty? remaining-files)
-        :done
-        (let [f (first remaining-files)
-              file-index (parse-long (.getName f))
-              _ (log/info "Processing file" file-index)
-              txes (read-nippy-file f)  ; Side effect: file I/O
-              {:keys [txs state]} (compute-txs-for-file state txes now)]
-          (jdbc/with-transaction [tx conn]
-            (execute-txs! tx txs))
-          (recur (rest remaining-files) state))))))
+    (ensure-import-progress-table! conn)
+    (let [already-imported (imported-files conn)
+          remaining (remove #(contains? already-imported (.getName %)) files)]
+      (log/info "Found" (count files) "total nippy files in" dir
+                "," (count already-imported) "already imported,"
+                (count remaining) "remaining")
+      (when (seq remaining)
+        (loop [remaining-files remaining
+               state empty-state
+               processed 0]
+          (if (empty? remaining-files)
+            (do (log/info "Import complete." processed "files processed")
+                :done)
+            (let [f (first remaining-files)
+                  file-name (.getName f)
+                  _ (log/info "Processing file" file-name
+                              "(" (inc processed) "of" (count remaining) ")")
+                  txes (read-nippy-file f)
+                  {:keys [txs state]} (compute-txs-for-file state txes now)]
+              (with-open [raw-conn (.getConnection conn)]
+                (jdbc/execute! raw-conn ["PRAGMA foreign_keys = OFF"])
+                (jdbc/with-transaction [tx raw-conn]
+                  (execute-txs! tx txs))
+                (jdbc/execute! raw-conn ["PRAGMA foreign_keys = ON"]))
+              (mark-file-imported! conn file-name)
+              (recur (rest remaining-files) state (inc processed)))))))))
 
 ;; ============================================================================
 ;; Pure functions for testing
