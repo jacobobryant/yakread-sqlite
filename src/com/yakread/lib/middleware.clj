@@ -121,13 +121,17 @@
       response)))
 
 (defn wrap-admin [handler]
-  (fn [{:keys [biff/db session] :as ctx}]
-    ;; TODO
-    (if false #_(contains? (:user/roles (xt/entity db (:uid session))) :admin)
-      (handler ctx)
-      {:status 401
-       :headers {"content-type" "text/html"}
-       :body "<h1>Unauthorized</h1>"})))
+  (fn [{:biff/keys [query] :keys [session] :as ctx}]
+    (let [roles (some-> (first (query {:select [:user/roles]
+                                       :from :user
+                                       :where [:= :user/id (:uid session)]
+                                       :limit 1}))
+                        :user/roles)]
+      (if (contains? roles :admin)
+        (handler ctx)
+        {:status 401
+         :headers {"content-type" "text/html"}
+         :body "<h1>Unauthorized</h1>"}))))
 
 (defn wrap-internal-error [handler]
   (fn [{:biff.middleware/keys [on-error] :as ctx}]

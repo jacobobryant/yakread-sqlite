@@ -99,10 +99,12 @@
    :result
    [{:item/id #uuid "01000000-0000-0000-0000-000000000100",
      :item/user-item
-     {:user-item/id #uuid "00010000-0000-0000-0000-000000000001"}}
+     {:user-item/id #uuid "00010000-0000-0000-0000-000000000001",
+      :user-item/favorited-at nil}}
     {:item/id #uuid "02000000-0000-0000-0000-000000000200",
      :item/user-item
-     {:user-item/id #uuid "00020000-0000-0000-0000-000000000002"}}
+     {:user-item/id #uuid "00020000-0000-0000-0000-000000000002",
+      :user-item/favorited-at nil}}
     {}]}
   _
   {:doc "image-from-feed",
