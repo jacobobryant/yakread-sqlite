@@ -246,11 +246,13 @@
   #::pco{:input [{:params/item-unsafe [:item/id
                                        {(? :item/sub) [:sub/id
                                                        :sub/user-id]}
-                                       {(? :item/user-item) [:user-item/id]}]}]
+                                       {(? :item/user-item) [:user-item/id
+                                                             (? :user-item/favorited-at)]}]}]
          :output [{:params/item [:item/id
                                  {:item/sub [:sub/id
                                              :sub/user-id]}
-                                 {:item/user-item [:user-item/id]}]}]}
+                                 {:item/user-item [:user-item/id
+                                                   :user-item/favorited-at]}]}]}
   (when (or (= (:uid session) (get-in item-unsafe [:item/sub :sub/user-id]))
             (not-empty (:item/user-item item-unsafe))
             (contains? item-candidate-ids (:item/id item-unsafe)))
