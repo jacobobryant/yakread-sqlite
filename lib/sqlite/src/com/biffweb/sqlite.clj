@@ -457,7 +457,7 @@
   (HikariDataSource.
    (doto (HikariConfig.)
      (.setJdbcUrl (str "jdbc:sqlite:" db-path))
-     (.setMaximumPoolSize 1)
+     (.setMaximumPoolSize 4)
      (.setConnectionInitSql
       (str/join ";" ["PRAGMA journal_mode=WAL"
                      "PRAGMA busy_timeout = 5000"

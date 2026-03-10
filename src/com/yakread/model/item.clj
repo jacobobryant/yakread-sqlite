@@ -120,7 +120,9 @@
                                {:item/id item-id :item/user-item {:user-item/id id}})))
                       (query {:select [:user-item/id :user-item/item-id]
                               :from :user-item
-                              :where [:= :user-item/user-id (:uid session)]}))]
+                              :where [:and
+                                      [:= :user-item/user-id (:uid session)]
+                                      [:in :user-item/item-id (vec item-ids)]]}))]
     (lib.core/restore-order items :item/id results)))
 
 (defresolver image-from-feed [{:biff/keys [query]} items]
