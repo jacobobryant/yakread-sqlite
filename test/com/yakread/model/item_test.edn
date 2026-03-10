@@ -105,7 +105,8 @@
      :item/user-item
      {:user-item/id #uuid "00020000-0000-0000-0000-000000000002",
       :user-item/favorited-at nil}}
-    {}]}
+    {:item/id #uuid "03000000-0000-0000-0000-000000000300",
+     :item/user-item {}}]}
   _
   {:doc "image-from-feed",
    :eval

@@ -124,7 +124,9 @@
                               :where [:and
                                       [:= :user-item/user-id (:uid session)]
                                       [:in :user-item/item-id (vec item-ids)]]}))]
-    (lib.core/restore-order items :item/id results)))
+    (lib.core/restore-order items :item/id results
+                            (fn [{:keys [item/id]}]
+                              {:item/id id :item/user-item {}}))))
 
 (defresolver image-from-feed [{:biff/keys [query]} items]
   #::pco{:input [(? :item/feed-url)

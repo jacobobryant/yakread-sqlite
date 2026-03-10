@@ -58,6 +58,7 @@
         {::error "Failed to extract content from URL."}
         (let [subject (if (not-empty subject) subject (str "Test: " title))]
           (lib.smtp/send-local! {:from from-address
+                                 :from-name from-name
                                  :to to-address
                                  :subject subject
                                  :rum [:html
