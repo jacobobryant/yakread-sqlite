@@ -1,6 +1,7 @@
 (ns com.yakread.pathom-optional-entity-test
   "Minimal standalone reproduction of a Pathom3 behavior where a pass-through
-   resolver's input/output declarations determine whether a batch resolver runs.
+   resolver's input declarations determine resolver execution order and which
+   fields are visible to downstream resolvers.
 
    Real-world scenario (yakread favorite icon bug):
    - `user-item` batch resolver provides {:item/user-item [:user-item/id
@@ -15,14 +16,25 @@
    :user-item/favorited-at (since it's not declared as needed). The optional
    field never makes it through to downstream resolvers.
 
-   Fix: Add (? :user-item/favorited-at) to from-params's INPUT and OUTPUT
-   declarations. Now Pathom resolves the batch resolver for the additional
-   field, and the pass-through includes it."
+   This file demonstrates three approaches:
+
+   1. BUGGY: authorize input declares nested entity with partial fields.
+      Pathom runs customer-loader BEFORE authorize (wrong order), and
+      filters out :customer/email from the input (wrong data).
+
+   2. COUPLED-FIX: authorize input declares all needed nested fields.
+      Works, but authorize must know about all downstream needs.
+
+   3. MINIMAL-INPUT: authorize only needs :order/id. Does its own auth
+      check without depending on Pathom to resolve nested entities.
+      Pathom resolves nested entities AFTER authorize runs.
+      Authorize runs first (correct security order) and doesn't need
+      to know about downstream resolver needs (no coupling)."
   (:require [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
             [com.wsscode.pathom3.connect.indexes :as pci]
             [com.wsscode.pathom3.interface.eql :as p.eql]))
 
-;; Track which resolvers are called
+;; Track which resolvers are called and in what order
 (def call-log (atom []))
 
 ;; --- Simulated database ---
@@ -48,10 +60,9 @@
   {:order/customer {:customer/id id
                     :customer/email (get customer-emails id)}})
 
-;; --- Resolver 3a: "authorize" (BUGGY) ---
-;; Pass-through that transforms params/order-unsafe → params/order.
+;; --- Approach 1: BUGGY authorize ---
 ;; INPUT only declares it needs [:customer/id] from the nested entity.
-;; Pathom only resolves customer-loader for :customer/id, not :customer/email.
+;; Pathom runs customer-loader BEFORE authorize, and filters out :customer/email.
 (defresolver authorize-buggy [env {:keys [params/order-unsafe]}]
   {::pco/input [{:params/order-unsafe [:order/id
                                        {(? :order/customer) [:customer/id]}]}]
@@ -60,18 +71,32 @@
   (swap! call-log conj :authorize-buggy)
   {:params/order order-unsafe})
 
-;; --- Resolver 3b: "authorize" (FIXED) ---
-;; INPUT declares it needs [:customer/id (? :customer/email)] from nested entity.
-;; This causes Pathom to resolve customer-loader for :customer/email too.
-(defresolver authorize-fixed [env {:keys [params/order-unsafe]}]
+;; --- Approach 2: COUPLED-FIX authorize ---
+;; INPUT declares all downstream fields. Works, but couples authorize
+;; to all downstream resolver needs.
+(defresolver authorize-coupled-fix [env {:keys [params/order-unsafe]}]
   {::pco/input [{:params/order-unsafe [:order/id
                                        {(? :order/customer) [:customer/id
                                                              (? :customer/email)]}]}]
    ::pco/output [{:params/order [:order/id
                                  {:order/customer [:customer/id
                                                    :customer/email]}]}]}
-  (swap! call-log conj :authorize-fixed)
+  (swap! call-log conj :authorize-coupled-fix)
   {:params/order order-unsafe})
+
+;; --- Approach 3: MINIMAL-INPUT authorize ---
+;; INPUT only requires :order/id. Does its own auth check (simulated here
+;; with the customer-emails lookup). Outputs only {:order/id ...}.
+;; Pathom resolves :order/customer AFTER authorize, within the params/order
+;; entity context. No coupling, correct ordering.
+(defresolver authorize-minimal [env {:keys [params/order-unsafe]}]
+  {::pco/input [{:params/order-unsafe [:order/id]}]
+   ::pco/output [{:params/order [:order/id]}]}
+  (swap! call-log conj :authorize-minimal)
+  ;; Simulated auth check: verify order exists (like yakread's SQL auth query)
+  (let [order-id (:order/id order-unsafe)]
+    (when (contains? customer-emails order-id)
+      {:params/order {:order/id order-id}})))
 
 ;; --- Resolver 4: "email-display" ---
 ;; Downstream resolver that needs :customer/email.
@@ -85,58 +110,53 @@
 (defn run-test [label authorize-resolver]
   (reset! call-log [])
   (let [env (pci/register [order-lookup authorize-resolver customer-loader email-display])
-        ;; Query: resolve params/order, then get email-display within it.
         query [{:params/order [:order/email-display]}]
         result (try
                  (p.eql/process env query)
                  (catch Exception e
                    {:error (.getMessage e)}))]
     (println (str "--- " label " ---"))
-    (println "  Resolvers called:" @call-log)
-    (println "  Result:" (pr-str result))
+    (println "  Resolver call order:" @call-log)
     (let [display (get-in result [:params/order :order/email-display])]
       (println "  :order/email-display =" (pr-str display))
       (println "  Expected: \"alice@example.com\"")
-      (println "  Bug present?" (or (nil? display) (= "<missing>" display))))
+      (let [log @call-log
+            auth-idx (first (keep-indexed (fn [i v] (when (#{:authorize-buggy :authorize-coupled-fix :authorize-minimal} v) i)) log))
+            loader-idx (first (keep-indexed (fn [i v] (when (= :customer-loader v) i)) log))]
+        (println "  Authorize runs before customer-loader?"
+                 (if (and auth-idx loader-idx)
+                   (< auth-idx loader-idx)
+                   "N/A")))
+      (println "  Correct result?" (= "alice@example.com" display)))
     (println)))
 
 (defn -main []
-  (println "=== Pathom3: Pass-through Resolver Input Shape Bug ===\n")
-  (println "Scenario:")
-  (println "  1. order-lookup provides params/order-unsafe with {:order/id 1}")
-  (println "  2. customer-loader can resolve {:order/customer [:customer/id :customer/email]}")
-  (println "     given :order/id")
-  (println "  3. authorize takes params/order-unsafe → params/order (pass-through)")
-  (println "  4. email-display needs :customer/email from :order/customer")
-  (println "")
-  (println "The authorize resolver's INPUT declaration determines what Pathom")
-  (println "resolves for the nested :order/customer BEFORE passing it through.\n")
+  (println "=== Pathom3: Pass-through Resolver Ordering & Input Filtering ===\n")
 
-  (run-test (str "BUGGY: authorize INPUT needs only {:order/customer [:customer/id]}\n"
-                 "         → Pathom doesn't resolve :customer/email before pass-through")
+  (run-test "APPROACH 1 - BUGGY: nested input with partial fields"
             authorize-buggy)
 
-  (run-test (str "FIXED: authorize INPUT needs {:order/customer [:customer/id (? :customer/email)]}\n"
-                 "         → Pathom resolves customer-loader for :customer/email too")
-            authorize-fixed)
+  (run-test "APPROACH 2 - COUPLED-FIX: nested input with ALL downstream fields"
+            authorize-coupled-fix)
 
-  (println "=== Explanation ===")
-  (println "The pass-through resolver (authorize) transforms params/order-unsafe into")
-  (println "params/order. Its INPUT shape declaration tells Pathom what data to provide:")
+  (run-test "APPROACH 3 - MINIMAL-INPUT: only :order/id, auth internally"
+            authorize-minimal)
+
+  (println "=== Summary ===")
   (println "")
-  (println "  BUGGY input:  {(? :order/customer) [:customer/id]}")
-  (println "  → Pathom calls customer-loader but only passes {:customer/id 1} to authorize")
-  (println "  → authorize passes this through as params/order")
-  (println "  → email-display gets {} for :order/customer (email was filtered out)")
+  (println "Approach 1 (BUGGY): authorize runs AFTER customer-loader, and")
+  (println "  the input shape filters out :customer/email. Both wrong.")
   (println "")
-  (println "  FIXED input:  {(? :order/customer) [:customer/id (? :customer/email)]}")
-  (println "  → Pathom calls customer-loader and passes BOTH fields to authorize")
-  (println "  → authorize passes the complete data through as params/order")
-  (println "  → email-display gets {:customer/email \"alice@example.com\"}")
+  (println "Approach 2 (COUPLED-FIX): works, but authorize must declare every")
+  (println "  field that any downstream resolver might need. Defeats the")
+  (println "  purpose of using Pathom for decoupled resolution.")
   (println "")
-  (println "Key insight: Pathom's input declarations act as a shape filter. Even though")
-  (println "customer-loader provides :customer/email, if the consuming resolver's input")
-  (println "doesn't declare that field, Pathom filters it out before passing data in."))
+  (println "Approach 3 (MINIMAL-INPUT): authorize only needs :order/id.")
+  (println "  It runs BEFORE customer-loader (correct security order).")
+  (println "  After authorize provides {:params/order {:order/id 1}},")
+  (println "  Pathom resolves :order/customer within params/order for")
+  (println "  downstream resolvers. No coupling, correct ordering."))
+
 
 
 
