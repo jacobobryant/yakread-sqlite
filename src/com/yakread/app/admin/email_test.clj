@@ -63,8 +63,8 @@
                                  :subject subject
                                  :rum [:html
                                        [:body
-                                        [:div (lib.content/normalize html)]]]})
-          {::success (str "Email sent to " to-address " with subject: " subject)})))))
+                                        [:div {:dangerouslySetInnerHTML
+                                               {:__html (lib.content/normalize html)}}]]]})          {::success (str "Email sent to " to-address " with subject: " subject)})))))
 
 (fx/defroute send-email-route "/admin/email-test/send"
   :post
