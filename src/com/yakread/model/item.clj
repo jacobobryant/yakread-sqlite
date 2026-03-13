@@ -111,15 +111,14 @@
 
 (defresolver user-item [{:biff/keys [query] :keys [session]} items]
   #::pco{:input [:item/id]
-         :output [{:item/user-item [:user-item/id :user-item/favorited-at]}]
+         :output [{:item/user-item [:user-item/id]}]
          :batch? true}
   (let [item-ids (into #{} (map :item/id items))
         results (into []
-                      (keep (fn [{:keys [user-item/id user-item/item-id user-item/favorited-at]}]
+                      (keep (fn [{:keys [user-item/id user-item/item-id]}]
                              (when (item-ids item-id)
-                               {:item/id item-id :item/user-item {:user-item/id id
-                                                                   :user-item/favorited-at favorited-at}})))
-                      (query {:select [:user-item/id :user-item/item-id :user-item/favorited-at]
+                               {:item/id item-id :item/user-item {:user-item/id id}})))
+                      (query {:select [:user-item/id :user-item/item-id]
                               :from :user-item
                               :where [:and
                                       [:= :user-item/user-id (:uid session)]
