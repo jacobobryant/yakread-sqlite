@@ -189,7 +189,7 @@
 (def components
   [biff/use-aero-config
    use-error-reporting
-   biffx/use-xtdb2
+   #_biffx/use-xtdb2
    lib.sqlite/use-sqlite
    ;lib.spark/use-spark
    #_biff/use-queues

@@ -1,12 +1,22 @@
 #!/bin/bash
 set -e
 source config.env
+
+# Compile CSS with Tailwind
+mkdir -p target/resources/public/css
+tailwindcss \
+  -c resources/tailwind.config.js \
+  -i resources/tailwind.css \
+  -o target/resources/public/css/main.css \
+  --minify
+
 rsync -av --relative \
   "--include='**.gitignore'" \
   "--exclude='/.git'" \
   "--filter=:- .gitignore" \
   --delete-after --protocol=29 \
   $(git ls-files) \
+  target/resources/public/css/main.css \
   $APP_NAME@$SERVER:repo/
 scp config.env $APP_NAME@$SERVER:repo/config.env
 ssh $APP_NAME@$SERVER sudo systemctl reset-failed $APP_NAME.service

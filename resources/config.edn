@@ -27,7 +27,7 @@
  :biff/base-url #profile {:prod #join ["https://" #biff/env DOMAIN] :default "http://localhost:8080"}
  :biff/host #profile {:dev "0.0.0.0" :default "localhost"}
  :biff/jwt-secret #biff/secret JWT_SECRET
- :biff/port 8080
+ :biff/port #or [#biff/env PORT 8080]
 
  :biff.xtdb2/storage   #profile {:prod :remote :default :local}
  :biff.xtdb2/log       #profile {:prod :kafka :default :local}
