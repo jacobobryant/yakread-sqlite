@@ -192,12 +192,12 @@
    biffx/use-xtdb2
    lib.sqlite/use-sqlite
    ;lib.spark/use-spark
-   biff/use-queues
+   #_biff/use-queues
    ;biffx/use-xtdb2-listener
    biff/use-jetty
    ;biff/use-chime
    biff/use-beholder
-   lib.smtp/use-server])
+   #_lib.smtp/use-server])
 
 (def initial-system {:biff/modules #'modules
                      :biff/merge-context-fn #'merge-context
