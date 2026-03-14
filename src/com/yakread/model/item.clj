@@ -123,7 +123,9 @@
                               :where [:and
                                       [:= :user-item/user-id (:uid session)]
                                       [:in :user-item/item-id (vec item-ids)]]}))]
-    (lib.core/restore-order items :item/id results)))
+    (lib.core/restore-order items :item/id results
+                            (fn [{:keys [item/id]}]
+                              {:item/id id :item/user-item {}}))))
 
 (defresolver image-from-feed [{:biff/keys [query]} items]
   #::pco{:input [(? :item/feed-url)
@@ -238,20 +240,31 @@
                           (:item/id params))]
     {:params/item-unsafe {:item/id item-id}}))
 
-(defresolver from-params [{:keys [session yakread.model/item-candidate-ids]}
+(defresolver from-params [{:keys [session yakread.model/item-candidate-ids] :biff/keys [query]}
                           {:keys [params/item-unsafe]}]
-  #::pco{:input [{:params/item-unsafe [:item/id
-                                       {(? :item/sub) [:sub/id
-                                                       :sub/user-id]}
-                                       {(? :item/user-item) [:user-item/id]}]}]
-         :output [{:params/item [:item/id
-                                 {:item/sub [:sub/id
-                                             :sub/user-id]}
-                                 {:item/user-item [:user-item/id]}]}]}
-  (when (or (= (:uid session) (get-in item-unsafe [:item/sub :sub/user-id]))
-            (not-empty (:item/user-item item-unsafe))
-            (contains? item-candidate-ids (:item/id item-unsafe)))
-    {:params/item item-unsafe}))
+  #::pco{:input [{:params/item-unsafe [:item/id]}]
+         :output [{:params/item [:item/id]}]}
+  (let [item-id (:item/id item-unsafe)]
+    (when (or (contains? item-candidate-ids item-id)
+              (seq (query {:select [:user-item/id]
+                           :from :user-item
+                           :where [:and
+                                   [:= :user-item/user-id (:uid session)]
+                                   [:= :user-item/item-id item-id]]
+                           :limit 1}))
+              (seq (query {:select [:sub/id]
+                           :from :sub
+                           :where [:and
+                                   [:= :sub/user-id (:uid session)]
+                                   [:or
+                                    [:in :sub/id {:select [:item/email-sub-id]
+                                                  :from :item
+                                                  :where [:= :item/id item-id]}]
+                                    [:in :sub/feed-id {:select [:item/feed-id]
+                                                       :from :item
+                                                       :where [:= :item/id item-id]}]]]
+                           :limit 1})))
+      {:params/item {:item/id item-id}})))
 
 (defresolver item-id [{:keys [xt/id item/ingested-at]}]
   {:item/id id})

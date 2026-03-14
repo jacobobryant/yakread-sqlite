@@ -42,12 +42,13 @@
                    #:app.shell.page{:route-sym routes/advertise
                                     :title "Advertise"
                                     :icon "dollar-sign"}]
-            (contains? roles :admin) (conj #:app.shell.page{:route-sym routes/admin
+            (contains? roles :admin) (conj #:app.shell.page{:route-sym routes/admin-dashboard
+                                                            :active-ns "com.yakread.app.admin"
                                                             :title "Admin"
                                                             :icon "lock"}))
-          (mapv (fn [{:keys [app.shell.page/route-sym] :as page}]
+          (mapv (fn [{:keys [app.shell.page/route-sym app.shell.page/active-ns] :as page}]
                   (merge page #:app.shell.page{:href (href route-sym)
-                                               :active (str/starts-with? route-ns (namespace route-sym))})))))})
+                                               :active (str/starts-with? route-ns (or active-ns (namespace route-sym)))})))))})
 
 (defresolver app-head [{user :session/user}]
   #::pco{:input [{(? :session/user) [:user/id

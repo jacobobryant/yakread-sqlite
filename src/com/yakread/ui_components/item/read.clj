@@ -94,7 +94,7 @@
       "Like"))})
 
 (defresolver like-button [{:item/keys [like-button* user-item]}]
-  #::pco{:input [{(? :item/user-item) [(? :user-item/favorited-at)]}]}
+  #::pco{:input [{:item/user-item [(? :user-item/favorited-at)]}]}
   {:item/like-button
    (like-button* {:active (boolean (:user-item/favorited-at user-item))})})
 

@@ -45,7 +45,7 @@
   ([raw session]
    (MimeMessage. session (io/input-stream (.getBytes raw)))))
 
-(defn send-local! [{:keys [path from to subject rum port host]
+(defn send-local! [{:keys [path from from-name to subject rum port host]
                     :or {host "localhost"
                          port 2525}}]
   (let [session* (session {:host host :port (str port)})
@@ -53,8 +53,11 @@
               (parse (slurp path) session*)
               (MimeMessage. session*))]
     (when from
-      (.setFrom msg (InternetAddress. from))
-      (.setReplyTo msg (into-array [(InternetAddress. from)])))
+      (let [addr (if from-name
+                   (InternetAddress. from from-name)
+                   (InternetAddress. from))]
+        (.setFrom msg addr)
+        (.setReplyTo msg (into-array [addr]))))
     (when to
       (.setRecipients msg Message$RecipientType/TO to))
     (when subject
