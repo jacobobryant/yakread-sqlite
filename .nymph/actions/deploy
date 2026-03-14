@@ -27,5 +27,9 @@ rsync -av --relative \
   target/resources/public/css/main.css \
   $APP_NAME@$SERVER:repo/
 scp config.env $APP_NAME@$SERVER:repo/config.env
+
+# Download vendored JS dependencies on the server
+ssh $APP_NAME@$SERVER "cd repo && bash download-vendor-deps.sh"
+
 ssh $APP_NAME@$SERVER sudo systemctl reset-failed $APP_NAME.service
 ssh $APP_NAME@$SERVER sudo systemctl restart $APP_NAME
