@@ -2,6 +2,14 @@
 set -e
 source config.env
 
+# Install Tailwind CSS standalone CLI if not present
+TAILWIND_BIN="/usr/local/bin/tailwindcss"
+if [ ! -f "$TAILWIND_BIN" ]; then
+  echo "Installing Tailwind CSS..."
+  curl -fsSL -o "$TAILWIND_BIN" https://github.com/tailwindlabs/tailwindcss/releases/download/v3.4.17/tailwindcss-linux-x64
+  chmod +x "$TAILWIND_BIN"
+fi
+
 # Compile CSS with Tailwind
 mkdir -p target/resources/public/css
 tailwindcss \
