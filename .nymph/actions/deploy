@@ -1,0 +1,13 @@
+#!/bin/bash
+set -e
+source config.env
+rsync -av --relative \
+  "--include='**.gitignore'" \
+  "--exclude='/.git'" \
+  "--filter=:- .gitignore" \
+  --delete-after --protocol=29 \
+  $(git ls-files) \
+  $APP_NAME@$SERVER:repo/
+scp config.env $APP_NAME@$SERVER:repo/config.env
+ssh $APP_NAME@$SERVER sudo systemctl reset-failed $APP_NAME.service
+ssh $APP_NAME@$SERVER sudo systemctl restart $APP_NAME
