@@ -191,13 +191,13 @@
    use-error-reporting
    #_biffx/use-xtdb2
    lib.sqlite/use-sqlite
-   ;lib.spark/use-spark
+   lib.spark/use-spark
    #_biff/use-queues
    ;biffx/use-xtdb2-listener
    biff/use-jetty
    ;biff/use-chime
    biff/use-beholder
-   #_lib.smtp/use-server])
+   lib.smtp/use-server])
 
 (def initial-system {:biff/modules #'modules
                      :biff/merge-context-fn #'merge-context
@@ -247,7 +247,7 @@
   (time-literals/print-time-literals-clj!)
   (alter-var-root #'gen/*rnd* (constantly (java.util.Random. (inst-ms (java.time.Instant/now)))))
   (let [{:keys [biff.nrepl/args yakread.import/enabled] conn* :biff/conn*} (start)]
-    (when enabled
+    #_(when enabled
       (future
         (biff/catchall-verbose
          (log/info "Starting XTDB->SQLite import...")
