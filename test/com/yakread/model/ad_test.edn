@@ -202,7 +202,7 @@
    (get-stripe-status
     {:biff/secret {:stripe/api-key "12345"},
      :biff.fx/pathom
-     {:ad-credit/ad-id {:ad/customer-id "abc123"},
+     {:ad-credit/ad {:ad/customer-id "abc123"},
       :ad-credit/created-at (t/instant 2000)}}
     :start),
    :result
