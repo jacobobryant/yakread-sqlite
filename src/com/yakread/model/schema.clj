@@ -139,7 +139,7 @@
                [:bulk-send/sent-at         inst?]
                [:bulk-send/payload-size    :int]
                [:bulk-send/mailersend-id   :string]
-               [:bulk-send/digests         [:vector :uuid]]]
+               [:bulk-send/digests       ? [:vector :uuid]]]
 
    :reclist [:map {:closed true
                   :biff/unique [[:reclist/user-id :reclist/created-at]]}

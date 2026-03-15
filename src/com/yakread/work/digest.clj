@@ -118,7 +118,7 @@
     (cond
       (= 0 (.size (:work.digest/prepare-digest queues)))
       ;; Wait in case the last jobs are still being processed.
-      [{:biff.fx/sleep 100000}
+      [{:biff.fx/sleep 10000}
        {:biff.fx/drain-queue nil
         :biff.fx/next :start*}]
 
@@ -131,7 +131,8 @@
        :biff.fx/next :start}))
 
   :start*
-  (fn [{:biff/keys [jobs secret]
+  (fn [{jobs :biff.fx/drain-queue
+        :biff/keys [secret]
         ::keys [payload-size-limit n-emails-limit]
         :or {payload-size-limit default-payload-size-limit
              n-emails-limit default-n-emails-limit}}]
