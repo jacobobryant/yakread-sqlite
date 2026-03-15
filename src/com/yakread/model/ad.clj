@@ -129,7 +129,7 @@
                 (? :ad/last-clicked)
                 ;; ensure these are set / user account hasn't been deleted
                 :ad/customer-id
-                {:ad/user-id [:user/email]}]}
+                {:ad/user [:user/email]}]}
   {:ad/chargeable
    (boolean
     (and payment-method
@@ -142,8 +142,8 @@
 (fx/defmachine get-stripe-status
   :start
   (fn [{:keys [biff/secret biff.fx/pathom]}]
-    (let [{:ad-credit/keys [ad-id created-at]} pathom
-          {:ad/keys [customer-id]} ad-id]
+    (let [{:ad-credit/keys [ad created-at]} pathom
+          {:ad/keys [customer-id]} ad]
       {:biff.fx/http {:method :get
                       :url "https://api.stripe.com/v1/payment_intents"
                       :basic-auth [(secret :stripe/api-key) ""]
@@ -170,7 +170,7 @@
 
 (defresolver stripe-status [ctx {:ad-credit/keys [charge-status] :as credit}]
   {::pco/input [:ad-credit/id
-                {:ad-credit/ad-id [:ad/customer-id]}
+                {:ad-credit/ad [:ad/customer-id]}
                 :ad-credit/created-at
                 :ad-credit/charge-status]
    ::pco/output [:ad-credit/stripe-status]}
