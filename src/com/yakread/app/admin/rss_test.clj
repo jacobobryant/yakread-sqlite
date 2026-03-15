@@ -56,11 +56,11 @@
   :post
   (fn [{:keys [params]}]
     (let [id (some-> (:id params) parse-uuid)]
-      (when id
-        {:biff.fx/sqlite [{:delete-from :test-rss-post
-                           :where [:= :test-rss-post/id id]}]})
-      {:status 303
-       :headers {"Location" (href page-route)}})))
+      (merge {:status 303
+              :headers {"Location" (href page-route)}}
+             (when id
+               {:biff.fx/sqlite [{:delete-from :test-rss-post
+                                   :where [:= :test-rss-post/id id]}]})))))
 
 (defn- escape-xml [s]
   (when s
@@ -131,44 +131,44 @@
         (when (= (:created params) "true")
           (ui/callout {:ui/type :info} "Post created successfully."))
         (biff/form
-          {:action (href create-post-route)}
-          [:.flex.flex-col.gap-4
-           (ui/form-input
-            {:ui/label "Feed Slug"
-             :ui/description "URL-safe identifier for the feed (e.g. my-feed)."
-             :name "feed-slug"
-             :placeholder default-slug
-             :value default-slug})
-           (ui/form-input
-            {:ui/label "Feed Title"
-             :name "feed-title"
-             :placeholder default-title
-             :value default-title})
-           (ui/form-input
-            {:ui/label "Post Title"
-             :name "post-title"
-             :required true
-             :placeholder "My Test Post"})
-           (ui/form-input
-            {:ui/label "Post URL"
-             :ui/description "Optional. If provided, the post will link to this URL."
-             :name "post-url"
-             :type "url"
-             :placeholder "https://example.com/article"})
-           (ui/form-input
-            {:ui/label "Post Content"
-             :ui/description "HTML content for the post. Can be left blank if URL is set."
-             :name "post-content"
-             :type "textarea"
-             :placeholder "<p>Hello world</p>"})
-           (ui/form-input
-            {:ui/label "Published At"
-             :ui/description "Defaults to current time if left blank."
-             :name "published-at"
-             :type "datetime-local"})
-           (ui/button {:type "submit"
-                       :ui/type :primary}
-                      "Create Post")]))
+         {:action (href create-post-route)}
+         [:.flex.flex-col.gap-4
+          (ui/form-input
+           {:ui/label "Feed Slug"
+            :ui/description "URL-safe identifier for the feed (e.g. my-feed)."
+            :name "feed-slug"
+            :placeholder default-slug
+            :value default-slug})
+          (ui/form-input
+           {:ui/label "Feed Title"
+            :name "feed-title"
+            :placeholder default-title
+            :value default-title})
+          (ui/form-input
+           {:ui/label "Post Title"
+            :name "post-title"
+            :required true
+            :placeholder "My Test Post"})
+          (ui/form-input
+           {:ui/label "Post URL"
+            :ui/description "Optional. If provided, the post will link to this URL."
+            :name "post-url"
+            :type "url"
+            :placeholder "https://example.com/article"})
+          (ui/form-input
+           {:ui/label "Post Content"
+            :ui/description "HTML content for the post. Can be left blank if URL is set."
+            :name "post-content"
+            :type "textarea"
+            :placeholder "<p>Hello world</p>"})
+          (ui/form-input
+           {:ui/label "Published At"
+            :ui/description "Defaults to current time if left blank."
+            :name "published-at"
+            :type "datetime-local"})
+          (ui/button {:type "submit"
+                      :ui/type :primary}
+                     "Create Post")]))
 
        (when (not-empty feed-slugs)
          (ui/section
@@ -198,12 +198,12 @@
                   [:div.text-sm.text-neut-400
                    (str (tick/date-time (tick/in (tick/instant published-at) (tick/zone "UTC"))))])]
                (biff/form
-                 {:action (href delete-post-route)
-                  :class "ml-4"}
-                 [:input {:type "hidden" :name "id" :value (str id)}]
-                 (ui/button {:type "submit"
-                             :ui/type :danger}
-                            "Delete"))]])])))))))
+                {:action (href delete-post-route)
+                 :class "ml-4"}
+                [:input {:type "hidden" :name "id" :value (str id)}]
+                (ui/button {:type "submit"
+                            :ui/type :danger}
+                           "Delete"))]])]))))))
 
 (fx/defroute-pathom page-route "/admin/rss-test"
   [:app.shell/app-shell]

@@ -58,7 +58,7 @@ CREATE TABLE bulk_send (
   sent_at INT NOT NULL,
   payload_size INT NOT NULL,
   mailersend_id TEXT NOT NULL,
-  digests BLOB NOT NULL
+  digests BLOB
 ) STRICT;
 
 CREATE TABLE deleted_user (
@@ -195,6 +195,16 @@ CREATE TABLE sub (
   FOREIGN KEY(user_id) REFERENCES user(id),
   FOREIGN KEY(feed_id) REFERENCES feed(id),
   UNIQUE(user_id, feed_id, email_from)
+) STRICT;
+
+CREATE TABLE test_rss_post (
+  id BLOB PRIMARY KEY NOT NULL,
+  feed_slug TEXT NOT NULL,
+  feed_title TEXT NOT NULL,
+  post_title TEXT NOT NULL,
+  post_url TEXT,
+  post_content TEXT,
+  published_at INT NOT NULL
 ) STRICT;
 
 CREATE TABLE user (

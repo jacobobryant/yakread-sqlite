@@ -174,7 +174,7 @@
           :item/image-url "https://example.com/some-image.png",
           :item/content-key
           #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
-          :item/lang "en",
+          :item/lang "nl",
           :item/record-type [:lift :item.record-type/direct]}]}
        {:insert-into :redirect,
         :values
