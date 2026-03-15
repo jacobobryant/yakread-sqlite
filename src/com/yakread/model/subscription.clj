@@ -16,17 +16,9 @@
     {:user/subscriptions (mapv #(select-keys % [:sub/id]) (or subbed []))
      :user/unsubscribed (mapv #(select-keys % [:sub/id]) (or unsubbed []))}))
 
-(defresolver email-title [{:biff/keys [query]} {:sub/keys [id email-from]}]
-  #::pco{:input [:sub/id :sub/email-from]}
-  (let [author-name (some-> (first (query {:select :item/author-name
-                                           :from :item
-                                           :where [:= :item/email-sub-id id]
-                                           :order-by [[:item/ingested-at :desc]]
-                                           :limit 1}))
-                            :item/author-name
-                            not-empty)]
-    {:sub/title (or author-name
-                    (str/replace email-from #"\s<.*>" ""))}))
+(defresolver email-title [{:keys [sub/email-from]}]
+  #::pco{:input [:sub/email-from]}
+  {:sub/title (str/replace email-from #"\s<.*>" "")})
 
 (defresolver feed-sub-title [{:keys [sub/feed]}]
   {::pco/input [{:sub/feed [(? :feed/title)

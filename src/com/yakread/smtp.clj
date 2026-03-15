@@ -66,18 +66,10 @@
                      (str/replace #"#transparent" "transparent"))
             raw-content-key (gen/uuid)
             parsed-content-key (gen/uuid)
-            from-address (some (fn [recipient]
-                                 (let [addr (get recipient :address "")]
-                                   (when (str/includes? addr "@")
-                                     addr)))
-                               (concat (:from message)
-                                       (:reply-to message)
-                                       [(:sender message)]))
-            from-personal (some (fn [recipient]
-                                  (not-empty (:personal recipient)))
-                                (concat (:from message)
-                                        (:reply-to message)
-                                        [(:sender message)]))
+            from (some (fn [k]
+                         (->> (concat (:from message) (:reply-to message) [(:sender message)])
+                              (some k)))
+                       [:personal :address])
             text (lib.content/html->text html)
 
             [{user-id :user/id
@@ -88,7 +80,7 @@
                       :from :user
                       :left-join [:sub [:and
                                         [:= :sub/user-id :user/id]
-                                        [:= :sub/email-from from-address]]]
+                                        [:= :sub/email-from from]]]
                       :where [:= :user/email-username (str/lower-case (:username message))]
                       :limit 1})
             new-sub (nil? sub-id)
@@ -118,7 +110,7 @@
                                         :item/content-key parsed-content-key
                                         :item/published-at now
                                         :item/excerpt (lib.content/excerpt text)
-                                        :item/author-name (or from-personal from-address)
+                                        :item/author-name from
                                         :item/lang (lib.content/lang html)
                                         :item/length (count text)
                                         :item/email-sub-id sub-id
@@ -131,7 +123,7 @@
                              [{:insert-into :sub
                                :values [{:sub/id sub-id
                                          :sub/user-id user-id
-                                         :sub/email-from from-address
+                                         :sub/email-from from
                                          :sub/record-type [:lift :sub.record-type/email]
                                          :sub/created-at now}]
                                :on-conflict [:sub/user-id :sub/feed-id :sub/email-from]
