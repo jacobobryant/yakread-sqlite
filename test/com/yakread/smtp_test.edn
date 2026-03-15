@@ -98,7 +98,7 @@
          #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
          :item/lang "en",
          :item/record-type [:lift :item.record-type/email],
-         :item/author-name "alice@example.com",
+         :item/author-name "Alice",
          :item/title "subject line",
          :item/ingested-at
          #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
@@ -148,7 +148,7 @@
          #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
          :item/lang "en",
          :item/record-type [:lift :item.record-type/email],
-         :item/author-name "alice@example.com",
+         :item/author-name "Alice",
          :item/title "subject line",
          :item/ingested-at
          #time/zoned-date-time "2000-01-01T00:00Z[UTC]",

@@ -16,9 +16,17 @@
     {:user/subscriptions (mapv #(select-keys % [:sub/id]) (or subbed []))
      :user/unsubscribed (mapv #(select-keys % [:sub/id]) (or unsubbed []))}))
 
-(defresolver email-title [{:keys [sub/email-from]}]
-  #::pco{:input [:sub/email-from]}
-  {:sub/title (str/replace email-from #"\s<.*>" "")})
+(defresolver email-title [{:biff/keys [query]} {:sub/keys [id email-from]}]
+  #::pco{:input [:sub/id :sub/email-from]}
+  (let [author-name (some-> (first (query {:select :item/author-name
+                                           :from :item
+                                           :where [:= :item/email-sub-id id]
+                                           :order-by [[:item/ingested-at :desc]]
+                                           :limit 1}))
+                            :item/author-name
+                            not-empty)]
+    {:sub/title (or author-name
+                    (str/replace email-from #"\s<.*>" ""))}))
 
 (defresolver feed-sub-title [{:keys [sub/feed]}]
   {::pco/input [{:sub/feed [(? :feed/title)
@@ -149,15 +157,15 @@
                            (for [[record-type subs*] (group-by :sub/record-type inputs)
                                  :let [source-key (record-type->source-key record-type)
                                        source-ids (mapv sub-source-id subs*)]]
-                             (query {:select [[source-key :source-id]
+                             (query {:select [source-key
                                               [[:max [:coalesce :item/published-at :item/ingested-at]]
                                                :published-at]]
                                      :from :item
                                      :where [:in source-key source-ids]
                                      :group-by source-key})))
-                     (mapv (fn [{:keys [source-id published-at]}]
-                             {:sub/id (source->sub-id source-id)
-                               :sub/published-at published-at})))]
+                     (mapv (fn [row]
+                             {:sub/id (source->sub-id (row-source-id row))
+                              :sub/published-at (:published-at row)})))]
     (lib.core/restore-order inputs
                             :sub/id
                             results
