@@ -269,7 +269,7 @@
           [:div
            (if cancel-at
              [:<> "You're on the premium plan until "
-              (tick/format "d MMMM yyyy" (tick/in cancel-at timezone))
+              (tick/format "d MMMM yyyy" (tick/in cancel-at (tick/zone timezone)))
               ". After that, you'll be downgraded to the free plan. "]
              [:<>
               "You're on the "

@@ -13,13 +13,13 @@
 (defn in-send-time-window? [{:keys [biff/now user]}]
   (let [{:user/keys [digest-days send-digest-at timezone]} user
         digest-days (or digest-days #{:sunday :monday :tuesday :wednesday :thursday :friday :saturday})
-        send-digest-at (or send-digest-at (tick/time "08:00"))
+        send-digest-at (or send-digest-at "08:00")
         timezone (or timezone "US/Pacific")
 
         timezone (java.time.ZoneId/of timezone)
         now-date (tick/date (tick/in now timezone))
         send-at-begin (-> now-date
-                          (tick/at send-digest-at)
+                          (tick/at (tick/time send-digest-at))
                           (tick/in timezone))
         send-at-begin (cond-> send-at-begin
                         (tick/<= now send-at-begin)
@@ -46,14 +46,14 @@
     ;; though. Queues should probably expose the number of in-progress jobs.
     (when (and enabled (= 0 (.size (:work.digest/prepare-digest queues))))
       (let [users (->> (query
-                                {:select [:user/id
-                                          :user/email
-                                          :user/digest-last-sent
-                                          :user/suppressed-at
-                                          :user/digest-days
-                                          :user/send-digest-at
-                                          :user/timezone]
-                                 :from :user})
+                        {:select [:user/id
+                                  :user/email
+                                  :user/digest-last-sent
+                                  :user/suppressed-at
+                                  :user/digest-days
+                                  :user/send-digest-at
+                                  :user/timezone]
+                         :from :user})
                        (filterv #(send-digest? {:biff/now now :user %}))
                        (sort-by :user/email))]
         (when (not-empty users)
@@ -197,12 +197,9 @@
 (comment
   ;; integration test
   (repl/with-context
-    (fn [{:keys [biff/db] :as ctx}]
-      (doseq [user (q db
-                      '{:find (pull user [*])
-                        :in [[email ...]]
-                        :where [[user :user/email email]]}
-                      ;; insert emails here
-                      [])]
+    (fn [{:keys [biff/query] :as ctx}]
+      (doseq [user (query {:select [:user/id :user/email]
+                           :from :user
+                           :where [:in :user/email []]})]
         (biff/submit-job ctx :work.digest/prepare-digest user))))
   )

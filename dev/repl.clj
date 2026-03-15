@@ -2,10 +2,13 @@
   (:require
    [clojure.edn :as edn]
    [clojure.pprint :as pprint]
+   [com.biffweb :as biff]
    [com.biffweb.experimental :as biffx]
    [com.yakread]
    [tick.core :as tick]
-   [next.jdbc :as jdbc]))
+   [next.jdbc :as jdbc]
+   [com.wsscode.pathom3.interface.eql :as p.eql]
+   [com.wsscode.pathom3.connect.operation :as pco :refer [?]]))
 
 
 (defn node []
@@ -53,6 +56,9 @@
   (biffx/q (conn) query))
 
 (def jacob-user-id #uuid "e86e5e14-0001-46eb-9d11-134162ce930f")
+
+(defn with-context [f]
+  (f (biff/merge-context @com.yakread/system)))
 
 (comment
 

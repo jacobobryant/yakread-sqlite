@@ -49,7 +49,7 @@
                                 7 "daily"
                                 1 "weekly"
                                 (str (count digest-days) "x/week"))
-   :digest.settings/time-text (tick/format "h:mm a" send-digest-at)})
+   :digest.settings/time-text (tick/format "h:mm a" (tick/time send-digest-at))})
 
 (defresolver subject-item [{:keys [user/digest-discover-recs]}]
   {::pco/input [{:user/digest-discover-recs [:item/id

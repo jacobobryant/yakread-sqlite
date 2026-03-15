@@ -51,7 +51,7 @@
 
 (defresolver default-send-digest-at [_]
   {::pco/input [:user/email]}
-  {:user/send-digest-at (tick/time "08:00")})
+  {:user/send-digest-at "08:00"})
 
 (defresolver default-timezone [{:user/keys [timezone]}]
   {::pco/input [:user/email
@@ -59,7 +59,7 @@
    ::pco/output [:user/timezone
                  :user/timezone*]}
   {:user/timezone* timezone
-   :user/timezone (or timezone (tick/zone "US/Pacific"))})
+   :user/timezone (or timezone "US/Pacific")})
 
 (defresolver premium [{:keys [biff/now]} {:user/keys [plan cancel-at]}]
   {::pco/input [(? :user/plan)

@@ -29,7 +29,7 @@
     (let [{:user/keys [id email timezone]
            :user.export/keys [feed-subs bookmarks favorites]} pathom
           dir (io/file temp-dir (str "yakread-export-"
-                                     (tick/format "yyyy-MM-dd" (tick/in now timezone))
+                                     (tick/format "yyyy-MM-dd" (tick/in now (tick/zone timezone)))
                                      "-" (inst-ms (tick/instant now)) "-" id))
           zipfile (str dir ".zip")
           s3-key (.getName (io/file zipfile))]
