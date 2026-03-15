@@ -143,14 +143,10 @@
   :redirect
   (fn [{:keys [biff.fx/http session biff/now]} _]
     (let [{:keys [url id]} (:body http)]
-      {:biff.fx/sqlite [{:insert-into :ad
-                         :values [{:ad/id (gen/uuid)
-                                   :ad/user-id (:uid session)
-                                   :ad/session-id id
-                                   :ad/updated-at now}]
-                         :on-conflict [:ad/user-id]
-                         :do-update-set {:ad/session-id id
-                                         :ad/updated-at now}}]
+      {:biff.fx/sqlite [{:update :ad
+                         :set {:ad/session-id id
+                               :ad/updated-at now}
+                         :where [:= :ad/user-id (:uid session)]}]
        :status 303
        :headers {"Location" url}})))
 
