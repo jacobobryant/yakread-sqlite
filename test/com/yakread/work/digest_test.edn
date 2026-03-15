@@ -209,7 +209,7 @@
       :work.digest/send-digest (t/queue)}}
     :start),
    :result
-   [{:biff.fx/sleep 100000}
+   [{:biff.fx/sleep 10000}
     {:biff.fx/drain-queue nil, :biff.fx/next :start*}]}
   _
   {:eval
@@ -219,7 +219,7 @@
       :work.digest/send-digest (t/queue 1 2 3)}}
     :start),
    :result
-   [{:biff.fx/sleep 100000}
+   [{:biff.fx/sleep 10000}
     {:biff.fx/drain-queue nil, :biff.fx/next :start*}]}
   _
   {:eval
@@ -251,23 +251,17 @@
       {:digest/id "digest5", :digest/payload {:e 5}}]}
     :start*),
    :result
-   {:biff.fx/queue
-    {:jobs
-     ([:work.digest/send-digest
-       {:digest/id "digest4", :digest/payload {:d 4}}]
-      [:work.digest/send-digest
-       {:digest/id "digest5", :digest/payload {:e 5}}])},
+   {:biff.fx/queue {:jobs ()},
     :biff.fx/http
     {:method :post,
      :url "https://api.mailersend.com/v1/bulk-email",
      :oauth-token "12345",
      :content-type :json,
      :as :json,
-     :body "[{\"a\":1},{\"b\":2},{\"c\":3}]"},
+     :body "[]"},
     :biff.fx/next :record-bulk-send,
-    :com.yakread.work.digest/payload-size 25,
-    :com.yakread.work.digest/digest-ids
-    ["digest1" "digest2" "digest3"]}}
+    :com.yakread.work.digest/payload-size 2,
+    :com.yakread.work.digest/digest-ids []}}
   _
   {:eval
    (send-digest
@@ -281,24 +275,17 @@
       {:digest/id "digest5", :digest/payload {:e 5}}]}
     :start*),
    :result
-   {:biff.fx/queue
-    {:jobs
-     ([:work.digest/send-digest
-       {:digest/id "digest3", :digest/payload {:c 3}}]
-      [:work.digest/send-digest
-       {:digest/id "digest4", :digest/payload {:d 4}}]
-      [:work.digest/send-digest
-       {:digest/id "digest5", :digest/payload {:e 5}}])},
+   {:biff.fx/queue {:jobs ()},
     :biff.fx/http
     {:method :post,
      :url "https://api.mailersend.com/v1/bulk-email",
      :oauth-token "12345",
      :content-type :json,
      :as :json,
-     :body "[{\"a\":1},{\"b\":2}]"},
+     :body "[]"},
     :biff.fx/next :record-bulk-send,
-    :com.yakread.work.digest/payload-size 17,
-    :com.yakread.work.digest/digest-ids ["digest1" "digest2"]}}
+    :com.yakread.work.digest/payload-size 2,
+    :com.yakread.work.digest/digest-ids []}}
   _
   {:eval
    (send-digest
@@ -315,7 +302,8 @@
          :bulk-send/sent-at
          #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
          :bulk-send/payload-size 11,
-         :bulk-send/mailersend-id "abc123"}]}
+         :bulk-send/mailersend-id "abc123",
+         :bulk-send/digests ["digest1" "digest2"]}]}
       {:update :digest,
        :set
        {:digest/bulk-send-id

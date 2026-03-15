@@ -273,18 +273,18 @@
  :via
  [{:type java.lang.NullPointerException
    :message "Cannot read the array length because \"ba\" is null"
-   :at [taoensso.nippy$eval45598$try_parse_header__45599 invoke "nippy.clj" 1783]}]
+   :at [taoensso.nippy$eval46718$try_parse_header__46719 invoke "nippy.clj" 1783]}]
  :trace
- [[taoensso.nippy$eval45598$try_parse_header__45599 invoke "nippy.clj" 1783]
-  [taoensso.nippy$thaw$fn__45609 invoke "nippy.clj" 1907]
+ [[taoensso.nippy$eval46718$try_parse_header__46719 invoke "nippy.clj" 1783]
+  [taoensso.nippy$thaw$fn__46729 invoke "nippy.clj" 1907]
   [taoensso.nippy$call_with_bindings invokeStatic "nippy.clj" 1279]
   [taoensso.nippy$call_with_bindings invoke "nippy.clj" 1275]
   [taoensso.nippy$thaw invokeStatic "nippy.clj" 1857]
   [taoensso.nippy$thaw invoke "nippy.clj" 1833]
   [taoensso.nippy$thaw invokeStatic "nippy.clj" 1846]
   [taoensso.nippy$thaw invoke "nippy.clj" 1833]
-  [tmp210086$eval83760 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp210086$eval83760 invoke "NO_SOURCE_FILE" -1]
+  [tmp571260$eval70998 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp571260$eval70998 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]
