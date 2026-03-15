@@ -149,15 +149,15 @@
                            (for [[record-type subs*] (group-by :sub/record-type inputs)
                                  :let [source-key (record-type->source-key record-type)
                                        source-ids (mapv sub-source-id subs*)]]
-                             (query {:select [[source-key :source-id]
+                             (query {:select [source-key
                                               [[:max [:coalesce :item/published-at :item/ingested-at]]
                                                :published-at]]
                                      :from :item
                                      :where [:in source-key source-ids]
                                      :group-by source-key})))
-                     (mapv (fn [{:keys [source-id published-at]}]
-                             {:sub/id (source->sub-id source-id)
-                               :sub/published-at published-at})))]
+                     (mapv (fn [row]
+                             {:sub/id (source->sub-id (row-source-id row))
+                              :sub/published-at (:published-at row)})))]
     (lib.core/restore-order inputs
                             :sub/id
                             results

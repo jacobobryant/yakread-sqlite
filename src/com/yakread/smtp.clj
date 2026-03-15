@@ -67,12 +67,8 @@
             raw-content-key (gen/uuid)
             parsed-content-key (gen/uuid)
             from (some (fn [k]
-                         (->> (concat (:from message)
-                                      (:reply-to message)
-                                      [(:sender message)])
-                              (some (fn [recipient]
-                                      (when (str/includes? (get recipient k "") "@")
-                                        (get recipient k))))))
+                         (->> (concat (:from message) (:reply-to message) [(:sender message)])
+                              (some k)))
                        [:personal :address])
             text (lib.content/html->text html)
 
