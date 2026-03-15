@@ -121,7 +121,7 @@
 (defresolver ads-table [{:keys [biff/now]}
                         {:keys [admin/ads] admin :session/user}]
   {::pco/input [{:admin/ads [:ad/id
-                             {:ad/user [:user/email]}
+                             {:ad/user [(? :user/email)]}
                              (? :ad/title)
                              :ad/state
                              :ad/balance
@@ -160,7 +160,7 @@
                            [0 (- balance)]
                            [1 (- (inst-ms updated-at))]))
                        ads)]
-          [(:user/email user)
+          [(:user/email user "<no email>")
            title
            [:div.px-1 {:class [(case state
                                  :running "bg-tealv-50"
