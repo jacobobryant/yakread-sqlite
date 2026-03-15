@@ -159,7 +159,7 @@
            {:ui/label "Post Content"
             :ui/description "HTML content for the post. Can be left blank if URL is set."
             :name "post-content"
-            :type "textarea"
+            :ui/input-type :textarea
             :placeholder "<p>Hello world</p>"})
           (ui/form-input
            {:ui/label "Published At"
@@ -217,9 +217,9 @@
      (ui/lazy-load (href page-content-route)))))
 
 (def module
-  {:routes ["" {:middleware [lib.mid/wrap-admin]}
-            page-route
-            page-content-route
-            create-post-route
-            delete-post-route
+  {:routes [["" {:middleware [lib.mid/wrap-admin]}
+             page-route
+             page-content-route
+             create-post-route
+             delete-post-route]
             feed-route]})
