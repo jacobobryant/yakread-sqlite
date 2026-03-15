@@ -177,7 +177,8 @@
                           :values [{:bulk-send/id bulk-send-id
                                     :bulk-send/sent-at now
                                     :bulk-send/payload-size payload-size
-                                    :bulk-send/mailersend-id (get-in http [:body :bulk_email_id])}]}
+                                    :bulk-send/mailersend-id (get-in http [:body :bulk_email_id])
+                                    :bulk-send/digests digest-ids}]}
                          {:update :digest
                           :set {:digest/bulk-send-id bulk-send-id}
                           :where [:in :digest/id digest-ids]}]}
