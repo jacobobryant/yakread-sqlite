@@ -10,6 +10,8 @@
    [com.yakread.lib.ui :as ui]
    [com.yakread.routes :as routes]))
 
+(declare page-route)
+
 (fx/defroute-pathom unsubscribe
   [{:params/sub [:sub/id
                  :sub/record-type
