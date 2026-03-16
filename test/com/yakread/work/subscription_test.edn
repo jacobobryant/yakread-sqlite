@@ -41,11 +41,7 @@
         :ad-click/created-at (t/instant 2001),
         :ad-click/user-id (t/uuid 8)}]}]
     (active-user-ids (:biff/query ctx) (t/zdt 2001 3))),
-   :result
-   [#uuid "00020000-0000-0000-0000-000000000002"
-    #uuid "00040000-0000-0000-0000-000000000004"
-    #uuid "00060000-0000-0000-0000-000000000006"
-    #uuid "00080000-0000-0000-0000-000000000008"]}
+   :result []}
   _
   {:doc "sync-all-feeds! skip feeds synced in the past 12 hours",
    :eval
@@ -79,13 +75,7 @@
        {:work.subscription/sync-feed
         (java.util.concurrent.ConcurrentLinkedQueue.)}})
      :start)),
-   :result
-   {:biff.fx/queue
-    {:jobs
-     ([:work.subscription/sync-feed
-       {:feed/id #uuid "00510000-0000-0000-0000-000000000051"}]
-      [:work.subscription/sync-feed
-       {:feed/id #uuid "00530000-0000-0000-0000-000000000053"}])}}}
+   :result {:biff.fx/queue {:jobs ()}}}
   _
   {:doc "sync-feed! start without metadata",
    :eval

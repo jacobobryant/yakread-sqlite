@@ -10,6 +10,7 @@
   [com.yakread.app.admin.email-test]
   [com.yakread.app.admin.infer-email-url]
   [com.yakread.app.admin.monitor]
+  [com.yakread.app.admin.rss-test]
   [com.yakread.app.advertise]
   [com.yakread.app.favorites]
   [com.yakread.app.favorites.add]
@@ -57,6 +58,7 @@
   com.yakread.app.admin.email-test/module
   com.yakread.app.admin.infer-email-url/module
   com.yakread.app.admin.monitor/module
+  com.yakread.app.admin.rss-test/module
   com.yakread.app.advertise/module
   com.yakread.app.favorites/module
   com.yakread.app.favorites.add/module

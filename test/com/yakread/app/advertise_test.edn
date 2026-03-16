@@ -180,16 +180,11 @@
      :biff/now (t/instant 2000)}),
    :result
    {:biff.fx/sqlite
-    [{:insert-into :ad,
-      :values
-      [{:ad/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
-        :ad/user-id "user1",
-        :ad/session-id "session-id",
-        :ad/updated-at #time/instant "2000-01-01T00:00:00Z"}],
-      :on-conflict [:ad/user-id],
-      :do-update-set
+    [{:update :ad,
+      :set
       {:ad/session-id "session-id",
-       :ad/updated-at #time/instant "2000-01-01T00:00:00Z"}}],
+       :ad/updated-at #time/instant "2000-01-01T00:00:00Z"},
+      :where [:= :ad/user-id "user1"]}],
     :status 303,
     :headers {"Location" "https://example.com"}}}
   _

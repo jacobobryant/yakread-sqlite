@@ -232,7 +232,16 @@
                [:auth-code/email           :string]
                [:auth-code/code            :string]
                [:auth-code/created-at      inst?]
-               [:auth-code/failed-attempts :int]]})
+               [:auth-code/failed-attempts :int]]
+
+   :test-rss-post [:map {:closed true}
+                   [:test-rss-post/id              :uuid]
+                   [:test-rss-post/feed-slug        ::string]
+                   [:test-rss-post/feed-title       ::string]
+                   [:test-rss-post/post-title       ::string]
+                   [:test-rss-post/post-url       ? ::string]
+                   [:test-rss-post/post-content   ? [:string {:max 100000}]]
+                   [:test-rss-post/published-at     inst?]]})
 
 (def module
   {})

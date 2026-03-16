@@ -7,6 +7,7 @@
    {:id :advertise :route 'com.yakread.app.admin.advertise/page-route :label "Ads"}
    {:id :screen-discover :route 'com.yakread.app.admin.discover/page-route :label "Screen discover"}
    {:id :email-test :route 'com.yakread.app.admin.email-test/page-route :label "Email test"}
+   {:id :rss-test :route 'com.yakread.app.admin.rss-test/page-route :label "RSS test"}
    {:id :monitor :route 'com.yakread.app.admin.monitor/page-route :target "_blank" :label "Monitor"}])
 
 (defn navbar [active]
