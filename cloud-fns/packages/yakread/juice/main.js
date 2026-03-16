@@ -7,8 +7,13 @@ function main(opts) {
     svgs: false,
     //links: false,
   };
-  let html = juice(opts['html'], { webResources: webResources });
-  return { body: { html } };
+  try {
+    let html = juice(opts['html'], { webResources: webResources });
+    return { body: { html } };
+  } catch (e) {
+    console.error('juice error:', e.message);
+    return { body: { html: null, error: e.message } };
+  }
 }
 
 exports.main = main;

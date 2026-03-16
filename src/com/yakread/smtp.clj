@@ -47,16 +47,18 @@
       (if-not result
         (log/warn "Rejected incoming email for"
                   (str (str/lower-case (:username message)) "@" (:domain message)))
-        {:com.yakread.fx/js {:fn-name "juice" :input {:html html}}
+        {:com.yakread.fx/js {:fn-name "juice" :input {:html html} :catch-exceptions true}
          :biff.fx/next :end
          ::url (infer-post-url (:headers message) html)})))
 
   :end
   (fn [{:keys [biff.smtp/message biff/query biff/now ::url]
-        {:keys [html]} :com.yakread.fx/js}]
+        {:keys [html exception]} :com.yakread.fx/js}]
     (if-not html
       (do
-        (log/warn "juice failed to parse message for" (:username message))
+        (if exception
+          (log/warn "juice threw exception for" (:username message) "-" (.getMessage exception))
+          (log/warn "juice failed to parse message for" (:username message)))
         {:biff.fx/spit {:file (str "storage/juice-failed/" 
                                    (inst-ms (tick/instant now))
                                    ".edn")
