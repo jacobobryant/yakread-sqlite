@@ -37,7 +37,7 @@
 
 (fx/defmachine queue-prepare-digest
   :start
-  (fn [{:keys [biff/query biff/queues yakread.work.digest/enabled biff/now]}]
+  (fn [{:keys [biff/query biff/queues yakread.work.digest/enabled yakread.work.digest/job-limit biff/now]}]
     ;; There is a small race condition where the queue could be empty even though the
     ;; :work.digest/prepare-digest consumer(s) are still processing jobs, in which case the
     ;; corresponding users could receive two digests. To deal with that, we could
@@ -55,7 +55,9 @@
                                   :user/timezone]
                          :from :user})
                        (filterv #(send-digest? {:biff/now now :user %}))
-                       (sort-by :user/email))]
+                       (sort-by :user/email))
+            users (cond->> users
+                    job-limit (take job-limit))]
         (when (not-empty users)
           (log/info "Sending digest to" (count users) "users"))
         (if (= enabled :dry-run)
