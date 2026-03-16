@@ -6,6 +6,7 @@
   [com.yakread.app.admin.advertise]
   [com.yakread.app.admin.dashboard]
   [com.yakread.app.admin.digest]
+  [com.yakread.app.admin.digest-trigger]
   [com.yakread.app.admin.discover]
   [com.yakread.app.admin.email-test]
   [com.yakread.app.admin.infer-email-url]
@@ -54,6 +55,7 @@
   com.yakread.app.admin.advertise/module
   com.yakread.app.admin.dashboard/module
   com.yakread.app.admin.digest/module
+  com.yakread.app.admin.digest-trigger/module
   com.yakread.app.admin.discover/module
   com.yakread.app.admin.email-test/module
   com.yakread.app.admin.infer-email-url/module
