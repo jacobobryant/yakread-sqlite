@@ -303,7 +303,7 @@
          #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
          :bulk-send/payload-size 11,
          :bulk-send/mailersend-id "abc123",
-         :bulk-send/digests ["digest1" "digest2"]}]}
+         :bulk-send/digests [:lift ["digest1" "digest2"]]}]}
       {:update :digest,
        :set
        {:digest/bulk-send-id
