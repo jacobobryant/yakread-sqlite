@@ -37,7 +37,8 @@
      {:fn-name "juice",
       :input
       {:html
-       "<!DOCTYPE html><html><head><title></title></head><body><div>the quick brown fox jumps over the lazy dog</div></body></html>"}},
+       "<!DOCTYPE html><html><head><title></title></head><body><div>the quick brown fox jumps over the lazy dog</div></body></html>"},
+      :catch-exceptions true},
      :biff.fx/next :end,
      :com.yakread.smtp/url "https://example.com/p/example-post"}}}
   _
