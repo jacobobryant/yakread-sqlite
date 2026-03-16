@@ -36,27 +36,7 @@
    [taoensso.telemere.tools-logging :as tel.tl]
    [tick.core :as tick]
    [time-literals.read-write :as time-literals])
-  (:import
-   [com.zaxxer.hikari HikariConfig HikariDataSource])
   (:gen-class))
-
-(defn use-sqlite
-  "Biff component that starts a HikariCP connection pool for SQLite
-   and puts it in the :biff/conn key."
-  [{:biff.sqlite/keys [db-path]
-    :or {db-path "storage/sqlite/main.db"}
-    :as ctx}]
-  (let [datasource (HikariDataSource.
-                    (doto (HikariConfig.)
-                      (.setJdbcUrl (str "jdbc:sqlite:" db-path))
-                      (.setConnectionInitSql
-                       (str/join ";" ["PRAGMA journal_mode=WAL"
-                                      "PRAGMA busy_timeout = 5000"
-                                      "PRAGMA foreign_keys = ON"
-                                      "PRAGMA synchronous = NORMAL"]))))]
-    (-> ctx
-        (assoc :biff/conn datasource)
-        (update :biff/stop conj #(.close datasource)))))
 
 (def modules
   (concat modules/modules
