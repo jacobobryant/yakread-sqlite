@@ -228,6 +228,7 @@
    :biff.fx/slurp (fn [_ctx file]
                     (slurp file))
    :biff.fx/spit (fn [_ctx {:keys [file content]}]
+                   (io/make-parents file)
                    (spit file content))
    :biff.fx/queue (fn [ctx {:keys [id job jobs wait-for-result]}]
                     (if jobs
