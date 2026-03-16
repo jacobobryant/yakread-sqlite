@@ -10,6 +10,8 @@
    [com.yakread.lib.ui :as ui]
    [com.yakread.routes :as routes]))
 
+(declare page-route)
+
 (fx/defroute-pathom unsubscribe
   [{:params/sub [:sub/id
                  :sub/record-type
@@ -55,13 +57,14 @@
                  (? :sub/pinned-at)]}]
 
   :post
-  (fn [{:keys [biff/now]} {{:sub/keys [id pinned-at record-type]}
+  (fn [{:keys [biff/now params]} {{:sub/keys [id pinned-at record-type]}
           :params/sub}]
     {:biff.fx/sqlite [{:update :sub
                        :set {:sub/pinned-at (when-not pinned-at now)}
                        :where [:= :sub/id id]}]
      :biff.fx/render {:route-sym `page-content-route
-                      :request-method :get}
+                      :request-method :get
+                      :params (select-keys params [:tab])}
      :biff.fx/next :return})
 
   :return
@@ -168,7 +171,15 @@
   (fn [{:keys [params]} {{:user/keys [subscriptions unsubscribed]} :session/user}]
     (let [{pinned-subs true unpinned-subs false} (group-by (comp some? :sub/pinned-at) subscriptions)
           show-tabs (every? not-empty [pinned-subs unpinned-subs])
-          active-tab (if (= (:tab params) "unpinned") :unpinned :pinned)]
+          active-tab (cond
+                       (= (:tab params) "unpinned") :unpinned
+                       (= (:tab params) "pinned") :pinned
+                       (not-empty pinned-subs) :pinned
+                       :else :all)
+          visible-subs (case active-tab
+                         :pinned pinned-subs
+                         :unpinned unpinned-subs
+                         :all subscriptions)]
       [:.h-full {:id (ui/dom-id ::content)}
        (ui/page-header {:title    "Subscriptions"
                         :add-href (href routes/add-sub-page)
@@ -186,26 +197,16 @@
           (when show-tabs
             [:.flex.gap-4.mb-6.max-sm:mx-4
              (ui/pill {:ui/label "Pinned"
-                       :class '[pinned-tab]
-                       :data-active (str (= active-tab :pinned))
-                       :_ (str "on click set @data-active of .unpinned-tab to 'false' "
-                               "then set @data-active of .pinned-tab to 'true'")})
-             (ui/pill {:class '[unpinned-tab]
-                       :ui/label "Unpinned"
-                       :data-active (str (= active-tab :unpinned))
-                       :_ (str "on click set @data-active of .pinned-tab to 'false' "
-                               "then set @data-active of .unpinned-tab to 'true'")})])
-          (for [[tab subscriptions] [[:pinned pinned-subs]
-                                     [:unpinned unpinned-subs]]
-                :when (not-empty subscriptions)]
-            (ui/card-grid
-             {:ui/cols 5
-              :class [(if (= tab :pinned) "pinned-tab" "unpinned-tab")
-                      "data-[active=false]:hidden"]
-              :data-active (str (or (not show-tabs) (= tab active-tab)))}
-             (->> subscriptions
-                  (sort-by :sub/published-at #(compare %2 %1))
-                  (mapv :sub.view/card))))])])))
+                       :href (href page-route {:tab "pinned"})
+                       :data-active (str (= active-tab :pinned))})
+             (ui/pill {:ui/label "Unpinned"
+                       :href (href page-route {:tab "unpinned"})
+                       :data-active (str (= active-tab :unpinned))})])
+          (ui/card-grid
+           {:ui/cols 5}
+           (->> visible-subs
+                (sort-by :sub/published-at #(compare %2 %1))
+                (mapv :sub.view/card)))])])))
 
 (fx/defroute-pathom page-route "/subscriptions"
   [:app.shell/app-shell (? :user/current)]
