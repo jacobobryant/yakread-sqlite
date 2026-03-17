@@ -13,6 +13,7 @@
    [com.yakread.lib.auth :as lib.auth]
    [com.yakread.lib.email :as lib.email]
    [com.yakread.lib.migrate.sqlite.copilot :as migrate.sqlite]
+   [com.yakread.lib.s3 :as lib.s3]
    [com.yakread.lib.sqlite :as lib.sqlite]
    [com.yakread.model.schema :as sqlite-schema]
    [com.yakread.lib.fx :as fx]
@@ -168,13 +169,34 @@
                                            (assoc :errors errors)
                                            (dissoc :batch))))))]
       (when (not-empty batch)
-        (send-email ctx
-                    {:template :alert
-                     :subject (str domain " error")
-                     :rum [:pre
-                           (str/join "\n\n\n\n"
-                                     (for [error batch]
-                                       ((tel/format-signal-fn {}) error)))]})))))
+        (let [error-text (str/join "\n\n\n\n"
+                                   (for [error batch]
+                                     ((tel/format-signal-fn {}) error)))
+              preview (subs error-text 0 (min 100 (count error-text)))
+              s3-key (str "errors/" (inst-ms (tick/instant)) ".txt")]
+          (try
+            (lib.s3/request ctx {:config-ns 'yakread.s3.errors
+                                 :key s3-key
+                                 :method "PUT"
+                                 :body error-text
+                                 :headers {"x-amz-acl" "private"
+                                           "content-type" "text/plain"}})
+            (let [url (lib.s3/presigned-url ctx {:config-ns 'yakread.s3.errors
+                                                 :key s3-key
+                                                 :method "GET"
+                                                 :expires-at (tick/>> (tick/instant) (tick/of-days 7))})]
+              (send-email ctx
+                          {:template :alert
+                           :subject (str domain " error")
+                           :rum [:div
+                                 [:p "Preview: " [:code preview]]
+                                 [:p [:a {:href url} "View full error log (expires in 7 days)"]]]}))
+            (catch Exception e
+              ;; Fall back to inline error text if S3 upload fails
+              (send-email ctx
+                          {:template :alert
+                           :subject (str domain " error")
+                           :rum [:pre error-text]}))))))))
 
 (defn use-error-reporting [{:keys [biff.error-reporting/enabled] :as ctx}]
   (if-not enabled
