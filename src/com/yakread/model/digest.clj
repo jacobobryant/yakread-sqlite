@@ -7,19 +7,25 @@
 
 ;; TODO rethink what things should be in here vs model.recommend
 
+(def ^:private in-clause-batch-size
+  "Max number of IDs per IN clause to stay within SQLite's statement length limit."
+  500)
+
 (defn recent-items [{:biff/keys [query now]
                      :user/keys [digest-last-sent]
                      :keys [all-item-ids]}]
-  ;; TODO make this requery for email/rss items
   (let [t0 (cond-> (tick/<< now (tick/new-period 2 :weeks))
              digest-last-sent (tick/max digest-last-sent))]
-    (query {:select :item/id
-            :from :item
-            :where [:and
-                    [:in :item/id all-item-ids]
-                    [:< t0 :item/ingested-at]]
-            :order-by [[:item/ingested-at :desc]]
-            :limit 50})))
+    (->> (partition-all in-clause-batch-size all-item-ids)
+         (mapcat (fn [batch]
+                   (query {:select [:item/id :item/ingested-at]
+                           :from :item
+                           :where [:and
+                                   [:in :item/id batch]
+                                   [:< t0 :item/ingested-at]]})))
+         (sort-by :item/ingested-at #(compare %2 %1))
+         (take 50)
+         (mapv #(select-keys % [:item/id])))))
 
 (defresolver digest-sub-items [{:biff/keys [query now]} {:user/keys [digest-last-sent subscriptions]}]
   {::pco/input [(? :user/digest-last-sent)

@@ -1,12 +1,14 @@
 (ns com.yakread.app.admin.dashboard
   (:require
    [clojure.java.shell :as sh]
+   [clojure.tools.logging :as log]
    [com.yakread.lib.admin :as lib]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.middleware :as lib.mid]
    [com.yakread.lib.route :as lib.route :refer [href]]
    [com.yakread.lib.ui :as ui]
+   [rum.core :as rum]
    [tick.core :as tick]))
 
 (defn past-30-days [now timezone]
@@ -15,7 +17,16 @@
          (take 30)
          (mapv #(.toLocalDate %)))))
 
-(declare page-route)
+(declare page-route test-error-alert-route)
+
+(fx/defroute test-error-alert-route "/admin/dashboard/test-error-alert"
+  :post
+  (fn [_ctx]
+    (log/error (ex-info "test exception" {}))
+    {:status 200
+     :headers {"content-type" "text/html"}
+     :body (rum/render-static-markup
+            (ui/callout {:ui/type :info} "Test error logged. You should receive an alert email shortly."))}))
 
 (fx/defroute-pathom page-content-route "/admin/dashboard/content"
   [{:admin/recent-users
@@ -26,32 +37,43 @@
 
   :get
   (fn [{:biff/keys [now queues]} {:admin/keys [recent-users dau revenue]}]
-    (ui/wide-page-well
-     [:.grid.xl:grid-cols-2.gap-8
-      (ui/section
-       {:title "Queues"}
-       (ui/table
-         ["Queue" "# jobs"]
-         (->> (update-vals queues count)
-              (sort-by second >))))
+    (let [result-id (ui/dom-id ::test-error-result)]
+      (ui/wide-page-well
+       [:.grid.xl:grid-cols-2.gap-8
+        (ui/section
+         {:title "Queues"}
+         (ui/table
+           ["Queue" "# jobs"]
+           (->> (update-vals queues count)
+                (sort-by second >))))
 
-      (ui/section
-       {:title "Recent signups"}
-       (ui/table
-         ["Email" "Joined"]
-         (for [{:user/keys [email joined-at]} (sort-by :user/joined-at #(compare %2 %1) recent-users)]
-           [email
-            ;; TODO use config for timezone
-            (lib.core/fmt-inst joined-at "yyyy-MM-dd hh:mm a" "America/Denver")])))
+        (ui/section
+         {:title "Recent signups"}
+         (ui/table
+           ["Email" "Joined"]
+           (for [{:user/keys [email joined-at]} (sort-by :user/joined-at #(compare %2 %1) recent-users)]
+             [email
+              ;; TODO use config for timezone
+              (lib.core/fmt-inst joined-at "yyyy-MM-dd hh:mm a" "America/Denver")])))
 
-      (ui/section
-       {:title "Daily metrics"}
-       (ui/table
-         ["Date" "DAU" "Revenue"]
-         (for [date (past-30-days now "America/Denver")]
-           [date
-            (get dau date 0)
-            (ui/fmt-cents (get revenue date 0))])))])))
+        (ui/section
+         {:title "Daily metrics"}
+         (ui/table
+           ["Date" "DAU" "Revenue"]
+           (for [date (past-30-days now "America/Denver")]
+             [date
+              (get dau date 0)
+              (ui/fmt-cents (get revenue date 0))])))
+
+        (ui/section
+         {:title "Test error alert"}
+         [:p.text-sm.text-neut-600 "Trigger a test error to verify the error alerting pipeline."]
+         [:form {:hx-post (href test-error-alert-route)
+                 :hx-target (str "#" result-id)
+                 :hx-swap "innerHTML"
+                 :class "mt-2"}
+          (ui/button {:type "submit" :ui/type :primary} "Send test error")]
+         [:div {:id result-id :class "mt-2"}])]))))
 
 (fx/defroute-pathom page-route "/admin/dashboard"
   [:app.shell/app-shell]
@@ -74,4 +96,5 @@
   {:routes ["" {:middleware [lib.mid/wrap-admin]}
             page-route
             page-content-route
+            test-error-alert-route
             logs-page]})
