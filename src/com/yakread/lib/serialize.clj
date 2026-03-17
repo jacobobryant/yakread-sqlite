@@ -27,10 +27,14 @@
      (java.util.UUID. (.getLong buffer) (.getLong buffer)))))
 
 (defn ewt-encode [secret params]
-  (let [payload (biffs/base64-url-encode (nippy/freeze params))]
+  (let [payload (biffs/base64-url-encode (nippy/fast-freeze params))]
     (str payload "." (biffs/signature secret payload))))
 
 (defn ewt-decode [secret token]
   (let [[payload sig] (str/split token #"\." 2)]
     (when (= sig (biffs/signature secret payload))
-      (nippy/thaw (biffs/base64-url-decode payload)))))
+      (let [bytes (biffs/base64-url-decode payload)]
+        (try
+          (nippy/fast-thaw bytes)
+          (catch Exception _
+            (nippy/thaw bytes)))))))

@@ -51,9 +51,9 @@
        :user/plan :annual})]
     {:table table,
      :email (:email row),
-     :roles (nippy/thaw (:roles row)),
+     :roles (nippy/fast-thaw (:roles row)),
      :joined_at (:joined_at row),
-     :digest_days (nippy/thaw (:digest_days row)),
+     :digest_days (nippy/fast-thaw (:digest_days row)),
      :timezone (:timezone row),
      :from_the_sample (:from_the_sample row),
      :plan (:plan row)}),
@@ -283,8 +283,8 @@
   [taoensso.nippy$thaw invoke "nippy.clj" 1833]
   [taoensso.nippy$thaw invokeStatic "nippy.clj" 1846]
   [taoensso.nippy$thaw invoke "nippy.clj" 1833]
-  [tmp321765$eval82717 invokeStatic "NO_SOURCE_FILE" 0]
-  [tmp321765$eval82717 invoke "NO_SOURCE_FILE" -1]
+  [tmp468825$eval103368 invokeStatic "NO_SOURCE_FILE" 0]
+  [tmp468825$eval103368 invoke "NO_SOURCE_FILE" -1]
   [clojure.lang.Compiler eval "Compiler.java" 7700]
   [clojure.lang.Compiler eval "Compiler.java" 7655]
   [clojure.core$eval invokeStatic "core.clj" 3232]

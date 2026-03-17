@@ -163,7 +163,10 @@
 
 (defn- fast-thaw [blob]
   (when blob
-    (nippy/thaw blob)))
+    (try
+      (nippy/fast-thaw blob)
+      (catch Exception _
+        (nippy/thaw blob)))))
 
 (defn- make-enum-reader [enum-map]
   (fn [db-val]
@@ -189,7 +192,7 @@
 
 (defn- fast-freeze [v]
   (when v
-    (nippy/freeze v)))
+    (nippy/fast-freeze v)))
 
 (defn- make-enum-writer [enum-map]
   (let [reverse-map (into {} (map (fn [[k v]] [v k]) enum-map))]
@@ -323,9 +326,9 @@
                            (throw (ex-info "Unknown enum keyword value"
                                            {:value v
                                             :available (keys enum-val->int)})))
-            (map? v)     (nippy/freeze v)
-            (vector? v)  (nippy/freeze v)
-            (set? v)     (nippy/freeze v)
+            (map? v)     (nippy/fast-freeze v)
+            (vector? v)  (nippy/fast-freeze v)
+            (set? v)     (nippy/fast-freeze v)
             :else        v))
         params))
 
@@ -545,3 +548,67 @@
     (-> ctx
         (assoc :biff/conn datasource)
         (update :biff/stop conj #(.close datasource)))))
+
+;; ============================================================================
+;; Nippy Migration (freeze -> fast-freeze)
+;; ============================================================================
+
+(defn nippy-columns
+  "Returns a sequence of [table-name column-name] string pairs for all columns
+   that use nippy serialization (sets, vectors, maps), based on the malli schema."
+  [malli-opts]
+  (let [info (schema-info malli-opts)]
+    (into []
+          (for [[table-key attrs] info
+                [attr ast] attrs
+                :let [coerce-type (infer-coercion-type ast)]
+                :when (= :nippy coerce-type)]
+            [(str/replace (name table-key) "-" "_")
+             (str/replace (name attr) "-" "_")]))))
+
+(defn migrate-nippy-blobs!
+  "One-off migration: re-encode all nippy BLOB columns from nippy/freeze format
+   to nippy/fast-freeze format. Processes rows in small batches to avoid holding
+   the write lock for too long.
+
+   nippy-columns is a sequence of [table column] string pairs, e.g.:
+     [[\"user\" \"roles\"] [\"user\" \"digest_days\"] [\"item\" \"redirect_urls\"]]
+
+   Options:
+     :batch-size - number of rows to update per transaction (default 100)
+     :on-progress - optional callback fn called with {:table :column :updated :total}"
+  [conn nippy-columns & {:keys [batch-size on-progress]
+                          :or {batch-size 100}}]
+  (doseq [[table column] nippy-columns]
+    (let [total-sql (str "SELECT COUNT(*) as cnt FROM " table " WHERE " column " IS NOT NULL")
+          total (-> (jdbc/execute-one! conn [total-sql]) :cnt)]
+      (when on-progress
+        (on-progress {:table table :column column :updated 0 :total total}))
+      (loop [offset 0
+             updated 0]
+        (let [select-sql (str "SELECT rowid, " column " FROM " table
+                              " WHERE " column " IS NOT NULL"
+                              " LIMIT " batch-size " OFFSET " offset)
+              rows (jdbc/execute! conn [select-sql])]
+          (when (seq rows)
+            (let [batch-updated
+                  (locking write-lock
+                    (jdbc/with-transaction [tx conn]
+                      (reduce
+                       (fn [cnt row]
+                         (let [blob (get row (keyword column))
+                               value (try
+                                       (nippy/fast-thaw blob)
+                                       (catch Exception _
+                                         (nippy/thaw blob)))
+                               new-blob (nippy/fast-freeze value)
+                               update-sql (str "UPDATE " table " SET " column " = ? WHERE rowid = ?")]
+                           (jdbc/execute-one! tx [update-sql new-blob (:rowid row)])
+                           (inc cnt)))
+                       0
+                       rows)))]
+              (let [new-updated (+ updated batch-updated)]
+                (when on-progress
+                  (on-progress {:table table :column column :updated new-updated :total total}))
+                (recur (+ offset batch-size) new-updated)))))))))
+

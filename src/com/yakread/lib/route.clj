@@ -15,7 +15,7 @@
 (def ^:dynamic *testing* false)
 
 (defn nippy-params [params]
-  {:npy (biffs/base64-url-encode (nippy/freeze params))})
+  {:npy (biffs/base64-url-encode (nippy/fast-freeze params))})
 
 (defn href [route & args]
   (let [path-template (first
@@ -64,7 +64,11 @@
      (let [params (merge params path-params)]
        (handler
         (cond-> ctx
-          (:npy params) (update :params merge (nippy/thaw (biffs/base64-url-decode (:npy params))))
+          (:npy params) (update :params merge (let [bytes (biffs/base64-url-decode (:npy params))]
+                                                (try
+                                                  (nippy/fast-thaw bytes)
+                                                  (catch Exception _
+                                                    (nippy/thaw bytes)))))
           (:ewt params) (assoc :biff/safe-params (lib.serialize/ewt-decode (jwt-secret) (:ewt params)))))))
     ([ctx handler-id]
      (handler ctx handler-id))))

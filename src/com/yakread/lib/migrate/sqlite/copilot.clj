@@ -124,9 +124,9 @@
     (instance? Instant v) (instant->epoch-ms v)
     (instance? ZonedDateTime v) (instant->epoch-ms v)
     (boolean? v) (bool->int v)
-    (set? v) (nippy/freeze v)
-    (map? v) (nippy/freeze v)
-    (vector? v) (nippy/freeze v)
+    (set? v) (nippy/fast-freeze v)
+    (map? v) (nippy/fast-freeze v)
+    (vector? v) (nippy/fast-freeze v)
     :else v))
 
 (defmulti convert-doc
@@ -143,9 +143,9 @@
   {:table :user
    :row {:id (coerce-value (:xt/id doc))
          :email (:user/email doc)
-         :roles (when-some [v (:user/roles doc)] (nippy/freeze v))
+         :roles (when-some [v (:user/roles doc)] (nippy/fast-freeze v))
          :joined_at (some-> (:user/joined-at doc) instant->epoch-ms)
-         :digest_days (when-some [v (:user/digest-days doc)] (nippy/freeze v))
+         :digest_days (when-some [v (:user/digest-days doc)] (nippy/fast-freeze v))
          :send_digest_at (some-> (:user/send-digest-at doc) str)
          :timezone (or (:user/timezone* doc)
                        (some-> (:user/timezone doc) str))
@@ -190,7 +190,7 @@
            :ingested_at (instant->epoch-ms (:item/ingested-at doc))
            :title (:item/title doc)
            :url (:item/url doc)
-           :redirect_urls (when-some [v (:item/redirect-urls doc)] (nippy/freeze v))
+           :redirect_urls (when-some [v (:item/redirect-urls doc)] (nippy/fast-freeze v))
            :content (:item/content doc)
            :content_key (some-> (:item/content-key doc) coerce-value)
            :published_at (some-> (:item/published-at doc) instant->epoch-ms)
@@ -243,7 +243,7 @@
          :sent_at (instant->epoch-ms (:bulk-send/sent-at doc))
          :payload_size (:bulk-send/payload-size doc)
          :mailersend_id (:bulk-send/mailersend-id doc)
-         :digests (nippy/freeze (:bulk-send/digests doc))}})
+         :digests (nippy/fast-freeze (:bulk-send/digests doc))}})
 
 (defmethod convert-doc :reclist [doc]
   {:table :reclist
@@ -252,7 +252,7 @@
                                      (:skip/user doc))) ; old schema
          :created_at (instant->epoch-ms (or (:reclist/created-at doc)
                                              (:skip/timeline-created-at doc))) ; old schema
-         :clicked (nippy/freeze (or (:reclist/clicked doc)
+         :clicked (nippy/fast-freeze (or (:reclist/clicked doc)
                                      (:skip/clicked doc) ; old schema
                                      #{}))}})
 
@@ -276,7 +276,7 @@
          :session_id (:ad/session-id doc)
          :payment_method (:ad/payment-method doc)
          :card_details (when-some [v (:ad/card-details doc)]
-                         (nippy/freeze (set/rename-keys v {:exp_year :exp-year
+                         (nippy/fast-freeze (set/rename-keys v {:exp_year :exp-year
                                                            :exp_month :exp-month})))}})
 
 (defmethod convert-doc :ad-click [doc]
