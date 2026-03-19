@@ -42,10 +42,11 @@
                                          (str/lower-case (:username message))]})))
           html (when result
                  (lib.smtp/extract-html message))]
-      (log/info "receiving email for"
+      #_(log/info "receiving email for"
                 (str (str/lower-case (:username message)) "@" (:domain message)))
       (if-not result
-        (log/warn "Rejected incoming email for"
+        nil
+        #_(log/warn "Rejected incoming email for"
                   (str (str/lower-case (:username message)) "@" (:domain message)))
         {:com.yakread.fx/js {:fn-name "juice" :input {:html html} :catch-exceptions true}
          :biff.fx/next :end

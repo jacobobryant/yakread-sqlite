@@ -126,7 +126,7 @@
 
       (<= n-emails-limit (.size (:work.digest/send-digest queues)))
       {:biff.fx/drain-queue nil
-       :biff.pipe/next :start*}
+       :biff.fx/next :start*}
 
       :else
       {:biff.fx/sleep 5000
