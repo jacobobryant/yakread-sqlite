@@ -33,10 +33,12 @@
     [:user/email
      :user/joined-at]}
    :admin/dau
-   :admin/revenue]
+   :admin/revenue
+   :admin/digests-sent
+   :admin/subscribed-users]
 
   :get
-  (fn [{:biff/keys [now queues]} {:admin/keys [recent-users dau revenue]}]
+  (fn [{:biff/keys [now queues]} {:admin/keys [recent-users dau revenue digests-sent subscribed-users]}]
     (let [result-id (ui/dom-id ::test-error-result)]
       (ui/wide-page-well
        [:.grid.xl:grid-cols-2.gap-8
@@ -57,12 +59,19 @@
               (lib.core/fmt-inst joined-at "yyyy-MM-dd hh:mm a" "America/Denver")])))
 
         (ui/section
+         {:title "Global metrics"}
+         (ui/table
+           ["Metric" "Value"]
+           [["Subscribed users" subscribed-users]]))
+
+        (ui/section
          {:title "Daily metrics"}
          (ui/table
-           ["Date" "DAU" "Revenue"]
+           ["Date" "DAU" "Digests sent" "Revenue"]
            (for [date (past-30-days now "America/Denver")]
              [date
               (get dau date 0)
+              (get digests-sent date 0)
               (ui/fmt-cents (get revenue date 0))])))
 
         (ui/section
