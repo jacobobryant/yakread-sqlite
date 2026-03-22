@@ -37,27 +37,7 @@
    [taoensso.telemere.tools-logging :as tel.tl]
    [tick.core :as tick]
    [time-literals.read-write :as time-literals])
-  (:import
-   [com.zaxxer.hikari HikariConfig HikariDataSource])
   (:gen-class))
-
-(defn use-sqlite
-  "Biff component that starts a HikariCP connection pool for SQLite
-   and puts it in the :biff/conn key."
-  [{:biff.sqlite/keys [db-path]
-    :or {db-path "storage/sqlite/main.db"}
-    :as ctx}]
-  (let [datasource (HikariDataSource.
-                    (doto (HikariConfig.)
-                      (.setJdbcUrl (str "jdbc:sqlite:" db-path))
-                      (.setConnectionInitSql
-                       (str/join ";" ["PRAGMA journal_mode=WAL"
-                                      "PRAGMA busy_timeout = 5000"
-                                      "PRAGMA foreign_keys = ON"
-                                      "PRAGMA synchronous = NORMAL"]))))]
-    (-> ctx
-        (assoc :biff/conn datasource)
-        (update :biff/stop conj #(.close datasource)))))
 
 (def modules
   (concat modules/modules
@@ -124,7 +104,7 @@
           (str "Schema for " k " is invalid: " (pr-str (ex-data ex)))))
 
 (def pathom-env (pci/register (->> (mapcat :resolvers modules)
-                                   (concat (lib.sqlite/sqlite-resolvers malli-opts*))
+                                   (concat (lib.sqlite/sqlite-resolvers sqlite-schema/columns))
                                    (mapv lib.pathom/wrap-debug))))
 
 (defn merge-context [{:keys [yakread/model
@@ -146,8 +126,7 @@
                 :com.yakread/sign-redirect (fn [url]
                                              {:redirect url
                                               :redirect-sig (biffs/signature (jwt-secret) url)})
-                :biff/href-safe (partial lib.route/href-safe ctx)
-                :biff/query  (partial lib.sqlite/execute ctx)})
+                :biff/href-safe (partial lib.route/href-safe ctx)})
         (pcp/with-plan-cache (atom {})))))
 
 ;; TODO use a lib.pipe thing for this
@@ -231,6 +210,7 @@
                      :biff/send-email #'lib.email/send-email
                      :biff.beholder/on-save #'on-save
                      :biff.fx/handlers fx/handlers
+                     :biff.sqlite/columns sqlite-schema/columns
                      ;;:biff.xtdb/tx-fns biff/tx-fns
                      :com.yakread/home-feed-cache (atom {})
                      lib.pathom/plan-cache-kw (atom {})
@@ -268,7 +248,7 @@
   (cld/default-init!)
   (time-literals/print-time-literals-clj!)
   (alter-var-root #'gen/*rnd* (constantly (java.util.Random. (inst-ms (java.time.Instant/now)))))
-  (let [{:keys [biff.nrepl/args yakread.import/enabled] conn* :biff/conn*} (start)]
+  (let [{nrepl-args :biff.nrepl/args} (start)]
     #_(when enabled
       (future
         (biff/catchall-verbose

@@ -35,8 +35,7 @@
   {::pco/output [{::all-ads [:ad/id]}
                  {::ad-candidates [:ad/id]}]}
   (let [all-ads (into []
-                      (comp (remove (comp nil? :ad/id))
-                            (map #(set/rename-keys % {:recent-cost :ad/recent-cost})))
+                      (remove (comp nil? :ad/id))
                       (query
                        {:select [:ad/id
                                  :ad/approve-state
@@ -44,7 +43,7 @@
                                  :ad/payment-failed
                                  :ad/payment-method
                                  :ad/budget
-                                 [[:coalesce [:sum :ad-click/cost] 0] :recent-cost]]
+                                 [[:coalesce [:sum :ad-click/cost] 0] :ad/recent-cost]]
                         :from :ad
                         :left-join [:ad-click [:and
                                                [:= :ad-click/ad-id :ad/id]
@@ -166,7 +165,7 @@
                                 {:select [:reclist/user-id
                                           :skip/item-id
                                           [[:count :skip/id] :skips]
-                                          [[:max :reclist/created-at] :skipped-at]]
+                                          [[:max :reclist/created-at] :reclist/created-at]]
                                  :from :skip
                                  :join [:reclist [:= :reclist/id :skip/reclist-id]]
                                  :where [:in :skip/item-id all-item-ids]
@@ -174,7 +173,7 @@
                                (mapv #(set/rename-keys % {:reclist/user-id :user-item/user-id
                                                           :skip/item-id :user-item/item-id
                                                           :skips :user-item/skips
-                                                          :skipped-at :user-item/skipped-at}))))
+                                                          :reclist/created-at :user-item/skipped-at}))))
                         (mapv dedupe-usit)
                         (group-by usit-key)
                         (vals)

@@ -92,12 +92,12 @@
    ::pco/output [:ad/last-clicked]
    ::pco/batch? true}
   (->> (query {:select [:ad-click/ad-id
-                        [[:max :ad-click/created-at] :last-clicked]]
+                        [[:max :ad-click/created-at] :ad-click/created-at]]
                :from :ad-click
                :where [:in :ad-click/ad-id (mapv :ad/id ads)]
                :group-by :ad-click/ad-id})
        (mapv #(set/rename-keys % {:ad-click/ad-id :ad/id
-                                  :last-clicked :ad/last-clicked}))
+                                  :ad-click/created-at :ad/last-clicked}))
        (wss-coll/restore-order ads :ad/id)))
 
 (defresolver amount-pending [{:biff/keys [query]} ads]
@@ -105,14 +105,13 @@
    ::pco/output [:ad/amount-pending]
    ::pco/batch? true}
   (->> (query {:select [:ad-credit/ad-id
-                        [[:sum :ad-credit/amount] :amount-pending]]
+                        [[:sum :ad-credit/amount] :ad/amount-pending]]
                :from :ad-credit
                :where [:and
                        [:in :ad-credit/ad-id (mapv :ad/id ads)]
                        [:= :ad-credit/charge-status [:lift :ad-credit.charge-status/pending]]]
                :group-by :ad-credit/ad-id})
-       (mapv #(set/rename-keys % {:ad-credit/ad-id :ad/id
-                                  :amount-pending :ad/amount-pending}))
+       (mapv #(set/rename-keys % {:ad-credit/ad-id :ad/id}))
        (wss-coll/restore-order ads :ad/id)))
 
 (defresolver chargeable [{:keys [biff/now]} {:ad/keys [payment-method

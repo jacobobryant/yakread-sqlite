@@ -72,15 +72,14 @@
          :output [:item/n-skipped]
          :batch? true}
   (let [results (->> (query {:select [:skip/item-id
-                                      [[:count :skip/id] :n-skipped]]
+                                      [[:count :skip/id] :item/n-skipped]]
                              :from :skip
                              :join [:reclist [:= :skip/reclist-id :reclist/id]]
                              :where [:and
                                      [:= :reclist/user-id (:uid session)]
                                      [:in :skip/item-id (mapv :item/id items)]]
                              :group-by :skip/item-id})
-                     (mapv #(set/rename-keys % {:skip/item-id :item/id
-                                                :n-skipped :item/n-skipped})))]
+                     (mapv #(set/rename-keys % {:skip/item-id :item/id})))]
     (lib.core/restore-order items
                             :item/id
                             results
@@ -93,15 +92,14 @@
          :output [:item/n-skipped]
          :batch? true}
   (let [results (->> (query {:select [:skip/ad-id
-                                      [[:count :skip/id] :n-skipped]]
+                                      [[:count :skip/id] :item/n-skipped]]
                              :from :skip
                              :join [:reclist [:= :skip/reclist-id :reclist/id]]
                              :where [:and
                                      [:= :reclist/user-id (:uid session)]
                                      [:in :skip/ad-id (mapv :ad/id ads)]]
                              :group-by :skip/ad-id})
-                     (mapv #(set/rename-keys % {:skip/ad-id :ad/id
-                                                :n-skipped :item/n-skipped})))]
+                     (mapv #(set/rename-keys % {:skip/ad-id :ad/id})))]
     (lib.core/restore-order ads
                             :ad/id
                             results

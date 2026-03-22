@@ -11,10 +11,12 @@
    [clojure.walk :as walk]
    [com.biffweb :as biff]
    [com.biffweb.experimental :as biffx]
+   [com.biffweb.sqlite :as biff.sqlite]
    [com.stuartsierra.dependency :as dep]
    [com.yakread :as main]
    [com.yakread.lib.route :as lib.route]
    [com.yakread.lib.sqlite :as lib.sqlite]
+   [com.yakread.model.schema :as sqlite-schema]
    [com.yakread.util.biff-staging :as biffs]
    [malli.experimental.time.generator]
    [malli.generator :as malli.g]
@@ -53,16 +55,17 @@
   `(with-open [~node-sym (start-test-node ~db-contents)]
      ~@body))
 
-(defn execute [conn & args]
-  (apply lib.sqlite/execute
-         {:biff/malli-opts* com.yakread/malli-opts*
-          :biff/conn* conn}
-         args))
+(defn execute [ctx & args]
+  (apply lib.sqlite/execute ctx args))
 
 (defn start-test-sqlite [table->records]
-  (let [conn (jdbc/get-connection "jdbc:sqlite::memory:")]
-    (doseq [statement (-> (io/resource "schema.sql")
-                          slurp
+  (let [schema-sql (biff.sqlite/generate-schema-sql
+                    {:biff.sqlite/columns sqlite-schema/columns})
+        conn (jdbc/get-connection "jdbc:sqlite::memory:")
+        ctx {:biff.sqlite/read-pool conn
+             :biff.sqlite/write-conn conn
+             :biff.sqlite/columns sqlite-schema/columns}]
+    (doseq [statement (-> schema-sql
                           (str/replace #"NOT NULL" "")
                           (str/replace #"(?m)--.*$" "")
                           (str/split #";"))
@@ -70,15 +73,16 @@
             :when statement]
       (jdbc/execute! conn [statement]))
     (doseq [[table records] table->records]
-      (execute conn {:insert-into table :values records}))
-    conn))
+      (lib.sqlite/execute ctx {:insert-into table :values records}))
+    ctx))
 
 (defmacro with-sqlite [[ctx-sym db-contents] & body]
-  `(with-open [conn# (start-test-sqlite ~db-contents)]
-     (let [~ctx-sym {:biff/conn* conn#
-                     :biff/malli-opts* main/malli-opts*
-                     :biff/query (partial execute conn#)}]
-       ~@body)))
+  `(let [ctx# (start-test-sqlite ~db-contents)]
+     (try
+       (let [~ctx-sym (assoc ctx# :biff/query (partial execute ctx#))]
+         ~@body)
+       (finally
+         (.close (:biff.sqlite/write-conn ctx#))))))
 
 (defn test-route [route method & args]
   (let [[state opts] (if (keyword? (first args))

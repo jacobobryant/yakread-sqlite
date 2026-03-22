@@ -1,11 +1,11 @@
 (ns com.yakread.lib.sqlite
   (:require
-   [clojure.set :as set]
    [clojure.string :as str]
    [com.biffweb.sqlite :as biff.sqlite]
    [com.wsscode.pathom3.connect.operation :as pco]
    [com.wsscode.pathom3.connect.planner :as-alias pcp]
-   [com.yakread.lib.core :as lib.core]))
+   [com.yakread.lib.core :as lib.core]
+   [com.yakread.model.schema :as sqlite-schema]))
 
 (defn- table-id-key
   "Get the ID key for a table (e.g., :user -> :user/id)"
@@ -25,35 +25,31 @@
       (keyword ns (subs n 0 (- (count n) 3)))
       attr)))
 
-(defn- ref-target
-  "Get the target table for a reference attribute."
-  [attrs attr]
-  (get-in attrs [attr :properties :biff/ref]))
+(defn execute
+  "Execute a SQL query/statement via biff.sqlite."
+  [ctx input]
+  (biff.sqlite/execute ctx input))
 
-(defn execute [ctx input]
-  (-> ctx
-      (set/rename-keys {:biff/conn* :biff/conn
-                        :biff/malli-opts* :biff/malli-opts})
-      (biff.sqlite/execute input)))
+(defn- columns-by-table
+  "Group columns map by table keyword."
+  [columns]
+  (reduce (fn [acc [col-id props]]
+            (let [table (keyword (namespace col-id))]
+              (assoc-in acc [table col-id] props)))
+          {}
+          columns))
 
-;; TODO add duplicate keys for backwards compat
 (defn sqlite-resolvers
-  "Create Pathom resolvers for SQLite tables from malli schema.
-
-   For reference attributes ending in -id:
-   - Returns the raw ID as :table/ref-id
-   - Also returns a join without the -id suffix as {:ref-table/id uuid}
-
-   Example: {:ad/user-id #uuid \"...\", :ad/user {:user/id #uuid \"...\"}}"
-  [malli-opts]
-  (for [[table-key attrs] (biff.sqlite/schema-info malli-opts)
+  "Create Pathom resolvers for SQLite tables from columns map."
+  [columns]
+  (for [[table-key attrs] (columns-by-table columns)
         :let [id-key (table-id-key table-key)
 
               ;; Find reference attrs
               ref-attrs (into {}
-                              (keep (fn [[attr _]]
-                                      (when-let [target (ref-target attrs attr)]
-                                        [attr target])))
+                              (keep (fn [[attr props]]
+                                      (when-let [ref (:ref props)]
+                                        [attr (keyword (namespace ref))])))
                               attrs)
 
               ;; Build output spec
@@ -64,7 +60,6 @@
                                       target-id-key (when target (table-id-key target))
                                       join-key (when is-ref? (strip-id-suffix k))]]
                             (if is-ref?
-                              ;; Return both the raw -id and the join
                               {join-key [target-id-key]}
                               k)))
 
@@ -106,13 +101,7 @@
                             inputs))))))
 
 (defn use-sqlite
-  "Biff component that starts a HikariCP connection pool for SQLite
-   and puts it in the :biff/conn* key."
-  [{:biff/keys [conn malli-opts malli-opts*] :as ctx}]
-  (let [ctx (-> ctx
-                (assoc :biff/malli-opts malli-opts*)
-                biff.sqlite/use-sqlite
-                (set/rename-keys {:biff/conn :biff/conn*})
-                (assoc :biff/malli-opts malli-opts
-                       :biff/conn conn))]
+  "Biff component that runs schema migrations, starts connection pools, and sets up query fn."
+  [{:biff.sqlite/keys [columns] :as ctx}]
+  (let [ctx (biff.sqlite/use-sqlite ctx)]
     (assoc ctx :biff/query (partial execute ctx))))

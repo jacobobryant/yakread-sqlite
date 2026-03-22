@@ -40,6 +40,11 @@
 
  :biff.sqlite/generate-schema #profile {:dev true}
 
+ :biff.sqlite/litestream-bucket     #biff/env LITESTREAM_BUCKET
+ :biff.sqlite/litestream-endpoint   #biff/env LITESTREAM_ENDPOINT
+ :biff.sqlite/litestream-access-key-id     #biff/env LITESTREAM_ACCESS_KEY_ID
+ :biff.sqlite/litestream-secret-access-key #biff/secret LITESTREAM_SECRET_ACCESS_KEY
+
  :mailersend/api-key  #profile {:prod #biff/secret MAILERSEND_API_KEY}
  :mailersend/from     #biff/env MAILERSEND_FROM
  :mailersend/reply-to #biff/env MAILERSEND_REPLY_TO

@@ -237,7 +237,7 @@
       :work.digest/send-digest (t/queue 1 2 3)},
      :com.yakread.work.digest/n-emails-limit 2}
     :start),
-   :result {:biff.fx/drain-queue nil, :biff.pipe/next :start*}}
+   :result {:biff.fx/drain-queue nil, :biff.fx/next :start*}}
   _
   {:eval
    (send-digest

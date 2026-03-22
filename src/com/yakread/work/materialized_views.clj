@@ -76,7 +76,7 @@
                (concat
                 (when-some [sub-id (-> (query
                                         {:select [[[:coalesce :item/email-sub-id :sub/id]
-                                                   :sub-id]]
+                                                   :sub/id]]
                                          :from :item
                                          :where [:= :item/id (:user-item/item-id record)]
                                          :left-join [:sub [:and
@@ -85,14 +85,14 @@
                                                            [:= :sub/user-id (:user-item/user-id record)]]]
                                          :limit 1})
                                        first
-                                       :sub-id)]
+                                       :sub/id)]
                   [{:view :sub-affinity :sub/id sub-id}])
                 [(merge record {:view :current-item})])
 
                (:skip/item-id record)
                (when-some [sub-id (-> (query
                                        {:select [[[:coalesce :item/email-sub-id :sub/id]
-                                                  :sub-id]]
+                                                  :sub/id]]
                                         :from :reclist
                                         :where [:= :reclist/id (:skip/reclist-id record)]
                                         :join [:item [:= :item/id (:skip/item-id record)]]
@@ -102,7 +102,7 @@
                                                           [:= :sub/user-id :reclist/user-id]]]
                                         :limit 1})
                                       first
-                                      :sub-id)]
+                                      :sub/id)]
                  [{:view :sub-affinity :sub/id sub-id}])))]
         [:work.materialized-views/update job])}}))
 
