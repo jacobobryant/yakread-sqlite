@@ -184,9 +184,9 @@
        :sub/created-at (t/instant 2005)}])),
    :result
    [{:sub/id #uuid "00100000-0000-0000-0000-000000000010",
-     :sub/published-at #time/instant "2001-01-01T00:00:00Z"}
+     :sub/published-at 978307200000}
     {:sub/id #uuid "00200000-0000-0000-0000-000000000020",
-     :sub/published-at #time/instant "2002-01-01T00:00:00Z"}
+     :sub/published-at 1009843200000}
     {:sub/id #uuid "00300000-0000-0000-0000-000000000030",
      :sub/published-at #time/instant "2005-01-01T00:00:00Z"}]}
   _

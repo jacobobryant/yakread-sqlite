@@ -6,12 +6,12 @@
                                                           com.xtdb/xtdb-jdbc
                                                           com.xtdb/xtdb-rocksdb
                                                           org.postgresql/postgresql]}
-        com.biffweb/sqlite                  {:local/root "lib/sqlite"}
+        io.github.jacobobryant/biff.sqlite  {:git/url "https://github.com/jacobobryant/biff.sqlite.git"
+                                              :git/sha "64a643552385210fa98db6d2756bb19e18684bea"}
         com.xtdb/xtdb-api                   {:mvn/version "2.x-20260126.180359-1"}
         com.xtdb/xtdb-core                  {:mvn/version "2.x-20260126.180359-1"}
         com.xtdb/xtdb-aws                   {:mvn/version "2.x-20260126.180359-1"}
         com.xtdb/xtdb-kafka                 {:mvn/version "2.x-20260126.180359-1"}
-        com.zaxxer/HikariCP                 {:mvn/version "7.0.2"}
 
         vouch-opensource/fugato             {:git/url "https://github.com/vouch-opensource/fugato"
                                              :git/sha "4c1f687bca84f1f7777f347acdaafd49c182eae0"}
@@ -66,8 +66,8 @@
 
         ;;io.github.biffweb/migrate           {:git/tag "v1.0" :git/sha "c490275" :deps/root "xtdb1"}
 
-        ;; sqlite
-        org.xerial/sqlite-jdbc              {:mvn/version "3.50.3.0"}
+        ;; sqlite (biff.sqlite brings sqlite-jdbc, next.jdbc, honeysql, HikariCP)
+        ;; Keep next.jdbc and honeysql for migration code
         com.github.seancorfield/next.jdbc   {:mvn/version "1.3.1070"}
         com.github.seancorfield/honeysql    {:mvn/version "2.7.1295"}}
  :aliases

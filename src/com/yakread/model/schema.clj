@@ -1,4 +1,5 @@
-(ns com.yakread.model.schema)
+(ns com.yakread.model.schema
+  (:require [clojure.string :as str]))
 
 (def ?
   "Mark an attribute as optional."
@@ -245,3 +246,97 @@
 
 (def module
   {})
+
+;; ============================================================================
+;; biff.sqlite columns conversion
+;; ============================================================================
+
+(def indexed-columns
+  "Set of column keywords that should have database indexes."
+  #{:user/email :user/email-username :user/customer-id
+    :sub/user-id :sub/feed-id
+    :item/feed-id :item/email-sub-id :item/url :item/ingested-at
+    :item/record-type :item/direct-candidate-status
+    :user-item/user-id :user-item/item-id
+    :digest/user-id
+    :ad-credit/ad-id
+    :redirect/url :redirect/item-id})
+
+(defn- resolve-type
+  "Resolve a malli type form to a biff.sqlite column type keyword."
+  [type-form]
+  (cond
+    (= type-form :uuid) :uuid
+    (= type-form :string) :text
+    (= type-form :int) :int
+    (= type-form :double) :real
+    (= type-form :boolean) :boolean
+    (identical? type-form inst?) :inst
+    ;; Schema aliases
+    (and (keyword? type-form)
+         (= (namespace type-form) "com.yakread.model.schema"))
+    (let [resolved (get schema type-form)]
+      (if resolved (resolve-type resolved) :text))
+    ;; Vector forms
+    (vector? type-form)
+    (case (first type-form)
+      :string :text
+      :enum :enum
+      :set :edn
+      :vector :edn
+      :map :edn
+      (throw (ex-info (str "Unknown vector type: " type-form) {:type type-form})))
+    :else (throw (ex-info (str "Unknown type: " (pr-str type-form)) {:type type-form}))))
+
+(defn- extract-enum-values
+  "Extract enum values from a malli type form.
+   Returns {0 :val1, 1 :val2, ...} or nil."
+  [type-form]
+  (when (and (vector? type-form) (= (first type-form) :enum))
+    (into {} (map-indexed (fn [i v] [i v]) (rest type-form)))))
+
+(defn- parse-entry
+  "Parse a malli map entry into [attr-key props-map type-form]."
+  [[attr-key & rest]]
+  (if (map? (first rest))
+    [attr-key (first rest) (second rest)]
+    [attr-key {} (first rest)]))
+
+(defn schema->columns
+  "Convert the malli-based schema to biff.sqlite columns format.
+   Returns map of {qualified-keyword -> column-props}."
+  []
+  (into {}
+    (mapcat
+      (fn [[table-key table-def]]
+        (when (and (vector? table-def) (= :map (first table-def)))
+          (let [table-props (when (map? (second table-def)) (second table-def))
+                entries (if table-props (drop 2 table-def) (drop 1 table-def))
+                id-key (keyword (name table-key) "id")
+                unique-constraints (:biff/unique table-props)]
+            (map
+              (fn [entry]
+                (let [[attr-key props type-form] (parse-entry entry)
+                      is-id? (= attr-key id-key)
+                      optional? (:optional props)
+                      ref-target (:biff/ref props)
+                      col-type (resolve-type type-form)
+                      enum-vals (extract-enum-values type-form)
+                      unique-constraint (first (filter #(= (first %) attr-key) unique-constraints))]
+                  [attr-key
+                   (cond-> {:type col-type}
+                     is-id? (assoc :primary-key true)
+                     (and (not is-id?) (not optional?)) (assoc :required true)
+                     ref-target (assoc :ref (keyword (name ref-target) "id"))
+                     (and unique-constraint (= 1 (count unique-constraint)))
+                     (assoc :unique true)
+                     (and unique-constraint (< 1 (count unique-constraint)))
+                     (assoc :unique-with (vec (rest unique-constraint)))
+                     enum-vals (assoc :enum-values enum-vals)
+                     (contains? indexed-columns attr-key) (assoc :index true))]))
+              entries))))
+      schema)))
+
+(def columns
+  "biff.sqlite columns map derived from the malli schema."
+  (schema->columns))

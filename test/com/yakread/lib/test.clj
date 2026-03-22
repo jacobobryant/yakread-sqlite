@@ -10,11 +10,13 @@
    [clojure.tools.logging :as log]
    [clojure.walk :as walk]
    [com.biffweb :as biff]
+   [com.biffweb.sqlite :as biff.sqlite]
    [com.biffweb.experimental :as biffx]
    [com.stuartsierra.dependency :as dep]
    [com.yakread :as main]
    [com.yakread.lib.route :as lib.route]
    [com.yakread.lib.sqlite :as lib.sqlite]
+   [com.yakread.model.schema :as sqlite-schema]
    [com.yakread.util.biff-staging :as biffs]
    [malli.experimental.time.generator]
    [malli.generator :as malli.g]
@@ -55,14 +57,16 @@
 
 (defn execute [conn & args]
   (apply lib.sqlite/execute
-         {:biff/malli-opts* com.yakread/malli-opts*
-          :biff/conn* conn}
+         {:biff.sqlite/columns sqlite-schema/columns
+          :biff.sqlite/read-pool conn
+          :biff.sqlite/write-conn conn}
          args))
 
 (defn start-test-sqlite [table->records]
-  (let [conn (jdbc/get-connection "jdbc:sqlite::memory:")]
-    (doseq [statement (-> (io/resource "schema.sql")
-                          slurp
+  (let [conn (jdbc/get-connection "jdbc:sqlite::memory:")
+        schema-sql (biff.sqlite/generate-schema-sql
+                    {:biff.sqlite/columns sqlite-schema/columns})]
+    (doseq [statement (-> schema-sql
                           (str/replace #"NOT NULL" "")
                           (str/replace #"(?m)--.*$" "")
                           (str/split #";"))
@@ -75,8 +79,9 @@
 
 (defmacro with-sqlite [[ctx-sym db-contents] & body]
   `(with-open [conn# (start-test-sqlite ~db-contents)]
-     (let [~ctx-sym {:biff/conn* conn#
-                     :biff/malli-opts* main/malli-opts*
+     (let [~ctx-sym {:biff.sqlite/columns sqlite-schema/columns
+                     :biff.sqlite/read-pool conn#
+                     :biff.sqlite/write-conn conn#
                      :biff/query (partial execute conn#)}]
        ~@body)))
 

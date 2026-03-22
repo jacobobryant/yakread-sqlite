@@ -8,7 +8,9 @@
    (t/with-sqlite
     [ctx
      {:sub
-      [{:sub/id (t/uuid 1), :sub/user-id (t/uuid 100), :sub/feed-id (t/uuid 10)}],
+      [{:sub/id (t/uuid 1),
+        :sub/user-id (t/uuid 100),
+        :sub/feed-id (t/uuid 10)}],
       :feed [{:feed/id (t/uuid 10), :feed/url "url1"}]}]
     (feed-subs ctx {:user/id (t/uuid 100)})),
    :result
