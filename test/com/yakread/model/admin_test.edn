@@ -12,9 +12,7 @@
        {:user/id (t/uuid 2),
         :user/email "old@test.com",
         :user/joined-at (t/instant 1999)}]}]
-    (recent-users
-     (merge ctx {:biff/now (t/instant 2000 1 8)})
-     {})),
+    (recent-users (merge ctx {:biff/now (t/instant 2000 1 8)}) {})),
    :result
    {:admin/recent-users
     [{:user/id #uuid "00010000-0000-0000-0000-000000000001"}]}}
@@ -27,9 +25,7 @@
       [{:user/id (t/uuid 1),
         :user/email "old@test.com",
         :user/joined-at (t/instant 1999)}]}]
-    (recent-users
-     (merge ctx {:biff/now (t/instant 2000 1 8)})
-     {})),
+    (recent-users (merge ctx {:biff/now (t/instant 2000 1 8)}) {})),
    :result {:admin/recent-users []}}
   _
   {:doc "ads returns all ads",
@@ -45,4 +41,63 @@
   {:doc "ads returns empty when no ads",
    :eval (t/with-sqlite [ctx {}] (ads ctx {})),
    :result {:admin/ads []}}
+  _
+  {:doc "digests-sent counts digests per day in last 30 days",
+   :eval
+   (t/with-sqlite
+    [ctx
+     {:user
+      [{:user/id (t/uuid 1),
+        :user/email "a@test.com",
+        :user/joined-at (t/instant 2000)}],
+      :digest
+      [{:digest/id (t/uuid 10),
+        :digest/user-id (t/uuid 1),
+        :digest/sent-at (t/instant 2000 1 28 10)}
+       {:digest/id (t/uuid 11),
+        :digest/user-id (t/uuid 1),
+        :digest/sent-at (t/instant 2000 1 28 14)}
+       {:digest/id (t/uuid 12),
+        :digest/user-id (t/uuid 1),
+        :digest/sent-at (t/instant 2000 1 27 10)}
+       {:digest/id (t/uuid 13),
+        :digest/user-id (t/uuid 1),
+        :digest/sent-at (t/instant 1999)}]}]
+    (let
+     [result
+      (digests-sent (merge ctx {:biff/now (t/instant 2000 1 29)}) {})]
+     (select-keys
+      (:admin/digests-sent result)
+      [(java.time.LocalDate/of 2000 1 28)
+       (java.time.LocalDate/of 2000 1 27)]))),
+   :result {#time/date "2000-01-28" 2, #time/date "2000-01-27" 1}}
+  _
+  {:doc "digests-sent returns empty when no digests",
+   :eval
+   (t/with-sqlite
+    [ctx {}]
+    (digests-sent (merge ctx {:biff/now (t/instant 2000)}) {})),
+   :result {:admin/digests-sent {}}}
+  _
+  {:doc "subscribed-users counts non-suppressed users",
+   :eval
+   (t/with-sqlite
+    [ctx
+     {:user
+      [{:user/id (t/uuid 1),
+        :user/email "a@test.com",
+        :user/joined-at (t/instant 2000)}
+       {:user/id (t/uuid 2),
+        :user/email "b@test.com",
+        :user/joined-at (t/instant 2000)}
+       {:user/id (t/uuid 3),
+        :user/email "c@test.com",
+        :user/joined-at (t/instant 2000),
+        :user/suppressed-at (t/instant 2000 6)}]}]
+    (subscribed-users ctx {})),
+   :result {:admin/subscribed-users 2}}
+  _
+  {:doc "subscribed-users returns 0 when no users",
+   :eval (t/with-sqlite [ctx {}] (subscribed-users ctx {})),
+   :result {:admin/subscribed-users 0}}
   _]}

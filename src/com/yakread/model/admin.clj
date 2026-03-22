@@ -2,7 +2,7 @@
   (:require
    [com.wsscode.pathom3.connect.operation :as pco :refer [defresolver]])
   (:import
-   [java.time ZoneId]))
+   [java.time Instant ZoneId]))
 
 (defresolver recent-users [{:biff/keys [query now]} _]
   {::pco/output [{:admin/recent-users [:user/id]}]}
@@ -34,6 +34,23 @@
                     (update acc date (fnil + 0) cost)))
                 {}))})
 
+(defresolver digests-sent [{:biff/keys [query now]} _]
+  {:admin/digests-sent
+   (->> (query {:select :digest/sent-at
+                :from :digest
+                :where [:<= (.minusSeconds now (* 60 60 24 30)) :digest/sent-at]})
+        (mapv (fn [{:keys [digest/sent-at]}]
+                (.. sent-at
+                    (atZone (ZoneId/of "America/Denver"))
+                    (toLocalDate))))
+        frequencies)})
+
+(defresolver subscribed-users [{:biff/keys [query]} _]
+  {:admin/subscribed-users
+   (count (query {:select :user/id
+                  :from :user
+                  :where [:is :user/suppressed-at nil]}))})
+
 (defresolver ads [{:biff/keys [query]} _]
   {::pco/output [{:admin/ads [:ad/id]}]}
   {:admin/ads (query {:select :ad/id :from :ad})})
@@ -42,4 +59,6 @@
   {:resolvers [recent-users
                dau
                revenue
+               digests-sent
+               subscribed-users
                ads]})
