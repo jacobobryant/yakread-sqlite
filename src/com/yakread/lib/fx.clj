@@ -7,8 +7,8 @@
    [clojure.walk :as walk]
    [com.biffweb :as biff]
    [com.wsscode.pathom3.interface.eql :as p.eql]
-   [com.yakread.lib.s3 :as lib.s3]
-   [com.yakread.lib.sqlite :as lib.sqlite]))
+   [com.biffweb.sqlite :as biff.sqlite]
+   [com.yakread.lib.s3 :as lib.s3]))
 
 (defn- truncate-str
   "Truncates a string s to be at most n characters long, appending an ellipsis if any characters were removed."
@@ -218,7 +218,7 @@
    :biff.fx/sqlite (fn [ctx input]
                      (let [stmts (if (map? input) [input] input)]
                        (doseq [stmt stmts]
-                         (lib.sqlite/execute ctx stmt))
+                         (biff.sqlite/execute ctx stmt))
                        nil))
    :biff.fx/pathom (fn [ctx input]
                      (let [{:keys [entity query]} (if (map? input)

@@ -15,7 +15,6 @@
    [com.stuartsierra.dependency :as dep]
    [com.yakread :as main]
    [com.yakread.lib.route :as lib.route]
-   [com.yakread.lib.sqlite :as lib.sqlite]
    [com.yakread.model.schema :as sqlite-schema]
    [com.yakread.util.biff-staging :as biffs]
    [malli.experimental.time.generator]
@@ -56,7 +55,7 @@
      ~@body))
 
 (defn execute [conn & args]
-  (apply lib.sqlite/execute
+  (apply biff.sqlite/execute
          {:biff.sqlite/columns sqlite-schema/columns
           :biff.sqlite/read-pool conn
           :biff.sqlite/write-conn conn}

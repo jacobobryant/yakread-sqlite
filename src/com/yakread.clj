@@ -7,12 +7,12 @@
    [clojure.tools.namespace.repl :as tn-repl]
    [com.biffweb :as biff]
    [com.biffweb.experimental :as biffx]
+   [com.biffweb.sqlite :as biff.sqlite]
    [com.wsscode.pathom3.connect.indexes :as pci]
    [com.wsscode.pathom3.connect.planner :as pcp]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.auth :as lib.auth]
    [com.yakread.lib.email :as lib.email]
-   [com.yakread.lib.migrate.sqlite.copilot :as migrate.sqlite]
    [com.yakread.lib.s3 :as lib.s3]
    [com.yakread.lib.sqlite :as lib.sqlite]
    [com.yakread.model.schema :as sqlite-schema]
@@ -85,13 +85,6 @@
                     (malli.u/schemas)
                     (keep :schema modules))})
 
-(def malli-opts*
-  {:registry (malr/composite-registry
-              (malli/default-schemas)
-              (malli.t/schemas)
-              (malli.u/schemas)
-              sqlite-schema/schema)})
-
 ;; TODO pull into a lib function
 (doseq [schema-map (keep :schema modules)
         k (keys schema-map)
@@ -127,7 +120,7 @@
                                              {:redirect url
                                               :redirect-sig (biffs/signature (jwt-secret) url)})
                 :biff/href-safe (partial lib.route/href-safe ctx)
-                :biff/query  (partial lib.sqlite/execute ctx)})
+                :biff/query  (partial biff.sqlite/execute ctx)})
         (pcp/with-plan-cache (atom {})))))
 
 ;; TODO use a lib.pipe thing for this
@@ -206,7 +199,6 @@
                      :biff/after-refresh `start
                      :biff/handler #'handler
                      :biff/malli-opts (lib.core/->DerefMap #'malli-opts)
-                     :biff/malli-opts* (lib.core/->DerefMap #'malli-opts*)
                      :biff/router router
                      :biff/send-email #'lib.email/send-email
                      :biff.beholder/on-save #'on-save
@@ -248,15 +240,7 @@
   (cld/default-init!)
   (time-literals/print-time-literals-clj!)
   (alter-var-root #'gen/*rnd* (constantly (java.util.Random. (inst-ms (java.time.Instant/now)))))
-  (let [{:keys [biff.nrepl/args yakread.import/enabled]} (start)]
-    #_(when enabled
-      (future
-        (biff/catchall-verbose
-         (log/info "Starting XTDB->SQLite import...")
-         (migrate.sqlite/import-from-nippy-files!
-          {:conn conn*
-           :dir "storage/migrate-xtdb"})
-         (log/info "XTDB->SQLite import finished."))))
+  (let [{:keys [biff.nrepl/args]} (start)]
     (apply nrepl-cmd/-main args)))
 
 (defn refresh []

@@ -31,9 +31,6 @@
   (when-let [ref (:ref col-props)]
     (keyword (namespace ref))))
 
-(defn execute [ctx input]
-  (biff.sqlite/execute ctx input))
-
 ;; TODO add duplicate keys for backwards compat
 (defn sqlite-resolvers
   "Create Pathom resolvers for SQLite tables from columns map.
@@ -79,9 +76,9 @@
                      ::pco/batch? true}
                     (fn [ctx inputs]
                       (let [ids (mapv id-key inputs)
-                            results (execute ctx {:select :*
-                                                  :from table-key
-                                                  :where [:in :id ids]})
+                            results (biff.sqlite/execute ctx {:select :*
+                                                              :from table-key
+                                                              :where [:in :id ids]})
 
                             ;; Post-process to add join keys
                             process-row
@@ -111,4 +108,4 @@
   (let [ctx (-> ctx
                 (assoc :biff.sqlite/columns sqlite-schema/columns)
                 biff.sqlite/use-sqlite)]
-    (assoc ctx :biff/query (partial execute ctx))))
+    (assoc ctx :biff/query (partial biff.sqlite/execute ctx))))

@@ -29,15 +29,6 @@
  :biff/jwt-secret #biff/secret JWT_SECRET
  :biff/port #long #or [#biff/env PORT "8080"]
 
- :biff.xtdb2/storage   #profile {:prod :remote :default :local}
- :biff.xtdb2/log       #profile {:prod :kafka :default :local}
- :biff.xtdb2.log/topic          #biff/env XTDB_LOG_TOPIC
- :biff.xtdb2.storage/max-cache-bytes nil
- :biff.xtdb2.storage/bucket     #biff/env XTDB_STORAGE_BUCKET
- :biff.xtdb2.storage/endpoint   #biff/env XTDB_STORAGE_ENDPOINT
- :biff.xtdb2.storage/access-key #biff/env XTDB_STORAGE_ACCESS_KEY
- :biff.xtdb2.storage/secret-key #biff/secret XTDB_STORAGE_SECRET_KEY
-
  :biff.sqlite/generate-schema #profile {:dev true}
  :biff.sqlite/litestream-bucket       #biff/env LITESTREAM_BUCKET
  :biff.sqlite/litestream-endpoint     #biff/env LITESTREAM_ENDPOINT
@@ -90,10 +81,6 @@
  :yakread.work.sync-all-feeds/enabled      #boolean #or [#biff/env ENABLE_SYNC_FEEDS "false"]
  :yakread.work.queue-add-candidate/enabled #boolean #or [#biff/env ENABLE_ADD_CANDIDATES "false"]
  :yakread.work.digest/enabled              #boolean #or [#biff/env ENABLE_SEND_DIGESTS "false"]
-
- :yakread.work.materialized-views/enabled #or [#biff/env MATERIALIZED_VIEWS_ENABLED true]
-
- :yakread.import/enabled #boolean #or [#biff/env YAKREAD_IMPORT_ENABLED "false"]
 
  :biff/alert-email             #biff/env ALERT_EMAIL
  :biff.error-reporting/enabled #profile {:prod true}}

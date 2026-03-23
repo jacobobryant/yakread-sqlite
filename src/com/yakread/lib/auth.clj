@@ -1,6 +1,6 @@
 (ns com.yakread.lib.auth
   (:require [com.biffweb :as biff]
-            [com.yakread.lib.sqlite :as lib.sqlite]
+            [com.biffweb.sqlite :as biff.sqlite]
             [clj-http.client :as http]
             [tick.core :as tick])
   (:import [java.util UUID]))
@@ -40,7 +40,7 @@
             (.nextInt rng (dec (int (Math/pow 10 length)))))))
 
 (defn- get-user-id [ctx email]
-  (-> (lib.sqlite/execute ctx {:select :user/id
+  (-> (biff.sqlite/execute ctx {:select :user/id
                                :from :user
                                :where [:= :user/email email]})
       first
@@ -48,7 +48,7 @@
 
 (defn- create-user! [ctx email]
   (let [user-id (random-uuid)]
-    (lib.sqlite/execute ctx
+    (biff.sqlite/execute ctx
       {:insert-into :user
        :values [{:user/id user-id
                  :user/email email
@@ -61,7 +61,7 @@
   (UUID/nameUUIDFromBytes (.getBytes s)))
 
 (defn- upsert-code! [ctx email code]
-  (lib.sqlite/execute ctx
+  (biff.sqlite/execute ctx
     {:insert-into :auth-code
      :values [{:auth-code/id (uuid-from email)
                :auth-code/email email
@@ -73,18 +73,18 @@
 
 (defn- get-code [ctx email]
   (first
-   (lib.sqlite/execute ctx
+   (biff.sqlite/execute ctx
      {:select :*
       :from :auth-code
       :where [:= :auth-code/id (uuid-from email)]})))
 
 (defn- delete-code! [ctx email]
-  (lib.sqlite/execute ctx
+  (biff.sqlite/execute ctx
     {:delete-from :auth-code
      :where [:= :auth-code/id (uuid-from email)]}))
 
 (defn- increment-failed-attempts! [ctx email]
-  (lib.sqlite/execute ctx
+  (biff.sqlite/execute ctx
     {:update :auth-code
      :set {:auth-code/failed-attempts [:+ :auth-code/failed-attempts 1]}
      :where [:= :auth-code/id (uuid-from email)]}))

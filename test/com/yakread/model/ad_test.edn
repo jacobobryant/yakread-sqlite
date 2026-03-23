@@ -58,9 +58,9 @@
       {:ad/id (t/uuid 30)}])),
    :result
    [{:ad/id #uuid "00100000-0000-0000-0000-000000000010",
-     :ad/last-clicked 946684800000}
+     :ad/last-clicked #time/instant "2000-01-01T00:00:00Z"}
     {:ad/id #uuid "00200000-0000-0000-0000-000000000020",
-     :ad/last-clicked 1072915200000}
+     :ad/last-clicked #time/instant "2004-01-01T00:00:00Z"}
     {:ad/id #uuid "00300000-0000-0000-0000-000000000030"}]}
   _
   {:eval

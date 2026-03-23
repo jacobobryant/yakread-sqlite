@@ -12,7 +12,7 @@
          unsubbed true} (->> (query {:select [:sub/id :sub/email-unsubscribed-at]
                                      :from :sub
                                      :where [:= :sub/user-id id]})
-                              (group-by (comp some? :sub/email-unsubscribed-at)))]
+                             (group-by (comp some? :sub/email-unsubscribed-at)))]
     {:user/subscriptions (mapv #(select-keys % [:sub/id]) (or subbed []))
      :user/unsubscribed (mapv #(select-keys % [:sub/id]) (or unsubbed []))}))
 
@@ -22,7 +22,7 @@
 
 (defresolver feed-sub-title [{:keys [sub/feed]}]
   {::pco/input [{:sub/feed [(? :feed/title)
-                             :feed/url]}]}
+                            :feed/url]}]}
   {:sub/title ((some-fn :feed/title :feed/url) feed)})
 
 (defresolver email-subtitle [{:biff/keys [query]} {:sub/keys [id record-type]}]
@@ -151,13 +151,13 @@
                                        source-ids (mapv sub-source-id subs*)]]
                              (query {:select [source-key
                                               [[:max [:coalesce :item/published-at :item/ingested-at]]
-                                               :published-at]]
+                                               :item/published-at]]
                                      :from :item
                                      :where [:in source-key source-ids]
                                      :group-by source-key})))
                      (mapv (fn [row]
                              {:sub/id (source->sub-id (row-source-id row))
-                              :sub/published-at (:published-at row)})))]
+                              :sub/published-at (:item/published-at row)})))]
     (lib.core/restore-order inputs
                             :sub/id
                             results
