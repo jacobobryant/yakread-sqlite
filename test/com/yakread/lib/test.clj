@@ -11,7 +11,6 @@
    [clojure.walk :as walk]
    [com.biffweb :as biff]
    [com.biffweb.sqlite :as biff.sqlite]
-   [com.biffweb.experimental :as biffx]
    [com.stuartsierra.dependency :as dep]
    [com.yakread :as main]
    [com.yakread.lib.route :as lib.route]
@@ -21,10 +20,7 @@
    [malli.generator :as malli.g]
    [next.jdbc :as jdbc]
    [tick.core :as tick]
-   [time-literals.read-write :as time-literals]
-   [xtdb.api :as xt]
-   [xtdb.node :as xtn]
-   [com.yakread :as main])
+   [time-literals.read-write :as time-literals])
   (:import
    [java.time Instant]))
 
@@ -44,15 +40,7 @@
                      data))
                  data))
 
-(defn start-test-node [table->records]
-  (let [node (xtn/start-node {})]
-    (xt/submit-tx node (for [[table records] table->records]
-                         (into [:put-docs table] records)))
-    node))
 
-(defmacro with-node [[node-sym db-contents] & body]
-  `(with-open [~node-sym (start-test-node ~db-contents)]
-     ~@body))
 
 (defn execute [conn & args]
   (apply biff.sqlite/execute
@@ -100,8 +88,6 @@
       (cond
         db* (with-sqlite [ctx* db*]
               (f (merge ctx ctx*) state))
-        db (with-node [node db]
-             (f (assoc ctx :biff/conn node) state))
         :else (f ctx state)))))
 
 
@@ -252,8 +238,7 @@
 
 (def initial-system
   (merge main/initial-system
-         {:biff.xtdb/topology :memory
-          :biff.index/dir :tmp}))
+         {:biff.index/dir :tmp}))
 
 (defn start!
   ([components]

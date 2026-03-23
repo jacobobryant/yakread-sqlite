@@ -329,23 +329,23 @@
    ::pco/output [:item/n-digest-sends]
    ::pco/batch? true}
   (let [results (->> (query {:union
-                             [{:select [[:digest/ad-id :item/id]
-                                        [[:count :digest/id] :item/n-digest-sends]]
+                             [{:select [[:digest/ad-id :id]
+                                        [[:count :digest/id] :n-digest-sends]]
                                :from :digest
                                :where [:and
                                        [:= :digest/user-id (:uid session)]
                                        [:in :digest/ad-id (mapv :item/id items)]]
                                :group-by :digest/ad-id}
-                              {:select [[:digest-item/item-id :item/id]
-                                        [[:count :digest-item/digest-id] :item/n-digest-sends]]
+                              {:select [[:digest-item/item-id :id]
+                                        [[:count :digest-item/digest-id] :n-digest-sends]]
                                :from :digest-item
                                :join [:digest [:= :digest-item/digest-id :digest/id]]
                                :where [:and
                                        [:= :digest/user-id (:uid session)]
-                                       ;; TODO seems like it might be faster without this assuming #
-                                       ;; digests is << # candidate items
                                        [:in :digest-item/item-id (mapv :item/id items)]]
-                               :group-by :digest-item/item-id}]}))]
+                               :group-by :digest-item/item-id}]})
+                     (mapv #(set/rename-keys % {:id :item/id
+                                                :n-digest-sends :item/n-digest-sends})))]
     (lib.core/restore-order items
                             :item/id
                             results

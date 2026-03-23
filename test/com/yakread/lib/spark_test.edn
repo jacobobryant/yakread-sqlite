@@ -253,7 +253,7 @@
      {:rating/user #uuid "00310000-0000-0000-0000-000000000031",
       :rating/candidate #uuid "00020000-0000-0000-0000-000000000002",
       :rating/value 0.3,
-      :rating/created-at 1988150400000}]}}
+      :rating/created-at #time/instant "2002-01-01T00:00:00Z"}]}}
   _
   {:doc "all-liked-items - empty database",
    :eval (t/with-sqlite [ctx {}] (all-liked-items ctx {})),

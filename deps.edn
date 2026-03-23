@@ -97,13 +97,7 @@
                     "-XX:-OmitStackTraceInFastThrow"
                     "-XX:+CrashOnOutOfMemoryError"
                     "-Dbiff.env.BIFF_PROFILE=prod"]
-         :main-opts ["-m" "com.yakread"]}
-  :import {:deps {io.github.biffweb/config  {:git/tag "v1.0" :git/sha "cc7ba13"}
-                  io.github.biffweb/migrate {:git/tag "v1.0" :git/sha "ab1b7f3" :deps/root "xtdb2"}}
-           :jvm-opts ["--add-opens=java.base/java.nio=ALL-UNNAMED"
-                      "-Dio.netty.tryReflectionSetAccessible=true"
-                      "-Dbiff.env.BIFF_PROFILE=prod"]
-           :main-opts ["-m" "tasks.migrate-xt"]}}
+         :main-opts ["-m" "com.yakread"]}}
  :mvn/repos
  {"central"         {:url "https://repo1.maven.org/maven2/"}
   "clojars"         {:url "https://clojars.org/repo"}

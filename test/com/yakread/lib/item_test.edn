@@ -152,29 +152,61 @@
          :biff.fx/tx [[:put-docs :stuff {:xt/id "stuff1"}]]})})]
     {:error (handle-readability {:com.yakread.lib.item/url "url"}),
      :success
-     (->> (t/truncate
-           (handle-readability
-            {:com.yakread.lib.item/url "url",
-             :com.yakread.lib.item/raw-html
-             (str
-              "<html><head>"
-              "<meta content=\"https://example.com/some-image.png\" property=\"og:image\">"
-              "</head><body>hello</body></html>"),
-             :com.yakread.fx/js
-             {:content (apply str (repeat 201 "hello"))}}))
-          (walk/postwalk
-           (fn [x]
-             (cond
-               (uuid? x) :_
-               (and (string? x)
-                    (parse-uuid x)) :_
-               (and (map? x)
-                    (contains? x :item/lang)) (dissoc x :item/lang)
-               :else x))))}),
+     (->>
+      (t/truncate
+       (handle-readability
+        {:com.yakread.lib.item/url "url",
+         :com.yakread.lib.item/raw-html
+         (str
+          "<html><head>"
+          "<meta content=\"https://example.com/some-image.png\" property=\"og:image\">"
+          "</head><body>hello</body></html>"),
+         :com.yakread.fx/js
+         {:content (apply str (repeat 201 "hello"))}}))
+      (walk/postwalk
+       (fn
+        [x]
+        (cond
+         (uuid? x)
+         :_
+         (and (string? x) (parse-uuid x))
+         :_
+         (and (map? x) (contains? x :item/lang))
+         (dissoc x :item/lang)
+         :else
+         x))))}),
    :result
    {:error
     {:on-error
      {:ctx {:com.yakread.lib.item/url "url"},
       :params {:item/url "url"}}},
-    :success nil}}
+    :success
+    [{:biff.fx/s3
+      {:config-ns yakread.s3.content,
+       :method "PUT",
+       :key :_,
+       :body "<html>\n <head></head>\n <body>\n  hellohellohellohe…",
+       :headers {"x-amz-acl" "private", "content-type" "text/html"}}}
+     {:biff.fx/sqlite
+      [{:insert-into :item,
+        :values
+        [{:item/id :_,
+          :item/image-url "https://example.com/some-image.png",
+          :item/content-key :_,
+          :item/record-type [:lift :item.record-type/direct]}]}
+       {:insert-into :redirect,
+        :values
+        [{:redirect/id :_,
+          :redirect/url "url",
+          :redirect/item-id :_}]}],
+      :on-success
+      {:ctx
+       {:com.yakread.lib.item/url "url",
+        :com.yakread.lib.item/raw-html
+        "<html><head><meta content=\"https://example.com/so…",
+        :com.yakread.fx/js
+        {:content
+         "hellohellohellohellohellohellohellohellohellohell…"}},
+       :params {:item/id :_, :item/url "url"}},
+      :biff.fx/tx [[:put-docs :stuff {:xt/id "stuff1"}]]}]}}
   _]}

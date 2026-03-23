@@ -6,7 +6,6 @@
    [clojure.tools.logging :as log]
    [clojure.tools.namespace.repl :as tn-repl]
    [com.biffweb :as biff]
-   [com.biffweb.experimental :as biffx]
    [com.biffweb.sqlite :as biff.sqlite]
    [com.wsscode.pathom3.connect.indexes :as pci]
    [com.wsscode.pathom3.connect.planner :as pcp]
@@ -184,11 +183,9 @@
 (def components
   [biff/use-aero-config
    use-error-reporting
-   #_biffx/use-xtdb2
    lib.sqlite/use-sqlite
    lib.spark/use-spark
    biff/use-queues
-   ;biffx/use-xtdb2-listener
    biff/use-jetty
    biff/use-chime
    biff/use-beholder

@@ -15,6 +15,12 @@
 (defn- median [xs]
   (first (take (/ (count xs) 2) xs)))
 
+(defn- ->instant [x]
+  (cond
+    (instance? Instant x) x
+    (number? x) (Instant/ofEpochMilli (long x))
+    :else nil))
+
 (defresolver item-candidates [{:biff/keys [query]} _]
   {::pco/output [{::item-candidates [:item/id
                                      :item/url]}]}
@@ -56,8 +62,8 @@
   (->> {:union [{:select [:ad/id
                           :reclist/user-id
                           [[:count :skip/id] :n-skips]
-                          [[:max :reclist/created-at] :reclist/created-at]
-                          [nil :ad-click/created-at]]
+                          [[:max :reclist/created-at] :last-skipped]
+                          [nil :last-clicked]]
                  :from :ad
                  :join [:skip [:= :skip/ad-id :ad/id]
                         :reclist [:= :skip/reclist-id :reclist/id]]
@@ -65,16 +71,17 @@
                 {:select [:ad/id
                           :ad-click/user-id
                           [nil :n-skips]
-                          [nil :reclist/created-at]
-                          [[:max :ad-click/created-at] :ad-click/created-at]]
+                          [nil :last-skipped]
+                          [[:max :ad-click/created-at] :last-clicked]]
                  :from :ad
                  :join [:ad-click [:= :ad/id :ad-click/ad-id]]
                  :group-by [:ad/id :ad-click/user-id]}]}
        query
-       (mapv #(set/rename-keys % {:ad/id :ad-id
-                                  :reclist/user-id :user-id
-                                  :reclist/created-at :last-skipped
-                                  :ad-click/created-at :last-clicked}))
+       (mapv #(-> %
+                  (set/rename-keys {:ad/id :ad-id
+                                    :reclist/user-id :user-id})
+                  (update :last-skipped ->instant)
+                  (update :last-clicked ->instant)))
        (remove (comp nil? :ad-id))
        (full-outer-join (juxt :ad-id :user-id))))
 
@@ -292,14 +299,15 @@
                   [:item/id :item/n-likes]}]}
   {:yakread.model/all-liked-items
    (into []
-         (remove (comp nil? :item/id))
+         (comp (map #(set/rename-keys % {:n-likes :item/n-likes}))
+               (remove (comp nil? :item/id)))
          (query
           {:select [[:user-item/item-id :item/id]
-                    [[:count :user-item/id] :item/n-likes]]
+                    [[:count :user-item/id] :n-likes]]
            :from :user-item
            :where [:is-not :user-item/favorited-at nil]
            :group-by [:user-item/item-id]
-           :order-by [[:item/n-likes :desc]]}))})
+           :order-by [[:n-likes :desc]]}))})
 
 (def ^:private pathom-env (pci/register [item-candidates
                                          ads

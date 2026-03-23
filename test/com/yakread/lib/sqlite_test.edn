@@ -1,16 +1,25 @@
 {:require
  [[com.yakread.lib.test :as t]
   [com.yakread.lib.sqlite :refer :all]
-  [com.yakread.model.schema :as schema]
-  [com.wsscode.pathom3.connect.operation :as pco]],
+  [com.yakread.model.schema :as schema]],
  :tests
- [{:doc "sqlite-resolvers creates resolvers from columns"
-   :eval (let [resolvers (sqlite-resolvers schema/columns)]
-           (pos? (count resolvers)))
+ [{:doc "sqlite-resolvers creates resolvers from columns",
+   :eval
+   (let
+    [resolvers (sqlite-resolvers schema/columns)]
+    (pos? (count resolvers))),
    :result true}
   _
-  {:doc "sqlite-resolvers resolver has batch? true"
-   :eval (let [resolvers (sqlite-resolvers schema/columns)
-               first-resolver (first resolvers)]
-           (-> first-resolver :config ::pco/batch?))
-   :result true}]}
+  {:doc "sqlite-resolvers resolver has batch? true",
+   :eval
+   (let
+    [resolvers
+     (sqlite-resolvers schema/columns)
+     first-resolver
+     (first resolvers)]
+    (->
+     first-resolver
+     :config
+     :com.wsscode.pathom3.connect.operation/batch?)),
+   :result true}
+  _]}

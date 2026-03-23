@@ -1,6 +1,10 @@
 (ns com.yakread.model.old-schema
-  (:require [tick.core :as tick]
-            [com.biffweb.experimental :as biffx]))
+  (:require [tick.core :as tick])
+  (:import [java.util UUID]))
+
+(defn- prefix-uuid [uuid-prefix uuid-rest]
+  (UUID/fromString (str (subs (str uuid-prefix) 0 4)
+                        (subs (str uuid-rest) 4))))
 
 (defn table [& args]
   (let [[options map-args] (if (map? (first args))
@@ -13,7 +17,7 @@
        [:fn {:error/message ":xt/id should be prefixed properly"}
         (fn [m]
           (= (:xt/id m)
-             (biffx/prefix-uuid (prefix-fn m) (:xt/id m))))]]
+             (prefix-uuid (prefix-fn m) (:xt/id m))))]]
       map-schema)))
 
 (defn inherit [base-schema & table-args]
