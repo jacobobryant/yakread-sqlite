@@ -84,13 +84,13 @@
                                  :let [source-key (record-type->source-key record-type)
                                        source-ids (mapv sub-source-id subs*)]]
                              (query {:select [source-key
-                                              [:%count.* :total]]
+                                              [:%count.* :sub/total]]
                                      :from :item
                                      :where [:in source-key source-ids]
                                      :group-by source-key})))
                      (mapv (fn [row]
                              {:sub/id (source->sub-id (row-source-id row))
-                              :sub/total (:total row)})))]
+                              :sub/total (:sub/total row)})))]
     (lib.core/restore-order inputs
                             :sub/id
                             results
@@ -110,7 +110,7 @@
                                  :let [source-key (record-type->source-key record-type)
                                        source-ids (mapv sub-source-id subs*)]]
                              (query {:select [source-key
-                                              [[:count :user-item/id] :items-read]]
+                                              [[:count :user-item/id] :sub/items-read]]
                                      :from :user-item
                                      :join [:item [:= :item/id :user-item/item-id]]
                                      :where [:and
@@ -126,7 +126,7 @@
                                      :group-by [source-key]})))
                      (mapv (fn [row]
                              {:sub/id (source->sub-id (row-source-id row))
-                              :sub/items-read (:items-read row)})))]
+                              :sub/items-read (:sub/items-read row)})))]
     (lib.core/restore-order inputs
                             :sub/id
                             results
