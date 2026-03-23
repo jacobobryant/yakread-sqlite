@@ -102,25 +102,20 @@
 (defn merge-context [{:keys [yakread/model
                              biff/jwt-secret]
                       :as ctx}]
-  (let [;snapshots (biff/index-snapshots ctx)
-        ]
-    (-> ctx
-        ;;(biff/assoc-db)
-        (merge pathom-env
-               {:yakread.model/get-candidates (constantly {})
-                :yakread.model/item-candidate-ids #{}}
-               (some-> model deref)
-               {:biff/router router
-                :biff.fx/handlers fx/handlers
-                ;:biff/db (:biff/db snapshots)
-                ;:biff.index/snapshots snapshots
-                :biff/now (tick/instant)
-                :com.yakread/sign-redirect (fn [url]
-                                             {:redirect url
-                                              :redirect-sig (biffs/signature (jwt-secret) url)})
-                :biff/href-safe (partial lib.route/href-safe ctx)
-                :biff/query  (partial biff.sqlite/execute ctx)})
-        (pcp/with-plan-cache (atom {})))))
+  (-> ctx
+      (merge pathom-env
+             {:yakread.model/get-candidates (constantly {})
+              :yakread.model/item-candidate-ids #{}}
+             (some-> model deref)
+             {:biff/router router
+              :biff.fx/handlers fx/handlers
+              :biff/now (tick/instant)
+              :com.yakread/sign-redirect (fn [url]
+                                           {:redirect url
+                                            :redirect-sig (biffs/signature (jwt-secret) url)})
+              :biff/href-safe (partial lib.route/href-safe ctx)
+              :biff/query  (partial biff.sqlite/execute ctx)})
+      (pcp/with-plan-cache (atom {}))))
 
 ;; TODO use a lib.pipe thing for this
 (defn- handle-error [{:keys [biff/send-email biff/domain biff.error-reporting/state] :as ctx} signal]
@@ -200,7 +195,6 @@
                      :biff/send-email #'lib.email/send-email
                      :biff.beholder/on-save #'on-save
                      :biff.fx/handlers fx/handlers
-                     ;;:biff.xtdb/tx-fns biff/tx-fns
                      :com.yakread/home-feed-cache (atom {})
                      lib.pathom/plan-cache-kw (atom {})
                      :biff.smtp/accept? #'smtp/accept?

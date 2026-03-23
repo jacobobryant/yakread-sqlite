@@ -71,15 +71,14 @@
   #::pco{:input [:item/id]
          :output [:item/n-skipped]
          :batch? true}
-  (let [results (->> (query {:select [:skip/item-id
+  (let [results (query {:select [[:skip/item-id :item/id]
                                       [[:count :skip/id] :item/n-skipped]]
                              :from :skip
                              :join [:reclist [:= :skip/reclist-id :reclist/id]]
                              :where [:and
                                      [:= :reclist/user-id (:uid session)]
                                      [:in :skip/item-id (mapv :item/id items)]]
-                             :group-by :skip/item-id})
-                     (mapv #(set/rename-keys % {:skip/item-id :item/id})))]
+                             :group-by :skip/item-id})]
     (lib.core/restore-order items
                             :item/id
                             results
@@ -91,15 +90,14 @@
   #::pco{:input [:ad/id]
          :output [:item/n-skipped]
          :batch? true}
-  (let [results (->> (query {:select [:skip/ad-id
+  (let [results (query {:select [[:skip/ad-id :ad/id]
                                       [[:count :skip/id] :item/n-skipped]]
                              :from :skip
                              :join [:reclist [:= :skip/reclist-id :reclist/id]]
                              :where [:and
                                      [:= :reclist/user-id (:uid session)]
                                      [:in :skip/ad-id (mapv :ad/id ads)]]
-                             :group-by :skip/ad-id})
-                     (mapv #(set/rename-keys % {:skip/ad-id :ad/id})))]
+                             :group-by :skip/ad-id})]
     (lib.core/restore-order ads
                             :ad/id
                             results

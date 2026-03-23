@@ -299,15 +299,14 @@
                   [:item/id :item/n-likes]}]}
   {:yakread.model/all-liked-items
    (into []
-         (comp (map #(set/rename-keys % {:n-likes :item/n-likes}))
-               (remove (comp nil? :item/id)))
+         (remove (comp nil? :item/id))
          (query
           {:select [[:user-item/item-id :item/id]
-                    [[:count :user-item/id] :n-likes]]
+                    [[:count :user-item/id] :item/n-likes]]
            :from :user-item
            :where [:is-not :user-item/favorited-at nil]
            :group-by [:user-item/item-id]
-           :order-by [[:n-likes :desc]]}))})
+           :order-by [[[:count :user-item/id] :desc]]}))})
 
 (def ^:private pathom-env (pci/register [item-candidates
                                          ads

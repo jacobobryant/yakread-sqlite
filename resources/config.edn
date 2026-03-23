@@ -19,10 +19,6 @@
  :biff.tasks/main-ns com.yakread
  :biff.tasks/on-soft-deploy "\"(com.yakread/on-save @com.yakread/system)\""
  :biff.tasks/server #biff/env SERVER
- :biff.xtdb.jdbc/jdbcUrl #biff/secret "XTDB_JDBC_URL"
- :biff.xtdb/dir "storage/xtdb"
- :biff.xtdb/topology #keyword #or [#profile {:prod #biff/env "PROD_XTDB_TOPOLOGY" :default #biff/env "XTDB_TOPOLOGY"}
-                                   "standalone"]
  :biff/domain #biff/env DOMAIN
  :biff/base-url #profile {:prod #join ["https://" #biff/env DOMAIN] :default "http://localhost:8080"}
  :biff/host #profile {:dev "0.0.0.0" :default "localhost"}
