@@ -6,18 +6,12 @@
    [clojure.java.io :as io]
    [clojure.pprint :as pprint :refer [pprint]]
    [clojure.string :as str]
-   [clojure.test.check.generators :as tc-gen]
    [clojure.tools.logging :as log]
    [clojure.walk :as walk]
    [com.biffweb :as biff]
    [com.biffweb.sqlite :as biff.sqlite]
-   [com.stuartsierra.dependency :as dep]
    [com.yakread :as main]
    [com.yakread.lib.route :as lib.route]
-   [com.yakread.model.schema :as sqlite-schema]
-   [com.yakread.util.biff-staging :as biffs]
-   [malli.experimental.time.generator]
-   [malli.generator :as malli.g]
    [next.jdbc :as jdbc]
    [tick.core :as tick]
    [time-literals.read-write :as time-literals])
@@ -44,7 +38,7 @@
 
 (defn execute [conn & args]
   (apply biff.sqlite/execute
-         {:biff.sqlite/columns sqlite-schema/columns
+         {:biff.sqlite/columns main/columns
           :biff.sqlite/read-pool conn
           :biff.sqlite/write-conn conn}
          args))
@@ -52,7 +46,7 @@
 (defn start-test-sqlite [table->records]
   (let [conn (jdbc/get-connection "jdbc:sqlite::memory:")
         schema-sql (biff.sqlite/generate-schema-sql
-                    {:biff.sqlite/columns sqlite-schema/columns})]
+                    {:biff.sqlite/columns main/columns})]
     (doseq [statement (-> schema-sql
                           (str/replace #"NOT NULL" "")
                           (str/replace #"(?m)--.*$" "")
@@ -66,7 +60,7 @@
 
 (defmacro with-sqlite [[ctx-sym db-contents] & body]
   `(with-open [conn# (start-test-sqlite ~db-contents)]
-     (let [~ctx-sym {:biff.sqlite/columns sqlite-schema/columns
+     (let [~ctx-sym {:biff.sqlite/columns main/columns
                      :biff.sqlite/read-pool conn#
                      :biff.sqlite/write-conn conn#
                      :biff/query (partial execute conn#)}]
@@ -390,70 +384,6 @@
         (inc (apply max (mapv #(rank graph % overrides) deps)))
         1)))
 
-;; TODO
-;; - support ref attrs that are cardinality-many
-;; - set default weights such that explicitly passed schemas are equal
-;; - improve shrinking
-;; - maybe don't use fugato
-(defn make-model [{:keys [biff/malli-opts schemas rank-overrides]}]
-  (when-not (set? schemas)
-    (throw (ex-info (str "`schemas` must be a set; got " (type schemas) " instead.")
-                    {:schemas schemas})))
-  (let [schema->ast (into {}
-                          (map (fn [ast]
-                                 [(-> ast :properties :schema)
-                                  ast]))
-                          (biffs/doc-asts main/malli-opts))
-        graph (reduce (fn [graph [doc-schema target-schema]]
-                        (dep/depend graph doc-schema target-schema))
-                      (dep/graph)
-                      (for [[doc-schema ast] schema->ast
-                            [_ {:keys [properties]}] (:keys ast)
-                            target-schema (:biff/ref properties)]
-                        [doc-schema target-schema]))
-        schemas (filterv (fn [schema]
-                           (or (schemas schema)
-                               (some #(dep/depends? graph % schema) schemas)))
-                         (dep/topo-sort graph))]
-    (into {}
-          (for [schema schemas
-                :let [deps (get-in graph [:dependencies schema])
-                      attr->properties (update-vals (get-in schema->ast [schema :keys])
-                                                    :properties)
-                      required-deps (->> (vals attr->properties)
-                                         (remove :optional)
-                                         (mapcat :biff/ref))
-                      attr->targets (into {}
-                                          (keep (fn [[attr properties]]
-                                                  (when-some [targets (:biff/ref properties)]
-                                                    [attr targets])))
-                                          attr->properties)]]
-            [schema {:freq (Math/pow 2 (rank graph schema rank-overrides))
-                     :run? (fn [state]
-                             (every? #(contains? state %) required-deps))
-                     :args (fn [state]
-                             (tc-gen/tuple
-                              (reduce (fn [gen [attr targets]]
-                                        (tc-gen/bind gen
-                                                     (fn [doc]
-                                                       (if (or (not (contains? doc attr))
-                                                               (empty? targets))
-                                                         (tc-gen/return (dissoc doc attr))
-                                                         (tc-gen/let [target (tc-gen/elements targets)
-                                                                      target-id (tc-gen/elements (keys (get state target)))]
-                                                           (assoc doc attr target-id))))))
-                                      (malli.g/generator schema malli-opts)
-                                      (for [[attr targets] attr->targets]
-                                        [attr (filterv #(contains? state %) targets)]))))
-                     :next-state (fn [state {[doc] :args}]
-                                   (-> state
-                                       (assoc-in [schema (:xt/id doc)] doc)
-                                       (update ::referenced (fnil into #{}) (keep doc (keys attr->targets)))))
-                     :valid? (fn [state {[doc] :args}]
-                               (->> (keys attr->targets)
-                                    (keep doc)
-                                    (every? #(contains? (::referenced state) %))))}]))))
-
 (defn- indexer-actual [indexer docs]
   (->> docs
        (reduce (fn [changes doc]
@@ -464,14 +394,6 @@
                {})
        (remove (comp nil? val))
        (into {})))
-
-#_(defn indexer-prop [{:keys [indexer model-opts expected-fn]}]
-  (let [model (make-model model-opts)]
-    (prop/for-all [commands (fugato/commands model {} 5 1)]
-      (let [docs (mapv (comp first :args) commands)
-            expected (expected-fn docs)
-            actual (indexer-actual indexer docs)]
-        (is (= expected actual))))))
 
 (def ^:dynamic *defspec-opts* {:num-tests 25})
 

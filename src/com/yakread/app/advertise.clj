@@ -6,6 +6,7 @@
    [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
    [com.yakread.lib.content :as lib.content]
    [com.yakread.lib.core :as lib.core]
+   [com.yakread.lib.form :as lib.form]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.middleware :as lib.mid]
    [com.yakread.lib.route :as lib.route :refer [href]]
@@ -541,9 +542,15 @@
          [:p "If you're unsure about something, feel free to "
           [:a.link {:href (href routes/contact)} "contact me"] "."]]))])))
 
+(defn- parse-cents [s]
+  (Math/round (* 100 (Float/parseFloat s))))
+
 (def module {:routes [page-route
                       policy-route
-                      ["" {:middleware [lib.mid/wrap-signed-in]}
+                      ["" {:middleware [lib.mid/wrap-signed-in
+                                       [lib.form/wrap-parse-form
+                                        {:overrides {:ad/bid parse-cents
+                                                     :ad/budget parse-cents}}]]}
                        save-ad
                        upload-image
                        change-image

@@ -4,8 +4,7 @@
    [com.biffweb.sqlite :as biff.sqlite]
    [com.wsscode.pathom3.connect.operation :as pco]
    [com.wsscode.pathom3.connect.planner :as-alias pcp]
-   [com.yakread.lib.core :as lib.core]
-   [com.yakread.model.schema :as sqlite-schema]))
+   [com.yakread.lib.core :as lib.core]))
 
 (defn- table-id-key
   "Get the ID key for a table (e.g., :user -> :user/id)"
@@ -105,7 +104,5 @@
   "Biff component that runs schema migrations, starts connection pool,
    and optionally starts litestream replication."
   [ctx]
-  (let [ctx (-> ctx
-                (assoc :biff.sqlite/columns sqlite-schema/columns)
-                biff.sqlite/use-sqlite)]
+  (let [ctx (biff.sqlite/use-sqlite ctx)]
     (assoc ctx :biff/query (partial biff.sqlite/execute ctx))))

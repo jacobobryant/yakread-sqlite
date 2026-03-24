@@ -263,8 +263,18 @@
   (fn [ctx]
     (handler (merge options ctx))))
 
+(def columns
+  {:auth-code/id              {:type :uuid :primary-key true}
+   :auth-code/email           {:type :text :required true}
+   :auth-code/code            {:type :text :required true}
+   :auth-code/created-at      {:type :inst :required true}
+   :auth-code/failed-attempts {:type :int :required true}
+   :deleted-user/id                  {:type :uuid :primary-key true}
+   :deleted-user/email-username-hash {:type :text :required true}})
+
 (defn module [options]
-  {:routes [["/auth" {:middleware [[wrap-options (merge default-options options)]]}
+  {:biff.sqlite/columns columns
+   :routes [["/auth" {:middleware [[wrap-options (merge default-options options)]]}
              ["/send-link"          {:post send-link-handler}]
              ["/verify-link/:token" {:get verify-link-handler}]
              ["/verify-link"        {:post verify-link-handler}]

@@ -71,10 +71,10 @@
       {:item/id (t/uuid 200)}
       {:item/id (t/uuid 400)}])),
    :result
-   [{:item/n-skipped 2,
-     :item/id #uuid "01000000-0000-0000-0000-000000000100"}
-    {:item/n-skipped 1,
-     :item/id #uuid "02000000-0000-0000-0000-000000000200"}
+   [{:item/id #uuid "01000000-0000-0000-0000-000000000100",
+     :item/n-skipped 2}
+    {:item/id #uuid "02000000-0000-0000-0000-000000000200",
+     :item/n-skipped 1}
     {:item/id #uuid "04000000-0000-0000-0000-000000000400",
      :item/n-skipped 0}]}
   _
@@ -235,15 +235,15 @@
    [{:item/id #uuid "01000000-0000-0000-0000-000000000100",
      :item/n-digest-sends 0}
     {:item/id #uuid "02000000-0000-0000-0000-000000000200",
-     :item/n-digest-sends 0}
+     :item/n-digest-sends 1}
     {:item/id #uuid "03000000-0000-0000-0000-000000000300",
-     :item/n-digest-sends 0}
+     :item/n-digest-sends 1}
     {:item/id #uuid "04000000-0000-0000-0000-000000000400",
-     :item/n-digest-sends 0}
+     :item/n-digest-sends 2}
     {:item/id #uuid "06000000-0000-0000-0000-000000000600",
      :item/n-digest-sends 0}
     {:item/id #uuid "05000000-0000-0000-0000-000000000500",
-     :item/n-digest-sends 0}
+     :item/n-digest-sends 2}
     {:item/id #uuid "07000000-0000-0000-0000-000000000700",
      :item/n-digest-sends 0}]}
   _]}

@@ -2,7 +2,6 @@
   (:require
    [com.biffweb :as biff]
    [com.yakread.lib.core :as lib.core]
-   [com.yakread.util.biff-staging :as biffs]
    [fast-edn.core :as fedn]))
 
 ;; TODO handle multiple checkboxes with same name
@@ -32,31 +31,28 @@
              {}
              form-params))
 
-(defn- parsers [malli-opts]
+(defn- parsers [columns]
   (into {}
-        (for [[field props] (biffs/field-asts malli-opts)]
-          [field (or (get-in props [:properties :biff.form/parser])
-                     (get-in props [:value :properties :biff.form/parser])
-                     (case (get-in props [:value :type])
-                       :boolean #(= "on" %)
-                       :int Long/parseLong
-                       :uuid parse-uuid
-                       :string (if-some [max-value (get-in props [:value :properties :max])]
-                                 (fn [s]
-                                   (cond-> s
-                                     (< max-value (count s)) (subs 0 max-value)))
-                                 identity)
-                       :time/local-time #(java.time.LocalTime/parse %)
-                       :time/zone-id #(java.time.ZoneId/of %)
-                       identity))])))
+        (for [[field col-def] columns
+              :let [type (:type col-def)]]
+          [field (case type
+                   :boolean #(= "on" %)
+                   :int Long/parseLong
+                   :uuid parse-uuid
+                   :text identity
+                   :inst #(java.time.Instant/parse %)
+                   :enum identity
+                   :edn identity
+                   :real #(Double/parseDouble %)
+                   identity)])))
 
 (def ^:private memo-parsers (memoize-latest parsers))
 
 (defn wrap-parse-form [handler & {:keys [overrides]}]
-  (fn [{:keys [biff/malli-opts biff.form/parser-overrides form-params query-params] :as ctx}]
+  (fn [{:keys [biff.sqlite/columns biff.form/parser-overrides form-params query-params] :as ctx}]
      (let [params (merge form-params query-params)
            new-params (lib.core/->DerefMap
-                       (delay (-> (memo-parsers @malli-opts)
+                       (delay (-> (memo-parsers columns)
                                   (merge parser-overrides overrides)
                                   (parse-form params))))]
        (handler (cond-> ctx

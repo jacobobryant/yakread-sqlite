@@ -1,6 +1,5 @@
 (ns com.yakread.model.item
   (:require
-   [clojure.set :as set]
    [clojure.string :as str]
    [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
    [com.yakread.lib.core :as lib.core]
@@ -326,30 +325,34 @@
   {::pco/input [:item/id]
    ::pco/output [:item/n-digest-sends]
    ::pco/batch? true}
-  (let [results (->> (query {:union
-                             [{:select [[:digest/ad-id :id]
-                                        [[:count :digest/id] :n-digest-sends]]
-                               :from :digest
-                               :where [:and
-                                       [:= :digest/user-id (:uid session)]
-                                       [:in :digest/ad-id (mapv :item/id items)]]
-                               :group-by :digest/ad-id}
-                              {:select [[:digest-item/item-id :id]
-                                        [[:count :digest-item/digest-id] :n-digest-sends]]
-                               :from :digest-item
-                               :join [:digest [:= :digest-item/digest-id :digest/id]]
-                               :where [:and
-                                       [:= :digest/user-id (:uid session)]
-                                       [:in :digest-item/item-id (mapv :item/id items)]]
-                               :group-by :digest-item/item-id}]})
-                     (mapv #(set/rename-keys % {:id :item/id
-                                                :n-digest-sends :item/n-digest-sends})))]
-    (lib.core/restore-order items
-                            :item/id
-                            results
-                            (fn [{:keys [item/id]}]
-                              {:item/id id
-                               :item/n-digest-sends 0}))))
+  (let [item-ids (mapv :item/id items)
+        uid (:uid session)
+        ;; Query digest table (items used as ad/subject in digests)
+        ad-counts (query {:select [:digest/ad-id
+                                   [[:count :digest/id] :n]]
+                          :from :digest
+                          :where [:and
+                                  [:= :digest/user-id uid]
+                                  [:in :digest/ad-id item-ids]]
+                          :group-by :digest/ad-id})
+        ;; Query digest-item table (items included in digests)
+        item-counts (query {:select [:digest-item/item-id
+                                     [[:count :digest-item/digest-id] :n]]
+                            :from :digest-item
+                            :join [:digest [:= :digest-item/digest-id :digest/id]]
+                            :where [:and
+                                    [:= :digest/user-id uid]
+                                    [:in :digest-item/item-id item-ids]]
+                            :group-by :digest-item/item-id})
+        ;; Merge counts into a single map keyed by item-id
+        id->count (merge-with +
+                              (into {} (map (juxt :digest/ad-id :n)) ad-counts)
+                              (into {} (map (juxt :digest-item/item-id :n)) item-counts))
+        results (mapv (fn [{:keys [item/id]}]
+                        {:item/id id
+                         :item/n-digest-sends (get id->count id 0)})
+                      items)]
+    results))
 
 (def module
   {:resolvers [user-favorites

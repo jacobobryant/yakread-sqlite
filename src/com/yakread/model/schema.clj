@@ -185,7 +185,7 @@
                                             1 :ad-credit.charge-status/confirmed
                                             2 :ad-credit.charge-status/failed}}
 
-   ;; --- mv-sub (materialized view, kept for schema compatibility) ---
+   ;; --- mv-sub (materialized view) ---
    :mv-sub/id             {:type :uuid :primary-key true}
    :mv-sub/sub-id         {:type :uuid :required true :ref :sub/id :unique true}
    :mv-sub/affinity-low   {:type :real}
@@ -194,21 +194,10 @@
    :mv-sub/unread         {:type :int}
    :mv-sub/n-read         {:type :int}
 
-   ;; --- mv-user (materialized view, kept for schema compatibility) ---
+   ;; --- mv-user (materialized view) ---
    :mv-user/id              {:type :uuid :primary-key true}
    :mv-user/user-id         {:type :uuid :required true :ref :user/id :unique true}
    :mv-user/current-item-id {:type :uuid :ref :item/id}
-
-   ;; --- deleted-user ---
-   :deleted-user/id                  {:type :uuid :primary-key true}
-   :deleted-user/email-username-hash {:type :text :required true}
-
-   ;; --- auth-code ---
-   :auth-code/id              {:type :uuid :primary-key true}
-   :auth-code/email           {:type :text :required true}
-   :auth-code/code            {:type :text :required true}
-   :auth-code/created-at      {:type :inst :required true}
-   :auth-code/failed-attempts {:type :int :required true}
 
    ;; --- test-rss-post ---
    :test-rss-post/id            {:type :uuid :primary-key true}
@@ -220,4 +209,4 @@
    :test-rss-post/published-at  {:type :inst :required true}})
 
 (def module
-  {})
+  {:biff.sqlite/columns columns})

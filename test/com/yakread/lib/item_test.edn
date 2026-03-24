@@ -2,7 +2,6 @@
  [[com.yakread.lib.test :as t]
   [clojure.data.generators :as gen]
   [clojure.string :as str]
-  [clojure.walk :as walk]
   [com.yakread.lib.item :as lib.item :refer :all]],
  :tests
  [{:doc "add-item-machine* :start",
@@ -152,29 +151,16 @@
          :biff.fx/tx [[:put-docs :stuff {:xt/id "stuff1"}]]})})]
     {:error (handle-readability {:com.yakread.lib.item/url "url"}),
      :success
-     (->>
-      (t/truncate
-       (handle-readability
-        {:com.yakread.lib.item/url "url",
-         :com.yakread.lib.item/raw-html
-         (str
-          "<html><head>"
-          "<meta content=\"https://example.com/some-image.png\" property=\"og:image\">"
-          "</head><body>hello</body></html>"),
-         :com.yakread.fx/js
-         {:content (apply str (repeat 201 "hello"))}}))
-      (walk/postwalk
-       (fn
-        [x]
-        (cond
-         (uuid? x)
-         :_
-         (and (string? x) (parse-uuid x))
-         :_
-         (and (map? x) (contains? x :item/lang))
-         (dissoc x :item/lang)
-         :else
-         x))))}),
+     (t/truncate
+      (handle-readability
+       {:com.yakread.lib.item/url "url",
+        :com.yakread.lib.item/raw-html
+        (str
+         "<html><head>"
+         "<meta content=\"https://example.com/some-image.png\" property=\"og:image\">"
+         "</head><body>hello</body></html>"),
+        :com.yakread.fx/js
+        {:content (apply str (repeat 201 "hello"))}}))}),
    :result
    {:error
     {:on-error
@@ -184,21 +170,24 @@
     [{:biff.fx/s3
       {:config-ns yakread.s3.content,
        :method "PUT",
-       :key :_,
+       :key "bb20b45f-d4d9-5138-3d93-cb799b3970be",
        :body "<html>\n <head></head>\n <body>\n  hellohellohellohe…",
        :headers {"x-amz-acl" "private", "content-type" "text/html"}}}
      {:biff.fx/sqlite
       [{:insert-into :item,
         :values
-        [{:item/id :_,
+        [{:item/id #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503",
           :item/image-url "https://example.com/some-image.png",
-          :item/content-key :_,
+          :item/content-key
+          #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+          :item/lang "fi",
           :item/record-type [:lift :item.record-type/direct]}]}
        {:insert-into :redirect,
         :values
-        [{:redirect/id :_,
+        [{:redirect/id #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
           :redirect/url "url",
-          :redirect/item-id :_}]}],
+          :redirect/item-id
+          #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503"}]}],
       :on-success
       {:ctx
        {:com.yakread.lib.item/url "url",
@@ -207,6 +196,8 @@
         :com.yakread.fx/js
         {:content
          "hellohellohellohellohellohellohellohellohellohell…"}},
-       :params {:item/id :_, :item/url "url"}},
+       :params
+       {:item/id #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503",
+        :item/url "url"}},
       :biff.fx/tx [[:put-docs :stuff {:xt/id "stuff1"}]]}]}}
   _]}

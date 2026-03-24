@@ -14,7 +14,6 @@
    [com.yakread.lib.email :as lib.email]
    [com.yakread.lib.s3 :as lib.s3]
    [com.yakread.lib.sqlite :as lib.sqlite]
-   [com.yakread.model.schema :as sqlite-schema]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.middleware :as lib.mid]
    [com.yakread.lib.pathom :as lib.pathom]
@@ -26,10 +25,6 @@
    [com.yakread.routes :as routes]
    [com.yakread.smtp :as smtp]
    [com.yakread.util.biff-staging :as biffs]
-   [malli.core :as malli]
-   [malli.experimental.time :as malli.t]
-   [malli.registry :as malr]
-   [malli.util :as malli.u]
    [nrepl.cmdline :as nrepl-cmd]
    [reitit.ring :as reitit-ring]
    [taoensso.telemere :as tel]
@@ -77,26 +72,11 @@
     (time ((requiring-resolve 'com.yakread.lib.test/run-examples!) {}))
     (log/info :done)))
 
-(def malli-opts
-  {:registry (apply malr/composite-registry
-                    (malli/default-schemas)
-                    (malli.t/schemas)
-                    (malli.u/schemas)
-                    (keep :schema modules))})
-
-;; TODO pull into a lib function
-(doseq [schema-map (keep :schema modules)
-        k (keys schema-map)
-        :let [ex (try
-                   (malli/schema k malli-opts)
-                   nil
-                   (catch Exception e
-                     e))]]
-  (assert (nil? ex)
-          (str "Schema for " k " is invalid: " (pr-str (ex-data ex)))))
+(def columns
+  (apply merge (keep :biff.sqlite/columns modules)))
 
 (def pathom-env (pci/register (->> (mapcat :resolvers modules)
-                                   (concat (lib.sqlite/sqlite-resolvers sqlite-schema/columns))
+                                   (concat (lib.sqlite/sqlite-resolvers columns))
                                    (mapv lib.pathom/wrap-debug))))
 
 (defn merge-context [{:keys [yakread/model
@@ -190,7 +170,7 @@
                      :biff/merge-context-fn #'merge-context
                      :biff/after-refresh `start
                      :biff/handler #'handler
-                     :biff/malli-opts (lib.core/->DerefMap #'malli-opts)
+                     :biff.sqlite/columns columns
                      :biff/router router
                      :biff/send-email #'lib.email/send-email
                      :biff.beholder/on-save #'on-save
