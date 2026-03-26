@@ -243,7 +243,7 @@
     {:item/id #uuid "06000000-0000-0000-0000-000000000600",
      :item/n-digest-sends 0}
     {:item/id #uuid "05000000-0000-0000-0000-000000000500",
-     :item/n-digest-sends 2}
+     :item/n-digest-sends 0}
     {:item/id #uuid "07000000-0000-0000-0000-000000000700",
      :item/n-digest-sends 0}]}
   _]}

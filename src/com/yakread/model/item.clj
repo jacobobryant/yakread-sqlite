@@ -327,15 +327,6 @@
    ::pco/batch? true}
   (let [item-ids (mapv :item/id items)
         uid (:uid session)
-        ;; Query digest table (items used as ad/subject in digests)
-        ad-counts (query {:select [:digest/ad-id
-                                   [[:count :digest/id] :n]]
-                          :from :digest
-                          :where [:and
-                                  [:= :digest/user-id uid]
-                                  [:in :digest/ad-id item-ids]]
-                          :group-by :digest/ad-id})
-        ;; Query digest-item table (items included in digests)
         item-counts (query {:select [:digest-item/item-id
                                      [[:count :digest-item/digest-id] :n]]
                             :from :digest-item
@@ -344,15 +335,11 @@
                                     [:= :digest/user-id uid]
                                     [:in :digest-item/item-id item-ids]]
                             :group-by :digest-item/item-id})
-        ;; Merge counts into a single map keyed by item-id
-        id->count (merge-with +
-                              (into {} (map (juxt :digest/ad-id :n)) ad-counts)
-                              (into {} (map (juxt :digest-item/item-id :n)) item-counts))
-        results (mapv (fn [{:keys [item/id]}]
-                        {:item/id id
-                         :item/n-digest-sends (get id->count id 0)})
-                      items)]
-    results))
+        id->count (into {} (map (juxt :digest-item/item-id :n)) item-counts)]
+    (mapv (fn [{:keys [item/id]}]
+            {:item/id id
+             :item/n-digest-sends (get id->count id 0)})
+          items)))
 
 (def module
   {:resolvers [user-favorites

@@ -1,5 +1,6 @@
 (ns com.yakread.lib.form
   (:require
+   [clojure.edn :as edn]
    [com.biffweb :as biff]
    [com.yakread.lib.core :as lib.core]
    [fast-edn.core :as fedn]))
@@ -41,8 +42,8 @@
                    :uuid parse-uuid
                    :text identity
                    :inst #(java.time.Instant/parse %)
-                   :enum identity
-                   :edn identity
+                   :enum edn/read-string
+                   :edn edn/read-string
                    :real #(Double/parseDouble %)
                    identity)])))
 
