@@ -1,0 +1,159 @@
+{:require
+ [[com.yakread.lib.test :as t]
+  [com.yakread.app.admin.impersonate :refer :all]],
+ :tests
+ [{:doc "search-route returns users matching email substring",
+   :eval
+   (t/test-route
+    search-route
+    :get
+    {:db*
+     {:user
+      [{:user/id (t/uuid 1),
+        :user/email "alice@example.com",
+        :user/joined-at (t/instant 2024)}
+       {:user/id (t/uuid 2),
+        :user/email "bob@example.com",
+        :user/joined-at (t/instant 2024)}
+       {:user/id (t/uuid 3),
+        :user/email "charlie@test.com",
+        :user/joined-at (t/instant 2024)}]},
+     :params {:q "example"}}),
+   :result
+   {:body
+    [:div
+     [:<>
+      [:p.text-sm.text-neut-600.mb-4 "Page 1 · 2 results"]
+      [:table
+       [:thead.text-left [:tr ([:th "Email"] [:th "Joined"] [:th ""])]]
+       [:tbody
+        ([:tr.even:bg-neut-50
+          ([:td "alice@example.com"]
+           [:td "2023-12-31"]
+           [:td
+            [:form
+             {:method "post",
+              :action "/admin/impersonate/sign-in-as",
+              :class "inline",
+              :style {:margin-bottom 0}}
+             ([:input
+               {:type "hidden",
+                :name "__anti-forgery-token",
+                :value
+                #object[clojure.lang.Var$Unbound 0x260b3704 "Unbound: #'ring.middleware.anti-forgery/*anti-forgery-token*"]}])
+             ([:input
+               {:type "hidden",
+                :name "user-id",
+                :value "00010000-0000-0000-0000-000000000001"}]
+              [:button
+               {:type "submit",
+                :class
+                (inter
+                 font-medium
+                 disabled:opacity-70
+                 nil
+                 text-blue-600
+                 text-sm
+                 px-3
+                 py-1)}
+               nil
+               ("Sign in as")])]])]
+         [:tr.even:bg-neut-50
+          ([:td "bob@example.com"]
+           [:td "2023-12-31"]
+           [:td
+            [:form
+             {:method "post",
+              :action "/admin/impersonate/sign-in-as",
+              :class "inline",
+              :style {:margin-bottom 0}}
+             ([:input
+               {:type "hidden",
+                :name "__anti-forgery-token",
+                :value
+                #object[clojure.lang.Var$Unbound 0x260b3704 "Unbound: #'ring.middleware.anti-forgery/*anti-forgery-token*"]}])
+             ([:input
+               {:type "hidden",
+                :name "user-id",
+                :value "00020000-0000-0000-0000-000000000002"}]
+              [:button
+               {:type "submit",
+                :class
+                (inter
+                 font-medium
+                 disabled:opacity-70
+                 nil
+                 text-blue-600
+                 text-sm
+                 px-3
+                 py-1)}
+               nil
+               ("Sign in as")])]])])]]
+      nil]]}}
+  _
+  {:doc "search-route returns empty when no match",
+   :eval
+   (t/test-route
+    search-route
+    :get
+    {:db*
+     {:user
+      [{:user/id (t/uuid 1),
+        :user/email "alice@example.com",
+        :user/joined-at (t/instant 2024)}]},
+     :params {:q "nomatch"}}),
+   :result
+   {:body
+    [:div
+     [:p.text-neut-600.text-sm
+      "No users found matching \""
+      "nomatch"
+      "\"."]]}}
+  _
+  {:doc "search-route returns empty message when no query",
+   :eval
+   (t/test-route
+    search-route
+    :get
+    {:db*
+     {:user
+      [{:user/id (t/uuid 1),
+        :user/email "alice@example.com",
+        :user/joined-at (t/instant 2024)}]},
+     :params {}}),
+   :result
+   {:body
+    [:div [:p.text-neut-600.text-sm "Enter a search term above."]]}}
+  _
+  {:doc "impersonate-route sets session uid for valid user",
+   :eval
+   (t/test-route
+    impersonate-route
+    :post
+    {:db*
+     {:user
+      [{:user/id (t/uuid 1),
+        :user/email "alice@example.com",
+        :user/joined-at (t/instant 2024)}]},
+     :params {:user-id (str (t/uuid 1))},
+     :session {}}),
+   :result
+   {:status 303,
+    :headers {"location" "/app"},
+    :session {:uid #uuid "00010000-0000-0000-0000-000000000001"}}}
+  _
+  {:doc "impersonate-route redirects to page when user not found",
+   :eval
+   (t/test-route
+    impersonate-route
+    :post
+    {:db*
+     {:user
+      [{:user/id (t/uuid 1),
+        :user/email "alice@example.com",
+        :user/joined-at (t/instant 2024)}]},
+     :params {:user-id (str (t/uuid 99))},
+     :session {}}),
+   :result
+   {:status 303, :headers {"location" ["/admin/impersonate" nil]}}}
+  _]}
