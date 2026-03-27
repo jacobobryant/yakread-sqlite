@@ -7,7 +7,6 @@
    [clojure.tools.logging :as log]
    [clojure.tools.namespace.find :as ns-find]
    [com.biffweb :as biff]
-   [com.biffweb.experimental :as biffx]
    [com.wsscode.pathom3.connect.operation :as pco]
    [com.wsscode.pathom3.connect.planner :as-alias pcp]
    [com.wsscode.pathom3.connect.runner :as-alias pcr]
@@ -91,82 +90,6 @@
     :ad
     :user
     :skip})
-
-(defn xtdb2-resolvers [malli-opts]
-  ;; TODO maybe add reverse resolvers too
-  (for [[schema attrs] (schema-info malli-opts)
-        :when (contains? schema-whitelist schema)
-        :let [ref? (fn [attr]
-                     (boolean (get-in attrs [attr :properties :biff/ref])))
-              joinify (fn [[k v]]
-                        (if (ref? k)
-                          [k {:xt/id v}]
-                          [k v]))
-              joinify-map (fn [m]
-                            (into {} (map joinify) m))]
-        :when (not (qualified-keyword? schema))
-        :let [op-name (symbol "com.yakread.util.biff-staging"
-                              (str (name schema) "-xtdb2-resolver"))]]
-    (pco/resolver op-name
-                  {::pco/input [:xt/id]
-                   ::pco/output (vec (for [k (keys attrs)
-                                           :when (not= k :xt/id)]
-                                       (if (ref? k)
-                                         {k [:xt/id]}
-                                         k)))
-                   ::pco/batch? true
-                   ::pco/cache-key (fn [env input]
-                                     [op-name input (expects env)])}
-                  (fn [{:keys [biff/conn ::pcr/resolver-cache*] :as env} inputs]
-                    ;; TODO
-                    ;; - use a fixed db snapshot
-                    (let [resolver-cache* (when (or (volatile? resolver-cache*)
-                                                    (= clojure.lang.Atom (type resolver-cache*)))
-                                            resolver-cache*)
-                          cache-value (some-> resolver-cache* deref)
-                          columns (filterv attrs (expects env))
-                          results (mapv (fn [{:keys [xt/id] :as input}]
-                                          (merge input
-                                                 (get-in cache-value [::cache schema id])))
-                                        inputs)
-                          missing-columns (into #{}
-                                                (mapcat (fn [entity]
-                                                          (into []
-                                                                (remove #(contains? entity %))
-                                                                columns)))
-                                                results)
-                          incomplete-inputs (filterv (fn [input]
-                                                       (some #(not (contains? input %))
-                                                             missing-columns))
-                                                     inputs)
-                          query {:select (vec (conj missing-columns :xt/id))
-                                                    :from schema
-                                                    :where [:in :xt/id (mapv :xt/id incomplete-inputs)]}
-                          query-results (when (not-empty incomplete-inputs)
-                                          (biffx/q conn query))
-                          nil-map (zipmap missing-columns (repeat nil))
-                          update-cache (fn [cache-value]
-                                         (reduce (fn [cache-value record]
-                                                   (update-in cache-value
-                                                              [::cache schema (:xt/id record)]
-                                                              #(merge nil-map % record)))
-                                                 cache-value
-                                                 query-results))
-                          cache-value (cond
-                                        (not resolver-cache*)
-                                        (update-cache cache-value)
-
-                                        (volatile? resolver-cache*)
-                                        (vswap! resolver-cache* update-cache)
-
-                                        :else
-                                        (swap! resolver-cache* update-cache))]
-                      (mapv (fn [{:keys [xt/id]}]
-                              (-> (get-in cache-value [::cache schema id])
-                                  lib.core/some-vals
-                                  joinify-map
-                                  (assoc :xt/id id)))
-                            inputs))))))
 
 (defn- find-modules [search-dirs]
   (->> search-dirs

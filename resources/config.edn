@@ -19,26 +19,17 @@
  :biff.tasks/main-ns com.yakread
  :biff.tasks/on-soft-deploy "\"(com.yakread/on-save @com.yakread/system)\""
  :biff.tasks/server #biff/env SERVER
- :biff.xtdb.jdbc/jdbcUrl #biff/secret "XTDB_JDBC_URL"
- :biff.xtdb/dir "storage/xtdb"
- :biff.xtdb/topology #keyword #or [#profile {:prod #biff/env "PROD_XTDB_TOPOLOGY" :default #biff/env "XTDB_TOPOLOGY"}
-                                   "standalone"]
  :biff/domain #biff/env DOMAIN
  :biff/base-url #profile {:prod #join ["https://" #biff/env DOMAIN] :default "http://localhost:8080"}
  :biff/host #profile {:dev "0.0.0.0" :default "localhost"}
  :biff/jwt-secret #biff/secret JWT_SECRET
  :biff/port #long #or [#biff/env PORT "8080"]
 
- :biff.xtdb2/storage   #profile {:prod :remote :default :local}
- :biff.xtdb2/log       #profile {:prod :kafka :default :local}
- :biff.xtdb2.log/topic          #biff/env XTDB_LOG_TOPIC
- :biff.xtdb2.storage/max-cache-bytes nil
- :biff.xtdb2.storage/bucket     #biff/env XTDB_STORAGE_BUCKET
- :biff.xtdb2.storage/endpoint   #biff/env XTDB_STORAGE_ENDPOINT
- :biff.xtdb2.storage/access-key #biff/env XTDB_STORAGE_ACCESS_KEY
- :biff.xtdb2.storage/secret-key #biff/secret XTDB_STORAGE_SECRET_KEY
-
  :biff.sqlite/generate-schema #profile {:dev true}
+ :biff.sqlite/litestream-bucket       #biff/env LITESTREAM_BUCKET
+ :biff.sqlite/litestream-endpoint     #biff/env LITESTREAM_ENDPOINT
+ :biff.sqlite/litestream-access-key-id     #biff/env LITESTREAM_ACCESS_KEY_ID
+ :biff.sqlite/litestream-secret-access-key #biff/secret LITESTREAM_SECRET_ACCESS_KEY
 
  :mailersend/api-key  #profile {:prod #biff/secret MAILERSEND_API_KEY}
  :mailersend/from     #biff/env MAILERSEND_FROM
@@ -86,10 +77,6 @@
  :yakread.work.sync-all-feeds/enabled      #boolean #or [#biff/env ENABLE_SYNC_FEEDS "false"]
  :yakread.work.queue-add-candidate/enabled #boolean #or [#biff/env ENABLE_ADD_CANDIDATES "false"]
  :yakread.work.digest/enabled              #boolean #or [#biff/env ENABLE_SEND_DIGESTS "false"]
-
- :yakread.work.materialized-views/enabled #or [#biff/env MATERIALIZED_VIEWS_ENABLED true]
-
- :yakread.import/enabled #boolean #or [#biff/env YAKREAD_IMPORT_ENABLED "false"]
 
  :biff/alert-email             #biff/env ALERT_EMAIL
  :biff.error-reporting/enabled #profile {:prod true}}

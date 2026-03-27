@@ -1,6 +1,6 @@
 (ns com.yakread.lib.auth
   (:require [com.biffweb :as biff]
-            [com.yakread.lib.sqlite :as lib.sqlite]
+            [com.biffweb.sqlite :as biff.sqlite]
             [clj-http.client :as http]
             [tick.core :as tick])
   (:import [java.util UUID]))
@@ -40,7 +40,7 @@
             (.nextInt rng (dec (int (Math/pow 10 length)))))))
 
 (defn- get-user-id [ctx email]
-  (-> (lib.sqlite/execute ctx {:select :user/id
+  (-> (biff.sqlite/execute ctx {:select :user/id
                                :from :user
                                :where [:= :user/email email]})
       first
@@ -48,7 +48,7 @@
 
 (defn- create-user! [ctx email]
   (let [user-id (random-uuid)]
-    (lib.sqlite/execute ctx
+    (biff.sqlite/execute ctx
       {:insert-into :user
        :values [{:user/id user-id
                  :user/email email
@@ -61,7 +61,7 @@
   (UUID/nameUUIDFromBytes (.getBytes s)))
 
 (defn- upsert-code! [ctx email code]
-  (lib.sqlite/execute ctx
+  (biff.sqlite/execute ctx
     {:insert-into :auth-code
      :values [{:auth-code/id (uuid-from email)
                :auth-code/email email
@@ -73,18 +73,18 @@
 
 (defn- get-code [ctx email]
   (first
-   (lib.sqlite/execute ctx
+   (biff.sqlite/execute ctx
      {:select :*
       :from :auth-code
       :where [:= :auth-code/id (uuid-from email)]})))
 
 (defn- delete-code! [ctx email]
-  (lib.sqlite/execute ctx
+  (biff.sqlite/execute ctx
     {:delete-from :auth-code
      :where [:= :auth-code/id (uuid-from email)]}))
 
 (defn- increment-failed-attempts! [ctx email]
-  (lib.sqlite/execute ctx
+  (biff.sqlite/execute ctx
     {:update :auth-code
      :set {:auth-code/failed-attempts [:+ :auth-code/failed-attempts 1]}
      :where [:= :auth-code/id (uuid-from email)]}))
@@ -263,8 +263,18 @@
   (fn [ctx]
     (handler (merge options ctx))))
 
+(def columns
+  {:auth-code/id              {:type :uuid :primary-key true}
+   :auth-code/email           {:type :text :required true}
+   :auth-code/code            {:type :text :required true}
+   :auth-code/created-at      {:type :inst :required true}
+   :auth-code/failed-attempts {:type :int :required true}
+   :deleted-user/id                  {:type :uuid :primary-key true}
+   :deleted-user/email-username-hash {:type :text :required true}})
+
 (defn module [options]
-  {:routes [["/auth" {:middleware [[wrap-options (merge default-options options)]]}
+  {:biff.sqlite/columns columns
+   :routes [["/auth" {:middleware [[wrap-options (merge default-options options)]]}
              ["/send-link"          {:post send-link-handler}]
              ["/verify-link/:token" {:get verify-link-handler}]
              ["/verify-link"        {:post verify-link-handler}]

@@ -30,7 +30,6 @@
   [com.yakread.model.feed]
   [com.yakread.model.item]
   [com.yakread.model.moderation]
-  [com.yakread.model.old-schema]
   [com.yakread.model.params]
   [com.yakread.model.recommend]
   [com.yakread.model.schema]
@@ -45,7 +44,6 @@
   [com.yakread.ui-components.shell]
   [com.yakread.work.account]
   [com.yakread.work.digest]
-  [com.yakread.work.materialized-views]
   [com.yakread.work.subscription]
   [com.yakread.work.train]))
 
@@ -79,7 +77,6 @@
   com.yakread.model.feed/module
   com.yakread.model.item/module
   com.yakread.model.moderation/module
-  com.yakread.model.old-schema/module
   com.yakread.model.params/module
   com.yakread.model.recommend/module
   com.yakread.model.schema/module
@@ -94,6 +91,5 @@
   com.yakread.ui-components.shell/module
   com.yakread.work.account/module
   com.yakread.work.digest/module
-  com.yakread.work.materialized-views/module
   com.yakread.work.subscription/module
   com.yakread.work.train/module])

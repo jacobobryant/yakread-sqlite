@@ -16,5 +16,8 @@
      :taken-by-deleted-user
      (email-username-taken? (:biff/query ctx) "bar"),
      :not-taken (email-username-taken? (:biff/query ctx) "baz")}),
-   :result {:taken-by-user true, :taken-by-deleted-user true, :not-taken false}}
+   :result
+   {:taken-by-user true,
+    :taken-by-deleted-user true,
+    :not-taken false}}
   _]}

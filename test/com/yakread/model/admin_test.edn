@@ -12,9 +12,7 @@
        {:user/id (t/uuid 2),
         :user/email "old@test.com",
         :user/joined-at (t/instant 1999)}]}]
-    (recent-users
-     (merge ctx {:biff/now (t/instant 2000 1 8)})
-     {})),
+    (recent-users (merge ctx {:biff/now (t/instant 2000 1 8)}) {})),
    :result
    {:admin/recent-users
     [{:user/id #uuid "00010000-0000-0000-0000-000000000001"}]}}
@@ -27,9 +25,7 @@
       [{:user/id (t/uuid 1),
         :user/email "old@test.com",
         :user/joined-at (t/instant 1999)}]}]
-    (recent-users
-     (merge ctx {:biff/now (t/instant 2000 1 8)})
-     {})),
+    (recent-users (merge ctx {:biff/now (t/instant 2000 1 8)}) {})),
    :result {:admin/recent-users []}}
   _
   {:doc "ads returns all ads",

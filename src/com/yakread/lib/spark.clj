@@ -30,13 +30,11 @@
      :from :item
      :where [:= :item/direct-candidate-status [:lift :item.direct-candidate-status/approved]]})})
 
-
 (defresolver ads [{:biff/keys [query now]} _]
   {::pco/output [{::all-ads [:ad/id]}
                  {::ad-candidates [:ad/id]}]}
   (let [all-ads (into []
-                      (comp (remove (comp nil? :ad/id))
-                            (map #(set/rename-keys % {:recent-cost :ad/recent-cost})))
+                      (remove (comp nil? :ad/id))
                       (query
                        {:select [:ad/id
                                  :ad/approve-state
@@ -44,7 +42,7 @@
                                  :ad/payment-failed
                                  :ad/payment-method
                                  :ad/budget
-                                 [[:coalesce [:sum :ad-click/cost] 0] :recent-cost]]
+                                 [[:coalesce [:sum :ad-click/cost] 0] :ad/recent-cost]]
                         :from :ad
                         :left-join [:ad-click [:and
                                                [:= :ad-click/ad-id :ad/id]
@@ -137,7 +135,6 @@
                                 :from :item
                                 :where [:in :item/url candidate-urls]}))))
 
-
         dedupe-usit (fn [usit]
                       (update usit :user-item/item-id dedupe-item-id))
         usit-key (juxt :user-item/user-id :user-item/item-id)
@@ -163,18 +160,14 @@
                         :else b))
         skip-usits (->> (when all-item-ids
                           (->> (query
-                                {:select [:reclist/user-id
-                                          :skip/item-id
-                                          [[:count :skip/id] :skips]
-                                          [[:max :reclist/created-at] :skipped-at]]
+                                {:select [[:reclist/user-id :user-item/user-id]
+                                          [:skip/item-id :user-item/item-id]
+                                          [[:count :skip/id] :user-item/skips]
+                                          [[:max :reclist/created-at] :user-item/skipped-at]]
                                  :from :skip
                                  :join [:reclist [:= :reclist/id :skip/reclist-id]]
                                  :where [:in :skip/item-id all-item-ids]
-                                 :group-by [:reclist/user-id :skip/item-id]})
-                               (mapv #(set/rename-keys % {:reclist/user-id :user-item/user-id
-                                                          :skip/item-id :user-item/item-id
-                                                          :skips :user-item/skips
-                                                          :skipped-at :user-item/skipped-at}))))
+                                 :group-by [:reclist/user-id :skip/item-id]})))
                         (mapv dedupe-usit)
                         (group-by usit-key)
                         (vals)
@@ -306,16 +299,14 @@
                   [:item/id :item/n-likes]}]}
   {:yakread.model/all-liked-items
    (into []
-         (comp (map #(set/rename-keys % {:user-item/item-id :item/id
-                                         :n-likes :item/n-likes}))
-               (remove (comp nil? :item/id)))
+         (remove (comp nil? :item/id))
          (query
-          {:select [:user-item/item-id
-                    [[:count :user-item/id] :n-likes]]
+          {:select [[:user-item/item-id :item/id]
+                    [[:count :user-item/id] :item/n-likes]]
            :from :user-item
            :where [:is-not :user-item/favorited-at nil]
            :group-by [:user-item/item-id]
-           :order-by [[:n-likes :desc]]}))})
+           :order-by [[[:count :user-item/id] :desc]]}))})
 
 (def ^:private pathom-env (pci/register [item-candidates
                                          ads
@@ -347,18 +338,15 @@
 
 (comment
   (-> @(:yakread/model @com.yakread/system)
-      :yakread.model/get-candidates
-      )
+      :yakread.model/get-candidates)
 
   (require 'repl)
   (time (do (new-model (repl/context))
-          :done))
+            :done))
 
   (time (do (use-spark (repl/context))
-          :done))
+            :done))
 
   (do (reset! (:yakread/model (repl/context))
               (new-model (repl/context)))
-    :done)
-
-  )
+      :done))

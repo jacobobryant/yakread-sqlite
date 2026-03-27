@@ -6,16 +6,14 @@
    [clojure.tools.logging :as log]
    [clojure.tools.namespace.repl :as tn-repl]
    [com.biffweb :as biff]
-   [com.biffweb.experimental :as biffx]
+   [com.biffweb.sqlite :as biff.sqlite]
    [com.wsscode.pathom3.connect.indexes :as pci]
    [com.wsscode.pathom3.connect.planner :as pcp]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.auth :as lib.auth]
    [com.yakread.lib.email :as lib.email]
-   [com.yakread.lib.migrate.sqlite.copilot :as migrate.sqlite]
    [com.yakread.lib.s3 :as lib.s3]
    [com.yakread.lib.sqlite :as lib.sqlite]
-   [com.yakread.model.schema :as sqlite-schema]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.middleware :as lib.mid]
    [com.yakread.lib.pathom :as lib.pathom]
@@ -27,37 +25,13 @@
    [com.yakread.routes :as routes]
    [com.yakread.smtp :as smtp]
    [com.yakread.util.biff-staging :as biffs]
-   [malli.core :as malli]
-   [malli.experimental.time :as malli.t]
-   [malli.registry :as malr]
-   [malli.util :as malli.u]
    [nrepl.cmdline :as nrepl-cmd]
    [reitit.ring :as reitit-ring]
    [taoensso.telemere :as tel]
    [taoensso.telemere.tools-logging :as tel.tl]
    [tick.core :as tick]
    [time-literals.read-write :as time-literals])
-  (:import
-   [com.zaxxer.hikari HikariConfig HikariDataSource])
   (:gen-class))
-
-(defn use-sqlite
-  "Biff component that starts a HikariCP connection pool for SQLite
-   and puts it in the :biff/conn key."
-  [{:biff.sqlite/keys [db-path]
-    :or {db-path "storage/sqlite/main.db"}
-    :as ctx}]
-  (let [datasource (HikariDataSource.
-                    (doto (HikariConfig.)
-                      (.setJdbcUrl (str "jdbc:sqlite:" db-path))
-                      (.setConnectionInitSql
-                       (str/join ";" ["PRAGMA journal_mode=WAL"
-                                      "PRAGMA busy_timeout = 5000"
-                                      "PRAGMA foreign_keys = ON"
-                                      "PRAGMA synchronous = NORMAL"]))))]
-    (-> ctx
-        (assoc :biff/conn datasource)
-        (update :biff/stop conj #(.close datasource)))))
 
 (def modules
   (concat modules/modules
@@ -98,57 +72,30 @@
     (time ((requiring-resolve 'com.yakread.lib.test/run-examples!) {}))
     (log/info :done)))
 
-(def malli-opts
-  {:registry (apply malr/composite-registry
-                    (malli/default-schemas)
-                    (malli.t/schemas)
-                    (malli.u/schemas)
-                    (keep :schema modules))})
-
-(def malli-opts*
-  {:registry (malr/composite-registry
-              (malli/default-schemas)
-              (malli.t/schemas)
-              (malli.u/schemas)
-              sqlite-schema/schema)})
-
-;; TODO pull into a lib function
-(doseq [schema-map (keep :schema modules)
-        k (keys schema-map)
-        :let [ex (try
-                   (malli/schema k malli-opts)
-                   nil
-                   (catch Exception e
-                     e))]]
-  (assert (nil? ex)
-          (str "Schema for " k " is invalid: " (pr-str (ex-data ex)))))
+(def columns
+  (apply merge (keep :biff.sqlite/columns modules)))
 
 (def pathom-env (pci/register (->> (mapcat :resolvers modules)
-                                   (concat (lib.sqlite/sqlite-resolvers malli-opts*))
+                                   (concat (lib.sqlite/sqlite-resolvers columns))
                                    (mapv lib.pathom/wrap-debug))))
 
 (defn merge-context [{:keys [yakread/model
                              biff/jwt-secret]
                       :as ctx}]
-  (let [;snapshots (biff/index-snapshots ctx)
-        ]
-    (-> ctx
-        ;;(biff/assoc-db)
-        (merge pathom-env
-               {:yakread.model/get-candidates (constantly {})
-                :yakread.model/item-candidate-ids #{}}
-               (some-> model deref)
-               {:biff/router router
-                :biff.fx/handlers fx/handlers
-                ;:biff/db (:biff/db snapshots)
-                ;:biff.index/snapshots snapshots
-                :biff/now (tick/instant)
-                :com.yakread/sign-redirect (fn [url]
-                                             {:redirect url
-                                              :redirect-sig (biffs/signature (jwt-secret) url)})
-                :biff/href-safe (partial lib.route/href-safe ctx)
-                :biff/query  (partial lib.sqlite/execute ctx)})
-        (pcp/with-plan-cache (atom {})))))
+  (-> ctx
+      (merge pathom-env
+             {:yakread.model/get-candidates (constantly {})
+              :yakread.model/item-candidate-ids #{}}
+             (some-> model deref)
+             {:biff/router router
+              :biff.fx/handlers fx/handlers
+              :biff/now (tick/instant)
+              :com.yakread/sign-redirect (fn [url]
+                                           {:redirect url
+                                            :redirect-sig (biffs/signature (jwt-secret) url)})
+              :biff/href-safe (partial lib.route/href-safe ctx)
+              :biff/query  (partial biff.sqlite/execute ctx)})
+      (pcp/with-plan-cache (atom {}))))
 
 ;; TODO use a lib.pipe thing for this
 (defn- handle-error [{:keys [biff/send-email biff/domain biff.error-reporting/state] :as ctx} signal]
@@ -211,11 +158,9 @@
 (def components
   [biff/use-aero-config
    use-error-reporting
-   #_biffx/use-xtdb2
    lib.sqlite/use-sqlite
    lib.spark/use-spark
    biff/use-queues
-   ;biffx/use-xtdb2-listener
    biff/use-jetty
    biff/use-chime
    biff/use-beholder
@@ -225,13 +170,11 @@
                      :biff/merge-context-fn #'merge-context
                      :biff/after-refresh `start
                      :biff/handler #'handler
-                     :biff/malli-opts (lib.core/->DerefMap #'malli-opts)
-                     :biff/malli-opts* (lib.core/->DerefMap #'malli-opts*)
+                     :biff.sqlite/columns columns
                      :biff/router router
                      :biff/send-email #'lib.email/send-email
                      :biff.beholder/on-save #'on-save
                      :biff.fx/handlers fx/handlers
-                     ;;:biff.xtdb/tx-fns biff/tx-fns
                      :com.yakread/home-feed-cache (atom {})
                      lib.pathom/plan-cache-kw (atom {})
                      :biff.smtp/accept? #'smtp/accept?
@@ -268,15 +211,7 @@
   (cld/default-init!)
   (time-literals/print-time-literals-clj!)
   (alter-var-root #'gen/*rnd* (constantly (java.util.Random. (inst-ms (java.time.Instant/now)))))
-  (let [{:keys [biff.nrepl/args yakread.import/enabled] conn* :biff/conn*} (start)]
-    #_(when enabled
-      (future
-        (biff/catchall-verbose
-         (log/info "Starting XTDB->SQLite import...")
-         (migrate.sqlite/import-from-nippy-files!
-          {:conn conn*
-           :dir "storage/migrate-xtdb"})
-         (log/info "XTDB->SQLite import finished."))))
+  (let [{:keys [biff.nrepl/args]} (start)]
     (apply nrepl-cmd/-main args)))
 
 (defn refresh []

@@ -6,12 +6,8 @@
                                                           com.xtdb/xtdb-jdbc
                                                           com.xtdb/xtdb-rocksdb
                                                           org.postgresql/postgresql]}
-        com.biffweb/sqlite                  {:local/root "lib/sqlite"}
-        com.xtdb/xtdb-api                   {:mvn/version "2.x-20260126.180359-1"}
-        com.xtdb/xtdb-core                  {:mvn/version "2.x-20260126.180359-1"}
-        com.xtdb/xtdb-aws                   {:mvn/version "2.x-20260126.180359-1"}
-        com.xtdb/xtdb-kafka                 {:mvn/version "2.x-20260126.180359-1"}
-        com.zaxxer/HikariCP                 {:mvn/version "7.0.2"}
+        io.github.jacobobryant/biff.sqlite  {:git/url "https://github.com/jacobobryant/biff.sqlite.git"
+                                              :git/sha "64a643552385210fa98db6d2756bb19e18684bea"}
 
         vouch-opensource/fugato             {:git/url "https://github.com/vouch-opensource/fugato"
                                              :git/sha "4c1f687bca84f1f7777f347acdaafd49c182eae0"}
@@ -66,10 +62,8 @@
 
         ;;io.github.biffweb/migrate           {:git/tag "v1.0" :git/sha "c490275" :deps/root "xtdb1"}
 
-        ;; sqlite
-        org.xerial/sqlite-jdbc              {:mvn/version "3.50.3.0"}
-        com.github.seancorfield/next.jdbc   {:mvn/version "1.3.1070"}
-        com.github.seancorfield/honeysql    {:mvn/version "2.7.1295"}}
+        ;; sqlite (biff.sqlite brings sqlite-jdbc, next.jdbc, honeysql, HikariCP)
+        }
  :aliases
  {:run {:extra-deps {com.biffweb/tasks {:git/url "https://github.com/jacobobryant/biff",
                                         :git/sha "c53c273c7e1a1773a57f9df6750a7c4448e47052"
@@ -103,13 +97,7 @@
                     "-XX:-OmitStackTraceInFastThrow"
                     "-XX:+CrashOnOutOfMemoryError"
                     "-Dbiff.env.BIFF_PROFILE=prod"]
-         :main-opts ["-m" "com.yakread"]}
-  :import {:deps {io.github.biffweb/config  {:git/tag "v1.0" :git/sha "cc7ba13"}
-                  io.github.biffweb/migrate {:git/tag "v1.0" :git/sha "ab1b7f3" :deps/root "xtdb2"}}
-           :jvm-opts ["--add-opens=java.base/java.nio=ALL-UNNAMED"
-                      "-Dio.netty.tryReflectionSetAccessible=true"
-                      "-Dbiff.env.BIFF_PROFILE=prod"]
-           :main-opts ["-m" "tasks.migrate-xt"]}}
+         :main-opts ["-m" "com.yakread"]}}
  :mvn/repos
  {"central"         {:url "https://repo1.maven.org/maven2/"}
   "clojars"         {:url "https://clojars.org/repo"}

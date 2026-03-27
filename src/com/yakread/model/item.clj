@@ -1,6 +1,5 @@
 (ns com.yakread.model.item
   (:require
-   [clojure.set :as set]
    [clojure.string :as str]
    [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
    [com.yakread.lib.core :as lib.core]
@@ -71,16 +70,14 @@
   #::pco{:input [:item/id]
          :output [:item/n-skipped]
          :batch? true}
-  (let [results (->> (query {:select [:skip/item-id
-                                      [[:count :skip/id] :n-skipped]]
+  (let [results (query {:select [[:skip/item-id :item/id]
+                                      [[:count :skip/id] :item/n-skipped]]
                              :from :skip
                              :join [:reclist [:= :skip/reclist-id :reclist/id]]
                              :where [:and
                                      [:= :reclist/user-id (:uid session)]
                                      [:in :skip/item-id (mapv :item/id items)]]
-                             :group-by :skip/item-id})
-                     (mapv #(set/rename-keys % {:skip/item-id :item/id
-                                                :n-skipped :item/n-skipped})))]
+                             :group-by :skip/item-id})]
     (lib.core/restore-order items
                             :item/id
                             results
@@ -92,16 +89,14 @@
   #::pco{:input [:ad/id]
          :output [:item/n-skipped]
          :batch? true}
-  (let [results (->> (query {:select [:skip/ad-id
-                                      [[:count :skip/id] :n-skipped]]
+  (let [results (query {:select [[:skip/ad-id :ad/id]
+                                      [[:count :skip/id] :item/n-skipped]]
                              :from :skip
                              :join [:reclist [:= :skip/reclist-id :reclist/id]]
                              :where [:and
                                      [:= :reclist/user-id (:uid session)]
                                      [:in :skip/ad-id (mapv :ad/id ads)]]
-                             :group-by :skip/ad-id})
-                     (mapv #(set/rename-keys % {:skip/ad-id :ad/id
-                                                :n-skipped :item/n-skipped})))]
+                             :group-by :skip/ad-id})]
     (lib.core/restore-order ads
                             :ad/id
                             results
@@ -116,8 +111,8 @@
   (let [item-ids (into #{} (map :item/id items))
         results (into []
                       (keep (fn [{:keys [user-item/id user-item/item-id]}]
-                             (when (item-ids item-id)
-                               {:item/id item-id :item/user-item {:user-item/id id}})))
+                              (when (item-ids item-id)
+                                {:item/id item-id :item/user-item {:user-item/id id}})))
                       (query {:select [:user-item/id :user-item/item-id]
                               :from :user-item
                               :where [:and
@@ -330,32 +325,21 @@
   {::pco/input [:item/id]
    ::pco/output [:item/n-digest-sends]
    ::pco/batch? true}
-  (let [results (->> (query {:union
-                             [{:select [:digest/ad-id
-                                        [[:count :digest/id] :n-sends]]
-                               :from :digest
-                               :where [:and
-                                       [:= :digest/user-id (:uid session)]
-                                       [:in :digest/ad-id (mapv :item/id items)]]
-                               :group-by :digest/ad-id}
-                              {:select [:digest-item/item-id
-                                        [[:count :digest-item/digest-id] :n-sends]]
-                               :from :digest-item
-                               :join [:digest [:= :digest-item/digest-id :digest/id]]
-                               :where [:and
-                                       [:= :digest/user-id (:uid session)]
-                                       ;; TODO seems like it might be faster without this assuming #
-                                       ;; digests is << # candidate items
-                                       [:in :digest-item/item-id (mapv :item/id items)]]
-                               :group-by :digest-item/item-id}]})
-                     (mapv #(set/rename-keys % {:digest/ad-id :item/id
-                                                :n-sends :item/n-digest-sends})))]
-    (lib.core/restore-order items
-                            :item/id
-                            results
-                            (fn [{:keys [item/id]}]
-                              {:item/id id
-                               :item/n-digest-sends 0}))))
+  (let [item-ids (mapv :item/id items)
+        uid (:uid session)
+        item-counts (query {:select [:digest-item/item-id
+                                     [[:count :digest-item/digest-id] :n]]
+                            :from :digest-item
+                            :join [:digest [:= :digest-item/digest-id :digest/id]]
+                            :where [:and
+                                    [:= :digest/user-id uid]
+                                    [:in :digest-item/item-id item-ids]]
+                            :group-by :digest-item/item-id})
+        id->count (into {} (map (juxt :digest-item/item-id :n)) item-counts)]
+    (mapv (fn [{:keys [item/id]}]
+            {:item/id id
+             :item/n-digest-sends (get id->count id 0)})
+          items)))
 
 (def module
   {:resolvers [user-favorites

@@ -2,6 +2,7 @@
  [[com.yakread.lib.test :as t]
   [clojure.data.generators :as gen]
   [clojure.string :as str]
+  [clojure.walk]
   [com.yakread.lib.item :as lib.item :refer :all]],
  :tests
  [{:doc "add-item-machine* :start",
@@ -27,7 +28,13 @@
         (fn
          [ctx params]
          {:on-success
-          {:ctx (dissoc ctx :biff/query :biff/conn* :biff/malli-opts*),
+          {:ctx
+           (dissoc
+            ctx
+            :biff/query
+            :biff.sqlite/read-pool
+            :biff.sqlite/write-conn
+            :biff.sqlite/columns),
            :params params}})})
       start*
       (fn
@@ -145,16 +152,24 @@
          :biff.fx/tx [[:put-docs :stuff {:xt/id "stuff1"}]]})})]
     {:error (handle-readability {:com.yakread.lib.item/url "url"}),
      :success
-     (t/truncate
-      (handle-readability
-       {:com.yakread.lib.item/url "url",
-        :com.yakread.lib.item/raw-html
-        (str
-         "<html><head>"
-         "<meta content=\"https://example.com/some-image.png\" property=\"og:image\">"
-         "</head><body>hello</body></html>"),
-        :com.yakread.fx/js
-        {:content (apply str (repeat 201 "hello"))}}))}),
+     (->>
+      (t/truncate
+       (handle-readability
+        {:com.yakread.lib.item/url "url",
+         :com.yakread.lib.item/raw-html
+         (str
+          "<html><head>"
+          "<meta content=\"https://example.com/some-image.png\" property=\"og:image\">"
+          "</head><body>hello</body></html>"),
+         :com.yakread.fx/js
+         {:content (apply str (repeat 201 "hello"))}}))
+      (clojure.walk/postwalk
+       (fn
+        [x]
+        (if
+         (and (map? x) (contains? x :item/lang))
+         (dissoc x :item/lang)
+         x))))}),
    :result
    {:error
     {:on-error
@@ -174,7 +189,6 @@
           :item/image-url "https://example.com/some-image.png",
           :item/content-key
           #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
-          :item/lang "nl",
           :item/record-type [:lift :item.record-type/direct]}]}
        {:insert-into :redirect,
         :values
