@@ -77,15 +77,14 @@
 
             [{user-id :user/id
               sub-id :sub/id}]
-            (query
-                     {:select [:user/id
-                               :sub/id]
-                      :from :user
-                      :left-join [:sub [:and
-                                        [:= :sub/user-id :user/id]
-                                        [:= :sub/email-from from]]]
-                      :where [:= :user/email-username (str/lower-case (:username message))]
-                      :limit 1})
+            (query {:select [:user/id
+                             :sub/id]
+                    :from :user
+                    :left-join [:sub [:and
+                                      [:= :sub/user-id :user/id]
+                                      [:= :sub/email-from from]]]
+                    :where [:= :user/email-username (str/lower-case (:username message))]
+                    :limit 1})
             new-sub (nil? sub-id)
             sub-id (or sub-id (gen/uuid))
             first-header (fn [header-name]
@@ -103,6 +102,15 @@
                         :headers {"x-amz-acl" "private"
                                   "content-type" "text/html"}}]}
          {:biff.fx/sqlite (concat
+                           (when new-sub
+                             [{:insert-into :sub
+                               :values [{:sub/id sub-id
+                                         :sub/user-id user-id
+                                         :sub/email-from from
+                                         :sub/record-type [:lift :sub.record-type/email]
+                                         :sub/created-at now}]
+                               :on-conflict [:sub/user-id :sub/feed-id :sub/email-from]
+                               :do-nothing true}])
                            [{:insert-into :item
                              :values [(lib.core/some-vals
                                        {:item/id (gen/uuid)
@@ -121,13 +129,4 @@
                                         :item/email-list-unsubscribe (first-header "list-unsubscribe")
                                         :item/email-list-unsubscribe-post (first-header "list-unsubscribe-post")
                                         :item/email-reply-to (some :address (:reply-to message))
-                                        :item/email-maybe-confirmation (or new-sub nil)})]}]
-                           (when new-sub
-                             [{:insert-into :sub
-                               :values [{:sub/id sub-id
-                                         :sub/user-id user-id
-                                         :sub/email-from from
-                                         :sub/record-type [:lift :sub.record-type/email]
-                                         :sub/created-at now}]
-                               :on-conflict [:sub/user-id :sub/feed-id :sub/email-from]
-                               :do-nothing true}]))}]))))
+                                        :item/email-maybe-confirmation (or new-sub nil)})]}])}]))))
