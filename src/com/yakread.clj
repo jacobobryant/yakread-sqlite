@@ -119,7 +119,7 @@
         (let [error-text (str/join "\n\n\n\n"
                                    (for [error batch]
                                      ((tel/format-signal-fn {}) error)))
-              preview (subs error-text 0 (min 100 (count error-text)))
+              preview (subs error-text 0 (min 1000 (count error-text)))
               s3-key (str "errors/" (inst-ms (tick/instant)) ".txt")]
           (try
             (lib.s3/request ctx {:config-ns 'yakread.s3.errors
