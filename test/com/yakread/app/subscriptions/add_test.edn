@@ -93,6 +93,22 @@
      ["/subscriptions/add"
       {:error "invalid-rss-feed", :url "https://example.com"}]}}}
   _
+  {:doc "add-rss null body (e.g. DNS resolution failure)",
+   :eval
+   (t/test-route
+    add-rss
+    :post
+    :add-urls
+    {:params {:session {:uid (t/uuid 1)}},
+     :db* {},
+     :biff.fx/http {:url "https://science"}}),
+   :result
+   {:status 303,
+    :headers
+    {"Location"
+     ["/subscriptions/add"
+      {:error "invalid-rss-feed", :url "https://science"}]}}}
+  _
   {:doc "add-rss auto-discovery",
    :eval
    (t/test-route

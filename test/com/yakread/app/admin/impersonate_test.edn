@@ -40,7 +40,7 @@
                {:type "hidden",
                 :name "__anti-forgery-token",
                 :value
-                #object[clojure.lang.Var$Unbound 0x260b3704 "Unbound: #'ring.middleware.anti-forgery/*anti-forgery-token*"]}])
+                #object[clojure.lang.Var$Unbound 0xb6af451 "Unbound: #'ring.middleware.anti-forgery/*anti-forgery-token*"]}])
              ([:input
                {:type "hidden",
                 :name "user-id",
@@ -71,7 +71,7 @@
                {:type "hidden",
                 :name "__anti-forgery-token",
                 :value
-                #object[clojure.lang.Var$Unbound 0x260b3704 "Unbound: #'ring.middleware.anti-forgery/*anti-forgery-token*"]}])
+                #object[clojure.lang.Var$Unbound 0xb6af451 "Unbound: #'ring.middleware.anti-forgery/*anti-forgery-token*"]}])
              ([:input
                {:type "hidden",
                 :name "user-id",

@@ -29,7 +29,8 @@
 (defn parse-urls [{:keys [url body] :as http-response}]
   (if (not-empty (:entries (remus-parse http-response)))
     [{:url url}]
-    (parse-urls* url body)))
+    (when body
+      (parse-urls* url body))))
 
 (defn extract-opml-urls [body]
   ;; NOTE: by default java.xml prints all parsing errors to the console.
