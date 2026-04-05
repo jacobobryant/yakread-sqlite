@@ -39,7 +39,8 @@
   :post
   (fn [{:keys [session biff.form/params]}]
     {:biff.fx/sqlite [{:update :user
-                       :set (merge {:user/use-original-links false}
+                       :set (merge {:user/use-original-links false
+                                    :user/digest-days #{}}
                                    (select-keys params [:user/digest-days
                                                         :user/send-digest-at
                                                         :user/timezone

@@ -66,6 +66,7 @@
  :yakread.s3.images/edge    #biff/env S3_IMAGES_EDGE
  :yakread.s3.export/bucket  #biff/env S3_EXPORT_BUCKET
  :yakread.s3.export/edge    #biff/env S3_EXPORT_EDGE
+ :yakread.s3.errors/origin  #biff/env S3_ERRORS_ORIGIN
  :yakread.s3.errors/bucket  #biff/env S3_ERRORS_BUCKET
 
  :yakread.pipe.js/base-url #biff/env CLOUD_FN_BASE_URL
