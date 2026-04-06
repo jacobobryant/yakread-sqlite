@@ -135,6 +135,7 @@
               (send-email ctx
                           {:template :alert
                            :subject (str domain " error")
+                           :text (str "Error preview:\n\n" preview "\n\nView full log: " url)
                            :rum [:div
                                  [:p "Preview: " [:code preview]]
                                  [:p [:a {:href url} "View full error log (expires in 7 days)"]]]}))
@@ -143,6 +144,7 @@
               (send-email ctx
                           {:template :alert
                            :subject (str domain " error")
+                           :text error-text
                            :rum [:pre error-text]}))))))))
 
 (defn use-error-reporting [{:keys [biff.error-reporting/enabled] :as ctx}]

@@ -134,7 +134,8 @@
    opts))
 
 (defn send-mailersend [{:keys [biff/secret mailersend/from mailersend/reply-to]} form-params]
-  (let [result (http/post "https://api.mailersend.com/v1/email"
+  (let [form-params (into {} (filter (comp some? val)) form-params)
+        result (http/post "https://api.mailersend.com/v1/email"
                           {:oauth-token (secret :mailersend/api-key)
                            :content-type :json
                            :throw-exceptions false
