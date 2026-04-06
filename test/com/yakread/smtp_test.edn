@@ -84,7 +84,17 @@
        "<!doctype html>\n<html>\n <head>\n  <title></title>\n </head>\n <body>\n  <div>\n   the quick brown fox jumps over the lazy dog\n  </div>\n </body>\n</html>",
        :headers {"x-amz-acl" "private", "content-type" "text/html"}}]}
     {:biff.fx/sqlite
-     ({:insert-into :item,
+     ({:insert-into :sub,
+       :values
+       [{:sub/id #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
+         :sub/user-id #uuid "00000000-0000-0000-0000-000000000000",
+         :sub/email-from "Alice",
+         :sub/record-type [:lift :sub.record-type/email],
+         :sub/created-at
+         #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}],
+       :on-conflict [:sub/user-id :sub/feed-id :sub/email-from],
+       :do-nothing true}
+      {:insert-into :item,
        :values
        [{:item/excerpt "the quick brown fox jumps over the lazy dog",
          :item/email-reply-to "alice@example.com",
@@ -105,17 +115,7 @@
          :item/ingested-at
          #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
          :item/email-sub-id
-         #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b"}]}
-      {:insert-into :sub,
-       :values
-       [{:sub/id #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
-         :sub/user-id #uuid "00000000-0000-0000-0000-000000000000",
-         :sub/email-from "Alice",
-         :sub/record-type [:lift :sub.record-type/email],
-         :sub/created-at
-         #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}],
-       :on-conflict [:sub/user-id :sub/feed-id :sub/email-from],
-       :do-nothing true})}]}
+         #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b"}]})}]}
   _
   {:doc "deliver* :end new sub",
    :eval
@@ -144,7 +144,17 @@
        "<!doctype html>\n<html>\n <head>\n  <title></title>\n </head>\n <body>\n  <div>\n   the quick brown fox jumps over the lazy dog\n  </div>\n </body>\n</html>",
        :headers {"x-amz-acl" "private", "content-type" "text/html"}}]}
     {:biff.fx/sqlite
-     ({:insert-into :item,
+     ({:insert-into :sub,
+       :values
+       [{:sub/id #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
+         :sub/user-id #uuid "00000000-0000-0000-0000-000000000000",
+         :sub/email-from "Alice",
+         :sub/record-type [:lift :sub.record-type/email],
+         :sub/created-at
+         #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}],
+       :on-conflict [:sub/user-id :sub/feed-id :sub/email-from],
+       :do-nothing true}
+      {:insert-into :item,
        :values
        [{:item/excerpt "the quick brown fox jumps over the lazy dog",
          :item/email-reply-to "alice@example.com",
@@ -165,15 +175,5 @@
          :item/ingested-at
          #time/zoned-date-time "2000-01-01T00:00Z[UTC]",
          :item/email-sub-id
-         #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b"}]}
-      {:insert-into :sub,
-       :values
-       [{:sub/id #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b",
-         :sub/user-id #uuid "00000000-0000-0000-0000-000000000000",
-         :sub/email-from "Alice",
-         :sub/record-type [:lift :sub.record-type/email],
-         :sub/created-at
-         #time/zoned-date-time "2000-01-01T00:00Z[UTC]"}],
-       :on-conflict [:sub/user-id :sub/feed-id :sub/email-from],
-       :do-nothing true})}]}
+         #uuid "98f8ba3d-c812-a76d-554d-cd2b40b5f04b"}]})}]}
   _]}
