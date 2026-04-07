@@ -9,12 +9,14 @@
     :post
     {:biff/now (t/instant 2000),
      :biff.fx/pathom
-     {:params/sub {:sub/id "sub1", :sub/record-type :sub.record-type/feed}}}),
+     {:params/sub
+      {:sub/id "sub1", :sub/record-type :sub.record-type/feed}}}),
    :result
    {:status 204,
     :headers {"HX-Location" ["/subscriptions" nil]},
     :biff.fx/sqlite
-    [{:delete-from :sub, :where [:= :sub/id "sub1"]}]}}
+    [{:delete-from :mv-sub, :where [:= :mv-sub/sub-id "sub1"]}
+     {:delete-from :sub, :where [:= :sub/id "sub1"]}]}}
   _
   {:doc "unsubscribe email subscription with one-click URL",
    :eval
@@ -36,8 +38,9 @@
     :headers {"HX-Location" ["/subscriptions" nil]},
     :biff.fx/sqlite
     [{:update :sub,
-      :set {:sub/email-unsubscribed-at
-            #time/instant "2000-01-01T00:00:00Z"},
+      :set
+      {:sub/email-unsubscribed-at
+       #time/instant "2000-01-01T00:00:00Z"},
       :where [:= :sub/id "sub1"]}],
     :biff.fx/http
     {:url "https://example.com/unsub",
@@ -62,10 +65,14 @@
     :headers {"HX-Location" ["/subscriptions" nil]},
     :biff.fx/sqlite
     [{:update :sub,
-      :set {:sub/email-unsubscribed-at
-            #time/instant "2000-01-01T00:00:00Z"},
+      :set
+      {:sub/email-unsubscribed-at
+       #time/instant "2000-01-01T00:00:00Z"},
       :where [:= :sub/id "sub1"]}],
-    :biff.fx/email {:to "unsub@example.com", :subject "unsubscribe"}}}
+    :biff.fx/email
+    {:to [{:email "unsub@example.com"}],
+     :subject "unsubscribe",
+     :text "unsubscribe"}}}
   _
   {:doc "unsubscribe email subscription with URL (non-one-click)",
    :eval
@@ -89,8 +96,9 @@
      "{\"yak/open-new-tab\":\"https://example.com/unsub\"}"},
     :biff.fx/sqlite
     [{:update :sub,
-      :set {:sub/email-unsubscribed-at
-            #time/instant "2000-01-01T00:00:00Z"},
+      :set
+      {:sub/email-unsubscribed-at
+       #time/instant "2000-01-01T00:00:00Z"},
       :where [:= :sub/id "sub1"]}]}}
   _
   {:doc "resubscribe moves subs back",

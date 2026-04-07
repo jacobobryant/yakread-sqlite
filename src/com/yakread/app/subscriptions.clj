@@ -29,7 +29,8 @@
       (case record-type
         :sub.record-type/feed
         (merge base
-               {:biff.fx/sqlite [{:delete-from :sub :where [:= :sub/id id]}]})
+               {:biff.fx/sqlite [{:delete-from :mv-sub :where [:= :mv-sub/sub-id id]}
+                                  {:delete-from :sub :where [:= :sub/id id]}]})
 
         :sub.record-type/email
         (let [{:item/keys [email-list-unsubscribe email-list-unsubscribe-post]} latest-item
@@ -46,7 +47,9 @@
                         {:biff.fx/http {:url url :method :post :throw-exceptions false}}
 
                         email
-                        {:biff.fx/email {:to email :subject "unsubscribe"}}
+                        {:biff.fx/email {:to [{:email email}]
+                                         :subject "unsubscribe"
+                                         :text "unsubscribe"}}
 
                         url
                         {:headers {"HX-Trigger" (cheshire/generate-string {:yak/open-new-tab url})}})))))))
