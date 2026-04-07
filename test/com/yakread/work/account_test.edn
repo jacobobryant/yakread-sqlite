@@ -127,9 +127,9 @@
        :socket-timeout 10000,
        :connection-timeout 10000})}
     {:biff.fx/sqlite
-     ({:delete-from :user, :where [:= :user/id "user123"]}
+     ({:delete-from :sub, :where [:= :sub/id "sub1"]}
       {:delete-from :ad, :where [:= :ad/id "ad1"]}
-      {:delete-from :sub, :where [:= :sub/id "sub1"]}
+      {:delete-from :user, :where [:= :user/id "user123"]}
       {:insert-into :deleted-user,
        :values
        [{:deleted-user/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",

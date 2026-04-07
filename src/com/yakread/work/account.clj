@@ -86,12 +86,12 @@
                          :socket-timeout 10000
                          :connection-timeout 10000})}
        {:biff.fx/sqlite (concat
-                         [{:delete-from :user :where [:= :user/id id]}]
-                         (when ad
-                           [{:delete-from :ad :where [:= :ad/id (:ad/id ad)]}])
                          (for [{:keys [sub/id sub/feed-id]} subscriptions
                                :when feed-id]
                            {:delete-from :sub :where [:= :sub/id id]})
+                         (when ad
+                           [{:delete-from :ad :where [:= :ad/id (:ad/id ad)]}])
+                         [{:delete-from :user :where [:= :user/id id]}]
                          (when email-username
                            [{:insert-into :deleted-user
                              :values [{:deleted-user/id (gen/uuid)
