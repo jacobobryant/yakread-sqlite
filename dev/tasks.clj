@@ -1,6 +1,5 @@
 (ns tasks
   (:require [com.biffweb.tasks :as tasks]
-            [clojure.java.shell :as sh]
             [com.biffweb.tasks.lazy.com.biffweb.config :as config]
             [com.biffweb.tasks.lazy.babashka.process :as process]))
 
@@ -30,21 +29,10 @@
 (defn fn-deploy []
   (process/shell {} "doctl" "serverless" "deploy" "cloud-fns"))
 
-(defn javac []
-  (sh/sh "javac"
-         "--release" "17"
-         "-cp" (:out (sh/sh "clj" "-Spath"))
-         "-d" "target/classes"
-         "java/com/yakread/AverageRating.java"
-         "-Xlint:-options"))
-
 (defn dev []
-  ;; NOTE this won't be on the classpath on the first run.
-  (javac)
   (tasks/dev))
 
 (defn deploy []
-  (javac)
   (tasks/deploy))
 
 ;; Tasks should be vars (#'hello instead of hello) so that `clj -Mdev help` can

@@ -11,10 +11,10 @@
  :biff.system-properties/user.timezone "UTC"
  :biff.system-properties/clojure.main.report "stderr"
 
+ :biff.tasks/tailwind-version "v3.4.17"
  :biff.tasks/css-output "target/resources/public/css/main.css"
  :biff.tasks/deploy-cmd ["git" "push" "prod" "master"]
- :biff.tasks/deploy-untracked-files [#ref [:biff.tasks/css-output] "config.env"
-                                     "target/classes/com/yakread/AverageRating.class"]
+ :biff.tasks/deploy-untracked-files [#ref [:biff.tasks/css-output] "config.env"]
  :biff.tasks/generate-assets-fn com.yakread/generate-assets!
  :biff.tasks/main-ns com.yakread
  :biff.tasks/on-soft-deploy "\"(com.yakread/on-save @com.yakread/system)\""

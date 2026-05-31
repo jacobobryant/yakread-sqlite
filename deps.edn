@@ -6,8 +6,7 @@
                                                           com.xtdb/xtdb-jdbc
                                                           com.xtdb/xtdb-rocksdb
                                                           org.postgresql/postgresql]}
-        io.github.jacobobryant/biff.sqlite  {:git/url "git@github.com:jacobobryant/biff.sqlite.git"
-                                             :git/sha "64a643552385210fa98db6d2756bb19e18684bea"}
+        io.github.jacobobryant/biff.sqlite  {:git/sha "64a643552385210fa98db6d2756bb19e18684bea"}
 
         vouch-opensource/fugato             {:git/url "https://github.com/vouch-opensource/fugato"
                                              :git/sha "4c1f687bca84f1f7777f347acdaafd49c182eae0"}
