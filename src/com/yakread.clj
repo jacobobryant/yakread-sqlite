@@ -6,10 +6,10 @@
    [clojure.tools.logging :as log]
    [clojure.tools.namespace.repl :as tn-repl]
    [com.biffweb :as biff]
+   [com.biffweb.core :as biff.core]
    [com.biffweb.sqlite :as biff.sqlite]
    [com.wsscode.pathom3.connect.indexes :as pci]
    [com.wsscode.pathom3.connect.planner :as pcp]
-   [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.auth :as lib.auth]
    [com.yakread.lib.email :as lib.email]
    [com.yakread.lib.s3 :as lib.s3]
@@ -187,11 +187,10 @@
 
 (defn start []
   (try
-    (let [new-system (reduce (fn [system component]
-                               (log/info "starting:" (str component))
-                               (component system))
-                             initial-system
-                             components)]
+    (let [new-system (biff.core/start
+                      initial-system
+                      #'modules
+                      components)]
       (reset! system new-system)
       (generate-assets! new-system)
       (log/info "System started.")
@@ -217,8 +216,6 @@
     (apply nrepl-cmd/-main args)))
 
 (defn refresh []
-  (doseq [f (:biff/stop @system)]
-    (log/info "stopping:" (str f))
-    (f))
+  (biff.core/stop @system)
   (tn-repl/refresh :after `start)
   :done)
