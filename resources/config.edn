@@ -15,7 +15,6 @@
  :biff.tasks/css-output "target/resources/public/css/main.css"
  :biff.tasks/deploy-cmd ["git" "push" "prod" "master"]
  :biff.tasks/deploy-untracked-files [#ref [:biff.tasks/css-output] "config.env"]
- :biff.tasks/generate-assets-fn com.yakread/generate-assets!
  :biff.tasks/main-ns com.yakread
  :biff.tasks/on-soft-deploy "\"(com.yakread/on-save @com.yakread/system)\""
  :biff.tasks/server #biff/env SERVER

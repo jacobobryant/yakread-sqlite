@@ -51,13 +51,6 @@
                  lib.mid/wrap-monitoring
                  lib.mid/wrap-internal-error))
 
-(def static-pages (apply biff/safe-merge (map :static modules)))
-
-(defn generate-assets! [_]
-  (biff/export-rum static-pages "target/resources/public")
-  (biff/delete-old-files {:dir "target/resources/public"
-                          :exts [".html"]}))
-
 (defn on-save [sys]
   (biff/add-libs)
   (biffs/generate-modules-file!
@@ -67,7 +60,6 @@
                   "src/com/yakread/ui_components"
                   "src/com/yakread/work"]})
   (when-not (:clojure.tools.namespace.reload/error (biff/eval-files! sys))
-    (generate-assets! sys)
     ;(test/run-all-tests #"com.yakread.*-test")
     (time ((requiring-resolve 'com.yakread.lib.test/run-examples!) {}))
     (log/info :done)))
@@ -192,7 +184,6 @@
                       #'modules
                       components)]
       (reset! system new-system)
-      (generate-assets! new-system)
       (log/info "System started.")
       (log/info "Go to" (:biff/base-url new-system))
       new-system)
