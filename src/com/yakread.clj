@@ -7,6 +7,7 @@
    [clojure.tools.namespace.repl :as tn-repl]
    [com.biffweb :as biff]
    [com.biffweb.core :as biff.core]
+   [com.biffweb.config :as biff.config]
    [com.biffweb.sqlite :as biff.sqlite]
    [com.wsscode.pathom3.connect.indexes :as pci]
    [com.wsscode.pathom3.connect.planner :as pcp]
@@ -150,7 +151,7 @@
 (defonce system (atom {}))
 
 (def components
-  [biff/use-aero-config
+  [biff.config/use-aero-config
    use-error-reporting
    lib.sqlite/use-sqlite
    lib.spark/use-spark
