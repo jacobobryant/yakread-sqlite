@@ -22,16 +22,17 @@
                     (if (= status 429)
                       (do
                         (log/warn "Received status 429 when fetching candidate" url)
-                        {:biff.fx/sleep 10000})
-                      [{:biff.fx/sqlite [{:insert-into :item
+                        {:biff.fx/sleep [:biff.fx/sleep 10000]})
+                      [{:biff.fx/sqlite [:biff.fx/sqlite
+                                         [{:insert-into :item
                                           :values [{:item/id (gen/uuid)
                                                     :item/url url
                                                     :item/ingested-at now
                                                     :item/record-type [:lift :item.record-type/direct]
-                                                    :item/direct-candidate-status [:lift :ingest-failed]}]
+                                          :item/direct-candidate-status [:lift :ingest-failed]}]
                                           :on-conflict [:item/id]
-                                          :do-update-set {:fields [:url :ingested-at :record-type :direct-candidate-status]}}]}
-                       {:biff.fx/sleep 2000}])))}))
+                                          :do-update-set {:fields [:url :ingested-at :record-type :direct-candidate-status]}}]]}
+                       {:biff.fx/sleep [:biff.fx/sleep 2000]}])))}))
 
 (fx/defmachine queue-add-candidate
   :start
@@ -52,8 +53,9 @@
                               (mapv :item/url)
                               not-empty))]
       (log/info "Found" (count urls) "candidate URLs")
-      {:biff.fx/queue {:jobs (for [url urls]
-                               [:work.train/add-candidate {:item/url url}])}})))
+      {:biff.fx/queue [:biff.fx/queue
+                       {:jobs (for [url urls]
+                                [:work.train/add-candidate {:item/url url}])}]})))
 
 (def module
   {:tasks [{:task     #'retrain

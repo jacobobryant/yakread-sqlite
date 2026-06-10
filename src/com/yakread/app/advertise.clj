@@ -41,14 +41,16 @@
 
   :post
   (fn [{:biff/keys [secret now]} {{{:ad/keys [id payment-method]} :user/ad} :session/user}]
-    [{:biff.fx/sqlite [{:update :ad
-                        :set {:ad/payment-method nil
-                              :ad/card-details nil
-                              :ad/updated-at now}
-                        :where [:= :ad/id id]}]}
-     {:biff.fx/http {:method :post
-                     :url (str "https://api.stripe.com/v1/payment_methods/" payment-method "/detach")
-                     :basic-auth [(secret :stripe/api-key)]}}
+    [{:biff.fx/sqlite [:biff.fx/sqlite
+                       [{:update :ad
+                         :set {:ad/payment-method nil
+                               :ad/card-details nil
+                               :ad/updated-at now}
+                         :where [:= :ad/id id]}]]}
+     {:biff.fx/http [:biff.fx/http
+                     {:method :post
+                      :url (str "https://api.stripe.com/v1/payment_methods/" payment-method "/detach")
+                      :basic-auth [(secret :stripe/api-key)]}]}
 
      {:status 200
       :headers {"HX-Location" (href page-route)}}]))
@@ -61,12 +63,13 @@
                                    :from :ad
                                    :where [:= :ad/session-id session-id]})]
       (if ad-id
-        {:biff.fx/http {:method :get
-                        :url (str "https://api.stripe.com/v1/checkout/sessions/" session-id)
-                        :basic-auth [(secret :stripe/api-key)]
-                        :multi-param-style :array
-                        :as :json
-                        :query-params {:expand ["setup_intent" "setup_intent.payment_method"]}}
+        {:biff.fx/http [:biff.fx/http
+                        {:method :get
+                         :url (str "https://api.stripe.com/v1/checkout/sessions/" session-id)
+                         :basic-auth [(secret :stripe/api-key)]
+                         :multi-param-style :array
+                         :as :json
+                         :query-params {:expand ["setup_intent" "setup_intent.payment_method"]}}]
          :ad/id ad-id
          :biff.fx/next :save-payment-method}
         {:biff.fx/next :redirect})))
@@ -74,15 +77,16 @@
   :save-payment-method
   (fn [{:keys [biff.fx/http biff/now] ad-id :ad/id}]
     (let [pm (get-in http [:body :setup_intent :payment_method])]
-      {:biff.fx/sqlite [{:update :ad
-                         :set {:ad/session-id nil
-                               :ad/payment-method (:id pm)
-                               :ad/card-details [:lift
-                                                 (-> (:card pm)
-                                                     (select-keys [:brand :last4 :exp_year :exp_month])
-                                                     not-empty)]
-                               :ad/updated-at now}
-                         :where [:= :ad/id ad-id]}]
+      {:biff.fx/sqlite [:biff.fx/sqlite
+                        [{:update :ad
+                          :set {:ad/session-id nil
+                                :ad/payment-method (:id pm)
+                                :ad/card-details [:lift
+                                                  (-> (:card pm)
+                                                      (select-keys [:brand :last4 :exp_year :exp_month])
+                                                      not-empty)]
+                                :ad/updated-at now}
+                          :where [:= :ad/id ad-id]}]]
        :biff.fx/next :redirect}))
 
   :redirect
@@ -100,54 +104,58 @@
     (if-some [customer-id (get-in user [:user/ad :ad/customer-id])]
       {:biff.fx/next :create-session
        :ad/customer-id customer-id}
-      {:biff.fx/http {:request-method :post
-                      :url "https://api.stripe.com/v1/customers"
-                      :basic-auth [(secret :stripe/api-key)]
-                      :form-params {:email (:user/email user)}
-                      :as :json}
+      {:biff.fx/http [:biff.fx/http
+                      {:request-method :post
+                       :url "https://api.stripe.com/v1/customers"
+                       :basic-auth [(secret :stripe/api-key)]
+                       :form-params {:email (:user/email user)}
+                       :as :json}]
        :biff.fx/next :create-customer}))
 
   :create-customer
   (fn [{:keys [biff.fx/http biff/now session]} _]
     (let [customer-id (get-in http [:body :id])]
-      {:biff.fx/sqlite [{:insert-into :ad
-                         :values [{:ad/id (gen/uuid)
-                                   :ad/user-id (:uid session)
-                                   :ad/customer-id customer-id
-                                   :ad/updated-at now
-                                   :ad/approve-state [:lift :ad.approve-state/pending]
-                                   :ad/balance 0
-                                   :ad/recent-cost 0}]
-                         :on-conflict [:ad/user-id]
-                         :do-update-set {:ad/customer-id customer-id
-                                         :ad/updated-at now}}]
+      {:biff.fx/sqlite [:biff.fx/sqlite
+                        [{:insert-into :ad
+                          :values [{:ad/id (gen/uuid)
+                                    :ad/user-id (:uid session)
+                                    :ad/customer-id customer-id
+                                    :ad/updated-at now
+                                    :ad/approve-state [:lift :ad.approve-state/pending]
+                                    :ad/balance 0
+                                    :ad/recent-cost 0}]
+                          :on-conflict [:ad/user-id]
+                          :do-update-set {:ad/customer-id customer-id
+                                          :ad/updated-at now}}]]
        :biff.fx/next :create-session
        :ad/customer-id customer-id}))
 
   :create-session
   (fn [{:keys [biff/base-url biff/secret ad/customer-id]} _]
-    {:biff.fx/http {:request-method :post
-                    :url "https://api.stripe.com/v1/checkout/sessions"
-                    :basic-auth [(secret :stripe/api-key)]
-                    :multi-param-style :array
-                    :form-params
-                    {:payment_method_types ["card"]
-                     :mode "setup"
-                     :customer customer-id
-                     :success_url (str base-url
-                                       (href receive-payment-method)
-                                       "?session-id={CHECKOUT_SESSION_ID}")
-                     :cancel_url (str base-url (href page-route))}
-                    :as :json}
+    {:biff.fx/http [:biff.fx/http
+                    {:request-method :post
+                     :url "https://api.stripe.com/v1/checkout/sessions"
+                     :basic-auth [(secret :stripe/api-key)]
+                     :multi-param-style :array
+                     :form-params
+                     {:payment_method_types ["card"]
+                      :mode "setup"
+                      :customer customer-id
+                      :success_url (str base-url
+                                        (href receive-payment-method)
+                                        "?session-id={CHECKOUT_SESSION_ID}")
+                      :cancel_url (str base-url (href page-route))}
+                     :as :json}]
      :biff.fx/next :redirect})
 
   :redirect
   (fn [{:keys [biff.fx/http session biff/now]} _]
     (let [{:keys [url id]} (:body http)]
-      {:biff.fx/sqlite [{:update :ad
-                         :set {:ad/session-id id
-                               :ad/updated-at now}
-                         :where [:= :ad/user-id (:uid session)]}]
+      {:biff.fx/sqlite [:biff.fx/sqlite
+                        [{:update :ad
+                          :set {:ad/session-id id
+                                :ad/updated-at now}
+                          :where [:= :ad/user-id (:uid session)]}]]
        :status 303
        :headers {"Location" url}})))
 
@@ -195,7 +203,7 @@
                    :do-update-set update-set}]]
       {:status 303
        :headers {"Location" (href page-route {:saved true})}
-       :biff.fx/sqlite sqlite})))
+       :biff.fx/sqlite [:biff.fx/sqlite sqlite]})))
 (obfuscate-url! #'save-ad)
 
 (fx/defroute upload-image
@@ -204,21 +212,24 @@
     (let [image-id (gen/uuid)
           file-info (get multipart-params "image-file")
           url (str edge "/" image-id)]
-      [{:biff.fx/s3 {:config-ns 'yakread.s3.images
-                     :method "PUT"
-                     :key (str image-id)
-                     :body (:tempfile file-info)
-                     :headers {"x-amz-acl" "public-read"
-                               "content-type" (:content-type file-info)}}}
-       {:biff.fx/http {:url     (ui/weserv {:url url
-                                            :w 150
-                                            :h 150
-                                            :fit "cover"
-                                            :a "attention"})
-                       :method  :get
-                       :headers {"User-Agent" base-url}}}
-       {:biff.fx/pathom [{(list ::form-ad {:ad (assoc params :ad/image-url url)})
-                          [:ad/ui-preview-card]}]}
+      [{:biff.fx/s3 [:biff.fx/s3
+                     {:config-ns 'yakread.s3.images
+                      :method "PUT"
+                      :key (str image-id)
+                      :body (:tempfile file-info)
+                      :headers {"x-amz-acl" "public-read"
+                                "content-type" (:content-type file-info)}}]}
+       {:biff.fx/http [:biff.fx/http
+                       {:url     (ui/weserv {:url url
+                                             :w 150
+                                             :h 150
+                                             :fit "cover"
+                                             :a "attention"})
+                        :method  :get
+                        :headers {"User-Agent" base-url}}]}
+       {:biff.fx/pathom [:biff.fx/pathom
+                         [{(list ::form-ad {:ad (assoc params :ad/image-url url)})
+                           [:ad/ui-preview-card]}]]}
        {:biff.fx/next :render
         ::url url}]))
 
@@ -264,9 +275,10 @@
   :get
   (fn [{:keys [biff.form/params]}]
     (let [{:ad/keys [url]} params]
-      {:biff.fx/http {:url url
-                      :method :get
-                      :throw-exceptions false}
+      {:biff.fx/http [:biff.fx/http
+                      {:url url
+                       :method :get
+                       :throw-exceptions false}]
        :biff.fx/next :query}))
 
   :query
@@ -285,17 +297,17 @@
           ad (merge params
                     ad-from-url
                     (lib.core/filter-vals params lib.core/something?))]
-      {:biff.fx/pathom [{(list ::form-ad {:ad ad}) [:ad/ui-preview-card]}]
+      {:biff.fx/result [:biff.fx/pathom [{(list ::form-ad {:ad ad}) [:ad/ui-preview-card]}]]
        :biff.fx/next :render
        ::ad ad}))
 
   :render
-  (fn [{:keys [biff.fx/pathom ::ad]}]
+  (fn [{:keys [biff.fx/result ::ad]}]
     [:<>
      (form {:ad ad})
      [:div#preview {:hx-swap-oob "true"
                     :hx-swap "morph"}
-      (get-in pathom [::form-ad :ad/ui-preview-card])]]))
+      (get-in result [::form-ad :ad/ui-preview-card])]]))
 
 (def preview-hx-opts
   {:hx-get (href refresh-preview)

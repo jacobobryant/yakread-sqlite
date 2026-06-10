@@ -41,14 +41,15 @@
       (if (empty? post-title)
         {:status 303
          :headers {"Location" (href page-route {:error "post-title-required"})}}
-        {:biff.fx/sqlite [{:insert-into :test-rss-post
-                           :values [{:test-rss-post/id (gen/uuid)
-                                     :test-rss-post/feed-slug feed-slug
-                                     :test-rss-post/feed-title feed-title
-                                     :test-rss-post/post-title post-title
-                                     :test-rss-post/post-url post-url
-                                     :test-rss-post/post-content post-content
-                                     :test-rss-post/published-at published-at}]}]
+        {:biff.fx/sqlite [:biff.fx/sqlite
+                          [{:insert-into :test-rss-post
+                            :values [{:test-rss-post/id (gen/uuid)
+                                      :test-rss-post/feed-slug feed-slug
+                                      :test-rss-post/feed-title feed-title
+                                      :test-rss-post/post-title post-title
+                                      :test-rss-post/post-url post-url
+                                      :test-rss-post/post-content post-content
+                                      :test-rss-post/published-at published-at}]}]]
          :status 303
          :headers {"Location" (href page-route {:created "true"})}}))))
 
@@ -57,10 +58,11 @@
   (fn [{:keys [params]}]
     (let [id (some-> (:id params) parse-uuid)]
       (merge {:status 303
-              :headers {"Location" (href page-route)}}
+             :headers {"Location" (href page-route)}}
              (when id
-               {:biff.fx/sqlite [{:delete-from :test-rss-post
-                                   :where [:= :test-rss-post/id id]}]})))))
+               {:biff.fx/sqlite [:biff.fx/sqlite
+                                 [{:delete-from :test-rss-post
+                                   :where [:= :test-rss-post/id id]}]]})))))
 
 (defn- escape-xml [s]
   (when s

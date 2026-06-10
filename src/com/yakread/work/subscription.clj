@@ -48,8 +48,9 @@
                              [:is :feed/synced-at nil]
                              [:< :feed/synced-at t0]]]})]
         (log/info "Syncing" (count feeds) "feeds")
-        {:biff.fx/queue {:jobs (for [{:keys [feed/id]} feeds]
-                                 [:work.subscription/sync-feed {:feed/id id}])}}))))
+        {:biff.fx/queue [:biff.fx/queue
+                         {:jobs (for [{:keys [feed/id]} feeds]
+                                  [:work.subscription/sync-feed {:feed/id id}])}]}))))
 
 (defn- entry->html [entry]
   (->> (concat (:contents entry) [(:description entry)])
@@ -76,19 +77,20 @@
                          :from :feed
                          :where [:= :feed/id id]})]
       {:biff.fx/next :parse
-       :biff.fx/http {:method :get
-                      :url url
-                      :headers (into {}
-                                     (remove (comp nil? val))
-                                     {"User-Agent" base-url
-                                      ;; Skip conditional headers when previous sync failed, so we
-                                      ;; get a fresh 200 response instead of a 304.
-                                      "If-None-Match" (when-not (pos? (or failed-syncs 0)) etag)
-                                      "If-Modified-Since" (when-not (pos? (or failed-syncs 0)) last-modified)})
-                      :socket-timeout     5000
-                      :connection-timeout 5000
-                      :throw-exceptions false
-                      :as :stream}
+       :biff.fx/http [:biff.fx/http
+                      {:method :get
+                       :url url
+                       :headers (into {}
+                                      (remove (comp nil? val))
+                                      {"User-Agent" base-url
+                                       ;; Skip conditional headers when previous sync failed, so we
+                                       ;; get a fresh 200 response instead of a 304.
+                                       "If-None-Match" (when-not (pos? (or failed-syncs 0)) etag)
+                                       "If-Modified-Since" (when-not (pos? (or failed-syncs 0)) last-modified)})
+                       :socket-timeout     5000
+                       :connection-timeout 5000
+                       :throw-exceptions false
+                       :as :stream}]
        :feed/failed-syncs failed-syncs}))
 
   :parse
@@ -194,11 +196,12 @@
                             (cond-> item
                               (:item/content-key item) (dissoc :item/content)))
                           items)]
-      [{:biff.fx/sqlite feed-tx}
-       {:biff.fx/s3 s3-inputs}
+      [{:biff.fx/sqlite [:biff.fx/sqlite feed-tx]}
+       {:biff.fx/s3 [:biff.fx/s3 s3-inputs]}
        (when (not-empty items)
-         {:biff.fx/sqlite [{:insert-into :item
-                            :values items}]})])))
+         {:biff.fx/sqlite [:biff.fx/sqlite
+                           [{:insert-into :item
+                             :values items}]]})])))
 
 (def module
   {:tasks [{:task     #'sync-all-feeds!

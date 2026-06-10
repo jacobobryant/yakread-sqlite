@@ -6,15 +6,16 @@
  [{:eval (export-user-data {:biff/job {:user/id "abc123"}} :start),
    :result
    {:biff.fx/pathom
-    {:entity {:user/id "abc123"},
-     :query
-     [:user/id
-      :user/email
-      :user/timezone
-      :user.export/feed-subs
-      :user.export/bookmarks
-      :user.export/favorites]},
-    :biff.fx/temp-dir {},
+    [:biff.fx/pathom
+     {:entity {:user/id "abc123"},
+      :query
+      [:user/id
+       :user/email
+       :user/timezone
+       :user.export/feed-subs
+       :user.export/bookmarks
+       :user.export/favorites]}],
+    :biff.fx/temp-dir [:biff.fx/temp-dir {}],
     :biff.fx/next :upload}}
   _
   {:eval
@@ -31,39 +32,45 @@
     :upload),
    :result
    [{:biff.fx/write
-     ({:file
-       #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123/feed-subscriptions.opml",
-       :content "feed-subs"}
-      {:file
-       #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123/bookmarks.csv",
-       :content "bookmarks"}
-      {:file
-       #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123/favorites.csv",
-       :content "favorites"})}
+     [:biff.fx/write
+      ({:file
+        #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123/feed-subscriptions.opml",
+        :content "feed-subs"}
+       {:file
+        #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123/bookmarks.csv",
+        :content "bookmarks"}
+       {:file
+        #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123/favorites.csv",
+        :content "favorites"})]}
     {:biff.fx/shell
-     ["zip"
-      "-r"
-      "yakread-export-1999-12-31-946684800000-abc123.zip"
-      "yakread-export-1999-12-31-946684800000-abc123"
-      :dir
-      "/tmp/dir"]}
+     [:biff.fx/shell
+      ["zip"
+       "-r"
+       "yakread-export-1999-12-31-946684800000-abc123.zip"
+       "yakread-export-1999-12-31-946684800000-abc123"
+       :dir
+       "/tmp/dir"]]}
     {:biff.fx/delete-files
-     #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123"}
+     [:biff.fx/delete-files
+      #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123"]}
     {:biff.fx/s3
-     {:config-ns yakread.s3.export,
-      :key "yakread-export-1999-12-31-946684800000-abc123.zip",
-      :method "PUT",
-      :body
-      #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123.zip",
-      :headers
-      {"x-amz-acl" "private", "content-type" "application/zip"}}}
+     [:biff.fx/s3
+      {:config-ns yakread.s3.export,
+       :key "yakread-export-1999-12-31-946684800000-abc123.zip",
+       :method "PUT",
+       :body
+       #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123.zip",
+       :headers
+       {"x-amz-acl" "private", "content-type" "application/zip"}}]}
     {:biff.fx/delete-files
-     "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123.zip"}
+     [:biff.fx/delete-files
+      "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123.zip"]}
     {:biff.fx/s3-presigned-url
-     {:config-ns yakread.s3.export,
-      :key "yakread-export-1999-12-31-946684800000-abc123.zip",
-      :method "GET",
-      :expires-at #time/instant "2000-01-08T00:00:00Z"}}
+     [:biff.fx/s3-presigned-url
+      {:config-ns yakread.s3.export,
+       :key "yakread-export-1999-12-31-946684800000-abc123.zip",
+       :method "GET",
+       :expires-at #time/instant "2000-01-08T00:00:00Z"}]}
     {:biff.fx/next :send,
      :com.yakread.work.account/email "hello@example.com"}]}
   _
@@ -74,31 +81,33 @@
     :send),
    :result
    {:biff.fx/email
-    {:template :export,
-     :to "hello@example.com",
-     :download-url "example.com"}}}
+    [:biff.fx/email
+     {:template :export,
+      :to "hello@example.com",
+      :download-url "example.com"}]}}
   _
   {:doc "delete-account: start state queries user data",
    :eval (delete-account {:biff/job {:user/id "user123"}} :start),
    :result
    {:biff.fx/pathom
-    {:entity {:user/id "user123"},
-     :query
-     [:user/id
-      (:user/email-username
-       {:com.wsscode.pathom3.connect.operation/optional? true})
-      {(:user/subscriptions
+    [:biff.fx/pathom
+     {:entity {:user/id "user123"},
+      :query
+      [:user/id
+       (:user/email-username
         {:com.wsscode.pathom3.connect.operation/optional? true})
-       [:sub/id
-        (:sub/feed-id
-         {:com.wsscode.pathom3.connect.operation/optional? true})]}
-      {(:user/ad
-        {:com.wsscode.pathom3.connect.operation/optional? true})
-       [:ad/id
-        (:ad/customer-id
-         {:com.wsscode.pathom3.connect.operation/optional? true})]}
-      (:user/customer-id
-       {:com.wsscode.pathom3.connect.operation/optional? true})]},
+       {(:user/subscriptions
+         {:com.wsscode.pathom3.connect.operation/optional? true})
+        [:sub/id
+         (:sub/feed-id
+          {:com.wsscode.pathom3.connect.operation/optional? true})]}
+       {(:user/ad
+         {:com.wsscode.pathom3.connect.operation/optional? true})
+        [:ad/id
+         (:ad/customer-id
+          {:com.wsscode.pathom3.connect.operation/optional? true})]}
+       (:user/customer-id
+        {:com.wsscode.pathom3.connect.operation/optional? true})]}],
     :biff.fx/next :delete}}
   _
   {:doc "delete-account: delete state with user and ad customer ids",
@@ -116,25 +125,28 @@
     :delete),
    :result
    [{:biff.fx/http
-     ({:method :delete,
-       :url "https://api.stripe.com/v1/customers/cus_user123",
-       :basic-auth ["sk_test_123"],
-       :socket-timeout 10000,
-       :connection-timeout 10000}
-      {:method :delete,
-       :url "https://api.stripe.com/v1/customers/cus_ad123",
-       :basic-auth ["sk_test_123"],
-       :socket-timeout 10000,
-       :connection-timeout 10000})}
+     [:biff.fx/http
+      ({:method :delete,
+        :url "https://api.stripe.com/v1/customers/cus_user123",
+        :basic-auth ["sk_test_123"],
+        :socket-timeout 10000,
+        :connection-timeout 10000}
+       {:method :delete,
+        :url "https://api.stripe.com/v1/customers/cus_ad123",
+        :basic-auth ["sk_test_123"],
+        :socket-timeout 10000,
+        :connection-timeout 10000})]}
     {:biff.fx/sqlite
-     ({:delete-from :sub, :where [:= :sub/id "sub1"]}
-      {:delete-from :ad, :where [:= :ad/id "ad1"]}
-      {:delete-from :user, :where [:= :user/id "user123"]}
-      {:insert-into :deleted-user,
-       :values
-       [{:deleted-user/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
-         :deleted-user/email-username-hash
-         "b4c9a289323b21a01c3e940f150eb9b8c542587f1abfd8f0e1cc1ffc5e475514"}]}),
+     [:biff.fx/sqlite
+      ({:delete-from :sub, :where [:= :sub/id "sub1"]}
+       {:delete-from :ad, :where [:= :ad/id "ad1"]}
+       {:delete-from :user, :where [:= :user/id "user123"]}
+       {:insert-into :deleted-user,
+        :values
+        [{:deleted-user/id
+          #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+          :deleted-user/email-username-hash
+          "b4c9a289323b21a01c3e940f150eb9b8c542587f1abfd8f0e1cc1ffc5e475514"}]})],
      :biff.fx/next :delete-email-batch}]}
   _
   {:doc "delete-account: delete state with only user customer id",
@@ -150,13 +162,15 @@
     :delete),
    :result
    [{:biff.fx/http
-     ({:method :delete,
-       :url "https://api.stripe.com/v1/customers/cus_user123",
-       :basic-auth ["sk_test_123"],
-       :socket-timeout 10000,
-       :connection-timeout 10000})}
+     [:biff.fx/http
+      ({:method :delete,
+        :url "https://api.stripe.com/v1/customers/cus_user123",
+        :basic-auth ["sk_test_123"],
+        :socket-timeout 10000,
+        :connection-timeout 10000})]}
     {:biff.fx/sqlite
-     ({:delete-from :user, :where [:= :user/id "user123"]}),
+     [:biff.fx/sqlite
+      ({:delete-from :user, :where [:= :user/id "user123"]})],
      :biff.fx/next :delete-email-batch}]}
   _
   {:doc "delete-account: delete state with no customer ids",
@@ -171,9 +185,10 @@
      :biff/secret {}}
     :delete),
    :result
-   [{:biff.fx/http ()}
+   [{:biff.fx/http [:biff.fx/http ()]}
     {:biff.fx/sqlite
-     ({:delete-from :user, :where [:= :user/id "user123"]}),
+     [:biff.fx/sqlite
+      ({:delete-from :user, :where [:= :user/id "user123"]})],
      :biff.fx/next :delete-email-batch}]}
   _
   {:doc "delete-account: delete-email-batch with no emails",
@@ -204,22 +219,24 @@
      :delete-email-batch)),
    :result
    [{:biff.fx/s3
-     ({:key "00200000-0000-0000-0000-000000000020",
-       :config-ns yakread.s3.content,
-       :method "DELETE"}
-      {:key "00210000-0000-0000-0000-000000000021",
-       :config-ns yakread.s3.emails,
-       :method "DELETE"}
-      {:key "00300000-0000-0000-0000-000000000030",
-       :config-ns yakread.s3.content,
-       :method "DELETE"})}
+     [:biff.fx/s3
+      ({:key "00200000-0000-0000-0000-000000000020",
+        :config-ns yakread.s3.content,
+        :method "DELETE"}
+       {:key "00210000-0000-0000-0000-000000000021",
+        :config-ns yakread.s3.emails,
+        :method "DELETE"}
+       {:key "00300000-0000-0000-0000-000000000030",
+        :config-ns yakread.s3.content,
+        :method "DELETE"})]}
     {:biff.fx/sqlite
-     [{:delete-from :item,
-       :where
-       [:in
-        :item/id
-        [#uuid "00020000-0000-0000-0000-000000000002"
-         #uuid "00030000-0000-0000-0000-000000000003"]]}]}
+     [:biff.fx/sqlite
+      [{:delete-from :item,
+        :where
+        [:in
+         :item/id
+         [#uuid "00020000-0000-0000-0000-000000000002"
+          #uuid "00030000-0000-0000-0000-000000000003"]]}]]}
     {:biff.fx/next :delete-email-batch,
      :com.yakread.work.account/email-ids ()}]}
   _
@@ -247,22 +264,24 @@
      :delete-email-batch)),
    :result
    [{:biff.fx/s3
-     ({:key "00200000-0000-0000-0000-000000000020",
-       :config-ns yakread.s3.content,
-       :method "DELETE"}
-      {:key "00210000-0000-0000-0000-000000000021",
-       :config-ns yakread.s3.emails,
-       :method "DELETE"}
-      {:key "00300000-0000-0000-0000-000000000030",
-       :config-ns yakread.s3.content,
-       :method "DELETE"})}
+     [:biff.fx/s3
+      ({:key "00200000-0000-0000-0000-000000000020",
+        :config-ns yakread.s3.content,
+        :method "DELETE"}
+       {:key "00210000-0000-0000-0000-000000000021",
+        :config-ns yakread.s3.emails,
+        :method "DELETE"}
+       {:key "00300000-0000-0000-0000-000000000030",
+        :config-ns yakread.s3.content,
+        :method "DELETE"})]}
     {:biff.fx/sqlite
-     [{:delete-from :item,
-       :where
-       [:in
-        :item/id
-        [#uuid "00020000-0000-0000-0000-000000000002"
-         #uuid "00030000-0000-0000-0000-000000000003"]]}]}
+     [:biff.fx/sqlite
+      [{:delete-from :item,
+        :where
+        [:in
+         :item/id
+         [#uuid "00020000-0000-0000-0000-000000000002"
+          #uuid "00030000-0000-0000-0000-000000000003"]]}]]}
     {:biff.fx/next :delete-email-batch,
      :com.yakread.work.account/email-ids ()}]}
   _]}

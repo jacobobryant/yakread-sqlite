@@ -22,13 +22,14 @@
                                          [:= :user-item/item-id (:item/id item)]
                                          [:is-not :user-item/viewed-at nil]]
                                  :limit 1}))
-             {:biff.fx/sqlite [{:insert-into :user-item
+             {:biff.fx/sqlite [:biff.fx/sqlite
+                               [{:insert-into :user-item
                                  :values [{:user-item/id (gen/uuid)
                                            :user-item/user-id (:user/id user)
                                            :user-item/item-id (:item/id item)
                                            :user-item/viewed-at now}]
                                  :on-conflict [:user-item/user-id :user-item/item-id]
-                                 :do-update-set {:fields [:viewed-at]}}]}))))
+                                 :do-update-set {:fields [:viewed-at]}}]]}))))
 
 (fx/defroute-pathom mark-all-read
   [{:session/user [:user/id]}
@@ -50,10 +51,11 @@
         (merge {:status 303
                 :headers {"HX-Location" (href `page-route (:sub/id sub))}}
                (when (not-empty values)
-                 {:biff.fx/sqlite [{:insert-into :user-item
+                 {:biff.fx/sqlite [:biff.fx/sqlite
+                                   [{:insert-into :user-item
                                      :values values
                                      :on-conflict [:user-item/user-id :user-item/item-id]
-                                     :do-update-set {:fields [:skipped-at]}}]}))))))
+                                     :do-update-set {:fields [:skipped-at]}}]]}))))))
 
 (fx/defroute-pathom read-content-route "/sub-item/:item-id/content"
   [{(? :params/item) [:item/ui-read-content
@@ -98,11 +100,12 @@
 
           :else
           {:biff.fx/next :render
-           :biff.fx/pathom [:app.shell/app-shell
+           :biff.fx/result [:biff.fx/pathom
+                            [:app.shell/app-shell
                             {:params/item [:item/id
                                            :item/title
                                            {:item/sub [:sub/id
-                                                       :sub/title]}]}]})))
+                                                       :sub/title]}]}]]})))
 
     :render
     (fn [_ {:keys [app.shell/app-shell params/item]}]

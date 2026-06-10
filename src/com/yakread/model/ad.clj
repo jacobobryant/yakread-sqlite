@@ -138,25 +138,26 @@
 
 (fx/defmachine get-stripe-status
   :start
-  (fn [{:keys [biff/secret biff.fx/pathom]}]
-    (let [{:ad-credit/keys [ad created-at]} pathom
+  (fn [{:keys [biff/secret ::credit]}]
+    (let [{:ad-credit/keys [ad created-at]} credit
           {:ad/keys [customer-id]} ad]
-      {:biff.fx/http {:method :get
-                      :url "https://api.stripe.com/v1/payment_intents"
-                      :basic-auth [(secret :stripe/api-key) ""]
-                      :flatten-nested-form-params true
-                      :as :json
-                      :query-params {:limit 100
-                                     :customer customer-id
-                                     :created {:gt (-> created-at
-                                                       tick/instant
-                                                       inst-ms
-                                                       (quot 1000)
-                                                       str)}}}
+      {:biff.fx/http [:biff.fx/http
+                      {:method :get
+                       :url "https://api.stripe.com/v1/payment_intents"
+                       :basic-auth [(secret :stripe/api-key) ""]
+                       :flatten-nested-form-params true
+                       :as :json
+                       :query-params {:limit 100
+                                      :customer customer-id
+                                      :created {:gt (-> created-at
+                                                        tick/instant
+                                                        inst-ms
+                                                        (quot 1000)
+                                                        str)}}}]
        :biff.fx/next :end}))
 
   :end
-  (fn [{credit :biff.fx/pathom
+  (fn [{:keys [::credit]
         http :biff.fx/http}]
     (when-some [status (some (fn [{:keys [metadata status]}]
                                (when (= (str (:ad-credit/id credit))
@@ -172,7 +173,7 @@
                 :ad-credit/charge-status]
    ::pco/output [:ad-credit/stripe-status]}
   (when (= charge-status :ad-credit.charge-status/pending)
-    (get-stripe-status (assoc ctx :biff.fx/pathom credit))))
+    (get-stripe-status (assoc ctx ::credit credit))))
 
 (defresolver pending-charge [{:biff/keys [query]} {:keys [ad/id]}]
   {::pco/input [:ad/id]

@@ -1,6 +1,7 @@
 (ns com.yakread.app.read-later.add
   (:require
    [clojure.string :as str]
+   [com.biffweb.fx :as biff.fx]
    [com.wsscode.pathom3.connect.operation :refer [?]]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.item :as lib.item]
@@ -10,7 +11,7 @@
    [com.yakread.routes :as routes]))
 
 (def add-item-async
-  (comp (fx/machine
+  (comp (biff.fx/machine
          ::add-item-async
          (lib.item/add-item-machine
           {:user-item-key :user-item/bookmarked-at}))
@@ -32,10 +33,11 @@
                         (filter #(str/starts-with? % "http"))
                         not-empty)]
       (merge (hx-redirect `page {:batch-added (count urls)})
-             {:biff.fx/queue {:jobs (for [[i url] (map-indexed vector urls)]
-                                      [::add-item {:user/id (:uid session)
-                                                   :url url
-                                                   :biff/priority i}])}})
+             {:biff.fx/queue [:biff.fx/queue
+                              {:jobs (for [[i url] (map-indexed vector urls)]
+                                       [::add-item {:user/id (:uid session)
+                                                    :url url
+                                                    :biff/priority i}])}]})
       (hx-redirect `page {:batch-error true}))))
 
 (fx/defroute-pathom page "/read-later/add"

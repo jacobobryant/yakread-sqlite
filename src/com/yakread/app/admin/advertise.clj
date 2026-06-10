@@ -23,16 +23,17 @@
                        (:ad/approve-state ad)
                        (update :ad/approve-state
                                (fn [v] [:lift (keyword "ad.approve-state" (name v))])))]
-      {:biff.fx/sqlite [{:update :ad
+      {:biff.fx/sqlite [:biff.fx/sqlite
+                        [{:update :ad
                           :set set-fields
-                          :where [:= :ad/id id]}]
+                          :where [:= :ad/id id]}]]
        :status 200
        :body ""})))
 
 (fx/defroute create-pending-charges
   :post
   (fn [{{:keys [tx]} :params}]
-    {:biff.fx/sqlite tx
+    {:biff.fx/sqlite [:biff.fx/sqlite tx]
      :headers {"hx-refresh" "true"}
      :status 204}))
 
@@ -56,47 +57,53 @@
                                             :succeeded (count succeeded)
                                             :faild (count failed)})
       (concat
-       {:status 204
-        :headers {"hx-refresh" "true"}
-        :biff.fx/sqlite (concat
-                         ;; record succeeded payment
-                         (for [{:ad-credit/keys [id amount ad]} succeeded
-                               :let [{ad-id :ad/id} ad]]
-                           [{:update :ad-credit
-                             :set {:ad-credit/charge-status [:lift :ad-credit.charge-status/confirmed]}
-                             :where [:= :ad-credit/id id]}
-                            {:update :ad
-                             :set {:ad/balance [:- :ad/balance amount]}
-                             :where [:= :ad/id ad-id]}])
+       [{:status 204
+         :headers {"hx-refresh" "true"}
+         :biff.fx/sqlite [:biff.fx/sqlite
+                          (concat
+                           ;; record succeeded payment
+                           (mapcat
+                            (fn [{:ad-credit/keys [id amount ad]}]
+                              (let [{ad-id :ad/id} ad]
+                                [{:update :ad-credit
+                                  :set {:ad-credit/charge-status [:lift :ad-credit.charge-status/confirmed]}
+                                  :where [:= :ad-credit/id id]}
+                                 {:update :ad
+                                  :set {:ad/balance [:- :ad/balance amount]}
+                                  :where [:= :ad/id ad-id]}]))
+                            succeeded)
 
-                         ;; record failed payment
-                         (for [{:ad-credit/keys [id ad]} failed
-                               :let [{ad-id :ad/id} ad]]
-                           [{:update :ad-credit
-                             :set {:ad-credit/charge-status [:lift :ad-credit.charge-status/failed]}
-                             :where [:= :ad-credit/id id]}
-                            {:update :ad
-                             :set {:ad/payment-failed true}
-                             :where [:= :ad/id ad-id]}]))}
+                           ;; record failed payment
+                           (mapcat
+                            (fn [{:ad-credit/keys [id ad]}]
+                              (let [{ad-id :ad/id} ad]
+                                [{:update :ad-credit
+                                  :set {:ad-credit/charge-status [:lift :ad-credit.charge-status/failed]}
+                                  :where [:= :ad-credit/id id]}
+                                 {:update :ad
+                                  :set {:ad/payment-failed true}
+                                  :where [:= :ad/id ad-id]}]))
+                            failed))]}]
 
        ;; create payment intent
        (for [{:ad-credit/keys [id amount ad]} new*
              :let [{:ad/keys [customer-id payment-method user]} ad
                    {:user/keys [email]} user]]
-         {:biff.fx/http {:method :post
-                         :url "https://api.stripe.com/v1/payment_intents"
-                         :basic-auth [(secret :stripe/api-key) ""]
-                         :headers {"Idempotency-Key" (str id)}
-                         :flatten-nested-form-params true
-                         :form-params {:amount amount
-                                       :currency "usd"
-                                       :confirm true
-                                       :customer customer-id
-                                       :payment_method payment-method
-                                       :off_session true
-                                       :description "Yakread advertising"
-                                       :receipt_email email
-                                       :metadata {:charge_id (str id)}}}})))))
+         {:biff.fx/http [:biff.fx/http
+                         {:method :post
+                          :url "https://api.stripe.com/v1/payment_intents"
+                          :basic-auth [(secret :stripe/api-key) ""]
+                          :headers {"Idempotency-Key" (str id)}
+                          :flatten-nested-form-params true
+                          :form-params {:amount amount
+                                        :currency "usd"
+                                        :confirm true
+                                        :customer customer-id
+                                        :payment_method payment-method
+                                        :off_session true
+                                        :description "Yakread advertising"
+                                        :receipt_email email
+                                        :metadata {:charge_id (str id)}}}]})))))
 
 (defresolver pending-ads [{:keys [admin/ads]}]
   {::pco/input [{:admin/ads [:ad/id

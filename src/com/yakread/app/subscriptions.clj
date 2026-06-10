@@ -29,8 +29,9 @@
       (case record-type
         :sub.record-type/feed
         (merge base
-               {:biff.fx/sqlite [{:delete-from :mv-sub :where [:= :mv-sub/sub-id id]}
-                                  {:delete-from :sub :where [:= :sub/id id]}]})
+               {:biff.fx/sqlite [:biff.fx/sqlite
+                                 [{:delete-from :mv-sub :where [:= :mv-sub/sub-id id]}
+                                  {:delete-from :sub :where [:= :sub/id id]}]]})
 
         :sub.record-type/email
         (let [{:item/keys [email-list-unsubscribe email-list-unsubscribe-post]} latest-item
@@ -38,18 +39,21 @@
               email (second (re-find #"<mailto:([^>]+)>" (or email-list-unsubscribe "")))]
           (merge-with merge
                       base
-                      {:biff.fx/sqlite [{:update :sub
-                                         :set {:sub/email-unsubscribed-at now}
-                                         :where [:= :sub/id id]}]}
+                      {:biff.fx/sqlite [:biff.fx/sqlite
+                                        [{:update :sub
+                                          :set {:sub/email-unsubscribed-at now}
+                                          :where [:= :sub/id id]}]]}
                       (cond
                         (and url (= (some-> email-list-unsubscribe-post str/lower-case)
                                     "list-unsubscribe=one-click"))
-                        {:biff.fx/http {:url url :method :post :throw-exceptions false}}
+                        {:biff.fx/http [:biff.fx/http
+                                        {:url url :method :post :throw-exceptions false}]}
 
                         email
-                        {:biff.fx/email {:to [{:email email}]
-                                         :subject "unsubscribe"
-                                         :text "unsubscribe"}}
+                        {:biff.fx/email [:biff.fx/email
+                                         {:to [{:email email}]
+                                          :subject "unsubscribe"
+                                          :text "unsubscribe"}]}
 
                         url
                         {:headers {"HX-Trigger" (cheshire/generate-string {:yak/open-new-tab url})}})))))))
@@ -62,12 +66,14 @@
   :post
   (fn [{:keys [biff/now params]} {{:sub/keys [id pinned-at record-type]}
           :params/sub}]
-    {:biff.fx/sqlite [{:update :sub
-                       :set {:sub/pinned-at (when-not pinned-at now)}
-                       :where [:= :sub/id id]}]
-     :biff.fx/render {:route-sym `page-content-route
-                      :request-method :get
-                      :params (select-keys params [:tab])}
+    {:biff.fx/sqlite [:biff.fx/sqlite
+                      [{:update :sub
+                        :set {:sub/pinned-at (when-not pinned-at now)}
+                        :where [:= :sub/id id]}]]
+     :biff.fx/render [:biff.fx/render
+                      {:route-sym `page-content-route
+                       :request-method :get
+                       :params (select-keys params [:tab])}]
      :biff.fx/next :return})
 
   :return
@@ -81,9 +87,10 @@
 
   :post
   (fn [_ {:keys [params.checked/subscriptions]}]
-    {:biff.fx/sqlite [{:update :sub
-                       :set {:sub/email-unsubscribed-at nil}
-                       :where [:in :sub/id (mapv :sub/id subscriptions)]}]
+    {:biff.fx/sqlite [:biff.fx/sqlite
+                      [{:update :sub
+                        :set {:sub/email-unsubscribed-at nil}
+                        :where [:in :sub/id (mapv :sub/id subscriptions)]}]]
      :status 204
      :headers {"HX-Redirect" (href `unsubs-page)}}))
 

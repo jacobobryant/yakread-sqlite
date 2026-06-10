@@ -14,13 +14,14 @@
       :user/use-original-links true}}),
    :result
    {:biff.fx/sqlite
-    [{:update :user,
-      :set
-      {:user/use-original-links true,
-       :user/digest-days #{:wednesday :friday :monday},
-       :user/send-digest-at 8,
-       :user/timezone "America/New_York"},
-      :where [:= :user/id "user1"]}],
+    [:biff.fx/sqlite
+     [{:update :user,
+       :set
+       {:user/use-original-links true,
+        :user/digest-days #{:wednesday :friday :monday},
+        :user/send-digest-at 8,
+        :user/timezone "America/New_York"},
+       :where [:= :user/id "user1"]}]],
     :status 303,
     :headers {"location" ["/settings" nil]}}}
   _
@@ -36,13 +37,14 @@
       :user/timezone "America/Denver"}}),
    :result
    {:biff.fx/sqlite
-    [{:update :user,
-      :set
-      {:user/use-original-links false,
-       :user/digest-days #{:tuesday},
-       :user/send-digest-at 14,
-       :user/timezone "America/Denver"},
-      :where [:= :user/id "user1"]}],
+    [:biff.fx/sqlite
+     [{:update :user,
+       :set
+       {:user/use-original-links false,
+        :user/digest-days #{:tuesday},
+        :user/send-digest-at 14,
+        :user/timezone "America/Denver"},
+       :where [:= :user/id "user1"]}]],
     :status 303,
     :headers {"location" ["/settings" nil]}}}
   _
@@ -55,8 +57,9 @@
      :biff.form/params {:user/timezone "Europe/London"}}),
    :result
    {:biff.fx/sqlite
-    [{:update :user,
-      :set {:user/timezone "Europe/London"},
-      :where [:= :user/id "user1"]}],
+    [:biff.fx/sqlite
+     [{:update :user,
+       :set {:user/timezone "Europe/London"},
+       :where [:= :user/id "user1"]}]],
     :status 204}}
   _]}

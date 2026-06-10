@@ -48,7 +48,8 @@
         nil
         #_(log/warn "Rejected incoming email for"
                   (str (str/lower-case (:username message)) "@" (:domain message)))
-        {:com.yakread.fx/js {:fn-name "juice" :input {:html html} :catch-exceptions true}
+        {:com.yakread.fx/js [:com.yakread.fx/js
+                             {:fn-name "juice" :input {:html html} :catch-exceptions true}]
          :biff.fx/next :end
          ::url (infer-post-url (:headers message) html)})))
 
@@ -60,10 +61,11 @@
         (if exception
           (log/warn "juice threw exception for" (:username message) "-" (.getMessage exception))
           (log/warn "juice failed to parse message for" (:username message)))
-        {:biff.fx/spit {:file (str "storage/juice-failed/" 
-                                   (inst-ms (tick/instant now))
-                                   ".edn")
-                        :content (pr-str message)}})
+        {:biff.fx/spit [:biff.fx/spit
+                        {:file (str "storage/juice-failed/"
+                                    (inst-ms (tick/instant now))
+                                    ".edn")
+                         :content (pr-str message)}]})
       (let [html (-> html
                      lib.content/normalize
                      (str/replace #"#transparent" "transparent"))
@@ -89,19 +91,21 @@
             sub-id (or sub-id (gen/uuid))
             first-header (fn [header-name]
                            (some lib.smtp/decode-header (get-in message [:headers header-name])))]
-        [{:biff.fx/s3 [{:config-ns 'yakread.s3.emails
-                        :key raw-content-key
-                        :method "PUT"
-                        :body (:raw message)
-                        :headers {"x-amz-acl" "private"
-                                  "content-type" "text/plain"}}
-                       {:config-ns 'yakread.s3.content
-                        :key parsed-content-key
-                        :method "PUT"
-                        :body html
-                        :headers {"x-amz-acl" "private"
-                                  "content-type" "text/html"}}]}
-         {:biff.fx/sqlite (concat
+        [{:biff.fx/s3 [:biff.fx/s3
+                       [{:config-ns 'yakread.s3.emails
+                         :key raw-content-key
+                         :method "PUT"
+                         :body (:raw message)
+                         :headers {"x-amz-acl" "private"
+                                   "content-type" "text/plain"}}
+                        {:config-ns 'yakread.s3.content
+                         :key parsed-content-key
+                         :method "PUT"
+                         :body html
+                         :headers {"x-amz-acl" "private"
+                                   "content-type" "text/html"}}]]}
+         {:biff.fx/sqlite [:biff.fx/sqlite
+                           (concat
                            (when new-sub
                              [{:insert-into :sub
                                :values [{:sub/id sub-id
@@ -129,4 +133,4 @@
                                         :item/email-list-unsubscribe (first-header "list-unsubscribe")
                                         :item/email-list-unsubscribe-post (first-header "list-unsubscribe-post")
                                         :item/email-reply-to (some :address (:reply-to message))
-                                        :item/email-maybe-confirmation (or new-sub nil)})]}])}]))))
+                                        :item/email-maybe-confirmation (or new-sub nil)})]}])]}]))))

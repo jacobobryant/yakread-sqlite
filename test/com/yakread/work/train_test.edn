@@ -29,7 +29,8 @@
        :yakread.work.queue-add-candidate/enabled true}))),
    :result
    {:biff.fx/queue
-    {:jobs
-     ([:work.train/add-candidate
-       {:item/url "https://example.com/1"}])}}}
+    [:biff.fx/queue
+     {:jobs
+      ([:work.train/add-candidate
+        {:item/url "https://example.com/1"}])}]}}
   _]}

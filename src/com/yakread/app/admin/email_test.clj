@@ -18,12 +18,13 @@
         :keys [biff/base-url]}]
     (if (empty? url)
       {::error "URL is required."}
-      {:biff.fx/http {:url url
-                      :method :get
-                      :headers {"User-Agent" (or base-url "Yakread")}
-                      :socket-timeout 10000
-                      :connection-timeout 10000
-                      :throw-exceptions false}
+      {:biff.fx/http [:biff.fx/http
+                      {:url url
+                       :method :get
+                       :headers {"User-Agent" (or base-url "Yakread")}
+                       :socket-timeout 10000
+                       :connection-timeout 10000
+                       :throw-exceptions false}]
        :biff.fx/next :handle-http
        ::from-address from-address
        ::from-name from-name
@@ -45,8 +46,9 @@
       {::error "Content too large (>10MB)."}
 
       :else
-      {:com.yakread.fx/js {:fn-name "readability"
-                           :input {:url url :html (:body http)}}
+      {:com.yakread.fx/js [:com.yakread.fx/js
+                           {:fn-name "readability"
+                            :input {:url url :html (:body http)}}]
        :biff.fx/next :handle-readability
        ::raw-html (:body http)}))
 

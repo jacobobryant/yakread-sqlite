@@ -24,12 +24,13 @@
                                  [:= :item/record-type [:lift :item.record-type/direct]]]
                          :limit 1}))]
          (on-success ctx {:item/id (:item/id item) :item/url (:item/url item)})
-         {:biff.fx/http {:url url
-                         :method  :get
-                         :headers {"User-Agent" base-url}
-                         :socket-timeout 5000
-                         :connection-timeout 5000
-                         :throw-exceptions false}
+         {:biff.fx/http [:biff.fx/http
+                         {:url url
+                          :method  :get
+                          :headers {"User-Agent" base-url}
+                          :socket-timeout 5000
+                          :connection-timeout 5000
+                          :throw-exceptions false}]
           :biff.fx/next :handle-http
           ::url         url})))
 
@@ -39,8 +40,9 @@
                   (some-> http :headers (get "Content-Type") (str/includes? "text"))
                   (< (count (:body http)) (* 1000 1000)))
        (on-error ctx {:item/url (:url http)})
-       {:com.yakread.fx/js {:fn-name "readability"
-                            :input {:url (:url http) :html (:body http)}}
+       {:com.yakread.fx/js [:com.yakread.fx/js
+                            {:fn-name "readability"
+                             :input {:url (:url http) :html (:body http)}}]
         :biff.fx/next :handle-readability
         ::url (:url http)
         ::final-url (str/replace (or (last (:trace-redirects http)) (:url http))
@@ -60,15 +62,14 @@
              content-key (when-not inline-content (gen/uuid))
              item-id (gen/uuid)]
          [(when-not inline-content
-            {:biff.fx/s3 {:config-ns 'yakread.s3.content
-                          :method  "PUT"
-                          :key     (str content-key)
-                          :body    content
-                          :headers {"x-amz-acl"    "private"
-                                    "content-type" "text/html"}}})
-          (merge-with into
-                      {:biff.fx/sqlite
-                       (filterv
+            {:biff.fx/s3 [:biff.fx/s3
+                          {:config-ns 'yakread.s3.content
+                           :method  "PUT"
+                           :key     (str content-key)
+                           :body    content
+                           :headers {"x-amz-acl"    "private"
+                                     "content-type" "text/html"}}]})
+          (let [sqlite (filterv
                         some?
                         [{:insert-into :item
                           :values [(lib.core/some-vals
@@ -91,8 +92,12 @@
                            {:insert-into :redirect
                             :values [{:redirect/id (gen/uuid)
                                       :redirect/url url
-                                      :redirect/item-id item-id}]})])}
-                      (on-success ctx {:item/id item-id :item/url url}))])))})
+                                      :redirect/item-id item-id}]})])
+                success (on-success ctx {:item/id item-id :item/url url})
+                success-sqlite (second (:biff.fx/sqlite success))]
+            (assoc success
+                   :biff.fx/sqlite
+                   [:biff.fx/sqlite (into sqlite success-sqlite)]))])))})
 
 (defn add-item-machine [{:keys [start user-item-key redirect-to]
                          :or {start :start}}]
@@ -102,7 +107,7 @@
 
         :on-success
         (fn [{:keys [session biff/now]} {:item/keys [id]}]
-          (merge {:biff.fx/sqlite
+          (merge {:biff.fx/sqlite [:biff.fx/sqlite
                   [{:insert-into :user-item
                     :values [(merge {:user-item/id (gen/uuid)
                                      :user-item/user-id (:uid session)
@@ -119,7 +124,7 @@
                                            :user-item/bookmarked-at nil
                                            :user-item/reported-at nil
                                            :user-item/report-reason nil}
-                                          {user-item-key now})}]}
+                                          {user-item-key now})}]]}
                  (some-> redirect-to (hx-redirect {:added true}))))
 
         :on-error

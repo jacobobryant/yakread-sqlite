@@ -30,22 +30,24 @@
 (fx/defroute set-timezone
   :post
   (fn [{:keys [session biff.form/params]}]
-    {:biff.fx/sqlite [{:update :user
-                       :set {:user/timezone (:user/timezone params)}
-                       :where [:= :user/id (:uid session)]}]
+    {:biff.fx/sqlite [:biff.fx/sqlite
+                      [{:update :user
+                        :set {:user/timezone (:user/timezone params)}
+                        :where [:= :user/id (:uid session)]}]]
      :status 204}))
 
 (fx/defroute save-settings
   :post
   (fn [{:keys [session biff.form/params]}]
-    {:biff.fx/sqlite [{:update :user
-                       :set (merge {:user/use-original-links false
-                                    :user/digest-days #{}}
-                                   (select-keys params [:user/digest-days
-                                                        :user/send-digest-at
-                                                        :user/timezone
-                                                        :user/use-original-links]))
-                       :where [:= :user/id (:uid session)]}]
+    {:biff.fx/sqlite [:biff.fx/sqlite
+                      [{:update :user
+                        :set (merge {:user/use-original-links false
+                                     :user/digest-days #{}}
+                                    (select-keys params [:user/digest-days
+                                                         :user/send-digest-at
+                                                         :user/timezone
+                                                         :user/use-original-links]))
+                        :where [:= :user/id (:uid session)]}]]
      :status 303
      :headers {"location" (href page)}}))
 
@@ -72,12 +74,13 @@
                                 {:select :user/id
                                  :from :user
                                  :where [:= :user/customer-id customer]})]
-      {:biff.fx/sqlite [{:update :user
-                         :set {:user/plan [:lift plan]
-                               :user/cancel-at (when cancel_at
-                                                 (tick/in (tick/instant (* cancel_at 1000))
-                                                          "UTC"))}
-                         :where [:= :user/id user-id]}]
+      {:biff.fx/sqlite [:biff.fx/sqlite
+                        [{:update :user
+                          :set {:user/plan [:lift plan]
+                                :user/cancel-at (when cancel_at
+                                                  (tick/in (tick/instant (* cancel_at 1000))
+                                                           "UTC"))}
+                          :where [:= :user/id user-id]}]]
        :status 204}))
 
   :delete-plan
@@ -87,10 +90,11 @@
                                 {:select :user/id
                                  :from :user
                                  :where [:= :user/customer-id customer]})]
-      {:biff.fx/sqlite [{:update :user
-                         :set {:user/plan nil
-                               :user/cancel-at nil}
-                         :where [:= :user/id user-id]}]
+      {:biff.fx/sqlite [:biff.fx/sqlite
+                        [{:update :user
+                          :set {:user/plan nil
+                                :user/cancel-at nil}
+                          :where [:= :user/id user-id]}]]
        :status 204})))
 
 (fx/defroute-pathom manage-premium
@@ -100,14 +104,15 @@
   (fn [{:keys [biff/base-url biff/secret biff.fx/pathom]}
        {:keys [session/user]}]
     (let [{:user/keys [customer-id]} user]
-      {:biff.fx/http {:method :post
-                      :url "https://api.stripe.com/v1/billing_portal/sessions"
-                      :basic-auth [(secret :stripe/api-key)]
-                      :form-params {:customer customer-id
-                                    :return_url (str base-url (href page))}
-                      :as :json
-                      :socket-timeout 10000
-                      :connection-timeout 10000}
+      {:biff.fx/http [:biff.fx/http
+                      {:method :post
+                       :url "https://api.stripe.com/v1/billing_portal/sessions"
+                       :basic-auth [(secret :stripe/api-key)]
+                       :form-params {:customer customer-id
+                                     :return_url (str base-url (href page))}
+                       :as :json
+                       :socket-timeout 10000
+                       :connection-timeout 10000}]
        :biff.fx/next :redirect}))
 
   :redirect
@@ -118,9 +123,10 @@
 (fx/defroute upgrade-premium
   :post
   (fn [_]
-    {:biff.fx/pathom [{:session/user [:user/premium
-                                      :user/email
-                                      (? :user/customer-id)]}]
+    {:biff.fx/pathom [:biff.fx/pathom
+                      [{:session/user [:user/premium
+                                       :user/email
+                                       (? :user/customer-id)]}]]
      :biff.fx/next :check-customer-id})
 
   :check-customer-id
@@ -131,11 +137,12 @@
         {:status 303 :headers {"location" (href page)}}
 
         (not customer-id)
-        {:biff.fx/http {:method :post
-                        :url "https://api.stripe.com/v1/customers"
-                        :basic-auth [(secret :stripe/api-key)]
-                        :form-params {:email email}
-                        :as :json}
+        {:biff.fx/http [:biff.fx/http
+                        {:method :post
+                         :url "https://api.stripe.com/v1/customers"
+                         :basic-auth [(secret :stripe/api-key)]
+                         :form-params {:email email}
+                         :as :json}]
          :biff.fx/next :create-session}
 
         :else
@@ -155,23 +162,25 @@
                      quarter-price-id
                      annual-price-id)]
       [(when http
-         {:biff.fx/sqlite [{:update :user
-                            :set {:user/customer-id customer-id}
-                            :where [:= :user/id (:uid session)]}]})
-       {:biff.fx/http {:method :post
-                       :url "https://api.stripe.com/v1/checkout/sessions"
-                       :basic-auth [(secret :stripe/api-key)]
-                       :multi-param-style :array
-                       :form-params {:mode "subscription"
-                                     :allow_promotion_codes true
-                                     :customer customer-id
-                                     "line_items[0][quantity]" 1
-                                     "line_items[0][price]" price-id
-                                     :success_url (str base-url (href page {:upgraded (:plan params)}))
-                                     :cancel_url (str base-url (href page))}
-                       :as :json
-                       :socket-timeout 10000
-                       :connection-timeout 10000}
+         {:biff.fx/sqlite [:biff.fx/sqlite
+                           [{:update :user
+                             :set {:user/customer-id customer-id}
+                             :where [:= :user/id (:uid session)]}]]})
+       {:biff.fx/http [:biff.fx/http
+                       {:method :post
+                        :url "https://api.stripe.com/v1/checkout/sessions"
+                        :basic-auth [(secret :stripe/api-key)]
+                        :multi-param-style :array
+                        :form-params {:mode "subscription"
+                                      :allow_promotion_codes true
+                                      :customer customer-id
+                                      "line_items[0][quantity]" 1
+                                      "line_items[0][price]" price-id
+                                      :success_url (str base-url (href page {:upgraded (:plan params)}))
+                                      :cancel_url (str base-url (href page))}
+                        :as :json
+                        :socket-timeout 10000
+                        :connection-timeout 10000}]
         :biff.fx/next :redirect}]))
 
   :redirect
@@ -182,8 +191,9 @@
 (fx/defroute export-data
   :post
   (fn [{:keys [session]}]
-    {:biff.fx/queue {:id :work.account/export-user-data
-                     :job {:user/id (:uid session)}}
+    {:biff.fx/queue [:biff.fx/queue
+                     {:id :work.account/export-user-data
+                      :job {:user/id (:uid session)}}]
      :status 204}))
 
 (fx/defroute-pathom delete-account
@@ -206,8 +216,9 @@
                                                              "was incorrect.")})}}
 
         :else
-        {:biff.fx/queue {:id :work.account/delete-account
-                         :job {:user/id (:user/id user)}}
+        {:biff.fx/queue [:biff.fx/queue
+                         {:id :work.account/delete-account
+                          :job {:user/id (:user/id user)}}]
          :status 204
          :headers {"hx-redirect" (href account-deleted)}
          :session {}}))))
@@ -368,9 +379,10 @@
     (let [{:keys [action user/id]} safe-params]
       (if (not= action :action/unsubscribe)
         (ui/on-error {:status 400})
-        {:biff.fx/sqlite [{:update :user
-                          :set {:user/digest-days #{}}
-                          :where [:= :user/id id]}]
+        {:biff.fx/sqlite [:biff.fx/sqlite
+                          [{:update :user
+                            :set {:user/digest-days #{}}
+                            :where [:= :user/id id]}]]
          :status 303
          :headers {"location" (href unsubscribe-success)}}))))
 

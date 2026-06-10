@@ -17,13 +17,14 @@
                           (if (string? block)
                             [block]
                             block))]
-      {:biff.fx/sqlite (for [id all-items]
-                         {:update :item
-                          :set {:item/direct-candidate-status
-                                [:lift (if (block-ids id)
-                                         :item.direct-candidate-status/blocked
-                                         :item.direct-candidate-status/approved)]}
-                          :where [:= :item/id id]})
+      {:biff.fx/sqlite [:biff.fx/sqlite
+                        (for [id all-items]
+                          {:update :item
+                           :set {:item/direct-candidate-status
+                                 [:lift (if (block-ids id)
+                                          :item.direct-candidate-status/blocked
+                                          :item.direct-candidate-status/approved)]}
+                           :where [:= :item/id id]})]
        :status 303
        :headers {"location" (href page-route)}})))
 

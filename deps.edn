@@ -1,6 +1,7 @@
 {:paths ["src" "resources" "target/resources" "target/classes"]
- :deps {com.biffweb/core                    {:mvn/version "2.0.0-rc4"}
-        com.biffweb/config                  {:mvn/version "2.0.0-rc4"}
+ :deps {com.biffweb/core                    {:mvn/version "2.0.0-rc5"}
+        com.biffweb/config                  {:mvn/version "2.0.0-rc5"}
+        com.biffweb/fx                      {:mvn/version "2.0.0-rc5"}
 
         com.biffweb/biff                    {:git/url "https://github.com/jacobobryant/biff"
                                              :git/sha "0e1e207df27acb1758ec3604eb56af50b7bb47ea"

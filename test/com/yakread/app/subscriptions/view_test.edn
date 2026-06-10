@@ -16,22 +16,23 @@
         :user-item/user-id user-id,
         :user-item/item-id (t/uuid 1)}]},
      :biff/now (t/instant 2000),
-     :biff.fx/pathom
+     :biff.fx/result
      {:session/user {:user/id user-id},
       :params/item {:item/id (t/uuid 1)}}}),
    :result
    {:status 204,
     :biff.fx/sqlite
-    [{:insert-into :user-item,
-      :values
-      [{:user-item/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
-        :user-item/user-id
-        #uuid "12345678-0000-0000-0000-000000000000",
-        :user-item/item-id
-        #uuid "00010000-0000-0000-0000-000000000001",
-        :user-item/viewed-at #time/instant "2000-01-01T00:00:00Z"}],
-      :on-conflict [:user-item/user-id :user-item/item-id],
-      :do-update-set {:fields [:viewed-at]}}]}}
+    [:biff.fx/sqlite
+     [{:insert-into :user-item,
+       :values
+       [{:user-item/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+         :user-item/user-id
+         #uuid "12345678-0000-0000-0000-000000000000",
+         :user-item/item-id
+         #uuid "00010000-0000-0000-0000-000000000001",
+         :user-item/viewed-at #time/instant "2000-01-01T00:00:00Z"}],
+       :on-conflict [:user-item/user-id :user-item/item-id],
+       :do-update-set {:fields [:viewed-at]}}]]}}
   _
   {:doc "mark-read existing, read",
    :eval
@@ -45,7 +46,7 @@
         :user-item/item-id (t/uuid 1),
         :user-item/viewed-at (t/instant 1999)}]},
      :biff/now (t/instant 2000),
-     :biff.fx/pathom
+     :biff.fx/result
      {:session/user {:user/id user-id},
       :params/item {:item/id (t/uuid 1)}}}),
    :result {:status 204}}
@@ -57,22 +58,23 @@
     :post
     {:db* {},
      :biff/now (t/instant 2000),
-     :biff.fx/pathom
+     :biff.fx/result
      {:session/user {:user/id user-id},
       :params/item {:item/id (t/uuid 1)}}}),
    :result
    {:status 204,
     :biff.fx/sqlite
-    [{:insert-into :user-item,
-      :values
-      [{:user-item/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
-        :user-item/user-id
-        #uuid "12345678-0000-0000-0000-000000000000",
-        :user-item/item-id
-        #uuid "00010000-0000-0000-0000-000000000001",
-        :user-item/viewed-at #time/instant "2000-01-01T00:00:00Z"}],
-      :on-conflict [:user-item/user-id :user-item/item-id],
-      :do-update-set {:fields [:viewed-at]}}]}}
+    [:biff.fx/sqlite
+     [{:insert-into :user-item,
+       :values
+       [{:user-item/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+         :user-item/user-id
+         #uuid "12345678-0000-0000-0000-000000000000",
+         :user-item/item-id
+         #uuid "00010000-0000-0000-0000-000000000001",
+         :user-item/viewed-at #time/instant "2000-01-01T00:00:00Z"}],
+       :on-conflict [:user-item/user-id :user-item/item-id],
+       :do-update-set {:fields [:viewed-at]}}]]}}
   _
   {:doc "mark-all-read",
    :eval
@@ -80,7 +82,7 @@
     mark-all-read
     :post
     {:biff/now (t/instant 2000),
-     :biff.fx/pathom
+     :biff.fx/result
      {:session/user {:user/id user-id},
       :params/sub
       {:sub/id "sub1",
@@ -92,27 +94,28 @@
    {:status 303,
     :headers {"HX-Location" ["/subscription/sub1" nil]},
     :biff.fx/sqlite
-    [{:insert-into :user-item,
-      :values
-      [{:user-item/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
-        :user-item/user-id
-        #uuid "12345678-0000-0000-0000-000000000000",
-        :user-item/item-id "item1",
-        :user-item/skipped-at #time/instant "2000-01-01T00:00:00Z"}
-       {:user-item/id #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503",
-        :user-item/user-id
-        #uuid "12345678-0000-0000-0000-000000000000",
-        :user-item/item-id "item2",
-        :user-item/skipped-at #time/instant "2000-01-01T00:00:00Z"}],
-      :on-conflict [:user-item/user-id :user-item/item-id],
-      :do-update-set {:fields [:skipped-at]}}]}}
+    [:biff.fx/sqlite
+     [{:insert-into :user-item,
+       :values
+       [{:user-item/id #uuid "bb20b45f-d4d9-5138-3d93-cb799b3970be",
+         :user-item/user-id
+         #uuid "12345678-0000-0000-0000-000000000000",
+         :user-item/item-id "item1",
+         :user-item/skipped-at #time/instant "2000-01-01T00:00:00Z"}
+        {:user-item/id #uuid "a32dc9f6-4f1d-f03a-8ce9-70b71df42503",
+         :user-item/user-id
+         #uuid "12345678-0000-0000-0000-000000000000",
+         :user-item/item-id "item2",
+         :user-item/skipped-at #time/instant "2000-01-01T00:00:00Z"}],
+       :on-conflict [:user-item/user-id :user-item/item-id],
+       :do-update-set {:fields [:skipped-at]}}]]}}
   _
   {:doc "read-page-route missing item",
    :eval
    (t/test-route
     read-page-route
     :get
-    {:biff.fx/pathom {:session/user {}}}),
+    {:biff.fx/result {:session/user {}}}),
    :result {:status 303, :headers {"Location" ["/subscriptions" nil]}}}
   _
   {:doc "read-page-route use-original-links",
@@ -123,7 +126,7 @@
      (t/test-route
       read-page-route
       :get
-      {:biff.fx/pathom
+      {:biff.fx/result
        {:params/item {:item/id "item1", :item/url "url1"},
         :session/user {:user/use-original-links true}}}))),
    :result
@@ -147,30 +150,24 @@
         {:__html
          "params = document.querySelector('#params');const …"}}]]]}}
   _
-   {:doc "page-route missing sub redirects",
-    :eval
-    (t/test-route
-     page-route
-     :get
-     {:biff.fx/pathom
-      {:app.shell/app-shell identity}}),
-    :result {:status 303, :headers {"Location" ["/subscriptions" nil]}}}
-   _
-   {:doc "page-content-route missing sub redirects",
-    :eval
-    (t/test-route
-     page-content-route
-     :get
-     {:biff.fx/pathom {}}),
-    :result {:status 303, :headers {"Location" ["/subscriptions" nil]}}}
-   _
-   {:doc "mark-all-read missing sub redirects",
-    :eval
-    (t/test-route
-     mark-all-read
-     :post
-     {:biff/now (t/instant 2000),
-      :biff.fx/pathom
-      {:session/user {:user/id user-id}}}),
-    :result {:status 303, :headers {"Location" ["/subscriptions" nil]}}}
-   _]}
+  {:doc "page-route missing sub redirects",
+   :eval
+   (t/test-route
+    page-route
+    :get
+    {:biff.fx/result {:app.shell/app-shell identity}}),
+   :result {:status 303, :headers {"Location" ["/subscriptions" nil]}}}
+  _
+  {:doc "page-content-route missing sub redirects",
+   :eval (t/test-route page-content-route :get {:biff.fx/result {}}),
+   :result {:status 303, :headers {"Location" ["/subscriptions" nil]}}}
+  _
+  {:doc "mark-all-read missing sub redirects",
+   :eval
+   (t/test-route
+    mark-all-read
+    :post
+    {:biff/now (t/instant 2000),
+     :biff.fx/result {:session/user {:user/id user-id}}}),
+   :result {:status 303, :headers {"Location" ["/subscriptions" nil]}}}
+  _]}

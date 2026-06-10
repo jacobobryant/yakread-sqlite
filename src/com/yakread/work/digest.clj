@@ -62,19 +62,21 @@
           (log/info "Sending digest to" (count users) "users"))
         (if (= enabled :dry-run)
           (run! #(log/info (:user/email %)) users)
-          {:biff.fx/queue {:jobs (for [user users]
-                                   [:work.digest/prepare-digest user])}})))))
+          {:biff.fx/queue [:biff.fx/queue
+                           {:jobs (for [user users]
+                                    [:work.digest/prepare-digest user])}]})))))
 
 (fx/defmachine prepare-digest
   :start
   (fn [{user :biff/job}]
-    {:biff.fx/pathom {:entity {:user/id (:user/id user)}
-                      :query  [(? :digest/payload)
-                               {(? :digest/subject-item)       [:item/id
-                                                                :item/title]}
-                               {(? :user/ad-rec)               [:ad/id]}
-                               {(? :user/icymi-recs)           [:item/id]}
-                               {(? :user/digest-discover-recs) [:item/id]}]}
+    {:biff.fx/pathom [:biff.fx/pathom
+                      {:entity {:user/id (:user/id user)}
+                       :query  [(? :digest/payload)
+                                {(? :digest/subject-item)       [:item/id
+                                                                 :item/title]}
+                                {(? :user/ad-rec)               [:ad/id]}
+                                {(? :user/icymi-recs)           [:item/id]}
+                                {(? :user/digest-discover-recs) [:item/id]}]}]
      :biff.fx/next :end
      ;; hack until model code is refactored to not use session.
      :session {:uid (:user/id user)}})
@@ -104,11 +106,12 @@
                     (when (not-empty digest-items)
                       [{:insert-into :digest-item
                         :values (vec digest-items)}]))]
-        [{:biff.fx/sqlite sqlite}
-         {:biff.fx/queue {:id :work.digest/send-digest
-                          :job {:user/email (:user/email user)
-                                :digest/id digest-id
-                                :digest/payload (:digest/payload pathom)}}}]))))
+        [{:biff.fx/sqlite [:biff.fx/sqlite sqlite]}
+         {:biff.fx/queue [:biff.fx/queue
+                          {:id :work.digest/send-digest
+                           :job {:user/email (:user/email user)
+                                 :digest/id digest-id
+                                 :digest/payload (:digest/payload pathom)}}]}]))))
 
 (def default-payload-size-limit (* 50 1000 1000))
 (def default-n-emails-limit 50)
@@ -120,16 +123,16 @@
     (cond
       (= 0 (.size (:work.digest/prepare-digest queues)))
       ;; Wait in case the last jobs are still being processed.
-      [{:biff.fx/sleep 10000}
-       {:biff.fx/drain-queue nil
+      [{:biff.fx/sleep [:biff.fx/sleep 10000]}
+       {:biff.fx/drain-queue [:biff.fx/drain-queue nil]
         :biff.fx/next :start*}]
 
       (<= n-emails-limit (.size (:work.digest/send-digest queues)))
-      {:biff.fx/drain-queue nil
+      {:biff.fx/drain-queue [:biff.fx/drain-queue nil]
        :biff.fx/next :start*}
 
       :else
-      {:biff.fx/sleep 5000
+      {:biff.fx/sleep [:biff.fx/sleep 5000]
        :biff.fx/next :start}))
 
   :start*
@@ -160,14 +163,16 @@
       (log/info "Bulk sending to" (count jobs) "users")
       (doseq [{:keys [user/email]} jobs]
         (log/info "Sending to" email))
-      {:biff.fx/queue {:jobs (for [job requeue-jobs]
-                               [:work.digest/send-digest job])}
-       :biff.fx/http {:method :post
-                      :url "https://api.mailersend.com/v1/bulk-email"
-                      :oauth-token (secret :mailersend/api-key)
-                      :content-type :json
-                      :as :json
-                      :body body}
+      {:biff.fx/queue [:biff.fx/queue
+                       {:jobs (for [job requeue-jobs]
+                                [:work.digest/send-digest job])}]
+       :biff.fx/http [:biff.fx/http
+                      {:method :post
+                       :url "https://api.mailersend.com/v1/bulk-email"
+                       :oauth-token (secret :mailersend/api-key)
+                       :content-type :json
+                       :as :json
+                       :body body}]
        :biff.fx/next :record-bulk-send
        ::payload-size (count body)
        ::digest-ids (mapv :digest/id jobs)}))
@@ -175,18 +180,19 @@
   :record-bulk-send
   (fn [{:keys [biff/now ::digest-ids ::payload-size biff.fx/http]}]
     (let [bulk-send-id (gen/uuid)]
-      [{:biff.fx/sqlite [{:insert-into :bulk-send
-                          :values [{:bulk-send/id bulk-send-id
-                                    :bulk-send/sent-at now
-                                    :bulk-send/payload-size payload-size
-                                    :bulk-send/mailersend-id (get-in http [:body :bulk_email_id])
-                                    :bulk-send/digests [:lift digest-ids]}]}
-                         {:update :digest
-                          :set {:digest/bulk-send-id bulk-send-id}
-                          :where [:in :digest/id digest-ids]}]}
+      [{:biff.fx/sqlite [:biff.fx/sqlite
+                         [{:insert-into :bulk-send
+                           :values [{:bulk-send/id bulk-send-id
+                                     :bulk-send/sent-at now
+                                     :bulk-send/payload-size payload-size
+                                     :bulk-send/mailersend-id (get-in http [:body :bulk_email_id])
+                                     :bulk-send/digests [:lift digest-ids]}]}
+                          {:update :digest
+                           :set {:digest/bulk-send-id bulk-send-id}
+                           :where [:in :digest/id digest-ids]}]]}
        ;; Mailersend limits bulk request to 15 / minute.
        ;; https://developers.mailersend.com/api/v1/email.html#send-bulk-emails
-       {:biff.fx/sleep (long (+ (/ 60000 9) 1000))}])))
+       {:biff.fx/sleep [:biff.fx/sleep (long (+ (/ 60000 9) 1000))]}])))
 
 (def module
   {:tasks [{:task #'queue-prepare-digest

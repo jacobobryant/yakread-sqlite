@@ -45,9 +45,10 @@
 
           :else
           (merge (response true username)
-                 {:biff.fx/sqlite [{:update :user
-                                    :set {:user/email-username username}
-                                    :where [:= :user/id (:uid session)]}]}))))))
+                 {:biff.fx/sqlite [:biff.fx/sqlite
+                                   [{:update :user
+                                     :set {:user/email-username username}
+                                     :where [:= :user/id (:uid session)]}]]}))))))
 
 (defn- subscribe-feeds-tx [{:keys [biff/query biff/now session]} feed-urls]
   (let [user-id (:uid session)
@@ -99,10 +100,11 @@
 (fx/defroute add-rss
   :post
   (fn [{:keys [biff/base-url] {:keys [url]} :params}]
-    {:biff.fx/http {:url     (lib.content/add-protocol url)
-                    :method  :get
-                    :headers {"User-Agent" base-url}
-                    :throw-exceptions false}
+    {:biff.fx/http [:biff.fx/http
+                    {:url     (lib.content/add-protocol url)
+                     :method  :get
+                     :headers {"User-Agent" base-url}
+                     :throw-exceptions false}]
      :biff.fx/next :add-urls})
 
   :add-urls
@@ -115,23 +117,23 @@
       (if (empty? feed-urls)
         (redirect `page-route {:error "invalid-rss-feed" :url (:url http)})
         (let [{:keys [sqlite feed-ids]} (subscribe-feeds-tx ctx feed-urls)]
-          [{:biff.fx/sqlite sqlite}
-           {:biff.fx/queue (sync-rss-jobs feed-ids 0)
+          [{:biff.fx/sqlite [:biff.fx/sqlite sqlite]}
+           {:biff.fx/queue [:biff.fx/queue (sync-rss-jobs feed-ids 0)]
             :status 303
             :headers {"Location" (href `page-route {:added-feeds (count feed-urls)})}}])))))
 
 (fx/defroute add-opml
   :post
   (fn [{{{:keys [tempfile]} :opml} :params}]
-    {:biff.fx/slurp tempfile
+    {:biff.fx/slurp [:biff.fx/slurp tempfile]
      :biff.fx/next  :end})
 
   :end
   (fn [{:keys [biff.fx/slurp] :as ctx}]
     (if-some [urls (not-empty (lib.rss/extract-opml-urls slurp))]
       (let [{:keys [sqlite feed-ids]} (subscribe-feeds-tx ctx urls)]
-        [{:biff.fx/sqlite sqlite}
-         {:biff.fx/queue (sync-rss-jobs feed-ids 5)
+        [{:biff.fx/sqlite [:biff.fx/sqlite sqlite]}
+         {:biff.fx/queue [:biff.fx/queue (sync-rss-jobs feed-ids 5)]
           :status        303
           :headers       {"Location" (href `page-route {:added-feeds (count urls)})}}])
       (redirect `page-route {:error "invalid-opml-file"}))))

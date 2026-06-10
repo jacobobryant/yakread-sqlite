@@ -72,28 +72,29 @@
       (if (not= action :action/click-item)
         (ui/on-error {:status 400})
         {:status 204
-         :biff.fx/sqlite (concat
-                      (skip-tx {:biff/query query
-                                :user/id user-id
-                                :rec/id item-id
-                                :skip-items skip-items
-                                :skip-ads skip-ads
-                                :t t})
-                      (when (empty? (query
-                                     {:select 1
-                                      :from :user-item
-                                      :where [:and
-                                              [:= :user-item/user-id user-id]
-                                              [:= :user-item/item-id item-id]
-                                              [:is-not :user-item/viewed-at nil]]
-                                      :limit 1}))
-                        [{:insert-into :user-item
-                          :values [{:user-item/id (gen/uuid)
-                                    :user-item/user-id user-id
-                                    :user-item/item-id item-id
-                                    :user-item/viewed-at now}]
-                          :on-conflict [:user-item/user-id :user-item/item-id]
-                          :do-update-set {:fields [:viewed-at]}}]))}))))
+         :biff.fx/sqlite [:biff.fx/sqlite
+                          (concat
+                           (skip-tx {:biff/query query
+                                     :user/id user-id
+                                     :rec/id item-id
+                                     :skip-items skip-items
+                                     :skip-ads skip-ads
+                                     :t t})
+                           (when (empty? (query
+                                          {:select 1
+                                           :from :user-item
+                                           :where [:and
+                                                   [:= :user-item/user-id user-id]
+                                                   [:= :user-item/item-id item-id]
+                                                   [:is-not :user-item/viewed-at nil]]
+                                           :limit 1}))
+                             [{:insert-into :user-item
+                               :values [{:user-item/id (gen/uuid)
+                                         :user-item/user-id user-id
+                                         :user-item/item-id item-id
+                                         :user-item/viewed-at now}]
+                               :on-conflict [:user-item/user-id :user-item/item-id]
+                               :do-update-set {:fields [:viewed-at]}}]))]}))))
 
 (fx/defroute record-ad-click
   :post
@@ -104,30 +105,31 @@
       (if (not= action :action/click-ad)
         (ui/on-error {:status 400})
         {:status 204
-         :biff.fx/sqlite (concat
-                      (skip-tx {:biff/query query
-                                :user/id user-id
-                                :rec/id ad-id
-                                :skip-items skip-items
-                                :skip-ads skip-ads
-                                :t t})
-                      (when (empty?
-                             (query
-                              {:select 1
-                               :from :ad-click
-                               :where [:and
-                                       [:= :ad-click/user-id user-id]
-                                       [:= :ad-click/ad-id ad-id]]
-                               :limit 1}))
-                        [{:insert-into :ad-click
-                          :values [{:ad-click/id (gen/uuid)
-                                    :ad-click/user-id user-id
-                                    :ad-click/ad-id ad-id
-                                    :ad-click/created-at now
-                                    :ad-click/cost click-cost
-                                    :ad-click/source [:lift (keyword "ad-click.source" (name (or source :web)))]}]
-                          :on-conflict [:ad-click/user-id :ad-click/ad-id]
-                          :do-update-set {:fields [:created-at :cost :source]}}]))}))))
+         :biff.fx/sqlite [:biff.fx/sqlite
+                          (concat
+                           (skip-tx {:biff/query query
+                                     :user/id user-id
+                                     :rec/id ad-id
+                                     :skip-items skip-items
+                                     :skip-ads skip-ads
+                                     :t t})
+                           (when (empty?
+                                  (query
+                                   {:select 1
+                                    :from :ad-click
+                                    :where [:and
+                                            [:= :ad-click/user-id user-id]
+                                            [:= :ad-click/ad-id ad-id]]
+                                    :limit 1}))
+                             [{:insert-into :ad-click
+                               :values [{:ad-click/id (gen/uuid)
+                                         :ad-click/user-id user-id
+                                         :ad-click/ad-id ad-id
+                                         :ad-click/created-at now
+                                         :ad-click/cost click-cost
+                                         :ad-click/source [:lift (keyword "ad-click.source" (name (or source :web)))]}]
+                               :on-conflict [:ad-click/user-id :ad-click/ad-id]
+                               :do-update-set {:fields [:created-at :cost :source]}}]))]}))))
 
 (fx/defroute-pathom page-content-route "/for-you/content"
   [{(? :session/user)
@@ -198,11 +200,11 @@
 (let [record-click-url (fn [{:keys [biff/href-safe
                                     params
                                     session
-                                    biff.fx/pathom]}]
+                                    biff.fx/result]}]
                          (href-safe record-item-click
                                     {:action  :action/click-item
                                      :user/id (:uid session)
-                                     :item/id (get-in pathom [:params/item :item/id])
+                                     :item/id (get-in result [:params/item :item/id])
                                      :skip-items (:skip-items params)
                                      :skip-ads (:skip-ads params)
                                      :t       (:t params)}))]
@@ -227,10 +229,11 @@
 
           :else
           {:biff.fx/next :render
-           :biff.fx/pathom [:app.shell/app-shell
+           :biff.fx/result [:biff.fx/pathom
+                            [:app.shell/app-shell
                             {:params/item [:item/ui-read-content
                                            :item/id
-                                           (? :item/title)]}]})))
+                                           (? :item/title)]}]]})))
 
     :render
     (fn [{:keys [params] :as ctx} {:keys [app.shell/app-shell params/item]}]

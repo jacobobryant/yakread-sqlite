@@ -4,97 +4,11 @@
    [clj-http.client :as http]
    [clojure.java.io :as io]
    [clojure.java.shell :as shell]
-   [clojure.walk :as walk]
    [com.biffweb :as biff]
-   [com.wsscode.pathom3.interface.eql :as p.eql]
+   [com.biffweb.fx :as biff.fx]
    [com.biffweb.sqlite :as biff.sqlite]
+   [com.wsscode.pathom3.interface.eql :as p.eql]
    [com.yakread.lib.s3 :as lib.s3]))
-
-(defn- truncate-str
-  "Truncates a string s to be at most n characters long, appending an ellipsis if any characters were removed."
-  [s n]
-  (if (<= (count s) n)
-    s
-    (str (subs s 0 (dec n)) "…")))
-
-(defn- truncate [data]
-  (walk/postwalk (fn [data]
-                   (if (string? data)
-                     (truncate-str data 500)
-                     data))
-                 data))
-
-(defn- step [{:keys [state->transition-fn
-                     ctx
-                     state
-                     trace]}]
-  (let [{:keys [biff.fx/handlers]} ctx
-        t-fn (or (get state->transition-fn state)
-                 (throw (ex-info "Invalid state" {:state state})))
-        result (t-fn ctx)
-        results (if (map? result)
-                  [result]
-                  result)
-        results (mapv (fn [m]
-                        (let [state-output (apply dissoc m (keys handlers))
-                              fx-input     (select-keys m (keys handlers))
-                              ctx          (merge ctx state-output) ; TODO think about if there's a better way to do this
-                              fx-output    (into {}
-                                                 (map (fn [[k v]]
-                                                        [k (try
-                                                             ((get handlers k) ctx v)
-                                                             (catch Exception e
-                                                               (throw (ex-info "Exception while running biff.fx effect"
-                                                                               (truncate
-                                                                                {:effect k
-                                                                                 :input v})
-                                                                               e))))]))
-                                                 fx-input)]
-                          {:biff.fx/state-output state-output
-                           :biff.fx/fx-input fx-input
-                           :biff.fx/fx-output fx-output}))
-                      results)
-        trace (conj trace
-                    {:biff.fx/state state
-                     :biff.fx/results results})
-        {:biff.fx/keys [state-output fx-output fx-input]} (apply merge-with merge results)]
-    {:next-state (:biff.fx/next state-output)
-     :ctx (merge ctx
-                 fx-output
-                 state-output
-                 {:biff.fx/trace trace
-                  :biff.fx/fx-input fx-input})
-     :trace trace
-     :state-output state-output}))
-
-;; TODO set and log gen/*rnd*
-(defn machine [machine-name & {:as state->transition-fn}]
-  (assert (contains? state->transition-fn :start)
-          "machine must have a :start state")
-  (fn run
-    ([ctx state]
-     ((or (get state->transition-fn state)
-          (throw (ex-info (str "Invalid state: " state) {})))
-      ctx))
-    ([ctx]
-     (loop [ctx   ctx
-            state :start
-            trace []]
-       (let [{:keys [next-state ctx trace state-output]}
-             (try
-               (step {:state->transition-fn state->transition-fn
-                      :ctx ctx
-                      :state state
-                      :trace trace})
-               (catch Exception e
-                 (throw (ex-info "Exception while running biff.fx machine"
-                                 {:machine machine-name
-                                  :state state
-                                  :trace (truncate trace)}
-                                 e))))]
-         (if next-state
-           (recur ctx next-state trace)
-           state-output))))))
 
 (defn safe-for-url? [s]
   (boolean (re-matches #"[a-zA-Z0-9-_.+!*]+" s)))
@@ -108,7 +22,7 @@
 
 (let [all-methods [:get :post :put :delete :head :options :trace :patch :connect]]
   (defn route* [uri route-name & {:as state->transition-fn}]
-    (let [machine* (machine route-name state->transition-fn)]
+    (let [machine* (apply biff.fx/machine route-name (mapcat identity state->transition-fn))]
       [uri
        (into {:name route-name}
              (comp (filter state->transition-fn)
@@ -116,9 +30,9 @@
                           [method machine*])))
              all-methods)])))
 
-(defn wrap-pathom [f]
+(defn wrap-result [f]
   (fn [ctx]
-    (f ctx (:biff.fx/pathom ctx))))
+    (f ctx (:biff.fx/result ctx))))
 
 (defn wrap-hiccup [f]
   (fn [& args]
@@ -154,14 +68,14 @@
          (route* ~uri
                  ~route-name
                  (-> params#
-                     (update-vals (comp wrap-hiccup wrap-pathom))
+                     (update-vals (comp wrap-hiccup wrap-result))
                      (merge {:start (fn [{:keys [~'request-method]}]
-                                      {:biff.fx/pathom query#
+                                      {:biff.fx/result [:biff.fx/pathom query#]
                                        :biff.fx/next ~'request-method})})))))))
 
 (defmacro defmachine [sym & args]
   (let [machine-name (keyword (str *ns*) (str sym))]
-    `(def ~sym (machine ~machine-name ~@args))))
+    `(def ~sym (biff.fx/machine ~machine-name ~@args))))
 
 (defn call-js [{:biff/keys [secret] :as ctx} params]
   (let [{:keys [base-url fn-name input local catch-exceptions]}
