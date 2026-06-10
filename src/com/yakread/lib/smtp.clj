@@ -7,6 +7,7 @@
    [rum.core :as rum])
   (:import
    [javax.mail
+    Address
     Authenticator
     Message$RecipientType
     PasswordAuthentication
@@ -51,15 +52,19 @@
   (let [session* (session {:host host :port (str port)})
         msg (if path
               (parse (slurp path) session*)
-              (MimeMessage. session*))]
+              (MimeMessage. session*))
+        recipients (cond
+                     (nil? to) nil
+                     (string? to) (into-array Address (InternetAddress/parse to false))
+                     :else (into-array Address to))]
     (when from
       (let [addr (if from-name
                    (InternetAddress. from from-name)
                    (InternetAddress. from))]
         (.setFrom msg addr)
         (.setReplyTo msg (into-array [addr]))))
-    (when to
-      (.setRecipients msg Message$RecipientType/TO to))
+    (when recipients
+      (.setRecipients msg Message$RecipientType/TO ^"[Ljavax.mail.Address;" recipients))
     (when subject
       (.setSubject msg subject))
     (when rum
@@ -181,4 +186,3 @@
          [:div {:style {:padding "1rem"}}
           (->> (str/split-lines content)
                (biff/join [:br]))]]]))))
-

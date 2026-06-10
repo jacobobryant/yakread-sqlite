@@ -33,7 +33,7 @@
        ::url url}))
 
   :handle-http
-  (fn [{:keys [biff.fx/http ::url]}]
+  (fn [{:keys [biff.fx/http] :as ctx}]
     (cond
       (:exception http)
       {::error (str "Failed to fetch URL: " (.getMessage (:exception http)))}
@@ -48,14 +48,23 @@
       :else
       {:com.yakread.fx/js [:com.yakread.fx/js
                            {:fn-name "readability"
-                            :input {:url url :html (:body http)}}]
+                            :input {:url (::url ctx) :html (:body http)}}]
        :biff.fx/next :handle-readability
-       ::raw-html (:body http)}))
+       ::raw-html (:body http)
+       ::from-address (::from-address ctx)
+       ::from-name (::from-name ctx)
+       ::to-address (::to-address ctx)
+       ::subject (::subject ctx)
+       ::url (::url ctx)}))
 
   :handle-readability
-  (fn [{:keys [::url ::from-address ::from-name ::to-address ::subject ::raw-html]
-        {:keys [content title]} :com.yakread.fx/js}]
-    (let [html (or content raw-html)]
+  (fn [{:as ctx}]
+    (let [{:keys [content title]} (:com.yakread.fx/js ctx)
+          html (or content (::raw-html ctx))
+          from-address (::from-address ctx)
+          from-name (::from-name ctx)
+          to-address (::to-address ctx)
+          subject (::subject ctx)]
       (if (empty? html)
         {::error "Failed to extract content from URL."}
         (let [subject (if (not-empty subject) subject (str "Test: " title))]
@@ -111,7 +120,7 @@
            {:ui/label "To Address"
             :ui/description "The email-username@yourdomain.com address for the test account."
             :name "to-address"
-            :type "email"
+            :type "text"
             :required true
             :placeholder "testuser@yakread.com"})
           (ui/form-input
