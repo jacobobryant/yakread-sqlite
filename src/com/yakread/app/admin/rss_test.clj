@@ -58,7 +58,7 @@
   (fn [{:keys [params]}]
     (let [id (some-> (:id params) parse-uuid)]
       (merge {:status 303
-             :headers {"Location" (href page-route)}}
+              :headers {"Location" (href page-route)}}
              (when id
                {:biff.fx/sqlite [:biff.fx/sqlite
                                  [{:delete-from :test-rss-post
@@ -113,7 +113,7 @@
                   "  </channel>\n"
                   "</rss>\n")})))
 
-(fx/defroute-pathom page-content-route "/admin/rss-test/content"
+(fx/defroute-graph page-content-route "/admin/rss-test/content"
   []
 
   :get
@@ -207,7 +207,7 @@
                             :ui/type :danger}
                            "Delete"))]])]))))))
 
-(fx/defroute-pathom page-route "/admin/rss-test"
+(fx/defroute-graph page-route "/admin/rss-test"
   [:app.shell/app-shell]
 
   :get

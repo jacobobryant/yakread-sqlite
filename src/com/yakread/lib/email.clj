@@ -160,6 +160,12 @@
     (let [dir (io/file "storage")]
       (.mkdirs dir)
       (spit (io/file dir "test-auth-code.txt") code)))
+  (let [dir (io/file "storage")]
+    (.mkdirs dir)
+    (spit (io/file dir "test-last-email.txt")
+          (str "TO: " (-> form-params :to first :email) "\n"
+               "SUBJECT: " (:subject form-params) "\n\n"
+               (:text form-params))))
   true)
 
 (defn send-email [{:keys [biff/secret recaptcha/site-key] :as ctx} opts]

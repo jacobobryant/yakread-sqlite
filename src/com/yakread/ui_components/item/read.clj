@@ -1,7 +1,7 @@
 (ns com.yakread.ui-components.item.read
   (:require
    [clojure.string :as str]
-   [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
+   [com.biffweb.graph :refer [defresolver]]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.icons :as lib.icons]
    [com.yakread.lib.middleware :as lib.middle]
@@ -9,7 +9,7 @@
    [com.yakread.lib.ui :as ui]
    [com.yakread.routes :as routes]))
 
-(fx/defroute-pathom mark-unread
+(fx/defroute-graph mark-unread
   [{:params/item [{:item/user-item [:user-item/id]}]}
    :params/redirect-url]
 
@@ -27,12 +27,12 @@
                               :user-item/skipped-at nil}
                         :where [:= :user-item/id (get-in item [:item/user-item :user-item/id])]}]]}))
 
-(fx/defroute-pathom toggle-favorite
+(fx/defroute-graph toggle-favorite
   [{:params/item
     [:item/like-button*
      {:item/user-item
       [:user-item/id
-       (? :user-item/favorited-at)]}]}]
+       [:? :user-item/favorited-at]]}]}]
 
   :post
   (fn [{:keys [biff/now]} {:keys [params/item]}]
@@ -49,7 +49,7 @@
                                 :user-item/report-reason nil}
                           :where [:= :user-item/id (:user-item/id user-item)]}]]})))
 
-(fx/defroute-pathom not-interested
+(fx/defroute-graph not-interested
   [{:params/item [{:item/user-item [:user-item/id]}]}
    :params/redirect-url]
 
@@ -86,7 +86,10 @@
      (bar-button-icon-label icon contents)
      contents)])
 
-(defresolver like-button* [{:item/keys [id]}]
+(defresolver like-button*
+  {:input [:item/id]
+   :output [:item/like-button*]}
+  [_ {:item/keys [id]}]
   {:item/like-button*
    (fn [{:keys [active]}]
      (bar-button
@@ -96,12 +99,18 @@
        :hx-swap "outerHTML"}
       "Like"))})
 
-(defresolver like-button [{:item/keys [like-button* user-item]}]
-  #::pco{:input [{:item/user-item [(? :user-item/favorited-at)]}]}
+(defresolver like-button
+  {:input [:item/like-button*
+           {:item/user-item [[:? :user-item/favorited-at]]}]
+   :output [:item/like-button]}
+  [_ {:item/keys [like-button* user-item]}]
   {:item/like-button
    (like-button* {:active (boolean (:user-item/favorited-at user-item))})})
 
-(defresolver share-button [{:item/keys [url]}]
+(defresolver share-button
+  {:input [:item/url]
+   :output [:item/share-button]}
+  [_ {:item/keys [url]}]
   {:item/share-button
    (bar-button
     {:data-url url
@@ -118,14 +127,16 @@
           (java.net.URLEncoder/encode "UTF-8")
           (str/replace "+" "%20")))
 
-(defresolver button-bar [{:keys [com.yakread/sign-redirect]}
-                         {:item/keys [id title sub like-button share-button email-reply-to]}]
-  #::pco{:input [:item/id
-                 :item/like-button
-                 (? :item/title)
-                 (? :item/share-button)
-                 (? :item/email-reply-to)
-                 {(? :item/sub) [:sub/id :sub/title]}]}
+(defresolver button-bar
+  {:input [:item/id
+           :item/like-button
+           [:? :item/title]
+           [:? :item/share-button]
+           [:? :item/email-reply-to]
+           [:? {:item/sub [:sub/id :sub/title]}]]
+   :output [:item/ui-button-bar]}
+  [{:keys [com.yakread/sign-redirect]}
+   {:item/keys [id title sub like-button share-button email-reply-to]}]
   {:item/ui-button-bar
    (fn [{:keys [leave-item-redirect
                 unsubscribe-redirect]}]
@@ -167,14 +178,16 @@
          ;; TODO report button
          )]))})
 
-(defresolver ui-read-content [{:item/keys [id url ui-details doc-type title clean-html ui-button-bar]}]
-  {::pco/input [:item/id
-                :item/doc-type
-                :item/ui-details
-                (? :item/url)
-                (? :item/title)
-                (? :item/clean-html)
-                :item/ui-button-bar]}
+(defresolver ui-read-content
+  {:input [:item/id
+           :item/doc-type
+           :item/ui-details
+           [:? :item/url]
+           [:? :item/title]
+           [:? :item/clean-html]
+           :item/ui-button-bar]
+   :output [:item/ui-read-content]}
+  [_ {:item/keys [id url ui-details doc-type title clean-html ui-button-bar]}]
   {:item/ui-read-content
    (fn [opts]
      [:div {:_ (str "on load wait 100 ms then call resumePosition(me) then "
@@ -230,8 +243,8 @@
              mark-unread
              toggle-favorite
              not-interested]]
-   :resolvers [button-bar
-               like-button*
-               like-button
-               share-button
-               ui-read-content]})
+   :biff.graph/resolvers [button-bar
+                          like-button*
+                          like-button
+                          share-button
+                          ui-read-content]})

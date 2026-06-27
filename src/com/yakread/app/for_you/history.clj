@@ -6,7 +6,7 @@
    [com.yakread.lib.ui :as ui]
    [com.yakread.routes :as routes]))
 
-(fx/defroute-pathom next-batch "/history/next"
+(fx/defroute-graph next-batch "/history/next"
   [{:session/user
     [{:user/history-items [:item/id
                            :item/ui-small-card]}]}]
@@ -18,8 +18,9 @@
             (not-empty history-items)
             (conj (ui/lazy-load (href next-batch {:after (:item/id (last history-items))})))))))
 
-(fx/defroute-pathom page "/history"
-  [:app.shell/app-shell :user/current]
+(fx/defroute-graph page "/history"
+  [:app.shell/app-shell
+   {:user/current [:user/id]}]
 
   :get
   (fn [_ {:keys [app.shell/app-shell] user :user/current}]

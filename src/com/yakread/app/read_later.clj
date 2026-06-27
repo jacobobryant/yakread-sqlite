@@ -1,6 +1,5 @@
 (ns com.yakread.app.read-later
   (:require
-   [com.wsscode.pathom3.connect.operation :as pco :refer [?]]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.middleware :as lib.mid]
    [com.yakread.lib.route :as lib.route :refer [href]]
@@ -13,7 +12,7 @@
                         :btn-label "Add bookmarks"
                         :btn-href (href routes/add-bookmark-page)}))
 
-(fx/defroute-pathom page-content "/read-later/content"
+(fx/defroute-graph page-content "/read-later/content"
   [{:session/user
     [{:user/bookmarks [:item/id
                        :item/ui-small-card
@@ -25,7 +24,7 @@
     (cond
       (not-empty bookmarks)
       [:<>
-      (ui/card-grid
+       (ui/card-grid
         {:ui/cols 4}
         (->> bookmarks
              (sort-by (comp :user-item/bookmarked-at :item/user-item) #(compare %2 %1))
@@ -44,8 +43,9 @@
 
       :else [:<>])))
 
-(fx/defroute-pathom page "/read-later"
-  [:app.shell/app-shell (? :user/current)]
+(fx/defroute-graph page "/read-later"
+  [:app.shell/app-shell
+   [:? {:user/current [:user/id]}]]
 
   :get
   (fn [_ {:keys [app.shell/app-shell] user :user/current}]

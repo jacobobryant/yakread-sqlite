@@ -1,12 +1,13 @@
 (ns com.yakread.model.source
-  (:require [com.wsscode.pathom3.connect.operation :as pco :refer [defresolver ?]]))
+  (:require [com.biffweb.graph :as biff.graph :refer [defresolver]]))
 
-(defresolver source-title [{sub-title :sub/title feed-title :feed/title :as params}]
-  {::pco/input [(? :sub/title)
-                (? :feed/title)]
-   ::pco/output [:source/title]}
+(defresolver source-title
+  {:input [[:? :sub/title]
+           [:? :feed/title]]
+   :output [:source/title]}
+  [_ {sub-title :sub/title feed-title :feed/title :as params}]
   (some->> (or sub-title feed-title)
            (hash-map :source/title)))
 
 (def module
-  {:resolvers [source-title]})
+  {:biff.graph/resolvers [source-title]})

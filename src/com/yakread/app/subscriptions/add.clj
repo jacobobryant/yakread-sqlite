@@ -2,7 +2,6 @@
   (:require
    [clojure.data.generators :as gen]
    [com.biffweb :as biff]
-   [com.wsscode.pathom3.connect.operation :refer [?]]
    [com.yakread.lib.content :as lib.content]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.fx :as fx]
@@ -30,7 +29,6 @@
                                      [:is-not :user/email-username nil]]}))
           (response true nil)
 
-
           (or (empty? username)
               ;; TODO
               (not-empty
@@ -54,12 +52,10 @@
   (let [user-id (:uid session)
         results (query {:select [:feed/id :feed/url :sub/id]
                         :from :feed
-                        :left-join [:sub [:= :feed/id :sub/feed-id]]
-                        :where [:and
-                                [:in :feed/url feed-urls]
-                                [:or
-                                 [:is :sub/user-id nil]
-                                 [:= :sub/user-id user-id]]]})
+                        :left-join [:sub [:and
+                                          [:= :feed/id :sub/feed-id]
+                                          [:= :sub/user-id user-id]]]
+                        :where [:in :feed/url feed-urls]})
         url->feed (into {} (map (juxt :feed/url :feed/id)) results)
         existing-sub-feed-ids (into #{}
                                     (comp (filter :sub/id)
@@ -138,11 +134,11 @@
           :headers       {"Location" (href `page-route {:added-feeds (count urls)})}}])
       (redirect `page-route {:error "invalid-opml-file"}))))
 
-(fx/defroute-pathom page-route "/subscriptions/add"
+(fx/defroute-graph page-route "/subscriptions/add"
   [:app.shell/app-shell
-   {(? :user/current) [:user/id
-                       (? :user/email-username)
-                       (? :user/suggested-email-username)]}]
+   [:? {:user/current [:user/id
+                       [:? :user/email-username]
+                       [:? :user/suggested-email-username]]}]]
 
   :get
   (fn [{:biff/keys [domain base-url] :keys [params] :as ctx}
@@ -160,20 +156,20 @@
           [:div "Sign up for newsletters with "
            [:span.font-semibold username "@" domain]]
           (biff/form
-            {:action (href set-username)
-             :hx-indicator "#username-indicator"}
-            (ui/form-input
-             {:ui/label "Username"
-              :ui/description "You can subscribe to newsletters after you pick a username."
-              :ui/postfix (str "@" domain)
-              :ui/submit-text "Save"
-              :ui/indicator-id "username-indicator"
-              :ui/error (when (= (:error params) "username-unavailable")
-                          "That username is unavailable.")
-              :name "username"
-              :value (or (:email-username params)
-                         (:user/suggested-email-username user))
-              :required true}))))
+           {:action (href set-username)
+            :hx-indicator "#username-indicator"}
+           (ui/form-input
+            {:ui/label "Username"
+             :ui/description "You can subscribe to newsletters after you pick a username."
+             :ui/postfix (str "@" domain)
+             :ui/submit-text "Save"
+             :ui/indicator-id "username-indicator"
+             :ui/error (when (= (:error params) "username-unavailable")
+                         "That username is unavailable.")
+             :name "username"
+             :value (or (:email-username params)
+                        (:user/suggested-email-username user))
+             :required true}))))
        (ui/section
         {:title "RSS feeds"}
         (when-some [n (:added-feeds params)]
@@ -185,49 +181,49 @@
            "Subscribed to " (ui/pluralize n "feed") "."])
         (let [modal-open (ui/random-id)]
           (biff/form
-            {:action (href add-rss)
-             :hx-indicator (str "#" (ui/dom-id ::rss-indicator))}
-            (ui/modal
-             {:open modal-open
-              :title "Subscribe via bookmarklet"}
-             [:.p-4
-              [:p "You can install the bookmarklet by dragging this link on to your browser toolbar or
+           {:action (href add-rss)
+            :hx-indicator (str "#" (ui/dom-id ::rss-indicator))}
+           (ui/modal
+            {:open modal-open
+             :title "Subscribe via bookmarklet"}
+            [:.p-4
+             [:p "You can install the bookmarklet by dragging this link on to your browser toolbar or
                    bookmarks menu:"]
-              [:p.my-6 [:a.text-xl.text-blue-600
-                        {:href (str "javascript:window.location=\""
-                                    base-url
-                                    (href page-route)
-                                    "?url=\"+encodeURIComponent(document.location)")}
-                        "Subscribe | Yakread"]]
-              [:p.mb-0 "Then click the bookmarklet to subscribe to the RSS feed for the current page."]])
-            (ui/form-input
-             {:ui/label "Website or feed URL" ; TODO spinner icon
-              :ui/submit-text "Subscribe"
-              :ui/description [:<> "You can also "
-                               [:button.link {:type "button"
-                                              :data-on-click (str "$" modal-open " = true")}
-                                "subscribe via bookmarklet"] "."]
-              :ui/indicator-id (ui/dom-id ::rss-indicator)
-              :ui/error (when (= (:error params) "invalid-rss-feed")
-                          "We weren't able to subscribe to that URL.")
-              :name "url"
-              :value (:url params)
-              :required true})))
+             [:p.my-6 [:a.text-xl.text-blue-600
+                       {:href (str "javascript:window.location=\""
+                                   base-url
+                                   (href page-route)
+                                   "?url=\"+encodeURIComponent(document.location)")}
+                       "Subscribe | Yakread"]]
+             [:p.mb-0 "Then click the bookmarklet to subscribe to the RSS feed for the current page."]])
+           (ui/form-input
+            {:ui/label "Website or feed URL" ; TODO spinner icon
+             :ui/submit-text "Subscribe"
+             :ui/description [:<> "You can also "
+                              [:button.link {:type "button"
+                                             :data-on-click (str "$" modal-open " = true")}
+                               "subscribe via bookmarklet"] "."]
+             :ui/indicator-id (ui/dom-id ::rss-indicator)
+             :ui/error (when (= (:error params) "invalid-rss-feed")
+                         "We weren't able to subscribe to that URL.")
+             :name "url"
+             :value (:url params)
+             :required true})))
         (biff/form
-          {:action (href add-opml)
-           :hx-indicator (str "#" (ui/dom-id ::opml-indicator))
-           :enctype "multipart/form-data"}
-          (ui/form-input
-           {:ui/label "OPML file"
-            :ui/submit-text "Import"
-            :ui/submit-opts {:class '["w-[92px]"]}
-            :ui/indicator-id (ui/dom-id ::opml-indicator)
-            :ui/error (when (= (:error params) "invalid-opml-file")
-                        "We weren't able to import that file.")
-            :name "opml"
-            :type "file"
-            :accept ".opml"
-            :required true}))))])))
+         {:action (href add-opml)
+          :hx-indicator (str "#" (ui/dom-id ::opml-indicator))
+          :enctype "multipart/form-data"}
+         (ui/form-input
+          {:ui/label "OPML file"
+           :ui/submit-text "Import"
+           :ui/submit-opts {:class '["w-[92px]"]}
+           :ui/indicator-id (ui/dom-id ::opml-indicator)
+           :ui/error (when (= (:error params) "invalid-opml-file")
+                       "We weren't able to import that file.")
+           :name "opml"
+           :type "file"
+           :accept ".opml"
+           :required true}))))])))
 
 (def module
   {:routes [page-route

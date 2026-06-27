@@ -3,7 +3,7 @@
    [clojure.string :as str]
    [clojure.tools.logging :as log]
    [com.biffweb :as biff]
-   [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
+   [com.biffweb.graph :refer [defresolver]]
    [com.yakread.lib.form :as lib.form]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.middleware :as lib.mid]
@@ -97,11 +97,11 @@
                           :where [:= :user/id user-id]}]]
        :status 204})))
 
-(fx/defroute-pathom manage-premium
+(fx/defroute-graph manage-premium
   [{:session/user [:user/customer-id]}]
 
   :post
-  (fn [{:keys [biff/base-url biff/secret biff.fx/pathom]}
+  (fn [{:keys [biff/base-url biff/secret biff.fx/graph]}
        {:keys [session/user]}]
     (let [{:user/keys [customer-id]} user]
       {:biff.fx/http [:biff.fx/http
@@ -123,15 +123,15 @@
 (fx/defroute upgrade-premium
   :post
   (fn [_]
-    {:biff.fx/pathom [:biff.fx/pathom
-                      [{:session/user [:user/premium
-                                       :user/email
-                                       (? :user/customer-id)]}]]
+    {:biff.fx/graph [:biff.fx/graph
+                     [{:session/user [:user/premium
+                                      :user/email
+                                      [:? :user/customer-id]]}]]
      :biff.fx/next :check-customer-id})
 
   :check-customer-id
-  (fn [{:keys [biff/secret biff.fx/pathom]}]
-    (let [{:user/keys [premium customer-id email]} (:session/user pathom)]
+  (fn [{:keys [biff/secret biff.fx/graph]}]
+    (let [{:user/keys [premium customer-id email]} (:session/user graph)]
       (cond
         premium
         {:status 303 :headers {"location" (href page)}}
@@ -196,11 +196,11 @@
                       :job {:user/id (:uid session)}}]
      :status 204}))
 
-(fx/defroute-pathom delete-account
+(fx/defroute-graph delete-account
   [{:session/user [:user/id
                    :user/email
                    :user/account-deletable
-                   (? :user/account-deletable-message)]}]
+                   [:? :user/account-deletable-message]]}]
 
   :post
   (fn [{:keys [headers session]} {:keys [session/user]}]
@@ -226,51 +226,53 @@
 (defn time-text [local-time]
   (.format local-time (DateTimeFormatter/ofPattern "h:mm a")))
 
-(defresolver main-settings [{:keys [session/user]}]
-  {::pco/input [{(? :session/user) [:user/id
-                                    :user/email
-                                    :user/digest-days
-                                    :user/send-digest-at
-                                    :user/timezone
-                                    (? :user/use-original-links)]}]}
+(defresolver main-settings
+  {:input [[:? {:session/user [:user/id :user/email :user/digest-days :user/send-digest-at [:? :user/timezone] [:? :user/use-original-links]]}]]
+   :output [::main-settings]}
+  [{:biff/keys [query]} {:keys [session/user]}]
   {::main-settings
-   (let [{:user/keys [digest-days send-digest-at timezone use-original-links]} user]
+   (let [{:user/keys [id digest-days send-digest-at use-original-links]} user
+         timezone (or (:user/timezone
+                       (first (query {:select :user/timezone
+                                      :from :user
+                                      :where [:= :user/id id]
+                                      :limit 1})))
+                      "US/Pacific")]
      (ui/section
       {}
       (biff/form
-        {:action (href save-settings)
-         :class '[flex flex-col gap-6]}
-        [:div
-         (ui/input-label {} "Which days would you like to receive the digest email?")
-         (days-checkboxes digest-days)]
-        [:div
-         (ui/input-label {} "What time of day would you like to receive the digest email?")
-         (ui/select {:name :user/send-digest-at
-                     :ui/options (for [i (range 24)
-                                       :let [value (LocalTime/of i 0)]]
-                                   {:label (time-text value) :value (str value)})
-                     :ui/default (str send-digest-at)})]
-        [:div
-         (ui/input-label {} "Your timezone:")
-         (ui/select {:name :user/timezone
-                     :ui/options (for [zone-str (sort (ZoneId/getAvailableZoneIds))]
-                                   {:label zone-str :value zone-str})
-                     :ui/default (str timezone)})]
+       {:action (href save-settings)
+        :class '[flex flex-col gap-6]}
+       [:div
+        (ui/input-label {} "Which days would you like to receive the digest email?")
+        (days-checkboxes digest-days)]
+       [:div
+        (ui/input-label {} "What time of day would you like to receive the digest email?")
+        (ui/select {:name :user/send-digest-at
+                    :ui/options (for [i (range 24)
+                                      :let [value (LocalTime/of i 0)]]
+                                  {:label (time-text value) :value (str value)})
+                    :ui/default (str send-digest-at)})]
+       [:div
+        (ui/input-label {} "Your timezone:")
+        (ui/select {:name :user/timezone
+                    :ui/options (for [zone-str (sort (ZoneId/getAvailableZoneIds))]
+                                  {:label zone-str :value zone-str})
+                    :ui/default (str timezone)})]
 
-        [:div
-         (ui/checkbox {:name :user/use-original-links
-                       :ui/label "Open links on the original website:"
-                       :ui/label-position :above
-                       :checked (when use-original-links
-                                  "checked")})]
+       [:div
+        (ui/checkbox {:name :user/use-original-links
+                      :ui/label "Open links on the original website:"
+                      :ui/label-position :above
+                      :checked (when use-original-links
+                                 "checked")})]
 
-        [:div (ui/button {:type "submit"} "Save")])))})
+       [:div (ui/button {:type "submit"} "Save")])))})
 
-(defresolver premium [{:keys [session/user]}]
-  {::pco/input [{(? :session/user) [(? :user/plan)
-                                    (? :user/cancel-at)
-                                    :user/premium
-                                    :user/timezone]}]}
+(defresolver premium
+  {:input [[:? {:session/user [[:? :user/plan] [:? :user/cancel-at] :user/premium :user/timezone]}]]
+   :output [::premium]}
+  [_ {:keys [session/user]}]
   {::premium
    (let [{:user/keys [premium plan cancel-at timezone]} user]
      (ui/section
@@ -291,31 +293,31 @@
                 "premium")
               " plan. "])
            (biff/form
-             {:action (href manage-premium)
-              :hx-boost "false"
-              :class "inline"}
-             [:button.link {:type "submit"} "Manage your subscription"])
+            {:action (href manage-premium)
+             :hx-boost "false"
+             :class "inline"}
+            [:button.link {:type "submit"} "Manage your subscription"])
            "."]]
          [:<>
           [:div "Support Yakread by upgrading to a premium plan without ads:"]
           [:.h-6]
           [:div {:class '[flex flex-col sm:flex-row justify-center gap-4 sm:gap-12 items-center]}
            (biff/form
-             {:action (href upgrade-premium)
-              :hx-boost "false"
-              :hidden {:plan "quarter"}}
-             (ui/button {:type "submit" :class "!min-w-[150px]"} "$30 / 3 months"))
+            {:action (href upgrade-premium)
+             :hx-boost "false"
+             :hidden {:plan "quarter"}}
+            (ui/button {:type "submit" :class "!min-w-[150px]"} "$30 / 3 months"))
            (biff/form
-             {:action (href upgrade-premium)
-              :hx-boost "false"
-              :hidden {:plan "annual"}}
-             (ui/button {:type "submit" :class "!min-w-[150px]"} "$60 / 12 months"))]
+            {:action (href upgrade-premium)
+             :hx-boost "false"
+             :hidden {:plan "annual"}}
+            (ui/button {:type "submit" :class "!min-w-[150px]"} "$60 / 12 months"))]
           [:.h-6]])]))})
 
-(defresolver account [{:keys [session/user]}]
-  {::pco/input [{(? :session/user) [:user/email
-                                    :user/account-deletable
-                                    (? :user/account-deletable-message)]}]}
+(defresolver account
+  {:input [[:? {:session/user [:user/email :user/account-deletable [:? :user/account-deletable-message]]}]]
+   :output [::account]}
+  [_ {:keys [session/user]}]
   {::account
    (let [{:user/keys [account-deletable account-deletable-message]} user]
      (ui/section
@@ -333,11 +335,11 @@
                     {:hx-post (href delete-account)
                      :hx-prompt "Account deletion is irreversible. To confirm, enter your email address."}
                     {:_ (str "on click call alert('" account-deletable-message "')")}))
-        "Delete account")))})
+                 "Delete account")))})
 
-(fx/defroute-pathom page "/settings"
+(fx/defroute-graph page "/settings"
   [:app.shell/app-shell
-   {(? :session/user) [:user/id]}
+   [:? {:session/user [:user/id]}]
    ::main-settings
    ::premium
    ::account]
@@ -406,6 +408,6 @@
              export-data
              delete-account]]
    :api-routes [stripe-webhook]
-   :resolvers [main-settings
-               premium
-               account]})
+   :biff.graph/resolvers [main-settings
+                          premium
+                          account]})

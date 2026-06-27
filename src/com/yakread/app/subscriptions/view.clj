@@ -1,14 +1,13 @@
 (ns com.yakread.app.subscriptions.view
   (:require
    [clojure.data.generators :as gen]
-   [com.wsscode.pathom3.connect.operation :refer [?]]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.middleware :as lib.middle]
    [com.yakread.lib.route :as lib.route :refer [href]]
    [com.yakread.lib.ui :as ui]
    [com.yakread.routes :as routes]))
 
-(fx/defroute-pathom mark-read
+(fx/defroute-graph mark-read
   [{:session/user [:user/id]}
    {:params/item [:item/id]}]
 
@@ -31,11 +30,11 @@
                                  :on-conflict [:user-item/user-id :user-item/item-id]
                                  :do-update-set {:fields [:viewed-at]}}]]}))))
 
-(fx/defroute-pathom mark-all-read
+(fx/defroute-graph mark-all-read
   [{:session/user [:user/id]}
-   {(? :params/sub) [:sub/id
+   [:? {:params/sub [:sub/id
                      {:sub/items [:item/id
-                                  :item/unread]}]}]
+                                  :item/unread]}]}]]
 
   :post
   (fn [{:keys [biff/now]} {:keys [session/user params/sub]}]
@@ -57,11 +56,11 @@
                                      :on-conflict [:user-item/user-id :user-item/item-id]
                                      :do-update-set {:fields [:skipped-at]}}]]}))))))
 
-(fx/defroute-pathom read-content-route "/sub-item/:item-id/content"
-  [{(? :params/item) [:item/ui-read-content
+(fx/defroute-graph read-content-route "/sub-item/:item-id/content"
+  [[:? {:params/item [:item/ui-read-content
                       {:item/sub [:sub/id
                                   :sub/title
-                                  (? :sub/subtitle)]}]}]
+                                  [:? :sub/subtitle]]}]}]]
 
   :get
   (fn [_ {{:item/keys [ui-read-content sub]
@@ -80,10 +79,10 @@
 
 (let [record-click-url (fn [item]
                          (href mark-read {:item/id (:item/id item)}))]
-  (fx/defroute-pathom read-page-route "/sub-item/:item-id"
-    [{(? :params/item) [:item/id
-                        (? :item/url)]}
-     {:session/user [(? :user/use-original-links)]}]
+  (fx/defroute-graph read-page-route "/sub-item/:item-id"
+    [[:? {:params/item [:item/id
+                        [:? :item/url]]}]
+     {:session/user [[:? :user/use-original-links]]}]
 
     :get
     (fn [_ {:keys [params/item session/user]}]
@@ -100,12 +99,12 @@
 
           :else
           {:biff.fx/next :render
-           :biff.fx/result [:biff.fx/pathom
+           :biff.fx/result [:biff.fx/graph
                             [:app.shell/app-shell
-                            {:params/item [:item/id
-                                           :item/title
-                                           {:item/sub [:sub/id
-                                                       :sub/title]}]}]]})))
+                             {:params/item [:item/id
+                                            :item/title
+                                            {:item/sub [:sub/id
+                                                        :sub/title]}]}]]})))
 
     :render
     (fn [_ {:keys [app.shell/app-shell params/item]}]
@@ -115,12 +114,12 @@
          [:div {:hx-post (record-click-url item) :hx-trigger "load" :hx-swap "outerHTML"}]
          (ui/lazy-load-spaced (href read-content-route id)))))))
 
-(fx/defroute-pathom page-content-route "/subscription/:sub-id/content"
-  [{(? :params/sub) [:sub/id
-                     :sub/title
-                     {:sub/items
-                      [:item/ui-read-more-card
-                       :item/published-at]}]}]
+(fx/defroute-graph page-content-route "/subscription/:sub-id/content"
+  [{:params/sub [:sub/id
+                 :sub/title
+                 {:sub/items
+                  [:item/ui-read-more-card
+                   :item/published-at]}]}]
 
   :get
   (fn [_ {:keys [params/sub]}]
@@ -133,12 +132,12 @@
           (ui/button {:ui/type :secondary
                       :ui/size :small
                       :hx-post (href mark-all-read {:sub/id id})}
-            "Mark all as read")
+                     "Mark all as read")
           (ui/button {:ui/type :secondary
                       :ui/size :small
                       :hx-post (href routes/unsubscribe! {:sub/id id})
                       :hx-confirm (ui/confirm-unsub-msg title)}
-            "Unsubscribe")]
+                     "Unsubscribe")]
          [:.h-6]
          [:div {:class '[flex flex-col gap-6
                          max-w-screen-sm]}
@@ -148,11 +147,11 @@
                                 :highlight-unread true
                                 :show-author false}))]]))))
 
-(fx/defroute-pathom page-route "/subscription/:sub-id"
+(fx/defroute-graph page-route "/subscription/:sub-id"
   [:app.shell/app-shell
-   {(? :params/sub) [:sub/id
+   [:? {:params/sub [:sub/id
                      :sub/title
-                     (? :sub/subtitle)]}]
+                     [:? :sub/subtitle]]}]]
 
   :get
   (fn [_ {:keys [app.shell/app-shell params/sub]}]
@@ -167,7 +166,7 @@
                           :back-href (href routes/subs-page)
                           :no-margin true})
          [:.h-4]
-         [:div#content (ui/lazy-load-spaced (href page-content-route id))])))))
+         [:div#content (ui/lazy-load-spaced (href page-content-route id {:sub/id id}))])))))
 
 (def module
   {:routes [["" {:middleware [lib.middle/wrap-signed-in]}

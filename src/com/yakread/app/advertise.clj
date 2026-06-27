@@ -3,7 +3,7 @@
    [clojure.data.generators :as gen]
    [clojure.string :as str]
    [com.biffweb :as biff]
-   [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
+   [com.biffweb.graph :refer [defresolver]]
    [com.yakread.lib.content :as lib.content]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.form :as lib.form]
@@ -31,12 +31,17 @@
 (defn fmt-dollars [amount]
   (format "%.2f" (/ amount 100.0)))
 
+(defn preview-image-url [url]
+  (if (str/includes? url "localhost")
+    url
+    (ui/weserv {:url url :w 150 :h 150 :fit "cover" :a "attention"})))
+
 (defn obfuscate-url!
   "Some ad blockers block requests to URLs that include 'advertise' in them."
   [route-var]
   (alter-var-root route-var update 0 str/replace #"ad" "womp"))
 
-(fx/defroute-pathom delete-payment-method
+(fx/defroute-graph delete-payment-method
   [{:session/user [{:user/ad [:ad/id :ad/payment-method]}]}]
 
   :post
@@ -93,11 +98,11 @@
   (constantly {:status 303
                :headers {"Location" "/advertise"}}))
 
-(fx/defroute-pathom add-payment-method
+(fx/defroute-graph add-payment-method
   [{:session/user
     [:user/email
-     {(? :user/ad)
-      [(? :ad/customer-id)]}]}]
+     [:? {:user/ad
+          [[:? :ad/customer-id]]}]]}]
 
   :post
   (fn [{:keys [biff/secret]} {:keys [session/user]}]
@@ -159,15 +164,15 @@
        :status 303
        :headers {"Location" url}})))
 
-(fx/defroute-pathom save-ad
+(fx/defroute-graph save-ad
   [{:session/user
     [:user/id
-     {(? :user/ad)
-      [(? :ad/url)
-       (? :ad/title)
-       (? :ad/description)
-       (? :ad/image-url)
-       :ad/approve-state]}]}]
+     [:? {:user/ad
+          [[:? :ad/url]
+           [:? :ad/title]
+           [:? :ad/description]
+           [:? :ad/image-url]
+           :ad/approve-state]}]]}]
 
   :post
   (fn [{:keys [biff.form/params biff/now]} {:keys [session/user]}]
@@ -212,33 +217,35 @@
     (let [image-id (gen/uuid)
           file-info (get multipart-params "image-file")
           url (str edge "/" image-id)]
-      [{:biff.fx/s3 [:biff.fx/s3
-                     {:config-ns 'yakread.s3.images
-                      :method "PUT"
-                      :key (str image-id)
-                      :body (:tempfile file-info)
-                      :headers {"x-amz-acl" "public-read"
-                                "content-type" (:content-type file-info)}}]}
-       {:biff.fx/http [:biff.fx/http
-                       {:url     (ui/weserv {:url url
-                                             :w 150
-                                             :h 150
-                                             :fit "cover"
-                                             :a "attention"})
-                        :method  :get
-                        :headers {"User-Agent" base-url}}]}
-       {:biff.fx/pathom [:biff.fx/pathom
-                         [{(list ::form-ad {:ad (assoc params :ad/image-url url)})
-                           [:ad/ui-preview-card]}]]}
-       {:biff.fx/next :render
-        ::url url}]))
+      (cond-> [{:biff.fx/s3 [:biff.fx/s3
+                             {:config-ns 'yakread.s3.images
+                              :method "PUT"
+                              :key (str image-id)
+                              :body (:tempfile file-info)
+                              :headers {"x-amz-acl" "public-read"
+                                        "content-type" (:content-type file-info)}}]}]
+        (not (str/includes? url "localhost"))
+        (conj {:biff.fx/http [:biff.fx/http
+                              {:url     (ui/weserv {:url url
+                                                    :w 150
+                                                    :h 150
+                                                    :fit "cover"
+                                                    :a "attention"})
+                               :method  :get
+                               :headers {"User-Agent" base-url}}]})
+        true
+        (conj {:biff.fx/graph [:biff.fx/graph
+                               {:entity {::form-ad-params (assoc params :ad/image-url url)}
+                                :query [{::form-ad [:ad/ui-preview-card]}]}]}
+              {:biff.fx/next :render
+               ::url url}))))
 
   :render
-  (fn [{:keys [biff.fx/pathom ::url]}]
+  (fn [{:keys [biff.fx/graph ::url]}]
     [:<>
      (image-upload-input {:value url})
      [:div#preview {:hx-swap-oob "true"}
-      (get-in pathom [::form-ad :ad/ui-preview-card])]]))
+      (get-in graph [::form-ad :ad/ui-preview-card])]]))
 (obfuscate-url! #'upload-image)
 
 (fx/defroute change-image
@@ -253,17 +260,19 @@
                  :ad/description
                  :ad/image-url
                  :ad/url]]
-  (defresolver form-ad [ctx params]
-    {::pco/input [{:session/user
-                   [{(? :user/ad) [:ad/id]}]}]
-     ::pco/output [{::form-ad (into [:ad/id] form-keys)}]}
+  (defresolver form-ad
+    {:input [{:session/user
+              [[:? {:user/ad [:ad/id]}]]}
+             [:? {::form-ad-params form-keys}]]
+     :output [{::form-ad (into [:ad/id] form-keys)}]}
+    [ctx params]
     {::form-ad (-> (:biff.form/params ctx)
-                   (merge (:ad (pco/params ctx)))
+                   (merge (::form-ad-params params))
                    (select-keys form-keys)
                    (merge (when-some [id (get-in params [:session/user :user/ad :ad/id])]
                             {:ad/id id})))}))
 
-(fx/defroute-pathom refresh-preview
+(fx/defroute-graph refresh-preview
   [{::form-ad [:ad/ui-preview-card]}]
 
   :get
@@ -297,7 +306,8 @@
           ad (merge params
                     ad-from-url
                     (lib.core/filter-vals params lib.core/something?))]
-      {:biff.fx/result [:biff.fx/pathom [{(list ::form-ad {:ad ad}) [:ad/ui-preview-card]}]]
+      {:biff.fx/result [:biff.fx/graph {:entity {::form-ad-params ad}
+                                        :query [{::form-ad [:ad/ui-preview-card]}]}]
        :biff.fx/next :render
        ::ad ad}))
 
@@ -318,44 +328,40 @@
    :hx-params "not __anti-forgery-token"})
 
 (defn image-upload-input [{:keys [value error]}]
-   [:div#image-upload
-    [:input {:type "hidden" :name (pr-str :ad/image-url) :value value}]
-    (if value
-      [:<>
-       (ui/input-label {} (required-field->label :ad/image-url))
-       [:.flex.items-center
-        [:img.rounded
-         {:src (ui/weserv {:url value
-                           :w 150
-                           :h 150
-                           :fit "cover"
-                           :a "attention"})
-          :style {:object-fit "cover"
-                  :object-position "center"
-                  :width "5.5rem"
-                  :height "5.5rem"}}]
-        [:.w-3]
-        [:button.text-blue-600.hover:underline
-         {:hx-trigger "click"
-          :hx-post (href change-image)
-          :hx-target "#image-upload"
-          :hx-swap "outerHTML"}
-         "Change"]]]
-      (ui/form-input
-       {:ui/label (required-field->label :ad/image-url)
-        :ui/description "Should be at least 150x150"
-        :type "file"
-        :indicator-id "image-upload-indicator"
-        :accept "image/apng, image/avif, image/gif, image/jpeg, image/png, image/svg+xml, image/webp"
-        :name "image-file"
-        :hx-post (href upload-image)
-        :hx-target "#image-upload"
-        :hx-swap "outerHTML"
-        :hx-include "closest form"
-        :hx-indicator "#image-upload-indicator"
-        :hx-encoding "multipart/form-data"}))
-    (when error
-      (ui/input-error error))])
+  [:div#image-upload
+   [:input {:type "hidden" :name (pr-str :ad/image-url) :value value}]
+   (if value
+     [:<>
+      (ui/input-label {} (required-field->label :ad/image-url))
+      [:.flex.items-center
+       [:img.rounded
+        {:src (preview-image-url value)
+         :style {:object-fit "cover"
+                 :object-position "center"
+                 :width "5.5rem"
+                 :height "5.5rem"}}]
+       [:.w-3]
+       [:button.text-blue-600.hover:underline
+        {:hx-trigger "click"
+         :hx-post (href change-image)
+         :hx-target "#image-upload"
+         :hx-swap "outerHTML"}
+        "Change"]]]
+     (ui/form-input
+      {:ui/label (required-field->label :ad/image-url)
+       :ui/description "Should be at least 150x150"
+       :type "file"
+       :indicator-id "image-upload-indicator"
+       :accept "image/apng, image/avif, image/gif, image/jpeg, image/png, image/svg+xml, image/webp"
+       :name "image-file"
+       :hx-post (href upload-image)
+       :hx-target "#image-upload"
+       :hx-swap "outerHTML"
+       :hx-include "closest form"
+       :hx-indicator "#image-upload-indicator"
+       :hx-encoding "multipart/form-data"}))
+   (when error
+     (ui/input-error error))])
 
 (defn form-input [opts]
   (let [label (or (:ui/label opts)
@@ -428,34 +434,34 @@
        {:id "delete-pm-indicator"
         :src "/img/spinner2.gif"}]]
      (biff/form
-       {:action (href add-payment-method)
-        :hx-boost "false"}
-       (ui/button
-         {:type "Submit"}
-         "Add a payment method")))])
+      {:action (href add-payment-method)
+       :hx-boost "false"}
+      (ui/button
+       {:type "Submit"}
+       "Add a payment method")))])
 
 ;; TODO add param to app-shell for including plausible
-(fx/defroute-pathom page-route "/advertise"
+(fx/defroute-graph page-route "/advertise"
   [:app.shell/app-shell
-   {(? :session/user)
-    [:user/id
-     {(? :user/ad)
-      [(? :ad/bid)
-       (? :ad/budget)
-       (? :ad/url)
-       (? :ad/title)
-       (? :ad/description)
-       (? :ad/image-url)
-       (? :ad/paused)
-       (? :ad/balance)
-       (? :ad/payment-failed)
-       (? :ad/card-details)
-       :ad/n-clicks
-       :ad/ui-preview-card
-       :ad/state
-       :ad/incomplete-fields]}]}
-   {(? :session/anon)
-    [:ad/ui-preview-card]}]
+   [:? {:session/user
+        [:user/id
+         [:? {:user/ad
+              [[:? :ad/bid]
+               [:? :ad/budget]
+               [:? :ad/url]
+               [:? :ad/title]
+               [:? :ad/description]
+               [:? :ad/image-url]
+               [:? :ad/paused]
+               [:? :ad/balance]
+               [:? :ad/payment-failed]
+               [:? :ad/card-details]
+               :ad/n-clicks
+               :ad/ui-preview-card
+               :ad/state
+               :ad/incomplete-fields]}]]}]
+   [:? {:session/anon
+        [:ad/ui-preview-card]}]]
 
   :get
   (fn [{:keys [params]}
@@ -524,7 +530,7 @@
            "Ads are approved manually before running. See the "
            [:a.link.inline-block {:href "/ad-policy" :target "_blank"} "ad content policy"] "."]))
 
-        (when (or (and user ad) anon)
+        (when (or user anon)
           [:<>
            [:.h-10]
            [:h3.font-bold.text-lg.max-sm:px-4 "Preview"]
@@ -560,9 +566,9 @@
 (def module {:routes [page-route
                       policy-route
                       ["" {:middleware [lib.mid/wrap-signed-in
-                                       [lib.form/wrap-parse-form
-                                        {:overrides {:ad/bid parse-cents
-                                                     :ad/budget parse-cents}}]]}
+                                        [lib.form/wrap-parse-form
+                                         {:overrides {:ad/bid parse-cents
+                                                      :ad/budget parse-cents}}]]}
                        save-ad
                        upload-image
                        change-image
@@ -571,4 +577,4 @@
                        add-payment-method
                        receive-payment-method
                        delete-payment-method]]
-             :resolvers [form-ad]})
+             :biff.graph/resolvers [form-ad]})

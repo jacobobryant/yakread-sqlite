@@ -7,7 +7,7 @@
 
 (declare page-route)
 
-(fx/defroute-pathom page-route "/admin/monitor"
+(fx/defroute-graph page-route "/admin/monitor"
   [:app.shell/app-shell]
 
   :get

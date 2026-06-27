@@ -88,7 +88,7 @@
                 (ui/callout {:ui/type :error} (::error result))
                 (ui/callout {:ui/type :info} (::success result))))})))
 
-(fx/defroute-pathom page-content-route "/admin/email-test/content"
+(fx/defroute-graph page-content-route "/admin/email-test/content"
   []
 
   :get
@@ -139,7 +139,7 @@
                      "Fetch & Send Email")]]
         [:div {:id result-id :class "mt-4"}])))))
 
-(fx/defroute-pathom page-route "/admin/email-test"
+(fx/defroute-graph page-route "/admin/email-test"
   [:app.shell/app-shell]
 
   :get

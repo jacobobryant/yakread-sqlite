@@ -2,9 +2,7 @@
   (:require
    [clojure.set :as set]
    [clojure.tools.logging :as log]
-   [com.wsscode.pathom3.connect.indexes :as pci]
-   [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
-   [com.wsscode.pathom3.interface.eql :as p.eql]
+   [com.biffweb.graph :as biff.graph :refer [defresolver]]
    [com.yakread.lib.ads :as lib.ads]
    [tick.core :as tick])
   (:import
@@ -21,18 +19,20 @@
     (number? x) (Instant/ofEpochMilli (long x))
     :else nil))
 
-(defresolver item-candidates [{:biff/keys [query]} _]
-  {::pco/output [{::item-candidates [:item/id
-                                     :item/url]}]}
+(defresolver item-candidates
+  {:output [{::item-candidates [:item/id
+                                :item/url]}]}
+  [{:biff/keys [query]} _]
   {::item-candidates
    (query
     {:select [:item/id :item/url]
      :from :item
      :where [:= :item/direct-candidate-status [:lift :item.direct-candidate-status/approved]]})})
 
-(defresolver ads [{:biff/keys [query now]} _]
-  {::pco/output [{::all-ads [:ad/id]}
-                 {::ad-candidates [:ad/id]}]}
+(defresolver ads
+  {:output [{::all-ads [:ad/id]}
+            {::ad-candidates [:ad/id]}]}
+  [{:biff/keys [query now]} _]
   (let [all-ads (into []
                       (remove (comp nil? :ad/id))
                       (query
@@ -85,12 +85,13 @@
        (remove (comp nil? :ad-id))
        (full-outer-join (juxt :ad-id :user-id))))
 
-(defresolver ad-ratings [{:biff/keys [query]} {::keys [all-ads]}]
-  {::pco/input [{::all-ads [:ad/id]}]
-   ::pco/output [{::ad-ratings [:rating/candidate
-                                :rating/user
-                                :rating/value
-                                :rating/created-at]}]}
+(defresolver ad-ratings
+  {:input [{::all-ads [:ad/id]}]
+   :output [{::ad-ratings [:rating/candidate
+                           :rating/user
+                           :rating/value
+                           :rating/created-at]}]}
+  [{:biff/keys [query]} {::keys [all-ads]}]
   {::ad-ratings (vec
                  (for [{:keys [ad-id user-id n-skips last-skipped last-clicked]}
                        (ad-interaction-info query)]
@@ -101,10 +102,11 @@
                                     (max 0 (- 0.5 (* 0.1 n-skips))))
                     :rating/created-at (or last-clicked last-skipped)}))})
 
-(defresolver dedupe-item-id [{:biff/keys [query]} {::keys [item-candidates]}]
-  {::pco/input [{::item-candidates [:item/id
-                                    :item/url]}]
-   ::pco/output [::dedupe-item-id]}
+(defresolver dedupe-item-id
+  {:input [{::item-candidates [:item/id
+                               :item/url]}]
+   :output [{::dedupe-item-id [:*]}]}
+  [{:biff/keys [query]} {::keys [item-candidates]}]
   (let [candidate-urls (not-empty (mapv :item/url item-candidates))
         item-id->url (into {}
                            (map (juxt :item/id :item/url))
@@ -118,14 +120,15 @@
                                      item-candidates)]
     {::dedupe-item-id (update-vals item-id->url url->item-candidate-id)}))
 
-(defresolver item-ratings [{:biff/keys [query]} {::keys [item-candidates dedupe-item-id]}]
-  {::pco/input [{::item-candidates [:item/id
-                                    :item/url]}
-                ::dedupe-item-id]
-   ::pco/output [{::item-ratings [:rating/user
-                                  :rating/candidate
-                                  :rating/value
-                                  :rating/created-at]}]}
+(defresolver item-ratings
+  {:input [{::item-candidates [:item/id
+                               :item/url]}
+           {::dedupe-item-id [:*]}]
+   :output [{::item-ratings [:rating/user
+                             :rating/candidate
+                             :rating/value
+                             :rating/created-at]}]}
+  [{:biff/keys [query]} {::keys [item-candidates dedupe-item-id]}]
   (let [candidate-urls (not-empty (mapv :item/url item-candidates))
         all-item-ids (when candidate-urls
                        (not-empty
@@ -196,15 +199,16 @@
              :rating/value value
              :rating/created-at created-at}))}))
 
-(defresolver spark-model [{:keys [yakread/spark]}
-                          {::keys [item-ratings ad-ratings]}]
-  {::pco/input [{::item-ratings [:rating/user
-                                 :rating/candidate
-                                 :rating/value]}
-                {::ad-ratings [:rating/user
-                               :rating/candidate
-                               :rating/value]}]
-   ::pco/output [::predict-fn]}
+(defresolver spark-model
+  {:input [{::item-ratings [:rating/user
+                            :rating/candidate
+                            :rating/value]}
+           {::ad-ratings [:rating/user
+                          :rating/candidate
+                          :rating/value]}]
+   :output [::predict-fn]}
+  [{:keys [yakread/spark]}
+   {::keys [item-ratings ad-ratings]}]
   (let [all-ratings (concat item-ratings ad-ratings)
         [[index->candidate candidate->index]
          [_ user->index]] (for [k [:rating/candidate :rating/user]
@@ -241,23 +245,24 @@
                         (or (candidate->score candidate-id)
                             0.1))))}))
 
-(defresolver get-candidates [{::keys [item-ratings
-                                      ad-ratings
-                                      item-candidates
-                                      ad-candidates
-                                      predict-fn]}]
-  {::pco/input [{::item-ratings [:rating/candidate
-                                 :rating/user
-                                 :rating/value
-                                 :rating/created-at]}
-                {::ad-ratings [:rating/candidate
-                               :rating/user
-                               :rating/value
-                               :rating/created-at]}
-                {::item-candidates [:item/id]}
-                {::ad-candidates [:ad/id]}
-                ::predict-fn]
-   ::pco/output [:yakread.model/get-candidates]}
+(defresolver get-candidates
+  {:input [{::item-ratings [:rating/candidate
+                            :rating/user
+                            :rating/value
+                            :rating/created-at]}
+           {::ad-ratings [:rating/candidate
+                          :rating/user
+                          :rating/value
+                          :rating/created-at]}
+           {::item-candidates [:item/id]}
+           {::ad-candidates [:ad/id]}
+           ::predict-fn]
+   :output [:yakread.model/get-candidates]}
+  [_ {::keys [item-ratings
+              ad-ratings
+              item-candidates
+              ad-candidates
+              predict-fn]}]
   (let [all-ratings (concat item-ratings ad-ratings)
         candidate->ratings (group-by :rating/candidate all-ratings)
         candidate->n-ratings (update-vals candidate->ratings count)
@@ -291,12 +296,16 @@
                                       (comp - inst-ms :candidate/last-liked)))
                        vec)]))))}))
 
-(defresolver item-candidate-ids [{::keys [item-candidates]}]
+(defresolver item-candidate-ids
+  {:input [{::item-candidates [:item/id]}]
+   :output [:yakread.model/item-candidate-ids]}
+  [_ {::keys [item-candidates]}]
   {:yakread.model/item-candidate-ids (into #{} (map :item/id) item-candidates)})
 
-(defresolver all-liked-items [{:biff/keys [query]} _]
-  {::pco/output [{:yakread.model/all-liked-items
-                  [:item/id :item/n-likes]}]}
+(defresolver all-liked-items
+  {:output [{:yakread.model/all-liked-items
+             [:item/id :item/n-likes]}]}
+  [{:biff/keys [query]} _]
   {:yakread.model/all-liked-items
    (into []
          (remove (comp nil? :item/id))
@@ -308,25 +317,26 @@
            :group-by [:user-item/item-id]
            :order-by [[[:count :user-item/id] :desc]]}))})
 
-(def ^:private pathom-env (pci/register [item-candidates
-                                         ads
-                                         ad-ratings
-                                         dedupe-item-id
-                                         item-ratings
-                                         spark-model
-                                         get-candidates
-                                         item-candidate-ids
-                                         all-liked-items]))
+(def ^:private graph-env
+  (biff.graph/new-env [item-candidates
+                       ads
+                       ad-ratings
+                       dedupe-item-id
+                       item-ratings
+                       spark-model
+                       get-candidates
+                       item-candidate-ids
+                       all-liked-items]))
 
 (defn new-model [ctx]
   (log/info "updating model")
   (merge {:yakread.model/item-candidate-ids #{}
           :yakread.model/get-candidates (constantly {})}
-         (p.eql/process (merge ctx pathom-env {:biff/now (tick/instant)})
-                        {}
-                        [(? :yakread.model/item-candidate-ids)
-                         (? :yakread.model/get-candidates)
-                         {:yakread.model/all-liked-items [:item/id :item/n-likes]}])))
+         (biff.graph/query (merge ctx graph-env {:biff/now (tick/instant)})
+                           {}
+                           [[:? :yakread.model/item-candidate-ids]
+                            [:? :yakread.model/get-candidates]
+                            {:yakread.model/all-liked-items [:item/id :item/n-likes]}])))
 
 (defn use-spark [ctx]
   (let [spark (doto (JavaSparkContext. "local[*]" "yakread")

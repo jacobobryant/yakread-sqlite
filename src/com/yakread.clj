@@ -8,20 +8,20 @@
    [com.biffweb :as biff]
    [com.biffweb.core :as biff.core]
    [com.biffweb.config :as biff.config]
+   [com.biffweb.graph :as biff.graph]
    [com.biffweb.sqlite :as biff.sqlite]
-   [com.wsscode.pathom3.connect.indexes :as pci]
-   [com.wsscode.pathom3.connect.planner :as pcp]
    [com.yakread.lib.auth :as lib.auth]
    [com.yakread.lib.email :as lib.email]
    [com.yakread.lib.s3 :as lib.s3]
    [com.yakread.lib.sqlite :as lib.sqlite]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.middleware :as lib.mid]
-   [com.yakread.lib.pathom :as lib.pathom]
+   [com.yakread.lib.graph :as lib.graph]
    [com.yakread.lib.route :as lib.route :refer [href]]
    [com.yakread.lib.smtp :as lib.smtp]
    [com.yakread.lib.spark :as lib.spark]
    [com.yakread.lib.ui :as ui]
+   [com.yakread.lib.vendor :as lib.vendor]
    [com.yakread.modules :as modules]
    [com.yakread.routes :as routes]
    [com.yakread.smtp :as smtp]
@@ -68,16 +68,18 @@
 (def columns
   (apply merge (keep :biff.sqlite/columns modules)))
 
-(def pathom-env (pci/register (->> (mapcat :resolvers modules)
-                                   (concat (lib.sqlite/sqlite-resolvers columns))
-                                   (mapv lib.pathom/wrap-debug))))
+(defn graph-env []
+  (biff.graph/new-env
+   (concat (mapcat :biff.graph/resolvers modules)
+           (lib.sqlite/make-resolvers columns))
+   :middleware (concat [lib.graph/wrap-debug]
+                       (mapcat :biff.graph/middleware modules))))
 
 (defn merge-context [{:keys [yakread/model
                              biff/jwt-secret]
                       :as ctx}]
   (-> ctx
-      (merge pathom-env
-             {:yakread.model/get-candidates (constantly {})
+      (merge {:yakread.model/get-candidates (constantly {})
               :yakread.model/item-candidate-ids #{}}
              (some-> model deref)
              {:biff/router router
@@ -87,8 +89,8 @@
                                            {:redirect url
                                             :redirect-sig (biffs/signature (jwt-secret) url)})
               :biff/href-safe (partial lib.route/href-safe ctx)
-              :biff/query  (partial biff.sqlite/execute ctx)})
-      (pcp/with-plan-cache (atom {}))))
+              :biff.graph/get-env graph-env
+              :biff/query  (partial biff.sqlite/execute ctx)})))
 
 ;; TODO use a lib.pipe thing for this
 (defn- handle-error [{:keys [biff/send-email biff/domain biff.error-reporting/state] :as ctx} signal]
@@ -152,6 +154,7 @@
 
 (def components
   [biff.config/use-aero-config
+   lib.vendor/use-vendor-dependencies
    use-error-reporting
    lib.sqlite/use-sqlite
    lib.spark/use-spark
@@ -171,7 +174,6 @@
                      :biff.beholder/on-save #'on-save
                      :biff.fx/handlers fx/handlers
                      :com.yakread/home-feed-cache (atom {})
-                     lib.pathom/plan-cache-kw (atom {})
                      :biff.smtp/accept? #'smtp/accept?
                      :biff.smtp/deliver #'smtp/deliver*
                      :biff/components components

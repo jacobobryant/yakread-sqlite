@@ -3,7 +3,6 @@
    [clojure.data.generators :as gen]
    [clojure.java.io :as io]
    [clojure.tools.logging :as log]
-   [com.wsscode.pathom3.connect.operation :refer [?]]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.fx :as fx]
    [tick.core :as tick]))
@@ -13,22 +12,23 @@
   (fn [{:keys [biff/job]}]
     (log/info ::start)
     (let [{:keys [user/id]} job]
-      {:biff.fx/pathom [:biff.fx/pathom
-                        {:entity {:user/id id}
-                         :query [:user/id
-                                 :user/email
-                                 :user/timezone
-                                 :user.export/feed-subs
-                                 :user.export/bookmarks
-                                 :user.export/favorites]}]
+      {:biff.fx/graph [:biff.fx/graph
+                       {:entity {:user/id id}
+                        :query [:user/id
+                                :user/email
+                                :user/timezone
+                                :user.export/feed-subs
+                                :user.export/bookmarks
+                                :user.export/favorites]}]
        :biff.fx/temp-dir [:biff.fx/temp-dir {}]
        :biff.fx/next :upload}))
 
   :upload
-  (fn [{:keys [biff/now biff.fx/pathom biff.fx/temp-dir]}]
+  (fn [{:keys [biff/now biff.fx/graph biff.fx/temp-dir]}]
     (log/info ::upload)
     (let [{:user/keys [id email timezone]
-           :user.export/keys [feed-subs bookmarks favorites]} pathom
+           :user.export/keys [feed-subs bookmarks favorites]} graph
+          timezone (or timezone "UTC")
           dir (io/file temp-dir (str "yakread-export-"
                                      (tick/format "yyyy-MM-dd" (tick/in now (tick/zone timezone)))
                                      "-" (inst-ms (tick/instant now)) "-" id))
@@ -39,7 +39,8 @@
                                                   ["bookmarks.csv" bookmarks]
                                                   ["favorites.csv" favorites]]]
                           {:file (io/file dir basename) :content content})]}
-       {:biff.fx/shell [:biff.fx/shell ["zip" "-r" s3-key (.getName dir) :dir temp-dir]]}
+       {:biff.fx/zip [:biff.fx/zip {:source dir
+                                    :destination zipfile}]}
        {:biff.fx/delete-files [:biff.fx/delete-files dir]}
        {:biff.fx/s3 [:biff.fx/s3
                      {:config-ns 'yakread.s3.export
@@ -70,20 +71,20 @@
   (fn [{:keys [biff/job]}]
     (log/info "deleting account" job)
     (let [{:keys [user/id]} job]
-      {:biff.fx/pathom [:biff.fx/pathom
-                        {:entity {:user/id id}
-                         :query [:user/id
-                                 (? :user/email-username)
-                                 {(? :user/subscriptions) [:sub/id
-                                                           (? :sub/feed-id)]}
-                                 {(? :user/ad) [:ad/id
-                                                (? :ad/customer-id)]}
-                                 (? :user/customer-id)]}]
+      {:biff.fx/graph [:biff.fx/graph
+                       {:entity {:user/id id}
+                        :query [:user/id
+                                [:? :user/email-username]
+                                [:? {:user/subscriptions [:sub/id
+                                                          [:? :sub/feed-id]]}]
+                                [:? {:user/ad [:ad/id
+                                               [:? :ad/customer-id]]}]
+                                [:? :user/customer-id]]}]
        :biff.fx/next :delete}))
 
   :delete
-  (fn [{:keys [biff.fx/pathom biff/secret]}]
-    (let [{:user/keys [id subscriptions ad customer-id email-username]} pathom]
+  (fn [{:keys [biff.fx/graph biff/secret]}]
+    (let [{:user/keys [id subscriptions ad customer-id email-username]} graph]
       [{:biff.fx/http [:biff.fx/http
                        (for [customer-id [customer-id (:ad/customer-id ad)]
                              :when customer-id]
@@ -94,16 +95,16 @@
                           :connection-timeout 10000})]}
        {:biff.fx/sqlite [:biff.fx/sqlite
                          (concat
-                         (for [{:keys [sub/id sub/feed-id]} subscriptions
-                               :when feed-id]
-                           {:delete-from :sub :where [:= :sub/id id]})
-                         (when ad
-                           [{:delete-from :ad :where [:= :ad/id (:ad/id ad)]}])
-                         [{:delete-from :user :where [:= :user/id id]}]
-                         (when email-username
-                           [{:insert-into :deleted-user
-                             :values [{:deleted-user/id (gen/uuid)
-                                       :deleted-user/email-username-hash (lib.core/sha256 email-username)}]}]))]
+                          (for [{:keys [sub/id sub/feed-id]} subscriptions
+                                :when feed-id]
+                            {:delete-from :sub :where [:= :sub/id id]})
+                          (when ad
+                            [{:delete-from :ad :where [:= :ad/id (:ad/id ad)]}])
+                          [{:delete-from :user :where [:= :user/id id]}]
+                          (when email-username
+                            [{:insert-into :deleted-user
+                              :values [{:deleted-user/id (gen/uuid)
+                                        :deleted-user/email-username-hash (lib.core/sha256 email-username)}]}]))]
         :biff.fx/next :delete-email-batch}]))
 
   :delete-email-batch
@@ -120,9 +121,9 @@
                              (mapv :item/id)))
           batch (when (not-empty email-ids)
                   (query
-                           {:select [:item/id :item/content-key :item/email-raw-content-key]
-                            :from :item
-                            :where [:in :item/id (take 500 email-ids)]}))
+                   {:select [:item/id :item/content-key :item/email-raw-content-key]
+                    :from :item
+                    :where [:in :item/id (take 500 email-ids)]}))
           remaining (drop 500 email-ids)]
       (when (not-empty batch)
         [{:biff.fx/s3 [:biff.fx/s3

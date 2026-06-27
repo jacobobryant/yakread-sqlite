@@ -1,7 +1,9 @@
 {:paths ["src" "resources" "target/resources" "target/classes"]
- :deps {com.biffweb/core                    {:mvn/version "2.0.0-rc5"}
-        com.biffweb/config                  {:mvn/version "2.0.0-rc5"}
-        com.biffweb/fx                      {:mvn/version "2.0.0-rc5"}
+ :deps {;; use :local/root temporarily
+        com.biffweb/core                    {:local/root "/root/biff/libs/core"}
+        com.biffweb/config                  {:local/root "/root/biff/libs/config"}
+        com.biffweb/fx                      {:local/root "/root/biff/libs/fx"}
+        com.biffweb/graph                   {:local/root "/root/biff/libs/graph"}
 
         com.biffweb/biff                    {:git/url "https://github.com/jacobobryant/biff"
                                              :git/sha "0e1e207df27acb1758ec3604eb56af50b7bb47ea"
@@ -15,10 +17,6 @@
         vouch-opensource/fugato             {:git/url "https://github.com/vouch-opensource/fugato"
                                              :git/sha "4c1f687bca84f1f7777f347acdaafd49c182eae0"}
         com.stuartsierra/dependency         {:mvn/version "1.0.0"}
-        com.wsscode/pathom3                 {;:mvn/version "2025.01.16-alpha"
-                                             ;; Includes https://github.com/wilkerlucio/pathom3/pull/234
-                                             :git/url "https://github.com/jacobobryant/pathom3"
-                                             :git/sha "9ca960a70e05643e1985c1c22b5b487307989307"}
         camel-snake-kebab/camel-snake-kebab {:mvn/version "0.4.3"}
         org.clojure/core.memoize            {:mvn/version "1.0.257"}
         org.clj-commons/claypoole           {:mvn/version "1.2.2"}
@@ -28,8 +26,9 @@
         hickory/hickory                     {:mvn/version "0.7.1"
                                              :exclusions [org.clojure/clojurescript]}
         throttler/throttler                 {:mvn/version "1.0.1"}
-        metosin/malli                       {:mvn/version "0.16.3"}
-        org.clojure/clojure                 {:mvn/version "1.12.0"}
+        metosin/malli                       {:mvn/version "0.20.1"}
+        org.clojure/clojure                 {:mvn/version "1.12.5"}
+        org.clojure/java.data               {:mvn/version "1.4.120"}
         org.subethamail/subethasmtp         {:mvn/version "3.1.7"}
         remus/remus                         {:mvn/version "0.2.2"}
         com.taoensso/nippy                  {:mvn/version "3.2.0"}
@@ -68,7 +67,7 @@
         ;; sqlite (biff.sqlite brings sqlite-jdbc, next.jdbc, honeysql, HikariCP)
         }
  :aliases
- {:run {:extra-deps {com.biffweb/tasks {:git/url "https://github.com/jacobobryant/biff",
+ {:run {:extra-deps {com.biffweb/tasks {:git/url "https://github.com/jacobobryant/biff"
                                         :git/sha "c53c273c7e1a1773a57f9df6750a7c4448e47052"
                                         :deps/root "libs/tasks"}}
         :extra-paths ["dev" "test"]

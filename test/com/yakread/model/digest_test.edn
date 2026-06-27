@@ -9,7 +9,8 @@
      {:item
       [{:item/id (t/uuid 1), :item/ingested-at (t/instant 2001)}
        {:item/id (t/uuid 2), :item/ingested-at (t/instant 2003)}]}]
-    (digest-sub-items
+    (t/resolve-resolver
+     digest-sub-items
      (merge ctx {:biff/now (t/instant 2003 1 10)})
      {:user/subscriptions
       [{:sub/items [{:item/id (t/uuid 1)} {:item/id (t/uuid 2)}]}]})),
@@ -23,11 +24,12 @@
      {:item
       [{:item/id (t/uuid 1), :item/ingested-at (t/instant 2003 1 4)}
        {:item/id (t/uuid 2), :item/ingested-at (t/instant 2003 1 6)}]}]
-    (digest-sub-items
+    (t/resolve-resolver
+     digest-sub-items
      (merge ctx {:biff/now (t/instant 2003 1 10)})
-     {:user/digest-last-sent (t/instant 2003 1 5),
-      :user/subscriptions
-      [{:sub/items [{:item/id (t/uuid 1)} {:item/id (t/uuid 2)}]}]})),
+     {:user/subscriptions
+      [{:sub/items [{:item/id (t/uuid 1)} {:item/id (t/uuid 2)}]}],
+      :user/digest-last-sent (t/instant 2003 1 5)})),
    :result
    {:user/digest-sub-items
     [{:item/id #uuid "00020000-0000-0000-0000-000000000002"}]}}
@@ -38,7 +40,8 @@
      {:item
       [{:item/id (t/uuid 1), :item/ingested-at (t/instant 2001)}
        {:item/id (t/uuid 2), :item/ingested-at (t/instant 2003)}]}]
-    (digest-bookmarks
+    (t/resolve-resolver
+     digest-bookmarks
      (merge ctx {:biff/now (t/instant 2003 1 10)})
      {:user/bookmarks [{:item/id (t/uuid 1)} {:item/id (t/uuid 2)}]})),
    :result

@@ -7,9 +7,6 @@
    [clojure.tools.logging :as log]
    [clojure.tools.namespace.find :as ns-find]
    [com.biffweb :as biff]
-   [com.wsscode.pathom3.connect.operation :as pco]
-   [com.wsscode.pathom3.connect.planner :as-alias pcp]
-   [com.wsscode.pathom3.connect.runner :as-alias pcr]
    [com.yakread.lib.core :as lib.core]
    [malli.core :as malli]
    [malli.registry :as malr]))
@@ -63,13 +60,6 @@
 
 (defn field-asts [malli-opts]
   (apply merge (vals (schema-info malli-opts))))
-
-(defn- expects [env]
-  (-> env
-      ::pcp/node
-      ::pcp/expects
-      keys
-      vec))
 
 ;; TODO see if we can infer this more intelligently
 (def schema-whitelist

@@ -28,7 +28,7 @@
        :status 303
        :headers {"location" (href page-route)}})))
 
-(fx/defroute-pathom page-content-route "/admin/discover/content"
+(fx/defroute-graph page-content-route "/admin/discover/content"
   [:admin.moderation/remaining
    :admin.moderation/approved
    :admin.moderation/blocked
@@ -69,7 +69,7 @@
                     :class '[w-full]}
                    "Save")])]]))
 
-(fx/defroute-pathom page-route "/admin/discover"
+(fx/defroute-graph page-route "/admin/discover"
   [:app.shell/app-shell]
 
   :get

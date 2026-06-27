@@ -28,7 +28,7 @@
      :body (rum/render-static-markup
             (ui/callout {:ui/type :info} "Test error logged. You should receive an alert email shortly."))}))
 
-(fx/defroute-pathom page-content-route "/admin/dashboard/content"
+(fx/defroute-graph page-content-route "/admin/dashboard/content"
   [{:admin/recent-users
     [:user/email
      :user/joined-at]}
@@ -43,27 +43,27 @@
         (ui/section
          {:title "Queues"}
          (ui/table
-           ["Queue" "# jobs"]
-           (->> (update-vals queues count)
-                (sort-by second >))))
+          ["Queue" "# jobs"]
+          (->> (update-vals queues count)
+               (sort-by second >))))
 
         (ui/section
          {:title "Recent signups"}
          (ui/table
-           ["Email" "Joined"]
-           (for [{:user/keys [email joined-at]} (sort-by :user/joined-at #(compare %2 %1) recent-users)]
-             [email
+          ["Email" "Joined"]
+          (for [{:user/keys [email joined-at]} (sort-by :user/joined-at #(compare %2 %1) recent-users)]
+            [email
               ;; TODO use config for timezone
-              (lib.core/fmt-inst joined-at "yyyy-MM-dd hh:mm a" "America/Denver")])))
+             (lib.core/fmt-inst joined-at "yyyy-MM-dd hh:mm a" "America/Denver")])))
 
         (ui/section
          {:title "Daily metrics"}
          (ui/table
-           ["Date" "DAU" "Revenue"]
-           (for [date (past-30-days now "America/Denver")]
-             [date
-              (get dau date 0)
-              (ui/fmt-cents (get revenue date 0))])))
+          ["Date" "DAU" "Revenue"]
+          (for [date (past-30-days now "America/Denver")]
+            [date
+             (get dau date 0)
+             (ui/fmt-cents (get revenue date 0))])))
 
         (ui/section
          {:title "Test error alert"}
@@ -75,7 +75,7 @@
           (ui/button {:type "submit" :ui/type :primary} "Send test error")]
          [:div {:id result-id :class "mt-2"}])]))))
 
-(fx/defroute-pathom page-route "/admin/dashboard"
+(fx/defroute-graph page-route "/admin/dashboard"
   [:app.shell/app-shell]
 
   :get

@@ -2,7 +2,7 @@
   (:require
    [clojure.string :as str]
    [com.biffweb :as biff]
-   [com.wsscode.pathom3.connect.operation :as pco :refer [defresolver ?]]
+   [com.biffweb.graph :as biff.graph :refer [defresolver]]
    [com.yakread.lib.route :refer [href]]
    [com.yakread.lib.ui :as ui]
    [com.yakread.lib.ui-email :as uie]
@@ -44,16 +44,19 @@
 
 (defn section-title [content]
   [:h3 {:style {:font-weight "700"
-                     :font-size "18px"
-                     :line-height "28px"
-                     :margin "0"
-                     :padding-bottom "12px"
-                     :border-bottom "1px solid #e1e1e1"
-                     :margin-bottom "20px"}}
-        content])
+                :font-size "18px"
+                :line-height "28px"
+                :margin "0"
+                :padding-bottom "12px"
+                :border-bottom "1px solid #e1e1e1"
+                :margin-bottom "20px"}}
+   content])
 
-
-(defresolver settings [{:keys [biff/base-url]} {:digest.settings/keys [freq-text time-text]}]
+(defresolver settings
+  {:input [:digest.settings/freq-text
+           :digest.settings/time-text]
+   :output [::settings]}
+  [{:keys [biff/base-url]} {:digest.settings/keys [freq-text time-text]}]
   {::settings
    [:div {:style {:font-style "italic"
                   :font-size "90%"
@@ -69,16 +72,17 @@
          :style {:color "#079a82"
                  :text-decoration "none"}} "Change settings"] "."]})
 
-(defresolver sponsored [{:user/keys [ad-rec id]}]
-  {::pco/input [{:user/ad-rec [:ad/id
-                               :ad/title
-                               :ad/host
-                               :ad/description
-                               :ad/image-url
-                               :ad/url-with-protocol
-                               :ad/click-cost
-                               :ad/recording-url]}]
-   ::pco/output [::sponsored]}
+(defresolver sponsored
+  {:input [{:user/ad-rec [:ad/id
+                          :ad/title
+                          :ad/host
+                          :ad/description
+                          :ad/image-url
+                          :ad/url-with-protocol
+                          :ad/click-cost
+                          :ad/recording-url]}]
+   :output [::sponsored]}
+  [_ {:user/keys [ad-rec id]}]
   (let [{:ad/keys [title
                    description
                    image-url
@@ -95,26 +99,27 @@
                 :details host})]}))
 
 (defn compact-section [title op-name input-key output-key]
-  (pco/resolver
-   op-name
-   {::pco/input [:user/id
-                 {input-key [:item/id
-                             :item/digest-url
-                             :item/ui-details*
-                             (? :item/clean-title)
-                             (? :item/url)]}]
-    ::pco/output [output-key]}
-   (fn [_env input]
-     (when-some [items (not-empty (get input input-key))]
-       {output-key
-        [:<>
-         (section-title title)
-         (for [{:item/keys [digest-url
-                            clean-title
-                            ui-details*]} items]
-           (ui-item {:url (digest-url {:user/id (:user/id input)})
-                     :title clean-title
-                     :details (biff/join ui/interpunct (ui-details* {:show-author true}))}))]}))))
+  (biff.graph/resolver
+   {:id (keyword (namespace op-name) (name op-name))
+    :input [:user/id
+            {input-key [:item/id
+                        :item/digest-url
+                        :item/ui-details*
+                        [:? :item/clean-title]
+                        [:? :item/url]]}]
+    :output [output-key]
+    :resolve-fn
+    (fn [_env input]
+      (when-some [items (not-empty (get input input-key))]
+        {output-key
+         [:<>
+          (section-title title)
+          (for [{:item/keys [digest-url
+                             clean-title
+                             ui-details*]} items]
+            (ui-item {:url (digest-url {:user/id (:user/id input)})
+                      :title clean-title
+                      :details (biff/join ui/interpunct (ui-details* {:show-author true}))}))]}))}))
 
 (def subscriptions
   (compact-section "Subscriptions" `subscriptions :user/digest-sub-items ::subscriptions))
@@ -125,14 +130,15 @@
 (def icymi
   (compact-section "In case you missed it" `icymi :user/icymi-recs ::icymi))
 
-(defresolver discover [{:user/keys [digest-discover-recs] user-id :user/id}]
-  {::pco/input [:user/id
-                {:user/digest-discover-recs [:item/digest-url
-                                             (? :item/clean-title)
-                                             (? :item/image-url)
-                                             (? :item/excerpt)
-                                             (? :item/url)]}]
-   ::pco/output [::discover]}
+(defresolver discover
+  {:input [:user/id
+           {:user/digest-discover-recs [:item/digest-url
+                                        [:? :item/clean-title]
+                                        [:? :item/image-url]
+                                        [:? :item/excerpt]
+                                        [:? :item/url]]}]
+   :output [::discover]}
+  [_ {:user/keys [digest-discover-recs] user-id :user/id}]
   (when (not-empty digest-discover-recs)
     {::discover
      [:<>
@@ -150,29 +156,30 @@
 
 (defn open-yakread-button [base-url]
   (uie/button
-    {:href (str base-url (href routes/for-you))
-     :label "Open Yakread"
-     :bg-color "#17b897"
-     :text-color "white"}))
+   {:href (str base-url (href routes/for-you))
+    :label "Open Yakread"
+    :bg-color "#17b897"
+    :text-color "white"}))
 
-(defresolver html [{:biff/keys [base-url]}
-                   {:digest/keys [subject-item
-                                  unsubscribe-url]
-                    ::keys [settings
-                            sponsored
-                            subscriptions
-                            bookmarks
-                            icymi
-                            discover]}]
-  {::pco/input [{(? :digest/subject-item) [:item/clean-title]}
-                ::settings
-                (? ::sponsored)
-                (? ::subscriptions)
-                (? ::bookmarks)
-                (? ::icymi)
-                (? ::discover)
-                :digest/unsubscribe-url]
-   ::pco/output [:digest/html]}
+(defresolver html
+  {:input [[:? {:digest/subject-item [:item/clean-title]}]
+           ::settings
+           [:? ::sponsored]
+           [:? ::subscriptions]
+           [:? ::bookmarks]
+           [:? ::icymi]
+           [:? ::discover]
+           :digest/unsubscribe-url]
+   :output [:digest/html]}
+  [{:biff/keys [base-url]}
+   {:digest/keys [subject-item
+                  unsubscribe-url]
+    ::keys [settings
+            sponsored
+            subscriptions
+            bookmarks
+            icymi
+            discover]}]
   (when-some [sections (->> [sponsored
                              subscriptions
                              bookmarks
@@ -193,10 +200,10 @@
                  (uie/h-space "24px")
                  (biff/join (uie/h-space "40px") sections)]})}))
 
-(def module {:resolvers [sponsored
-                         subscriptions
-                         bookmarks
-                         icymi
-                         discover
-                         settings
-                         html]})
+(def module {:biff.graph/resolvers [sponsored
+                                    subscriptions
+                                    bookmarks
+                                    icymi
+                                    discover
+                                    settings
+                                    html]})

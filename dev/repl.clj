@@ -6,9 +6,7 @@
    [com.biffweb.experimental :as biffx]
    [com.yakread]
    [tick.core :as tick]
-   [next.jdbc :as jdbc]
-   [com.wsscode.pathom3.interface.eql :as p.eql]
-   [com.wsscode.pathom3.connect.operation :as pco :refer [?]]))
+   [next.jdbc :as jdbc]))
 
 
 (defn node []

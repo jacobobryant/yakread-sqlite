@@ -9,8 +9,8 @@
      {:user [{:user/id (t/uuid 1)}],
       :mv-user
       [{:mv-user/id (t/uuid 10), :mv-user/user-id (t/uuid 1)}]}]
-    {:exists (mv ctx {:user/id (t/uuid 1)}),
-     :not-exists (mv ctx {:user/id (t/uuid 2)})}),
+    {:exists (t/resolve-resolver mv ctx {:user/id (t/uuid 1)}),
+     :not-exists (t/resolve-resolver mv ctx {:user/id (t/uuid 2)})}),
    :result
    {:exists
     {:user/mv

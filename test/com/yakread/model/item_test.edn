@@ -1,8 +1,7 @@
 {:require
  [[com.yakread.lib.test :as t]
   [clojure.data.generators :as gen]
-  [com.yakread.model.item :refer :all]
-  [com.wsscode.pathom3.connect.operation :as pco]],
+  [com.yakread.model.item :refer :all]],
  :tests
  [{:eval
    (t/with-sqlite
@@ -19,7 +18,7 @@
         :user-item/user-id (t/uuid 20),
         :user-item/item-id (t/uuid 300),
         :user-item/favorited-at (t/instant 2000)}]}]
-    (user-favorites ctx {:user/id (t/uuid 10)})),
+    (t/resolve-resolver user-favorites ctx {:user/id (t/uuid 10)})),
    :result {:user/favorites [], :user/more-favorites false}}
   _
   {:eval
@@ -37,7 +36,7 @@
         :user-item/user-id (t/uuid 20),
         :user-item/item-id (t/uuid 300),
         :user-item/bookmarked-at (t/instant 2000)}]}]
-    (user-bookmarks ctx {:user/id (t/uuid 10)})),
+    (t/resolve-resolver user-bookmarks ctx {:user/id (t/uuid 10)})),
    :result {:user/bookmarks [], :user/more-bookmarks false}}
   _
   {:eval
@@ -65,7 +64,8 @@
        {:skip/id (t/uuid 15),
         :skip/reclist-id (t/uuid 5),
         :skip/item-id (t/uuid 300)}]}]
-    (n-skipped
+    (t/resolve-resolver
+     n-skipped
      (assoc ctx :session {:uid (t/uuid 10)})
      [{:item/id (t/uuid 100)}
       {:item/id (t/uuid 200)}
@@ -91,7 +91,8 @@
        {:user-item/id (t/uuid 3),
         :user-item/user-id (t/uuid 20),
         :user-item/item-id (t/uuid 300)}]}]
-    (user-item
+    (t/resolve-resolver
+     user-item
      (assoc ctx :session {:uid (t/uuid 10)})
      [{:item/id (t/uuid 100)}
       {:item/id (t/uuid 200)}
@@ -117,11 +118,12 @@
        {:feed/id (t/uuid 2),
         :feed/url "url2",
         :feed/image-url "image-url2"}]}]
-    (image-from-feed
+    (t/resolve-resolver
+     image-from-feed
      ctx
      [{:item/feed {:feed/image-url "image-url3"}}
-      {:item/feed {:feed/image-url "image-url4"},
-       :item/feed-url "url1"}
+      {:item/feed-url "url1",
+       :item/feed {:feed/image-url "image-url4"}}
       {:item/feed-url "url1"}
       {:item/feed-url "url3"}])),
    :result
@@ -144,13 +146,19 @@
         :user-item/item-id (t/uuid 200),
         :user-item/viewed-at (t/instant 1999),
         :user-item/favorited-at (t/instant 2001)}]}]
-    {:all (history-items ctx {:session/user {:user/id (t/uuid 10)}}),
+    {:all
+     (t/resolve-resolver
+      history-items
+      ctx
+      {:session/user {:user/id (t/uuid 10)}}),
      :page-1
-     (history-items
-      (pco/with-node-params ctx {:batch-size 1})
+     (t/resolve-resolver
+      history-items
+      (assoc ctx :batch-size 1)
       {:session/user {:user/id (t/uuid 10)}}),
      :page-2
-     (history-items
+     (t/resolve-resolver
+      history-items
       ctx
       {:session/user {:user/id (t/uuid 10)},
        :params/paginate-after (t/uuid 200)})}),
@@ -186,7 +194,8 @@
        {:sub/id (t/uuid 2),
         :sub/user-id (t/uuid 10),
         :sub/feed-id (t/uuid 200)}]}]
-    (feed-sub
+    (t/resolve-resolver
+     feed-sub
      (assoc ctx :session {:uid (t/uuid 10)})
      [{:item/feed-id (t/uuid 100)}])),
    :result
@@ -194,7 +203,7 @@
      {:sub/id #uuid "00010000-0000-0000-0000-000000000001"}}]}
   _
   {:doc "email-sub",
-   :eval (email-sub {:item/email-sub-id (t/uuid 3)}),
+   :eval (t/resolve-resolver email-sub {} {:item/email-sub-id (t/uuid 3)}),
    :result
    {:item/sub {:sub/id #uuid "00030000-0000-0000-0000-000000000003"}}}
   _
@@ -222,7 +231,8 @@
        {:digest-item/id (t/uuid 14),
         :digest-item/digest-id (t/uuid 2),
         :digest-item/item-id (t/uuid 400)}]}]
-    (digest-sends
+    (t/resolve-resolver
+     digest-sends
      (assoc ctx :session {:uid (t/uuid 10)})
      [{:item/id (t/uuid 100)}
       {:item/id (t/uuid 200)}

@@ -2,7 +2,6 @@
  [[com.yakread.lib.test :as t]
   [clojure.data.generators :as gen]
   [com.yakread.app.advertise :refer :all]
-  [com.wsscode.pathom3.connect.operation :as pco]
   [clj-http.client :as http]
   [clojure.string :as str]],
  :fixtures
@@ -321,26 +320,28 @@
        "https://images.weserv.nl/?url=https%3A//images.example.com/bb20b45f-d4d9-5138-3d93-cb799b3970be&w=150&h=150&fit=cover&a=attention",
        :method :get,
        :headers {"User-Agent" "https://example.com"}}]}
-    {:biff.fx/pathom
-     [:biff.fx/pathom
-      [{(:com.yakread.app.advertise/form-ad
-         {:ad
-          {:ad/title "hey",
-           :ad/image-url
-           "https://images.example.com/bb20b45f-d4d9-5138-3d93-cb799b3970be"}})
-        [:ad/ui-preview-card]}]]}
+    {:biff.fx/graph
+     [:biff.fx/graph
+      {:entity
+       {:com.yakread.app.advertise/form-ad-params
+        {:ad/title "hey",
+         :ad/image-url
+         "https://images.example.com/bb20b45f-d4d9-5138-3d93-cb799b3970be"}},
+       :query
+       [{:com.yakread.app.advertise/form-ad [:ad/ui-preview-card]}]}]}
     {:biff.fx/next :render,
      :com.yakread.app.advertise/url
      "https://images.example.com/bb20b45f-d4d9-5138-3d93-cb799b3970be"}]}
   _
   {:doc "form-ad",
    :eval
-   (form-ad
-    (pco/with-node-params
-     {:biff.form/params
-      {:ad/title "Title", :ad/description "Description"}}
-     {:ad {:ad/title "Different Title"}})
-    {:session/user {:user/ad {:ad/id "abc123"}}}),
+   (t/resolve-resolver
+    form-ad
+    {:biff.form/params
+     {:ad/title "Title", :ad/description "Description"}}
+    {:com.yakread.app.advertise/form-ad-params
+     {:ad/title "Different Title"},
+     :session/user {:user/ad {:ad/id "abc123"}}}),
    :result
    {:com.yakread.app.advertise/form-ad
     {:ad/title "Different Title",
@@ -371,14 +372,15 @@
      :biff.fx/http biffweb-com-post}),
    :result
    {:biff.fx/result
-    [:biff.fx/pathom
-     [{(:com.yakread.app.advertise/form-ad
-        {:ad
-         {:ad/title "Title",
-          :ad/description "The time is at hand",
-          :ad/image-url
-          "https://biffweb.com/cards/xtdb2-prerelease.png"}})
-       [:ad/ui-preview-card]}]],
+    [:biff.fx/graph
+     {:entity
+      {:com.yakread.app.advertise/form-ad-params
+       {:ad/title "Title",
+        :ad/description "The time is at hand",
+        :ad/image-url
+        "https://biffweb.com/cards/xtdb2-prerelease.png"}},
+      :query
+      [{:com.yakread.app.advertise/form-ad [:ad/ui-preview-card]}]}],
     :biff.fx/next :render,
     :com.yakread.app.advertise/ad
     {:ad/title "Title",

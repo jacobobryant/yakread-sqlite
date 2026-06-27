@@ -1,17 +1,20 @@
-(ns com.yakread.model.admin 
+(ns com.yakread.model.admin
   (:require
-   [com.wsscode.pathom3.connect.operation :as pco :refer [defresolver]])
+   [com.biffweb.graph :as biff.graph :refer [defresolver]])
   (:import
    [java.time ZoneId]))
 
-(defresolver recent-users [{:biff/keys [query now]} _]
-  {::pco/output [{:admin/recent-users [:user/id]}]}
+(defresolver recent-users
+  {:output [{:admin/recent-users [:user/id]}]}
+  [{:biff/keys [query now]} _]
   {:admin/recent-users
    (query {:select :user/id
            :from :user
            :where [:<= (.minusSeconds now (* 60 60 24 7)) :user/joined-at]})})
 
-(defresolver dau [{:biff/keys [query now]} _]
+(defresolver dau
+  {:output [:admin/dau]}
+  [{:biff/keys [query now]} _]
   {:admin/dau
    (->> (query {:select :user-item/viewed-at
                 :from :user-item
@@ -22,7 +25,9 @@
                     (toLocalDate))))
         frequencies)})
 
-(defresolver revenue [{:biff/keys [query now]} _]
+(defresolver revenue
+  {:output [:admin/revenue]}
+  [{:biff/keys [query now]} _]
   {:admin/revenue
    (->> (query {:select [:ad-click/created-at :ad-click/cost]
                 :from :ad-click
@@ -34,12 +39,13 @@
                     (update acc date (fnil + 0) cost)))
                 {}))})
 
-(defresolver ads [{:biff/keys [query]} _]
-  {::pco/output [{:admin/ads [:ad/id]}]}
+(defresolver ads
+  {:output [{:admin/ads [:ad/id]}]}
+  [{:biff/keys [query]} _]
   {:admin/ads (query {:select :ad/id :from :ad})})
 
 (def module
-  {:resolvers [recent-users
-               dau
-               revenue
-               ads]})
+  {:biff.graph/resolvers [recent-users
+                          dau
+                          revenue
+                          ads]})

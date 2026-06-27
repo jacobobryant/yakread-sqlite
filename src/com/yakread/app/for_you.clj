@@ -2,7 +2,6 @@
   (:require
    [clojure.data.generators :as gen]
    [com.biffweb :as biff]
-   [com.wsscode.pathom3.connect.operation :refer [?]]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.middleware :as lib.mid]
    [com.yakread.lib.route :as lib.route :refer [href]]
@@ -131,19 +130,19 @@
                                :on-conflict [:ad-click/user-id :ad-click/ad-id]
                                :do-update-set {:fields [:created-at :cost :source]}}]))]}))))
 
-(fx/defroute-pathom page-content-route "/for-you/content"
-  [{(? :session/user)
-    [{(? :user/current-item)
-      [:item/ui-read-more-card]}
-     {:user/for-you-recs
-      [(? :item/id)
-       (? :ad/id)
-       :rec/ui-read-more-card]}]}
-   {(? :session/anon)
-    [{:user/discover-recs
-      [:item/id
-       :item/url
-       :item/ui-read-more-card]}]}]
+(fx/defroute-graph page-content-route "/for-you/content"
+  [[:? {:session/user
+        [[:? {:user/current-item
+              [:item/ui-read-more-card]}]
+         {:user/for-you-recs
+          [[:? :item/id]
+           [:? :ad/id]
+           :rec/ui-read-more-card]}]}]
+   [:? {:session/anon
+        [{:user/discover-recs
+          [:item/id
+           :item/url
+           :item/ui-read-more-card]}]}]]
 
   :get
   (fn [{:keys [biff/now params]} {:keys [user/discover-recs session/user session/anon]
@@ -188,7 +187,7 @@
                              :show-author true
                              :new-tab true})))]))
 
-(fx/defroute-pathom page-route "/for-you"
+(fx/defroute-graph page-route "/for-you"
   [:app.shell/app-shell]
 
   :get
@@ -208,10 +207,10 @@
                                      :skip-items (:skip-items params)
                                      :skip-ads (:skip-ads params)
                                      :t       (:t params)}))]
-  (fx/defroute-pathom read-page-route "/item/:item-id"
-    [{(? :params/item) [:item/id
-                        (? :item/url)]}
-     {:session/user [(? :user/use-original-links)]}]
+  (fx/defroute-graph read-page-route "/item/:item-id"
+    [[:? {:params/item [:item/id
+                        [:? :item/url]]}]
+     {:session/user [[:? :user/use-original-links]]}]
 
     :get
     (fn [{:keys [params] :as ctx} {:keys [params/item session/user]}]
@@ -229,11 +228,11 @@
 
           :else
           {:biff.fx/next :render
-           :biff.fx/result [:biff.fx/pathom
+           :biff.fx/result [:biff.fx/graph
                             [:app.shell/app-shell
-                            {:params/item [:item/ui-read-content
-                                           :item/id
-                                           (? :item/title)]}]]})))
+                             {:params/item [:item/ui-read-content
+                                            :item/id
+                                            [:? :item/title]]}]]})))
 
     :render
     (fn [{:keys [params] :as ctx} {:keys [app.shell/app-shell params/item]}]

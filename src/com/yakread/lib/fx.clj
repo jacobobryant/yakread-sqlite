@@ -6,9 +6,12 @@
    [clojure.java.shell :as shell]
    [com.biffweb :as biff]
    [com.biffweb.fx :as biff.fx]
+   [com.biffweb.graph :as biff.graph]
    [com.biffweb.sqlite :as biff.sqlite]
-   [com.wsscode.pathom3.interface.eql :as p.eql]
-   [com.yakread.lib.s3 :as lib.s3]))
+   [com.yakread.lib.graph :as lib.graph]
+   [com.yakread.lib.s3 :as lib.s3])
+  (:import
+   [java.util.zip ZipEntry ZipOutputStream]))
 
 (defn safe-for-url? [s]
   (boolean (re-matches #"[a-zA-Z0-9-_.+!*]+" s)))
@@ -56,7 +59,7 @@
                      (merge {:start (fn [{:keys [~'request-method]}]
                                       {:biff.fx/next ~'request-method})})))))))
 
-(defmacro defroute-pathom [sym & args]
+(defmacro defroute-graph [sym & args]
   (let [[uri query & kvs] (if (string? (first args))
                             args
                             (into [nil] args))
@@ -70,7 +73,7 @@
                  (-> params#
                      (update-vals (comp wrap-hiccup wrap-result))
                      (merge {:start (fn [{:keys [~'request-method]}]
-                                      {:biff.fx/result [:biff.fx/pathom query#]
+                                      {:biff.fx/result [:biff.fx/graph query#]
                                        :biff.fx/next ~'request-method})})))))))
 
 (defmacro defmachine [sym & args]
@@ -119,8 +122,24 @@
         {:url (:url request)
          :exception e}))))
 
+(defn zip-directory [{:keys [source destination]}]
+  (let [source (io/file source)
+        parent (.toPath (.getParentFile source))]
+    (with-open [out (ZipOutputStream. (io/output-stream destination))]
+      (doseq [file (file-seq source)
+              :when (.isFile file)]
+        (let [entry-name (-> (.relativize parent (.toPath file))
+                             str
+                             (.replace java.io.File/separatorChar \/))]
+          (.putNextEntry out (ZipEntry. entry-name))
+          (with-open [in (io/input-stream file)]
+            (io/copy in out))
+          (.closeEntry out))))))
+
 (def handlers
-  {:biff.fx/http (fn [_ctx input]
+  (merge
+   biff.graph/fx-handlers
+   {:biff.fx/http (fn [_ctx input]
                    (if (map? input)
                      (http* input)
                      (mapv http* input)))
@@ -134,11 +153,7 @@
                        (doseq [stmt stmts]
                          (biff.sqlite/execute ctx stmt))
                        nil))
-   :biff.fx/pathom (fn [ctx input]
-                     (let [{:keys [entity query]} (if (map? input)
-                                                    input
-                                                    {:query input})]
-                       (p.eql/process ctx (or entity {}) query)))
+   :biff.fx/graph lib.graph/query
    :biff.fx/slurp (fn [_ctx file]
                     (slurp file))
    :biff.fx/spit (fn [_ctx {:keys [file content]}]
@@ -187,6 +202,8 @@
                     nil)
    :biff.fx/shell (fn [_ctx args]
                     (apply shell/sh args))
+   :biff.fx/zip (fn [_ctx input]
+                  (zip-directory input))
    :biff.fx/delete-files (fn [_ctx path]
                            (run! io/delete-file (reverse (file-seq (io/file path)))))
-   :com.yakread.fx/js call-js})
+   :com.yakread.fx/js call-js}))

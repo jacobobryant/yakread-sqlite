@@ -84,7 +84,7 @@
         {:status 303
          :headers {"location" (href page-route)}}))))
 
-(fx/defroute-pathom page-route "/admin/impersonate"
+(fx/defroute-graph page-route "/admin/impersonate"
   [:app.shell/app-shell]
 
   :get

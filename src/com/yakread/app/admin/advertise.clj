@@ -2,7 +2,7 @@
   (:require
    [clojure.data.generators :as gen]
    [clojure.tools.logging :as log]
-   [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
+   [com.biffweb.graph :as biff.graph :refer [defresolver]]
    [com.yakread.lib.admin :as lib]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.icons :as lib.icons]
@@ -37,10 +37,10 @@
      :headers {"hx-refresh" "true"}
      :status 204}))
 
-(fx/defroute-pathom handle-pending-charges
+(fx/defroute-graph handle-pending-charges
   [{:admin/pending-charges
     [:ad-credit/id
-     (? :ad-credit/stripe-status)
+     [:? :ad-credit/stripe-status]
      :ad-credit/amount
      {:ad-credit/ad [:xt/id
                      :ad/title
@@ -105,11 +105,12 @@
                                         :receipt_email email
                                         :metadata {:charge_id (str id)}}}]})))))
 
-(defresolver pending-ads [{:keys [admin/ads]}]
-  {::pco/input [{:admin/ads [:ad/id
-                             :ad/state
-                             (? :ad/ui-preview-card)]}]
-   ::pco/output [::pending-ads]}
+(defresolver pending-ads
+  {:input [{:admin/ads [:ad/id
+                        :ad/state
+                        [:? :ad/ui-preview-card]]}]
+   :output [::pending-ads]}
+  [_ {:keys [admin/ads]}]
   {::pending-ads
    (let [pending (filterv #(= :pending (:ad/state %)) ads)]
      [:.flex.flex-wrap
@@ -122,24 +123,25 @@
                         :hx-target "closest .pending-ad"
                         :hx-swap "outerHTML"
                         :ui/icon icon}
-              label))]
+                       label))]
          [:.max-w-screen-sm ui-preview-card]])])})
 
-(defresolver ads-table [{:keys [biff/now]}
-                        {:keys [admin/ads] admin :session/user}]
-  {::pco/input [{:admin/ads [:ad/id
-                             {:ad/user [(? :user/email)]}
-                             (? :ad/title)
-                             :ad/state
-                             :ad/balance
-                             (? :ad/bid)
-                             (? :ad/budget)
-                             :ad/updated-at
-                             (? :ad/chargeable)
-                             (? :ad/amount-pending)
-                             {(? :ad/pending-charge) [:ad-credit/id
-                                                      (? :ad-credit/stripe-status)]}]}
-                {:session/user [:user/timezone]}]}
+(defresolver ads-table
+  {:input [{:admin/ads [:ad/id
+                        {:ad/user [[:? :user/email]]}
+                        [:? :ad/title]
+                        :ad/state
+                        :ad/balance
+                        [:? :ad/bid]
+                        [:? :ad/budget]
+                        :ad/updated-at
+                        [:? :ad/chargeable]
+                        [:? :ad/amount-pending]
+                        [:? {:ad/pending-charge [:ad-credit/id [:? :ad-credit/stripe-status]]}]]}
+           {:session/user [:user/timezone]}]
+   :output [::ads-table]}
+  [{:keys [biff/now]}
+   {:keys [admin/ads] admin :session/user}]
   {::ads-table
    (let [pending-ads (filterv :ad/pending-charge ads)
          charge-tx (for [{:ad/keys [id balance chargeable]} ads
@@ -155,36 +157,36 @@
       [:div.flex.gap-4
        (ui/button {:hx-post (href create-pending-charges {:tx charge-tx})
                    :disabled (empty? charge-tx)}
-         "Create pending charges")
+                  "Create pending charges")
        (ui/button {:hx-post (href handle-pending-charges)
                    :disabled (empty? pending-ads)}
-         "Handle pending charges")]
+                  "Handle pending charges")]
       (ui/table
-        ["Email" "Title" "State" "Balance" "Bid" "Budget" "Updated" "Chargeable" "Pending" "Stripe status"]
-        (for [{:ad/keys [user title state balance bid budget updated-at chargeable amount-pending pending-charge]}
-              (sort-by (fn [{:ad/keys [chargeable amount-pending updated-at balance]}]
-                         (if (or chargeable amount-pending)
-                           [0 (- balance)]
-                           [1 (- (inst-ms updated-at))]))
-                       ads)]
-          [(:user/email user "<no email>")
-           title
-           [:div.px-1 {:class [(case state
-                                 :running "bg-tealv-50"
-                                 (:paused :incomplete) "bg-yellv-50"
-                                 (:rejected :payment-failed) "bg-redv-50"
-                                 nil)]}
-            (name state)]
-           (some-> balance ui/fmt-cents)
-           (some-> bid ui/fmt-cents)
-           (some-> budget ui/fmt-cents)
-           (tick/date (tick/in updated-at (tick/zone (:user/timezone admin))))
-           (when chargeable
-             (lib.icons/base "check-solid" {:class "w-4 h-4"}))
-           (some-> amount-pending ui/fmt-cents)
-           (:ad-credit/stripe-status pending-charge)]))))})
+       ["Email" "Title" "State" "Balance" "Bid" "Budget" "Updated" "Chargeable" "Pending" "Stripe status"]
+       (for [{:ad/keys [user title state balance bid budget updated-at chargeable amount-pending pending-charge]}
+             (sort-by (fn [{:ad/keys [chargeable amount-pending updated-at balance]}]
+                        (if (or chargeable amount-pending)
+                          [0 (- balance)]
+                          [1 (- (inst-ms updated-at))]))
+                      ads)]
+         [(:user/email user "<no email>")
+          title
+          [:div.px-1 {:class [(case state
+                                :running "bg-tealv-50"
+                                (:paused :incomplete) "bg-yellv-50"
+                                (:rejected :payment-failed) "bg-redv-50"
+                                nil)]}
+           (name state)]
+          (some-> balance ui/fmt-cents)
+          (some-> bid ui/fmt-cents)
+          (some-> budget ui/fmt-cents)
+          (tick/date (tick/in updated-at (tick/zone (:user/timezone admin))))
+          (when chargeable
+            (lib.icons/base "check-solid" {:class "w-4 h-4"}))
+          (some-> amount-pending ui/fmt-cents)
+          (:ad-credit/stripe-status pending-charge)]))))})
 
-(fx/defroute-pathom page-content-route "/admin/advertise/content"
+(fx/defroute-graph page-content-route "/admin/advertise/content"
   [::pending-ads
    ::ads-table]
 
@@ -194,7 +196,7 @@
      pending-ads
      ads-table]))
 
-(fx/defroute-pathom page-route "/admin/advertise"
+(fx/defroute-graph page-route "/admin/advertise"
   [:app.shell/app-shell]
 
   :get
@@ -212,5 +214,5 @@
             update-ad
             create-pending-charges
             handle-pending-charges]
-   :resolvers [pending-ads
-               ads-table]})
+   :biff.graph/resolvers [pending-ads
+                          ads-table]})

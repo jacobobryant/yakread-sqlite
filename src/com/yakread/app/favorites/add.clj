@@ -1,6 +1,5 @@
 (ns com.yakread.app.favorites.add
   (:require
-   [com.wsscode.pathom3.connect.operation :refer [?]]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.item :as lib.item]
    [com.yakread.lib.middleware :as lib.middle]
@@ -14,9 +13,9 @@
     :user-item-key :user-item/favorited-at
     :redirect-to `page}))
 
-(fx/defroute-pathom page "/favorites/add"
+(fx/defroute-graph page "/favorites/add"
   [:app.shell/app-shell
-   {(? :session/user) [:user/id]}]
+   [:? {:session/user [:user/id]}]]
 
   :get
   (fn [{:keys [params biff/base-url] :as ctx}

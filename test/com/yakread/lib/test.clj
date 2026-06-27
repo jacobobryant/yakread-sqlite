@@ -66,6 +66,12 @@
                      :biff/query (partial execute conn#)}]
        ~@body)))
 
+(defn resolve-resolver
+  "Runs a biff.graph resolver directly."
+  [resolver ctx input]
+  ((:biff.graph/resolve-fn resolver)
+   (assoc ctx :biff.graph/input input)))
+
 (defn test-route [route method & args]
   (let [[state opts] (if (keyword? (first args))
                        args

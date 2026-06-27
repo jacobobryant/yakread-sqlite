@@ -18,7 +18,8 @@
        {:item/id (t/uuid 3),
         :item/url "url3",
         :item/record-type [:lift :item.record-type/direct]}]}]
-    (next-batch
+    (t/resolve-resolver
+     next-batch
      (assoc
       ctx
       :yakread.model/all-liked-items

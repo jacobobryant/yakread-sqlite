@@ -13,7 +13,7 @@
         :item/url "url2",
         :item/direct-candidate-status
         [:lift :item.direct-candidate-status/approved]}]}]
-    (item-candidates ctx {})),
+    (t/resolve-resolver item-candidates ctx {})),
    :result
    {:com.yakread.lib.spark/item-candidates
     [{:item/id #uuid "00020000-0000-0000-0000-000000000002",
@@ -23,7 +23,7 @@
    :eval
    (t/with-sqlite
     [ctx {}]
-    (ads (merge ctx {:biff/now (t/instant 2000)}) {})),
+    (t/resolve-resolver ads (merge ctx {:biff/now (t/instant 2000)}) {})),
    :result
    {:com.yakread.lib.spark/all-ads [],
     :com.yakread.lib.spark/ad-candidates []}}
@@ -64,7 +64,7 @@
         :ad-click/created-at (t/instant 1999),
         :ad-click/cost 200,
         :ad-click/source [:lift :ad-click.source/web]}]}]
-    (ads (merge ctx {:biff/now (t/instant 2000)}) {})),
+    (t/resolve-resolver ads (merge ctx {:biff/now (t/instant 2000)}) {})),
    :result
    {:com.yakread.lib.spark/all-ads
     [{:ad/id #uuid "00010000-0000-0000-0000-000000000001",
@@ -102,7 +102,7 @@
    (t/with-sqlite
     [ctx {}]
     {:input (ad-interaction-info (:biff/query ctx)),
-     :ratings (ad-ratings ctx {})}),
+     :ratings (t/resolve-resolver ad-ratings ctx {})}),
    :result
    {:input [], :ratings {:com.yakread.lib.spark/ad-ratings []}}}
   _
@@ -145,7 +145,7 @@
         :ad-click/cost 0,
         :ad-click/source [:lift :ad-click.source/web]}]}]
     {:input (ad-interaction-info (:biff/query ctx)),
-     :ratings (ad-ratings ctx {})}),
+     :ratings (t/resolve-resolver ad-ratings ctx {})}),
    :result
    {:input
     [{:last-clicked #time/instant "2000-01-01T00:00:00Z",
@@ -184,7 +184,8 @@
        {:item/id (t/uuid 2), :item/url "url1"}
        {:item/id (t/uuid 3), :item/url "url2"}
        {:item/id (t/uuid 4), :item/url "url3"}]}]
-    (dedupe-item-id
+    (t/resolve-resolver
+     dedupe-item-id
      ctx
      {:com.yakread.lib.spark/item-candidates
       [{:item/id (t/uuid 1), :item/url "url1"}
@@ -202,10 +203,11 @@
    :eval
    (t/with-sqlite
     [ctx {}]
-    (item-ratings
+    (t/resolve-resolver
+     item-ratings
      ctx
-     {:com.yakread.lib.spark/item-candidates [],
-      :com.yakread.lib.spark/dedupe-item-id {}})),
+     {:com.yakread.lib.spark/dedupe-item-id {},
+      :com.yakread.lib.spark/item-candidates []})),
    :result {:com.yakread.lib.spark/item-ratings []}}
   _
   {:doc "item-ratings non-empty input",
@@ -235,15 +237,16 @@
        {:skip/id (t/uuid 41),
         :skip/reclist-id (t/uuid 21),
         :skip/item-id (t/uuid 3)}]}]
-    (item-ratings
+    (t/resolve-resolver
+     item-ratings
      ctx
-     {:com.yakread.lib.spark/item-candidates
-      [{:item/id (t/uuid 1), :item/url "url1"}
-       {:item/id (t/uuid 2), :item/url "url2"}],
-      :com.yakread.lib.spark/dedupe-item-id
+     {:com.yakread.lib.spark/dedupe-item-id
       {(t/uuid 3) (t/uuid 2),
        (t/uuid 1) (t/uuid 1),
-       (t/uuid 2) (t/uuid 2)}})),
+       (t/uuid 2) (t/uuid 2)},
+      :com.yakread.lib.spark/item-candidates
+      [{:item/id (t/uuid 1), :item/url "url1"}
+       {:item/id (t/uuid 2), :item/url "url2"}]})),
    :result
    {:com.yakread.lib.spark/item-ratings
     [{:rating/user #uuid "00300000-0000-0000-0000-000000000030",
@@ -256,7 +259,7 @@
       :rating/created-at #time/instant "2002-01-01T00:00:00Z"}]}}
   _
   {:doc "all-liked-items - empty database",
-   :eval (t/with-sqlite [ctx {}] (all-liked-items ctx {})),
+   :eval (t/with-sqlite [ctx {}] (t/resolve-resolver all-liked-items ctx {})),
    :result {:yakread.model/all-liked-items []}}
   _
   {:doc "all-liked-items",
@@ -279,7 +282,7 @@
        {:user-item/id (t/uuid 4),
         :user-item/user-id (t/uuid 13),
         :user-item/item-id (t/uuid 22)}]}]
-    (all-liked-items ctx {})),
+    (t/resolve-resolver all-liked-items ctx {})),
    :result
    {:yakread.model/all-liked-items
     [{:item/id #uuid "00210000-0000-0000-0000-000000000021",

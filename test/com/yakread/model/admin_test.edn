@@ -12,7 +12,10 @@
        {:user/id (t/uuid 2),
         :user/email "old@test.com",
         :user/joined-at (t/instant 1999)}]}]
-    (recent-users (merge ctx {:biff/now (t/instant 2000 1 8)}) {})),
+    (t/resolve-resolver
+     recent-users
+     (merge ctx {:biff/now (t/instant 2000 1 8)})
+     {})),
    :result
    {:admin/recent-users
     [{:user/id #uuid "00010000-0000-0000-0000-000000000001"}]}}
@@ -25,20 +28,23 @@
       [{:user/id (t/uuid 1),
         :user/email "old@test.com",
         :user/joined-at (t/instant 1999)}]}]
-    (recent-users (merge ctx {:biff/now (t/instant 2000 1 8)}) {})),
+    (t/resolve-resolver
+     recent-users
+     (merge ctx {:biff/now (t/instant 2000 1 8)})
+     {})),
    :result {:admin/recent-users []}}
   _
   {:doc "ads returns all ads",
    :eval
    (t/with-sqlite
     [ctx {:ad [{:ad/id (t/uuid 1)} {:ad/id (t/uuid 2)}]}]
-    (ads ctx {})),
+    (t/resolve-resolver ads ctx {})),
    :result
    {:admin/ads
     [{:ad/id #uuid "00010000-0000-0000-0000-000000000001"}
      {:ad/id #uuid "00020000-0000-0000-0000-000000000002"}]}}
   _
   {:doc "ads returns empty when no ads",
-   :eval (t/with-sqlite [ctx {}] (ads ctx {})),
+   :eval (t/with-sqlite [ctx {}] (t/resolve-resolver ads ctx {})),
    :result {:admin/ads []}}
   _]}

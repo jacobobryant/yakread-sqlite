@@ -4,7 +4,6 @@
    [clojure.string :as str]
    [clojure.tools.logging :as log]
    [com.biffweb :as biff]
-   [com.wsscode.pathom3.error :as p.error]
    [com.yakread.lib.datastar :as lib.d*]
    [com.yakread.lib.form :as lib.form]
    [com.yakread.lib.route :as lib.route :refer [href]]
@@ -30,19 +29,24 @@
      (cond-> ctx
        (:edn params) (update :params merge (edn/read-string (:edn params)))))))
 
-(defn wrap-pathom-error [handler]
+(defn- unresolved-graph-attr [data]
+  (some-> data
+          :biff.graph/trace
+          peek
+          :path
+          peek))
+
+(defn wrap-graph-error [handler]
   (fn [ctx]
     (try
       (handler ctx)
       (catch clojure.lang.ExceptionInfo e
         (let [data (ex-data e)]
           (cond
-            (and (= (::p.error/cause data) ::p.error/attribute-missing)
-                 (some #(str/starts-with? (namespace %) "params") (keys (:missing data))))
+            (some-> (unresolved-graph-attr data) namespace (= "params"))
             {:status 400 :body "invalid input" :headers {"Content-type" "text/plain"}}
 
-            (and (= (::p.error/cause data) ::p.error/attribute-missing)
-                 (some #(= "session" (namespace %)) (keys (:missing data))))
+            (some-> (unresolved-graph-attr data) namespace (= "session"))
             {:status 401}
 
             :else
@@ -148,7 +152,7 @@
    wrap-render-rum
    #_wrap-auth-aliases
    wrap-edn-json-params
-   wrap-pathom-error
+   wrap-graph-error
    lib.d*/wrap-sse-response
    lib.form/wrap-parse-form
    lib.route/wrap-nippy-params])

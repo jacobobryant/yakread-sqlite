@@ -3,7 +3,7 @@
    [cheshire.core :as cheshire]
    [clojure.string :as str]
    [com.biffweb :as biff]
-   [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
+   [com.biffweb.graph :as biff.graph :refer [defresolver]]
    [com.yakread.lib.fx :as fx]
    [com.yakread.lib.middleware :as lib.mid]
    [com.yakread.lib.route :as lib.route :refer [href]]
@@ -12,18 +12,18 @@
 
 (declare page-route)
 
-(fx/defroute-pathom unsubscribe
+(fx/defroute-graph unsubscribe
   [{:params/sub [:sub/id
                  :sub/record-type
-                 {(? :sub/latest-item)
-                  [:item/id
-                   (? :item/email-list-unsubscribe)
-                   (? :item/email-list-unsubscribe-post)]}]}
-   (? :params/redirect-url)]
+                 [:? {:sub/latest-item
+                      [:item/id
+                       [:? :item/email-list-unsubscribe]
+                       [:? :item/email-list-unsubscribe-post]]}]]}
+   [:? :params/redirect-url]]
 
   :post
   (fn [{:keys [biff/now]} {{:sub/keys [id record-type latest-item] :as sub} :params/sub
-          :keys [params/redirect-url]}]
+                           :keys [params/redirect-url]}]
     (let [base {:status 204
                 :headers {"HX-Location" (or redirect-url (href routes/subs-page))}}]
       (case record-type
@@ -58,14 +58,14 @@
                         url
                         {:headers {"HX-Trigger" (cheshire/generate-string {:yak/open-new-tab url})}})))))))
 
-(fx/defroute-pathom toggle-pin
+(fx/defroute-graph toggle-pin
   [{:params/sub [:sub/id
                  :sub/record-type
-                 (? :sub/pinned-at)]}]
+                 [:? :sub/pinned-at]]}]
 
   :post
   (fn [{:keys [biff/now params]} {{:sub/keys [id pinned-at record-type]}
-          :params/sub}]
+                                  :params/sub}]
     {:biff.fx/sqlite [:biff.fx/sqlite
                       [{:update :sub
                         :set {:sub/pinned-at (when-not pinned-at now)}
@@ -80,8 +80,7 @@
   (fn [{:keys [biff.fx/render]} _]
     render))
 
-
-(fx/defroute-pathom resubscribe
+(fx/defroute-graph resubscribe
   [{:params.checked/subscriptions
     [:sub/id]}]
 
@@ -94,12 +93,14 @@
      :status 204
      :headers {"HX-Redirect" (href `unsubs-page)}}))
 
-(defresolver sub-card [{:sub/keys [id title unread pinned-at record-type]}]
-  #::pco{:input [:sub/id
-                 :sub/title
-                 :sub/unread
-                 :sub/record-type
-                 (? :sub/pinned-at)]}
+(defresolver sub-card
+  {:input [:sub/id
+           :sub/title
+           :sub/unread
+           :sub/record-type
+           [:? :sub/pinned-at]]
+   :output [:sub.view/card]}
+  [_ {:sub/keys [id title unread pinned-at record-type]}]
   {:sub.view/card
    [:.relative
     [:div {:class '[absolute top-1.5 right-4 sm:right-0]}
@@ -143,7 +144,7 @@
                         :btn-label "Add subscriptions"
                         :btn-href (href routes/add-sub-page)}))
 
-(fx/defroute-pathom unsubs-page "/subscriptions/unsubscribed"
+(fx/defroute-graph unsubs-page "/subscriptions/unsubscribed"
   [:app.shell/app-shell
    {:session/user
     [{:user/unsubscribed
@@ -169,12 +170,12 @@
          (ui/checkbox {:name (str "subs[" id "]") :ui/label title}))
        (ui/button {:type "submit"} "Move to subscriptions")]))))
 
-(fx/defroute-pathom page-content-route "/subscriptions/content"
+(fx/defroute-graph page-content-route "/subscriptions/content"
   [{:session/user
     [{:user/subscriptions [:sub/id
                            :sub.view/card
-                           (? :sub/published-at)
-                           (? :sub/pinned-at)]}
+                           [:? :sub/published-at]
+                           [:? :sub/pinned-at]]}
      {:user/unsubscribed [:sub/id]}]}]
 
   :get
@@ -218,8 +219,9 @@
                 (sort-by :sub/published-at #(compare %2 %1))
                 (mapv :sub.view/card)))])])))
 
-(fx/defroute-pathom page-route "/subscriptions"
-  [:app.shell/app-shell (? :user/current)]
+(fx/defroute-graph page-route "/subscriptions"
+  [:app.shell/app-shell
+   [:? {:user/current [:user/id]}]]
 
   :get
   (fn [{:keys [params]} {:keys [app.shell/app-shell] user :user/current}]
@@ -234,7 +236,7 @@
         (empty-state)]))))
 
 (def module
-  {:resolvers [sub-card]
+  {:biff.graph/resolvers [sub-card]
    :routes [page-route
             ["" {:middleware [lib.mid/wrap-signed-in]}
              page-content-route

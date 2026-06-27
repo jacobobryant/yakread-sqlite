@@ -18,7 +18,7 @@
         :sub/created-at (t/instant 2000),
         :sub/record-type [:lift :sub.record-type/email],
         :sub/email-unsubscribed-at (t/instant 2000)}]}]
-    (user-subs ctx {:user/id (t/uuid 1)})),
+    (t/resolve-resolver user-subs ctx {:user/id (t/uuid 1)})),
    :result
    {:user/subscriptions
     [{:sub/id #uuid "00100000-0000-0000-0000-000000000010"}],
@@ -43,18 +43,21 @@
         :item/ingested-at (t/instant 2002),
         :item/record-type [:lift :item.record-type/email]}]}]
     {:email
-     (latest-email-item
+     (t/resolve-resolver
+      latest-email-item
       ctx
-      {:sub/record-type :sub.record-type/email, :sub/id (t/uuid 100)}),
+      {:sub/id (t/uuid 100), :sub/record-type :sub.record-type/email}),
      :feed
-     (latest-email-item
+     (t/resolve-resolver
+      latest-email-item
       ctx
-      {:sub/record-type :sub.record-type/feed, :sub/id (t/uuid 100)}),
+      {:sub/id (t/uuid 100), :sub/record-type :sub.record-type/feed}),
      :no-items
-     (latest-email-item
+     (t/resolve-resolver
+      latest-email-item
       ctx
-      {:sub/record-type :sub.record-type/email,
-       :sub/id (t/uuid 300)})}),
+      {:sub/id (t/uuid 300),
+       :sub/record-type :sub.record-type/email})}),
    :result
    {:email
     {:sub/latest-item
@@ -80,15 +83,16 @@
         :item/feed-id (t/uuid 100),
         :item/ingested-at (t/instant 2000),
         :item/record-type [:lift :item.record-type/feed]}]}]
-    (total
+    (t/resolve-resolver
+     total
      ctx
      [{:sub/id (t/uuid 10), :sub/record-type :sub.record-type/email}
       {:sub/id (t/uuid 20),
-       :sub/record-type :sub.record-type/feed,
-       :sub/feed-id (t/uuid 100)}
+       :sub/feed-id (t/uuid 100),
+       :sub/record-type :sub.record-type/feed}
       {:sub/id (t/uuid 30),
-       :sub/record-type :sub.record-type/feed,
-       :sub/feed-id (t/uuid 200)}])),
+       :sub/feed-id (t/uuid 200),
+       :sub/record-type :sub.record-type/feed}])),
    :result
    [{:sub/id #uuid "00100000-0000-0000-0000-000000000010",
      :sub/total 2}
@@ -131,15 +135,16 @@
         :user-item/user-id (t/uuid 1),
         :user-item/item-id (t/uuid 1),
         :user-item/viewed-at (t/instant 2000)}]}]
-    (items-read
+    (t/resolve-resolver
+     items-read
      ctx
-     [{:sub/id (t/uuid 10),
-       :sub/user-id (t/uuid 1),
+     [{:sub/user-id (t/uuid 1),
+       :sub/id (t/uuid 10),
        :sub/record-type :sub.record-type/email}
-      {:sub/id (t/uuid 20),
-       :sub/user-id (t/uuid 1),
-       :sub/record-type :sub.record-type/feed,
-       :sub/feed-id (t/uuid 100)}])),
+      {:sub/user-id (t/uuid 1),
+       :sub/id (t/uuid 20),
+       :sub/feed-id (t/uuid 100),
+       :sub/record-type :sub.record-type/feed}])),
    :result
    [{:sub/id #uuid "00100000-0000-0000-0000-000000000010",
      :sub/items-read 1}
@@ -147,7 +152,7 @@
      :sub/items-read 0}]}
   _
   {:doc "items-unread",
-   :eval (items-unread {:sub/total 5, :sub/items-read 2}),
+   :eval (t/resolve-resolver items-unread {} {:sub/total 5, :sub/items-read 2}),
    :result {:sub/items-unread 3, :sub/unread 3}}
   _
   {:doc "published-at",
@@ -169,19 +174,20 @@
         :item/feed-id (t/uuid 100),
         :item/ingested-at (t/instant 2002),
         :item/record-type [:lift :item.record-type/feed]}]}]
-    (published-at
+    (t/resolve-resolver
+     published-at
      ctx
      [{:sub/id (t/uuid 10),
-       :sub/record-type :sub.record-type/email,
-       :sub/created-at (t/instant 2003)}
+       :sub/created-at (t/instant 2003),
+       :sub/record-type :sub.record-type/email}
       {:sub/id (t/uuid 20),
-       :sub/record-type :sub.record-type/feed,
        :sub/feed-id (t/uuid 100),
-       :sub/created-at (t/instant 2004)}
+       :sub/created-at (t/instant 2004),
+       :sub/record-type :sub.record-type/feed}
       {:sub/id (t/uuid 30),
-       :sub/record-type :sub.record-type/feed,
        :sub/feed-id (t/uuid 200),
-       :sub/created-at (t/instant 2005)}])),
+       :sub/created-at (t/instant 2005),
+       :sub/record-type :sub.record-type/feed}])),
    :result
    [{:sub/id #uuid "00100000-0000-0000-0000-000000000010",
      :sub/published-at #time/instant "2001-01-01T00:00:00Z"}
@@ -208,15 +214,16 @@
         :item/feed-id (t/uuid 100),
         :item/ingested-at (t/instant 2000),
         :item/record-type [:lift :item.record-type/feed]}]}]
-    (items
+    (t/resolve-resolver
+     items
      ctx
      [{:sub/id (t/uuid 10), :sub/record-type :sub.record-type/email}
       {:sub/id (t/uuid 20),
-       :sub/record-type :sub.record-type/feed,
-       :sub/feed-id (t/uuid 100)}
+       :sub/feed-id (t/uuid 100),
+       :sub/record-type :sub.record-type/feed}
       {:sub/id (t/uuid 30),
-       :sub/record-type :sub.record-type/feed,
-       :sub/feed-id (t/uuid 200)}])),
+       :sub/feed-id (t/uuid 200),
+       :sub/record-type :sub.record-type/feed}])),
    :result
    [{:sub/id #uuid "00100000-0000-0000-0000-000000000010",
      :sub/items
@@ -246,10 +253,11 @@
     (doall
      (for
       [user-id [(t/uuid 1) (t/uuid 2)]]
-      (from-params
+      (t/resolve-resolver
+       from-params
        (merge
         ctx
-        {:session {:uid user-id}, :params {:sub/id (t/uuid 10)}})
+        {:params {:sub/id (t/uuid 10)}, :session {:uid user-id}})
        {})))),
    :result
    ({:params/sub
@@ -277,28 +285,28 @@
         :sub/created-at (t/instant 2000),
         :sub/record-type [:lift :sub.record-type/feed]}]}]
     {:valid
-     (params-checked
+     (t/resolve-resolver
+      params-checked
       (merge
        ctx
-       {:session {:uid (t/uuid 1)},
-        :params
-        {:subs {(str (t/uuid 10)) nil, (str (t/uuid 20)) nil}}})
+       {:params {:subs {(str (t/uuid 20)) nil, (str (t/uuid 10)) nil}},
+        :session {:uid (t/uuid 1)}})
       {}),
      :unauthorized
-     (params-checked
+     (t/resolve-resolver
+      params-checked
       (merge
        ctx
-       {:session {:uid (t/uuid 1)},
-        :params
-        {:subs {(str (t/uuid 10)) nil, (str (t/uuid 30)) nil}}})
+       {:params {:subs {(str (t/uuid 30)) nil, (str (t/uuid 10)) nil}},
+        :session {:uid (t/uuid 1)}})
       {}),
      :missing
-     (params-checked
+     (t/resolve-resolver
+      params-checked
       (merge
        ctx
-       {:session {:uid (t/uuid 1)},
-        :params
-        {:subs {(str (t/uuid 10)) nil, (str (t/uuid 40)) nil}}})
+       {:params {:subs {(str (t/uuid 10)) nil, (str (t/uuid 40)) nil}},
+        :session {:uid (t/uuid 1)}})
       {})}),
    :result
    {:valid
@@ -337,7 +345,8 @@
         :user-item/user-id (t/uuid 1),
         :user-item/item-id (t/uuid 1),
         :user-item/viewed-at (t/instant 2000)}]}]
-    (unread-items
+    (t/resolve-resolver
+     unread-items
      ctx
      [{:sub/user-id (t/uuid 1),
        :sub/items [{:item/id (t/uuid 1)} {:item/id (t/uuid 2)}]}
@@ -359,7 +368,7 @@
         :sub/created-at (t/instant 2000),
         :sub/record-type [:lift :sub.record-type/feed]}],
       :mv-sub [{:mv-sub/id (t/uuid 60), :mv-sub/sub-id (t/uuid 10)}]}]
-    (mv ctx [{:sub/id (t/uuid 10)}])),
+    (t/resolve-resolver mv ctx [{:sub/id (t/uuid 10)}])),
    :result
    [{:sub/id #uuid "00100000-0000-0000-0000-000000000010",
      :sub/mv

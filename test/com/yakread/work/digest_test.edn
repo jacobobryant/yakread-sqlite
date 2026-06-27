@@ -118,24 +118,15 @@
   _
   {:eval (prepare-digest {:biff/job {:user/id "user1"}} :start),
    :result
-   {:biff.fx/pathom
-    [:biff.fx/pathom
+   {:biff.fx/graph
+    [:biff.fx/graph
      {:entity {:user/id "user1"},
       :query
-      [(:digest/payload
-        {:com.wsscode.pathom3.connect.operation/optional? true})
-       {(:digest/subject-item
-         {:com.wsscode.pathom3.connect.operation/optional? true})
-        [:item/id :item/title]}
-       {(:user/ad-rec
-         {:com.wsscode.pathom3.connect.operation/optional? true})
-        [:ad/id]}
-       {(:user/icymi-recs
-         {:com.wsscode.pathom3.connect.operation/optional? true})
-        [:item/id]}
-       {(:user/digest-discover-recs
-         {:com.wsscode.pathom3.connect.operation/optional? true})
-        [:item/id]}]}],
+      [[:? :digest/payload]
+       [:? {:digest/subject-item [:item/id :item/title]}]
+       [:? {:user/ad-rec [:ad/id]}]
+       [:? {:user/icymi-recs [:item/id]}]
+       [:? {:user/digest-discover-recs [:item/id]}]]}],
     :biff.fx/next :end,
     :session {:uid "user1"}}}
   _
@@ -145,7 +136,7 @@
     (prepare-digest
      {:biff/now (t/zdt 2000),
       :biff/job {:user/id (t/uuid 0), :user/email "user1@example.com"},
-      :biff.fx/pathom
+      :biff.fx/graph
       {:digest/payload {:foo "bar"},
        :digest/subject-item
        {:item/id (t/uuid 1), :item/title "some item"},

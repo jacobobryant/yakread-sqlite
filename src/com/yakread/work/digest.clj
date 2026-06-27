@@ -5,7 +5,6 @@
    [clojure.string :as str]
    [clojure.tools.logging :as log]
    [com.biffweb :as biff]
-   [com.wsscode.pathom3.connect.operation :as pco :refer [?]]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.fx :as fx]
    [tick.core :as tick]))
@@ -69,25 +68,25 @@
 (fx/defmachine prepare-digest
   :start
   (fn [{user :biff/job}]
-    {:biff.fx/pathom [:biff.fx/pathom
-                      {:entity {:user/id (:user/id user)}
-                       :query  [(? :digest/payload)
-                                {(? :digest/subject-item)       [:item/id
-                                                                 :item/title]}
-                                {(? :user/ad-rec)               [:ad/id]}
-                                {(? :user/icymi-recs)           [:item/id]}
-                                {(? :user/digest-discover-recs) [:item/id]}]}]
+    {:biff.fx/graph [:biff.fx/graph
+                     {:entity {:user/id (:user/id user)}
+                      :query  [[:? :digest/payload]
+                               [:? {:digest/subject-item [:item/id
+                                                          :item/title]}]
+                               [:? {:user/ad-rec [:ad/id]}]
+                               [:? {:user/icymi-recs [:item/id]}]
+                               [:? {:user/digest-discover-recs [:item/id]}]]}]
      :biff.fx/next :end
      ;; hack until model code is refactored to not use session.
      :session {:uid (:user/id user)}})
 
   :end
-  (fn [{:keys [biff.fx/pathom biff/now] user :biff/job}]
-    (when (:digest/payload pathom)
+  (fn [{:keys [biff.fx/graph biff/now] user :biff/job}]
+    (when (:digest/payload graph)
       (let [digest-id (gen/uuid)
             digest-items (for [[k kind] [[:user/icymi-recs :digest-item.kind/icymi]
                                          [:user/digest-discover-recs :digest-item.kind/discover]]
-                               item (get pathom k)]
+                               item (get graph k)]
                            {:digest-item/id (gen/uuid)
                             :digest-item/digest-id digest-id
                             :digest-item/item-id (:item/id item)
@@ -101,8 +100,8 @@
                                       :digest/user-id  (:user/id user)
                                       :digest/sent-at  now}
                                      (filter (comp lib.core/something? val))
-                                     {:digest/subject-id  (get-in pathom [:digest/subject-item :item/id])
-                                      :digest/ad-id       (get-in pathom [:user/ad-rec :ad/id])})]}]
+                                     {:digest/subject-id  (get-in graph [:digest/subject-item :item/id])
+                                      :digest/ad-id       (get-in graph [:user/ad-rec :ad/id])})]}]
                     (when (not-empty digest-items)
                       [{:insert-into :digest-item
                         :values (vec digest-items)}]))]
@@ -111,7 +110,7 @@
                           {:id :work.digest/send-digest
                            :job {:user/email (:user/email user)
                                  :digest/id digest-id
-                                 :digest/payload (:digest/payload pathom)}}]}]))))
+                                 :digest/payload (:digest/payload graph)}}]}]))))
 
 (def default-payload-size-limit (* 50 1000 1000))
 (def default-n-emails-limit 50)
@@ -211,5 +210,4 @@
       (doseq [user (query {:select [:user/id :user/email]
                            :from :user
                            :where [:in :user/email []]})]
-        (biff/submit-job ctx :work.digest/prepare-digest user))))
-  )
+        (biff/submit-job ctx :work.digest/prepare-digest user)))))

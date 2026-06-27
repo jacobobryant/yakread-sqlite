@@ -5,8 +5,8 @@
  :tests
  [{:eval (export-user-data {:biff/job {:user/id "abc123"}} :start),
    :result
-   {:biff.fx/pathom
-    [:biff.fx/pathom
+   {:biff.fx/graph
+    [:biff.fx/graph
      {:entity {:user/id "abc123"},
       :query
       [:user/id
@@ -21,7 +21,7 @@
   {:eval
    (export-user-data
     {:biff/now (t/instant 2000),
-     :biff.fx/pathom
+     :biff.fx/graph
      {:user/id "abc123",
       :user/email "hello@example.com",
       :user/timezone "America/Denver",
@@ -42,14 +42,12 @@
        {:file
         #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123/favorites.csv",
         :content "favorites"})]}
-    {:biff.fx/shell
-     [:biff.fx/shell
-      ["zip"
-       "-r"
-       "yakread-export-1999-12-31-946684800000-abc123.zip"
-       "yakread-export-1999-12-31-946684800000-abc123"
-       :dir
-       "/tmp/dir"]]}
+    {:biff.fx/zip
+     [:biff.fx/zip
+      {:source
+       #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123",
+       :destination
+       "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123.zip"}]}
     {:biff.fx/delete-files
      [:biff.fx/delete-files
       #biff/file "/tmp/dir/yakread-export-1999-12-31-946684800000-abc123"]}
@@ -89,31 +87,21 @@
   {:doc "delete-account: start state queries user data",
    :eval (delete-account {:biff/job {:user/id "user123"}} :start),
    :result
-   {:biff.fx/pathom
-    [:biff.fx/pathom
+   {:biff.fx/graph
+    [:biff.fx/graph
      {:entity {:user/id "user123"},
       :query
       [:user/id
-       (:user/email-username
-        {:com.wsscode.pathom3.connect.operation/optional? true})
-       {(:user/subscriptions
-         {:com.wsscode.pathom3.connect.operation/optional? true})
-        [:sub/id
-         (:sub/feed-id
-          {:com.wsscode.pathom3.connect.operation/optional? true})]}
-       {(:user/ad
-         {:com.wsscode.pathom3.connect.operation/optional? true})
-        [:ad/id
-         (:ad/customer-id
-          {:com.wsscode.pathom3.connect.operation/optional? true})]}
-       (:user/customer-id
-        {:com.wsscode.pathom3.connect.operation/optional? true})]}],
+       [:? :user/email-username]
+       [:? {:user/subscriptions [:sub/id [:? :sub/feed-id]]}]
+       [:? {:user/ad [:ad/id [:? :ad/customer-id]]}]
+       [:? :user/customer-id]]}],
     :biff.fx/next :delete}}
   _
   {:doc "delete-account: delete state with user and ad customer ids",
    :eval
    (delete-account
-    {:biff.fx/pathom
+    {:biff.fx/graph
      {:user/id "user123",
       :user/customer-id "cus_user123",
       :user/subscriptions
@@ -152,7 +140,7 @@
   {:doc "delete-account: delete state with only user customer id",
    :eval
    (delete-account
-    {:biff.fx/pathom
+    {:biff.fx/graph
      {:user/id "user123",
       :user/customer-id "cus_user123",
       :user/subscriptions [],
@@ -176,7 +164,7 @@
   {:doc "delete-account: delete state with no customer ids",
    :eval
    (delete-account
-    {:biff.fx/pathom
+    {:biff.fx/graph
      {:user/id "user123",
       :user/customer-id nil,
       :user/subscriptions [],

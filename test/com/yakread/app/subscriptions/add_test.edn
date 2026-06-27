@@ -201,7 +201,11 @@
      :db*
      {:feed
       [{:feed/id (t/uuid 1),
-        :feed/url "https://obryant.dev/feed.xml"}]},
+        :feed/url "https://obryant.dev/feed.xml"}],
+      :sub
+      [{:sub/id (t/uuid 2),
+        :sub/user-id (t/uuid 2),
+        :sub/feed-id (t/uuid 1)}]},
      :biff/now (t/instant 2000),
      :biff.fx/http
      {:url "https://obryant.dev",

@@ -1,13 +1,14 @@
 (ns com.yakread.model.moderation
   (:require
-   [com.wsscode.pathom3.connect.operation :as pco :refer [defresolver]]))
+   [com.biffweb.graph :as biff.graph :refer [defresolver]]))
 
-(defresolver next-batch [{:biff/keys [query] :keys [yakread.model/all-liked-items]} _]
-  {::pco/output [{:admin.moderation/next-batch [:item/id :item/n-likes]}
-                 :admin.moderation/remaining
-                 :admin.moderation/approved
-                 :admin.moderation/blocked
-                 :admin.moderation/ingest-failed]}
+(defresolver next-batch
+  {:output [{:admin.moderation/next-batch [:item/id :item/n-likes]}
+            :admin.moderation/remaining
+            :admin.moderation/approved
+            :admin.moderation/blocked
+            :admin.moderation/ingest-failed]}
+  [{:biff/keys [query] :keys [yakread.model/all-liked-items]} _]
   (let [direct-items (query {:select [:item/id :item/url :item/record-type :item/direct-candidate-status]
                              :from :item
                              :where [:= :item/record-type [:lift :item.record-type/direct]]})
@@ -44,4 +45,4 @@
      :admin.moderation/ingest-failed (get statuses :item.direct-candidate-status/ingest-failed 0)
      :admin.moderation/next-batch (vec (take 50 liked-direct-items))}))
 
-(def module {:resolvers [next-batch]})
+(def module {:biff.graph/resolvers [next-batch]})

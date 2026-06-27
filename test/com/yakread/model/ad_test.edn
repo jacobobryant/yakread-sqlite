@@ -8,7 +8,7 @@
     [ctx
      {:user [{:user/id (t/uuid 1), :user/email "alice@example.com"}],
       :ad [{:ad/id (t/uuid 2), :ad/user-id (t/uuid 1)}]}]
-    (user-ad ctx {:user/id (t/uuid 1)})),
+    (t/resolve-resolver user-ad ctx {:user/id (t/uuid 1)})),
    :result
    {:user/ad {:ad/id #uuid "00020000-0000-0000-0000-000000000002"}}}
   _
@@ -28,8 +28,8 @@
        {:ad-click/id (t/uuid 5),
         :ad-click/ad-id (t/uuid 20),
         :ad-click/user-id (t/uuid 104)}]}]
-    {:not-empty (n-clicks ctx {:ad/id (t/uuid 20)}),
-     :empty (n-clicks ctx {:ad/id (t/uuid 30)})}),
+    {:not-empty (t/resolve-resolver n-clicks ctx {:ad/id (t/uuid 20)}),
+     :empty (t/resolve-resolver n-clicks ctx {:ad/id (t/uuid 30)})}),
    :result {:not-empty {:ad/n-clicks 3}, :empty {:ad/n-clicks 0}}}
   _
   {:eval
@@ -51,7 +51,8 @@
        {:ad-click/id (t/uuid 5),
         :ad-click/ad-id (t/uuid 20),
         :ad-click/created-at (t/instant 2004)}]}]
-    (last-clicked
+    (t/resolve-resolver
+     last-clicked
      ctx
      [{:ad/id (t/uuid 10)}
       {:ad/id (t/uuid 20)}
@@ -61,7 +62,7 @@
      :ad/last-clicked #time/instant "2000-01-01T00:00:00Z"}
     {:ad/id #uuid "00200000-0000-0000-0000-000000000020",
      :ad/last-clicked #time/instant "2004-01-01T00:00:00Z"}
-    {:ad/id #uuid "00300000-0000-0000-0000-000000000030"}]}
+    {}]}
   _
   {:eval
    (t/with-sqlite
@@ -92,7 +93,8 @@
         :ad-credit/charge-status
         [:lift :ad-credit.charge-status/pending],
         :ad-credit/amount 100}]}]
-    (amount-pending
+    (t/resolve-resolver
+     amount-pending
      ctx
      [{:ad/id (t/uuid 10)}
       {:ad/id (t/uuid 20)}
@@ -102,7 +104,7 @@
      :ad/amount-pending 175}
     {:ad/id #uuid "00200000-0000-0000-0000-000000000020",
      :ad/amount-pending 100}
-    {:ad/id #uuid "00400000-0000-0000-0000-000000000040"}]}
+    {}]}
   _
   {:eval
    (t/with-sqlite
@@ -133,7 +135,7 @@
         :ad-credit/charge-status
         [:lift :ad-credit.charge-status/pending],
         :ad-credit/amount 100}]}]
-    (pending-charge ctx {:ad/id (t/uuid 10)})),
+    (t/resolve-resolver pending-charge ctx {:ad/id (t/uuid 10)})),
    :result
    {:ad/pending-charge
     {:ad-credit/id #uuid "00010000-0000-0000-0000-000000000001"}}}
@@ -167,7 +169,7 @@
         :ad-credit/charge-status
         [:lift :ad-credit.charge-status/pending],
         :ad-credit/amount 100}]}]
-    (pending-charges ctx nil)),
+    (t/resolve-resolver pending-charges ctx nil)),
    :result
    {:admin/pending-charges
     [{:ad-credit/id #uuid "00010000-0000-0000-0000-000000000001"}
@@ -187,7 +189,9 @@
       :ad/last-clicked (t/instant 2000),
       :ad/paused false}
      chargeable*
-     (fn [& {:as overrides}] (chargeable ctx (merge ad overrides)))]
+     (fn
+      [& {:as overrides}]
+      (t/resolve-resolver chargeable ctx (merge ad overrides)))]
     {:success (chargeable*),
      :stale (chargeable* :ad/last-clicked (t/instant 1999)),
      :amount-too-small (chargeable* :ad/balance 250),

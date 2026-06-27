@@ -85,7 +85,7 @@
                 (ui/callout {:ui/type :info}
                             (str "Queued " (count users) " prepare-digest job(s)."))))})))
 
-(fx/defroute-pathom page-content-route "/admin/digest-trigger/content"
+(fx/defroute-graph page-content-route "/admin/digest-trigger/content"
   []
 
   :get
@@ -154,7 +154,7 @@
                      "Queue Digests")]]
         [:div {:id queue-result-id :class "mt-4"}])))))
 
-(fx/defroute-pathom page-route "/admin/digest-trigger"
+(fx/defroute-graph page-route "/admin/digest-trigger"
   [:app.shell/app-shell]
 
   :get

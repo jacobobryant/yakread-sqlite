@@ -2,11 +2,10 @@
   (:require
    [clojure.data.generators :as gen]
    [com.rpl.specter :as sp]
-   [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
+   [com.biffweb.graph :as biff.graph :refer [defresolver]]
    [com.yakread.lib.core :as lib.core]
-   [edn-query-language.core :as eql]
+   [com.yakread.lib.graph :as lib.graph]
    [lambdaisland.uri :as uri]
-   [com.wsscode.pathom3.interface.eql :as p.eql]
    [tick.core :as tick]))
 
 (def n-skipped (some-fn :item/n-skipped :item/n-skipped-with-digests))
@@ -66,7 +65,7 @@
         total (apply + weights)]
     [(/ (apply + (take 25 weights)) total) ; want around 25%
      (/ (apply + (take 200 weights)) total) ; want around 80%
-     ])) ; [0.22532621043101672 0.8807970779778829]
+])) ; [0.22532621043101672 0.8807970779778829]
 
 ;; I didn't end up using this function, but seems like a shame to delete it.
 #_(defn max-n-by [n f xs]
@@ -86,15 +85,15 @@
 (defresolver sub-affinity*
   "Returns the 10 most recent interactions (e.g. viewed, liked, etc) for a given sub."
   [{:biff/keys [query]} subscriptions]
-  {::pco/input [:sub/id
-                :sub/title
-                :sub/user-id
-                {:sub/items [:item/id]}]
-   ::pco/output [:sub/new
-                 :sub/affinity-low*
-                 :sub/affinity-high*
-                 :sub/n-interactions]
-   ::pco/batch? true}
+  {:input [:sub/id
+           :sub/title
+           :sub/user-id
+           {:sub/items [:item/id]}]
+   :output [:sub/new
+            :sub/affinity-low*
+            :sub/affinity-high*
+            :sub/n-interactions]
+   :batch true}
   (let [user+sub->skips      (into {}
                                    (for [{:sub/keys [id user-id items]} subscriptions
                                          :when (not-empty items)
@@ -164,20 +163,22 @@
        (sort-by (juxt n-skipped (comp - inst-ms tick/instant :item/ingested-at)))
        (rerank 0.1)))
 
-(defresolver unread-subs [{:user/keys [subscriptions]}]
-  {::pco/input [{:user/subscriptions [:sub/id :sub/unread]}]
-   ::pco/output [{:user/unread-subscriptions [:sub/id]}]}
+(defresolver unread-subs
+  {:input [{:user/subscriptions [:sub/id :sub/unread]}]
+   :output [{:user/unread-subscriptions [:sub/id]}]}
+  [_ {:user/keys [subscriptions]}]
   {:user/unread-subscriptions (filterv #(not= 0 (:sub/unread %)) subscriptions)})
 
-(defresolver selected-subs [{:user/keys [unread-subscriptions]}]
-  {::pco/input [{:user/unread-subscriptions [:sub/id
-                                             :sub/record-type
-                                             (? :sub/affinity-low*)
-                                             (? :sub/affinity-high*)
-                                             (? :sub/pinned-at)
-                                             (? :sub/published-at)]}]
-   ::pco/output [{:user/selected-subs [:sub/id
-                                       :item/rec-type]}]}
+(defresolver selected-subs
+  {:input [{:user/unread-subscriptions [:sub/id
+                                        :sub/record-type
+                                        [:? :sub/affinity-low*]
+                                        [:? :sub/affinity-high*]
+                                        [:? :sub/pinned-at]
+                                        [:? :sub/published-at]]}]
+   :output [{:user/selected-subs [:sub/id
+                                  :item/rec-type]}]}
+  [_ {:user/keys [unread-subscriptions]}]
   (let [new? (fn [sub] (and (= (:sub/record-type sub) :sub.record-type/email)
                             (nil? (:sub/affinity-low* sub))))
         {new-subs true old-subs false} (group-by new? (gen/shuffle unread-subscriptions))
@@ -231,34 +232,36 @@
 
 (defn sub-recs-resolver [{:keys [op-name output-key extra-input wrap-input n-skipped-key]
                           :or {wrap-input identity}}]
-  (pco/resolver
-   op-name
-   {::pco/input (eql/merge-queries
-                 [{:user/selected-subs
-                   [:item/rec-type
-                    :sub/title
-                    {:sub/unread-items
-                     [:item/id
-                      :item/ingested-at
-                      n-skipped-key]}]}]
-                 extra-input)
-    ::pco/output [{output-key [:item/id
-                               :item/rec-type]}]}
-   (fn [_env input]
-     (let [{:user/keys [selected-subs]} (wrap-input input)]
-       {output-key
-        (vec
-         (for [{:keys [sub/unread-items item/rec-type]} selected-subs
-               ;; This shouldn't be necessary, but apparently there's a bug in the :sub/unread indexer or
-               ;; something.
-               :when (< 0 (count unread-items))
-               :let [most-recent (apply max-key (comp inst-ms tick/instant :item/ingested-at) unread-items)
-                     item (if (= 0 (get most-recent n-skipped-key))
-                            most-recent
-                            (->> unread-items
-                                 rank-by-freshness
-                                 first))]]
-           (assoc item :item/rec-type rec-type)))}))))
+  (biff.graph/resolver
+   {:id (keyword (namespace op-name) (name op-name))
+    :input (vec
+            (concat
+             [{:user/selected-subs
+               [:item/rec-type
+                :sub/title
+                {:sub/unread-items
+                 [:item/id
+                  :item/ingested-at
+                  n-skipped-key]}]}]
+             extra-input))
+    :output [{output-key [:item/id
+                          :item/rec-type]}]
+    :resolve-fn
+    (fn [_env input]
+      (let [{:user/keys [selected-subs]} (wrap-input input)]
+        {output-key
+         (vec
+          (for [{:keys [sub/unread-items item/rec-type]} selected-subs
+                ;; This shouldn't be necessary, but apparently there's a bug in the :sub/unread indexer or
+                ;; something.
+                :when (< 0 (count unread-items))
+                :let [most-recent (apply max-key (comp inst-ms tick/instant :item/ingested-at) unread-items)
+                      item (if (= 0 (get most-recent n-skipped-key))
+                             most-recent
+                             (->> unread-items
+                                  rank-by-freshness
+                                  first))]]
+            (assoc item :item/rec-type rec-type)))}))}))
 
 (def for-you-sub-recs
   (sub-recs-resolver
@@ -291,23 +294,25 @@
                                       wrap-input
                                       n-recs]
                                :or {wrap-input identity}}]
-  (pco/resolver
-   op-name
-   {::pco/input (eql/merge-queries
-                 [{:user/unread-bookmarks [:item/id
-                                           :item/ingested-at
-                                           n-skipped-key
-                                           (? :item/url)]}]
-                 extra-input)
-    ::pco/output [{output-key [:item/id :item/rec-type]}]}
-   (fn [_env input]
-     (let [{:user/keys [unread-bookmarks]} (wrap-input input)]
-       {output-key
-        (into []
-              (comp (lib.core/distinct-by (some-fn (comp :host uri/uri :item/url) :item/id))
-                    (map #(assoc % :item/rec-type :item.rec-type/bookmark))
-                    (take n-recs))
-              (rank-by-freshness unread-bookmarks))}))))
+  (biff.graph/resolver
+   {:id (keyword (namespace op-name) (name op-name))
+    :input (vec
+            (concat
+             [{:user/unread-bookmarks [:item/id
+                                       :item/ingested-at
+                                       n-skipped-key
+                                       [:? :item/url]]}]
+             extra-input))
+    :output [{output-key [:item/id :item/rec-type]}]
+    :resolve-fn
+    (fn [_env input]
+      (let [{:user/keys [unread-bookmarks]} (wrap-input input)]
+        {output-key
+         (into []
+               (comp (lib.core/distinct-by (some-fn (comp :host uri/uri :item/url) :item/id))
+                     (map #(assoc % :item/rec-type :item.rec-type/bookmark))
+                     (take n-recs))
+               (rank-by-freshness unread-bookmarks))}))}))
 
 (def for-you-bookmark-recs
   (bookmark-recs-resolver
@@ -322,7 +327,7 @@
     :output-key :user/icymi-bookmark-recs
     :n-skipped-key :item/n-skipped-with-digests
     :n-recs n-icymi-recs
-    :extra-input {:user/digest-bookmarks [:item/id]}
+    :extra-input [{:user/digest-bookmarks [:item/id]}]
     :wrap-input (fn [{:user/keys [unread-bookmarks digest-bookmarks] :as input}]
                   (let [exclude (into #{} (map :item/id) digest-bookmarks)]
                     (assoc input :user/unread-bookmarks (into []
@@ -355,29 +360,41 @@
    a-items
    b-items))
 
-(defresolver candidates [{:keys [yakread.model/get-candidates]}
-                         {user-id :user/id}]
-  {::pco/input [(? :user/id)]
-   ::pco/output [{:user/item-candidates [:item/id
-                                         :candidate/type
-                                         :candidate/score
-                                         :candidate/last-liked]}
-                 {:user/ad-candidates [:ad/id
-                                       :candidate/type
-                                       :candidate/score
-                                       :candidate/last-liked]}]}
+(defresolver candidates
+  {:input [[:? :user/id]]
+   :output [{:user/item-candidates [:item/id
+                                    :candidate/type
+                                    :candidate/score
+                                    :candidate/last-liked]}
+            {:user/ad-candidates [:ad/id
+                                  :candidate/type
+                                  :candidate/score
+                                  :candidate/last-liked]}]}
+  [{:keys [yakread.model/get-candidates]}
+   {user-id :user/id}]
   (let [{:keys [item ad]} (get-candidates user-id)]
     {:user/item-candidates (mapv #(assoc % :item/id (:xt/id %)) item)
      :user/ad-candidates (mapv #(assoc % :ad/id (:xt/id %)) ad)}))
 
-(defresolver candidate-digest-skips [{:keys [item/n-digest-sends item/n-skipped]}]
+(defresolver candidate-digest-skips
+  {:input [:item/n-digest-sends
+           :item/n-skipped]
+   :output [:candidate/n-skips-with-digests]}
+  [_ {:keys [item/n-digest-sends item/n-skipped]}]
   {:candidate/n-skips-with-digests (+ n-digest-sends n-skipped)})
 
-(defresolver item-digest-skips [{:keys [item/n-digest-sends item/n-skipped]}]
+(defresolver item-digest-skips
+  {:input [:item/n-digest-sends
+           :item/n-skipped]
+   :output [:item/n-skipped-with-digests]}
+  [_ {:keys [item/n-digest-sends item/n-skipped]}]
   {:item/n-skipped-with-digests (+ n-digest-sends n-skipped)})
 
 ;; TODO materialize this
-(defresolver read-urls [{:biff/keys [query]} {:keys [user/id]}]
+(defresolver read-urls
+  {:input [:user/id]
+   :output [:user/read-urls]}
+  [{:biff/keys [query]} {:keys [user/id]}]
   {:user/read-urls (into #{}
                          (keep :item/url)
                          (query {:select :item/url
@@ -394,49 +411,51 @@
                                           nil]]}))})
 
 (defn discover-recs-resolver [{:keys [op-name output-key n-skips-key n-recs]}]
-  (pco/resolver
-   op-name
-   {::pco/input [(? :user/read-urls)
-                 {:user/item-candidates [:item/id
-                                         :item/url
-                                         :candidate/score
-                                         :candidate/last-liked
-                                         n-skips-key]}]
-    ::pco/output [{output-key [:item/id
-                               :item/rec-type]}]}
-   (fn [_ {candidates :user/item-candidates
-           :keys [read-urls]}]
-     (let [read? (fn [url]
-                   (contains? read-urls url))
+  (biff.graph/resolver
+   {:id (keyword (namespace op-name) (name op-name))
+    :input [[:? :user/read-urls]
+            {:user/item-candidates [:item/id
+                                    :item/url
+                                    :candidate/score
+                                    :candidate/last-liked
+                                    n-skips-key]}]
+    :output [{output-key [:item/id
+                          :item/rec-type]}]
+    :resolve-fn
+    (fn [_ {candidates :user/item-candidates
+            :keys [read-urls]}]
+      (let [read? (fn [url]
+                    (contains? read-urls url))
 
-           candidates (vec candidates) ; does this matter?
-           url->host (into {} (map (juxt :item/url (comp :host uri/uri :item/url))) candidates)
+            candidates (vec candidates) ; does this matter?
+            url->host (into {} (map (juxt :item/url (comp :host uri/uri :item/url))) candidates)
 
-           recommendations
-           (loop [selected []
-                  candidates candidates]
-             (if (or (<= n-recs (count selected)) (empty? candidates))
-               selected
-               (let [selection (if (< (gen/double) 0.1)
-                                 (gen/rand-nth candidates)
-                                 (->> candidates
-                                      take-rand
-                                      (sort-by (comp - inst-ms tick/instant :candidate/last-liked))
-                                      take-rand
-                                      gen/shuffle
-                                      (sort-by (fn [{n-skips n-skips-key
-                                                     :candidate/keys [score]}]
-                                                 [n-skips (- score)]))
-                                      (rerank 0.25)
-                                      first))]
-                 (if (read? (:item/url selection))
-                   (recur selected (vec (remove #{selection} candidates)))
-                   (recur (conj selected selection)
-                          (filterv (fn [{:keys [item/url]}]
-                                     (not= (url->host url)
-                                           (url->host (:item/url selection))))
-                                   candidates))))))]
-       {output-key (mapv #(assoc % :item/rec-type :item.rec-type/discover) recommendations)}))))
+            recommendations
+            (loop [selected []
+                   candidates candidates]
+              (if (or (<= n-recs (count selected)) (empty? candidates))
+                selected
+                (let [selection (if (< (gen/double) 0.1)
+                                  (gen/rand-nth candidates)
+                                  (->> candidates
+                                       take-rand
+                                       (sort-by (comp - inst-ms tick/instant :candidate/last-liked))
+                                       take-rand
+                                       gen/shuffle
+                                       (sort-by (fn [{n-skips n-skips-key
+                                                      :candidate/keys [score]}]
+                                                  [n-skips (- score)]))
+                                       (rerank 0.25)
+                                       first))]
+                  (if (read? (:item/url selection))
+                    (recur selected (vec (remove #{selection} candidates)))
+                    (recur (conj selected selection)
+                           (filterv (fn [{:keys [item/url]}]
+                                      (not= (url->host url)
+                                            (url->host (:item/url selection))))
+                                    candidates))))))]
+        {output-key (mapv #(assoc % :item/rec-type :item.rec-type/discover)
+                          recommendations)}))}))
 
 (def discover-recs
   (discover-recs-resolver {:op-name `discover-recs
@@ -450,104 +469,89 @@
                            :n-skips-key :candidate/n-skips-with-digests
                            :n-recs n-digest-discover-recs}))
 
-(defresolver ad-score [{:keys [candidate/score ad/effective-bid]}]
+(defresolver ad-score
+  {:input [:candidate/score
+           :ad/effective-bid]
+   :output [:candidate/ad-score]}
+  [_ {:keys [candidate/score ad/effective-bid]}]
   {:candidate/ad-score (* (max 0.0001 score) effective-bid)})
 
-(defresolver clicked-ads [{:biff/keys [query]} {:keys [user/id]}]
+(defresolver clicked-ads
+  {:input [:user/id]
+   :output [:user/clicked-ads]}
+  [{:biff/keys [query]} {:keys [user/id]}]
   {:user/clicked-ads (into #{}
                            (map :ad-click/ad-id)
                            (query {:select :ad-click/ad-id
                                    :from :ad-click
                                    :where [:= :ad-click/user-id id]}))})
 
-(defresolver ad-rec [{:user/keys [premium clicked-ads]
-                      user-id :user/id
-                      candidates :user/ad-candidates}]
-  {::pco/input [(? :user/id)
-                (? :user/premium)
-                (? :user/clicked-ads)
-                {:user/ad-candidates [:ad/id
-                                      :item/n-skipped
-                                      :candidate/ad-score
-                                      :ad/effective-bid
-                                      :ad/approve-state
-                                      (? :ad/paused)
-                                      {:ad/user [:user/id
-                                                    (? :user/email)]}]}]
-   ::pco/output [{:user/ad-rec [:ad/id
-                                :ad/click-cost
-                                :item/rec-type]}]}
+(defresolver ad-rec
+  {:input [[:? :user/id]
+           [:? :user/premium]
+           [:? :user/clicked-ads]
+           {:user/ad-candidates [:ad/id
+                                 :item/n-skipped
+                                 :candidate/ad-score
+                                 :ad/effective-bid
+                                 :ad/approve-state
+                                 [:? :ad/paused]
+                                 {:ad/user [:user/id
+                                            [:? :user/email]]}]}]
+   :output [{:user/ad-rec [:ad/id
+                           :ad/click-cost
+                           :item/rec-type]}]}
+  [_ {:user/keys [premium clicked-ads]
+      user-id :user/id
+      candidates :user/ad-candidates}]
   (when-not premium
     (let [[first-ad second-ad] (->> candidates
                                     (remove (fn [{:ad/keys [id paused approve-state]
                                                   ad-user :ad/user}]
                                               (or (contains? clicked-ads id)
                                                   (not= approve-state :ad.approve-state/approved)
-                                                (= user-id (:user/id ad-user))
-                                                paused
+                                                  (= user-id (:user/id ad-user))
+                                                  paused
                                                 ;; Apparently when people requested to have their
                                                 ;; accounts removed, I did so without changing their
                                                 ;; ads. So we check here to make sure the ad user's
                                                 ;; account wasn't removed.
-                                                (nil? (:user/email ad-user)))))
-                                  gen/shuffle
-                                  (sort-by :item/n-skipped)
-                                  (take-rand 2)
-                                  (sort-by :candidate/ad-score >))
+                                                  (nil? (:user/email ad-user)))))
+                                    gen/shuffle
+                                    (sort-by :item/n-skipped)
+                                    (take-rand 2)
+                                    (sort-by :candidate/ad-score >))
         ;; `click-cost` is the minimum amount that (:ad/bid first-ad) could've been while still
         ;; being first. The ad owner will be charged this amount if the user clicks the ad.
-        click-cost (when second-ad
-                     (max 1 (inc (int (* (:ad/effective-bid first-ad)
-                                         (/ (:candidate/ad-score second-ad)
-                                            (:candidate/ad-score first-ad)))))))]
-    (when second-ad
-      {:user/ad-rec (assoc first-ad
-                           :ad/click-cost click-cost
-                           :item/rec-type :item.rec-type/ad)}))))
+          click-cost (when second-ad
+                       (max 1 (inc (int (* (:ad/effective-bid first-ad)
+                                           (/ (:candidate/ad-score second-ad)
+                                              (:candidate/ad-score first-ad)))))))]
+      (when second-ad
+        {:user/ad-rec (assoc first-ad
+                             :ad/click-cost click-cost
+                             :item/rec-type :item.rec-type/ad)}))))
 
 (defn- take-items [n xs]
   (->> xs
        (lib.core/distinct-by (some-fn :item/id :ad/id))
        (take n)))
 
-
-(def runtime-pathom-keys
-  [:com.wsscode.pathom3.connect.planner/graph
-   :com.wsscode.pathom3.connect.planner/node
-   :com.wsscode.pathom3.connect.runner/batch-pending*
-   :com.wsscode.pathom3.connect.runner/batch-waiting*
-   :com.wsscode.pathom3.connect.runner/graph-run-start-ms
-   :com.wsscode.pathom3.connect.runner/node-run-stats*
-   :com.wsscode.pathom3.connect.runner/resolver-cache*
-   :com.wsscode.pathom3.connect.runner/root-query
-   :com.wsscode.pathom3.connect.runner/source-entity
-   :com.wsscode.pathom3.entity-tree/entity-tree*
-   :com.wsscode.pathom3.path/path])
-
-(defresolver for-you-recs [ctx {:user/keys [id]}]
-  #::pco{:input [:user/id]
-         :output [{:user/for-you-recs [:item/id
-                                       :ad/id
-                                       :item/rec-type
-                                       :ad/click-cost]}]}
-  (let [cache (:com.wsscode.pathom3.connect.runner/resolver-cache* ctx)
-        input (->> [[{(? :user/for-you-sub-recs) [:item/id
-                                                  :item/n-skipped
-                                                  :item/rec-type]}]
-                    [{(? :user/for-you-bookmark-recs) [:item/id
-                                                       :item/n-skipped
-                                                       :item/rec-type]}
+(defresolver for-you-recs
+  {:input [:user/id]
+   :output [{:user/for-you-recs [:item/id
+                                 :ad/id
+                                 :item/rec-type
+                                 :ad/click-cost]}]}
+  [ctx {:user/keys [id]}]
+  (let [input (->> [[[:? {:user/for-you-sub-recs [:item/id :item/n-skipped :item/rec-type]}]]
+                    [[:? {:user/for-you-bookmark-recs [:item/id :item/n-skipped :item/rec-type]}]
                      {:user/discover-recs [:item/id
                                            :item/rec-type]}
-                     {(? :user/ad-rec) [:ad/id
-                                        :item/rec-type
-                                        :ad/click-cost]}]]
+                     [:? {:user/ad-rec [:ad/id :item/rec-type :ad/click-cost]}]]]
                    (pmap (fn [query]
-                           (p.eql/process
-                            (-> (apply dissoc ctx runtime-pathom-keys)
-                                (assoc :com.wsscode.pathom3.connect.runner/resolver-cache* cache))
-                            {:user/id id}
-                            query)))
+                           (lib.graph/query ctx {:entity {:user/id id}
+                                                 :query query})))
                    (apply merge))
 
         {:user/keys [ad-rec for-you-sub-recs for-you-bookmark-recs discover-recs]}
@@ -564,38 +568,35 @@
                   vec)]
     {:user/for-you-recs recs}))
 
-(defresolver icymi-recs [{:user/keys [icymi-sub-recs icymi-bookmark-recs]}]
-  #::pco{:input [{(? :user/icymi-sub-recs) [:item/id
-                                            :item/n-skipped-with-digests
-                                            :item/rec-type]}
-                 {(? :user/icymi-bookmark-recs) [:item/id
-                                                 :item/n-skipped-with-digests
-                                                 :item/rec-type]}]
-         :output [{:user/icymi-recs [:item/id
-                                     :item/rec-type]}]}
+(defresolver icymi-recs
+  {:input [[:? {:user/icymi-sub-recs [:item/id :item/n-skipped-with-digests :item/rec-type]}]
+           [:? {:user/icymi-bookmark-recs [:item/id :item/n-skipped-with-digests :item/rec-type]}]]
+   :output [{:user/icymi-recs [:item/id
+                               :item/rec-type]}]}
+  [_ {:user/keys [icymi-sub-recs icymi-bookmark-recs]}]
   {:user/icymi-recs (into []
                           (take n-icymi-recs)
                           (pick-by-skipped icymi-bookmark-recs icymi-sub-recs))})
 
 (def module
-  {:resolvers [sub-affinity*
-               for-you-sub-recs
-               icymi-sub-recs
-               for-you-bookmark-recs
-               icymi-bookmark-recs
-               candidates
-               ad-score
-               discover-recs
-               digest-discover-recs
-               ad-rec
-               for-you-recs
-               unread-subs
-               selected-subs
-               icymi-recs
-               candidate-digest-skips
-               item-digest-skips
-               read-urls
-               clicked-ads]})
+  {:biff.graph/resolvers [sub-affinity*
+                          for-you-sub-recs
+                          icymi-sub-recs
+                          for-you-bookmark-recs
+                          icymi-bookmark-recs
+                          candidates
+                          ad-score
+                          discover-recs
+                          digest-discover-recs
+                          ad-rec
+                          for-you-recs
+                          unread-subs
+                          selected-subs
+                          icymi-recs
+                          candidate-digest-skips
+                          item-digest-skips
+                          read-urls
+                          clicked-ads]})
 
 (comment
 
@@ -604,25 +605,15 @@
   (let [ctx (biff/merge-context @com.yakread/system)
         user-id (biff/lookup-id (:biff/db ctx) :user/email "jacob@thesample.ai")]
 
-    #_(lib.pathom/process (assoc-in ctx [:session :uid] user-id)
-                        {:user/id user-id}
-                        [{:user/sub-recs [:item/title]}]
-                        #_[{:user/subscriptions [:sub/affinity-high :sub/title]}]
-                        #_[{:user/discover-recs [:item/url]}])
-
-    (->> (p.eql/process (assoc-in ctx [:session :uid] user-id)
-                             {:user/id user-id}
-                             #_[{:user/sub-recs [:item/title]}]
-                             [{:user/subscriptions [:sub/affinity-low
-                                                    :sub/affinity-high
-                                                    :sub/title :sub/n-interactions]}]
-                             #_[{:user/discover-recs [:item/url]}])
+    (->> (lib.graph/query (assoc-in ctx [:session :uid] user-id)
+                          {:entity {:user/id user-id}
+                           :query #_[{:user/sub-recs [:item/title]}]
+                           [{:user/subscriptions [:sub/affinity-low
+                                                  :sub/affinity-high
+                                                  :sub/title :sub/n-interactions]}]})
          :user/subscriptions
          (mapv :sub/n-interactions)
          frequencies
          sort
          #_(sort-by :sub/affinity-high >)
-         #_(take 50)
-         ))
-
-  )
+         #_(take 50))))

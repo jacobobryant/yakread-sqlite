@@ -1,18 +1,11 @@
 (ns com.yakread.lib.sqlite
   (:require
    [clojure.string :as str]
-   [com.biffweb.sqlite :as biff.sqlite]
-   [com.wsscode.pathom3.connect.operation :as pco]
-   [com.wsscode.pathom3.connect.planner :as-alias pcp]
-   [com.yakread.lib.core :as lib.core]))
-
-(defn- table-id-key
-  "Get the ID key for a table (e.g., :user -> :user/id)"
-  [table-key]
-  (keyword (name table-key) "id"))
+   [com.biffweb.graph :as biff.graph]
+   [com.biffweb.sqlite :as biff.sqlite]))
 
 ;; ============================================================================
-;; SQLite Pathom Resolvers
+;; SQLite graph resolvers
 ;; ============================================================================
 
 (defn- strip-id-suffix
@@ -24,81 +17,67 @@
       (keyword ns (subs n 0 (- (count n) 3)))
       attr)))
 
-(defn- ref-target
-  "Get the target table for a reference column."
-  [col-props]
-  (when-let [ref (:ref col-props)]
-    (keyword (namespace ref))))
-
-;; TODO add duplicate keys for backwards compat
-(defn sqlite-resolvers
-  "Create Pathom resolvers for SQLite tables from columns map.
-
-   For reference attributes ending in -id:
-   - Returns the raw ID as :table/ref-id
-   - Also returns a join without the -id suffix as {:ref-table/id uuid}
-
-   Example: {:ad/user-id #uuid \"...\", :ad/user {:user/id #uuid \"...\"}}"
+(defn make-resolvers
+  "Create biff.graph resolvers for SQLite tables from columns map."
   [columns]
-  (let [;; Group columns by table
-        tables (group-by #(keyword (namespace (key %))) columns)]
-    (for [[table-key table-cols] tables
-          :let [id-key (table-id-key table-key)
-                cols-map (into {} table-cols)
-
-                ;; Find reference attrs
-                ref-attrs (into {}
-                                (keep (fn [[attr props]]
-                                        (when-let [target (ref-target props)]
-                                          [attr target])))
-                                cols-map)
-
-                ;; Build output spec
-                output (vec (for [k (keys cols-map)
-                                  :when (not= k id-key)
-                                  :let [is-ref? (contains? ref-attrs k)
-                                        target (get ref-attrs k)
-                                        target-id-key (when target (table-id-key target))
-                                        join-key (when is-ref? (strip-id-suffix k))]]
-                              (if is-ref?
-                                {join-key [target-id-key]}
-                                k)))
-
-                ;; Add the raw -id keys to output
-                output (into output (keys ref-attrs))
-
-                op-name (symbol "com.yakread.lib.sqlite"
-                                (str (name table-key) "-resolver"))]]
-      (pco/resolver op-name
-                    {::pco/input [id-key]
-                     ::pco/output output
-                     ::pco/batch? true}
-                    (fn [ctx inputs]
-                      (let [ids (mapv id-key inputs)
-                            results (biff.sqlite/execute ctx {:select :*
-                                                              :from table-key
-                                                              :where [:in :id ids]})
-
-                            ;; Post-process to add join keys
-                            process-row
-                            (fn [row]
-                              (into row
-                                    (map (fn [[ref-attr target]]
-                                           (let [target-id-key (table-id-key target)
-                                                 join-key (strip-id-suffix ref-attr)
-                                                 ref-val (get row ref-attr)]
-                                             [join-key (when (some? ref-val)
-                                                         {target-id-key ref-val})])))
-                                    ref-attrs))
-
-                            results (mapv process-row results)
-                            id->result (into {} (map (juxt id-key identity)) results)]
-                        (mapv (fn [input]
-                                (let [id (get input id-key)]
-                                  (-> (get id->result id {})
-                                      lib.core/some-vals
-                                      (assoc id-key id))))
-                              inputs)))))))
+  (let [columns  (or columns {})
+        by-table (group-by (comp keyword namespace key) columns)]
+    (vec
+     (for [[table-key table-cols] by-table
+           :let [table-cols-map (into {} table-cols)
+                 pk-entry (first (filter (fn [[_ props]]
+                                           (:primary-key props))
+                                         table-cols-map))
+                 _ (when-not pk-entry
+                     (throw (ex-info (str "No primary key found for table " table-key)
+                                     {:table table-key})))
+                 pk-key (key pk-entry)
+                 non-pk-cols (dissoc table-cols-map pk-key)
+                 ref-cols (into {}
+                                (keep (fn [[col-key props]]
+                                        (when (and (:ref props)
+                                                   (str/ends-with? (name col-key) "-id"))
+                                          [col-key (:ref props)])))
+                                non-pk-cols)
+                 join-mappings (mapv (fn [[col-key ref-key]]
+                                        {:join-key (strip-id-suffix col-key)
+                                         :col-key col-key
+                                         :ref-key ref-key})
+                                      ref-cols)
+                 output (vec (concat (keys non-pk-cols)
+                                     (map (fn [{:keys [join-key ref-key]}]
+                                            {join-key [ref-key]})
+                                          join-mappings)))
+                 resolver-id (keyword "com.yakread.lib.sqlite"
+                                      (str (name table-key) "-resolver"))]]
+       (biff.graph/resolver
+        {:id resolver-id
+         :input [pk-key]
+         :output output
+         :batch true
+         :resolve-fn (fn [ctx inputs]
+                       (let [ids (mapv pk-key inputs)
+                             results (biff.sqlite/execute ctx {:select :*
+                                                               :from table-key
+                                                               :where [:in pk-key ids]})
+                             process-row (fn [row]
+                                           (let [row (dissoc row pk-key)
+                                                 row (reduce
+                                                      (fn [row {:keys [join-key col-key ref-key]}]
+                                                        (let [ref-val (get row col-key)]
+                                                          (cond-> row
+                                                            (some? ref-val)
+                                                            (assoc join-key {ref-key ref-val}))))
+                                                      row
+                                                      join-mappings)]
+                                             (into {}
+                                                   (filter (fn [[_ v]]
+                                                             (some? v)))
+                                                   row)))
+                             id->result (into {} (map (juxt pk-key process-row)) results)]
+                         (mapv (fn [input]
+                                 (get id->result (get input pk-key) {}))
+                               inputs)))})))))
 
 (defn use-sqlite
   "Biff component that runs schema migrations, starts connection pool,

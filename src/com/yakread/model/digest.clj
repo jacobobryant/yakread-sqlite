@@ -1,7 +1,7 @@
 (ns com.yakread.model.digest
   (:require
    [clojure.string :as str]
-   [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
+   [com.biffweb.graph :as biff.graph :refer [defresolver]]
    [com.yakread.routes :as routes]
    [tick.core :as tick]))
 
@@ -27,10 +27,11 @@
          (take 50)
          (mapv #(select-keys % [:item/id])))))
 
-(defresolver digest-sub-items [{:biff/keys [query now]} {:user/keys [digest-last-sent subscriptions]}]
-  {::pco/input [(? :user/digest-last-sent)
-                {:user/subscriptions [{:sub/items [:item/id]}]}]
-   ::pco/output [{:user/digest-sub-items [:item/id]}]}
+(defresolver digest-sub-items
+  {:input [[:? :user/digest-last-sent]
+           {:user/subscriptions [{:sub/items [:item/id]}]}]
+   :output [{:user/digest-sub-items [:item/id]}]}
+  [{:biff/keys [query now]} {:user/keys [digest-last-sent subscriptions]}]
   {:user/digest-sub-items
    (recent-items
     {:biff/query query
@@ -38,10 +39,11 @@
      :user/digest-last-sent digest-last-sent
      :all-item-ids (mapv :item/id (mapcat :sub/items subscriptions))})})
 
-(defresolver digest-bookmarks [{:biff/keys [query now]} {:user/keys [digest-last-sent bookmarks]}]
-  {::pco/input [(? :user/digest-last-sent)
-                {:user/bookmarks [:item/id]}]
-   ::pco/output [{:user/digest-bookmarks [:item/id]}]}
+(defresolver digest-bookmarks
+  {:input [[:? :user/digest-last-sent]
+           {:user/bookmarks [:item/id]}]
+   :output [{:user/digest-bookmarks [:item/id]}]}
+  [{:biff/keys [query now]} {:user/keys [digest-last-sent bookmarks]}]
   ;; TODO bookmark recency should be based on :user-item/bookmarked-at, not :item/ingested-at
   {:user/digest-bookmarks
    (recent-items
@@ -50,34 +52,39 @@
      :user/digest-last-sent digest-last-sent
      :all-item-ids (mapv :item/id bookmarks)})})
 
-(defresolver settings-info [{:user/keys [digest-days send-digest-at]}]
+(defresolver settings-info
+  {:input [:user/digest-days
+           :user/send-digest-at]
+   :output [:digest.settings/freq-text :digest.settings/time-text]}
+  [_ {:user/keys [digest-days send-digest-at]}]
   {:digest.settings/freq-text (case (count digest-days)
                                 7 "daily"
                                 1 "weekly"
                                 (str (count digest-days) "x/week"))
    :digest.settings/time-text (tick/format "h:mm a" (tick/time send-digest-at))})
 
-(defresolver subject-item [{:keys [user/digest-discover-recs]}]
-  {::pco/input [{:user/digest-discover-recs [:item/id
-                                             (? :item/title)]}]
-   ::pco/output [{:digest/subject-item [:item/id]}]}
+(defresolver subject-item
+  {:input [{:user/digest-discover-recs [:item/id
+                                        [:? :item/title]]}]
+   :output [{:digest/subject-item [:item/id]}]}
+  [_ {:keys [user/digest-discover-recs]}]
   (when-some [item (->> digest-discover-recs
                         (filter :item/title)
                         first)]
     {:digest/subject-item item}))
 
-(defresolver mailersend-payload [{:mailersend/keys [from reply-to]}
-                                 {:user/keys [email from-the-sample]
-                                  :digest/keys [html
-                                                text
-                                                subject-item]}]
-  {::pco/input [:user/email
-                (? :user/from-the-sample)
-                (? :digest/html)
-                (? :digest/text)
-                {(? :digest/subject-item) [:item/id
-                                           :item/title]}]
-   ::pco/output [:digest/payload]}
+(defresolver mailersend-payload
+  {:input [:user/email
+           [:? :user/from-the-sample]
+           [:? :digest/html]
+           [:? :digest/text]
+           [:? {:digest/subject-item [:item/id :item/title]}]]
+   :output [:digest/payload]}
+  [{:mailersend/keys [from reply-to]}
+   {:user/keys [email from-the-sample]
+    :digest/keys [html
+                  text
+                  subject-item]}]
   (when html
     {:digest/payload {:from {:email from
                              :name (if from-the-sample
@@ -93,16 +100,19 @@
                       :text text
                       :precedence_bulk true}}))
 
-(defresolver unsubscribe-url [{:biff/keys [base-url href-safe]}
-                               {:keys [user/id]}]
+(defresolver unsubscribe-url
+  {:input [:user/id]
+   :output [:digest/unsubscribe-url]}
+  [{:biff/keys [base-url href-safe]}
+   {:keys [user/id]}]
   {:digest/unsubscribe-url
    (str base-url (href-safe routes/unsubscribe {:action :action/unsubscribe
                                                 :user/id id}))})
 
 (def module
-  {:resolvers [digest-sub-items
-               digest-bookmarks
-               settings-info
-               subject-item
-               mailersend-payload
-               unsubscribe-url]})
+  {:biff.graph/resolvers [digest-sub-items
+                          digest-bookmarks
+                          settings-info
+                          subject-item
+                          mailersend-payload
+                          unsubscribe-url]})

@@ -4,7 +4,7 @@
    [clojure.java.io :as io]
    [clojure.string :as str]
    [com.biffweb :as biff]
-   [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
+   [com.biffweb.graph :as biff.graph :refer [defresolver]]
    [com.yakread.lib.icons :as lib.icons]
    [com.yakread.lib.route :as lib.route :refer [href]]
    [com.yakread.lib.ui :as ui]
@@ -20,8 +20,16 @@
     (str "/css/main.css?t=" last-modified)
     "/css/main.css"))
 
-(defresolver pages [{:keys [reitit.core/match]} {{:keys [user/roles]} :user/current}]
-  #::pco{:input [{(? :user/current) [(? :user/roles)]}]}
+(defresolver pages
+  {:input [[:? {:user/current [[:? :user/roles]]}]]
+   :output [{:app.shell/pages
+             [:app.shell.page/route-sym
+              :app.shell.page/active-ns
+              :app.shell.page/title
+              :app.shell.page/icon
+              :app.shell.page/href
+              :app.shell.page/active]}]}
+  [{:keys [reitit.core/match]} {{:keys [user/roles]} :user/current}]
   {:app.shell/pages
    (let [route-ns (-> match :data :name namespace)]
      (->> (cond-> [#:app.shell.page{:route-sym routes/for-you
@@ -50,9 +58,10 @@
                   (merge page #:app.shell.page{:href (href route-sym)
                                                :active (str/starts-with? route-ns (or active-ns (namespace route-sym)))})))))})
 
-(defresolver app-head [{user :session/user}]
-  #::pco{:input [{(? :session/user) [:user/id
-                                     (? :user/timezone)]}]}
+(defresolver app-head
+  {:input [[:? {:session/user [:user/id [:? :user/timezone*]]}]]
+   :output [:app.shell/app-head]}
+  [_ {user :session/user}]
   {:app.shell/app-head
    [[:link {:rel "stylesheet" :href (css-path)}]
     [:script {:src "/vendor/cdn.jsdelivr.net/npm/htmx.org@2.0.5/dist/htmx.min.js"}]
@@ -73,10 +82,14 @@
     [:link {:rel "mask-icon", :href "/safari-pinned-tab.svg", :color "#5bbad5"}]
     [:meta {:name "msapplication-TileColor", :content "#da532c"}]
     [:meta {:name "theme-color", :content "#222222"}]
-    (when (and user (not (:user/timezone user)))
+    (when (and user (not (:user/timezone* user)))
       [:script
        (biff/unsafe
-        (str "set_timezone('" (href routes/set-timezone) "', '" csrf/*anti-forgery-token* "');"))])]})
+        (str "window.addEventListener('load', () => set_timezone('"
+             (href routes/set-timezone)
+             "', '"
+             csrf/*anti-forgery-token*
+             "'));"))])]})
 
 (def default-metadata
   #:base{:title "Yakread"
@@ -85,9 +98,15 @@
          :image "https://platypub.sfo3.cdn.digitaloceanspaces.com/270d320a-d9d8-4cdf-bbed-2078ca595b16"
          :font-families ["Inter:wght@400;500;600;700"]})
 
-(defresolver sidebar [{current-user :user/current :keys [app.shell/pages]}]
-  #::pco{:input [{(? :user/current) [:user/email]}
-                 :app.shell/pages]}
+(defresolver sidebar
+  {:input [[:? {:user/current [:user/email]}]
+           {:app.shell/pages
+            [:app.shell.page/href
+             :app.shell.page/title
+             :app.shell.page/icon
+             :app.shell.page/active]}]
+   :output [:app.shell/sidebar]}
+  [_ {current-user :user/current :keys [app.shell/pages]}]
   {:app.shell/sidebar
    [:div {:id "sidebar"
           :class '[max-md:fixed
@@ -152,15 +171,15 @@
                    rounded
                    "bottom-[2.25rem]"]}
          (biff/form
-           {:action "/auth/signout"
-            :class "inline"
-            :hx-push-url "true"}
-           [:button {:type "submit"
-                     :class '[hover:bg-neut-800
-                              px-2
-                              py-1
-                              w-full]}
-            "Sign out"])]
+          {:action "/auth/signout"
+           :class "inline"
+           :hx-push-url "true"}
+          [:button {:type "submit"
+                    :class '[hover:bg-neut-800
+                             px-2
+                             py-1
+                             w-full]}
+           "Sign out"])]
         [:button
          {:class '[flex
                    items-center
@@ -217,13 +236,17 @@
          :class class}
         (lib.icons/base icon {:class '[w-6 h-6]})])]]])
 
-(defresolver app-shell [ctx
-                        {:app.shell/keys [app-head pages sidebar]
-                         :keys [session/signed-in]}]
-  #::pco{:input [:app.shell/app-head
-                 :app.shell/sidebar
-                 :app.shell/pages
-                 :session/signed-in]}
+(defresolver app-shell
+  {:input [:app.shell/app-head
+           :app.shell/sidebar
+           {:app.shell/pages
+            [:app.shell.page/title
+             :app.shell.page/active]}
+           :session/signed-in]
+   :output [:app.shell/app-shell]}
+  [ctx
+   {:app.shell/keys [app-head pages sidebar]
+    :keys [session/signed-in]}]
   {:app.shell/app-shell
    (let [active-page (first (filterv :app.shell.page/active pages))]
      (fn [{:keys [title wide description banner]} & content]
@@ -256,7 +279,7 @@
            (ui/footer {:show-recaptcha-message (not signed-in)})]]])))})
 
 (def module
-  {:resolvers [app-shell
-               app-head
-               pages
-               sidebar]})
+  {:biff.graph/resolvers [app-shell
+                          app-head
+                          pages
+                          sidebar]})

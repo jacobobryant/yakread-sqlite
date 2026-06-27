@@ -61,18 +61,19 @@
         :user-item/item-id (t/uuid 15),
         :user-item/user-id (t/uuid 1),
         :user-item/viewed-at (t/instant 2003)}]}]
-    (sub-affinity*
+    (t/resolve-resolver
+     sub-affinity*
      ctx
-     [{:sub/id (t/uuid 51),
+     [{:sub/user-id (t/uuid 1),
        :sub/title "my sub",
-       :sub/user-id (t/uuid 1),
+       :sub/id (t/uuid 51),
        :sub/items
        [{:item/id (t/uuid 11)}
         {:item/id (t/uuid 12)}
         {:item/id (t/uuid 13)}]}
-      {:sub/id (t/uuid 52),
+      {:sub/user-id (t/uuid 1),
        :sub/title "my other sub",
-       :sub/user-id (t/uuid 1),
+       :sub/id (t/uuid 52),
        :sub/items [{:item/id (t/uuid 14)} {:item/id (t/uuid 15)}]}])),
    :result
    [{:sub/n-interactions 3,
@@ -109,7 +110,9 @@
   {:eval
    (binding
     [gen/*rnd* (java.util.Random. 0)]
-    (for-you-sub-recs
+    (t/resolve-resolver
+     for-you-sub-recs
+     {}
      {:user/selected-subs
       [{:item/rec-type :item.rec-type/subscription,
         :sub/title "sub1",
@@ -133,7 +136,9 @@
   {:eval
    (binding
     [gen/*rnd* (java.util.Random. 0)]
-    (icymi-sub-recs
+    (t/resolve-resolver
+     icymi-sub-recs
+     {}
      {:user/selected-subs
       [{:item/rec-type :item.rec-type/subscription,
         :sub/title "sub1",
@@ -158,7 +163,9 @@
   {:eval
    (binding
     [gen/*rnd* (java.util.Random. 0)]
-    (icymi-bookmark-recs
+    (t/resolve-resolver
+     icymi-bookmark-recs
+     {}
      {:user/digest-bookmarks [{:item/id "item1"} {:item/id "item2"}],
       :user/unread-bookmarks
       [{:item/id "item1",
@@ -193,9 +200,11 @@
        :item/n-skipped i})]
     (binding
      [gen/*rnd* (java.util.Random. 0)]
-     (icymi-recs
-      {:user/icymi-sub-recs (mapv item (range 1 4)),
-       :user/icymi-bookmark-recs (mapv item (range 4 7))}))),
+     (t/resolve-resolver
+      icymi-recs
+      {}
+      {:user/icymi-bookmark-recs (mapv item (range 4 7)),
+       :user/icymi-sub-recs (mapv item (range 1 4))}))),
    :result
    {:user/icymi-recs
     [{:item/id "item4",
@@ -229,7 +238,7 @@
         :user-item/user-id (t/uuid 100),
         :user-item/item-id (t/uuid 2),
         :user-item/viewed-at (t/instant 2000)}]}]
-    (read-urls ctx {:user/id (t/uuid 100)})),
+    (t/resolve-resolver read-urls ctx {:user/id (t/uuid 100)})),
    :result {:user/read-urls #{"url2"}}}
   _
   {:doc "clicked-ads",
@@ -243,7 +252,7 @@
        {:ad-click/id (t/uuid 2),
         :ad-click/ad-id (t/uuid 12),
         :ad-click/user-id (t/uuid 200)}]}]
-    (clicked-ads ctx {:user/id (t/uuid 100)})),
+    (t/resolve-resolver clicked-ads ctx {:user/id (t/uuid 100)})),
    :result
    {:user/clicked-ads #{#uuid "00110000-0000-0000-0000-000000000011"}}}
   _]}

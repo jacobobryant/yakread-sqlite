@@ -4,7 +4,7 @@
             [com.yakread.lib.content :as lib.content]
             [com.yakread.lib.route :refer [href]]
             [com.yakread.lib.ui :as ui]
-            [com.wsscode.pathom3.connect.operation :as pco :refer [defresolver ?]]
+            [com.biffweb.graph :as biff.graph :refer [defresolver]]
             [com.yakread.routes :as routes]
             [lambdaisland.uri :as uri]
             [tick.core :as tick])
@@ -20,27 +20,29 @@
         (mapv #(vector :span.inline-block %))
         (biff/join ui/interpunct))])
 
-(defresolver details* [{:item/keys [doc-type
-                                    byline
-                                    author-name
-                                    url
-                                    published-at
-                                    ingested-at
-                                    length
-                                    rec-type
-                                    source]}]
-  {::pco/input [:item/id
-                :item/title
-                :item/ingested-at
-                :item/doc-type
-                (? :item/byline)
-                (? :item/author-name)
-                (? :item/site-name)
-                (? :item/url)
-                (? :item/published-at)
-                (? :item/length)
-                (? :item/rec-type)
-                {(? :item/source) [:source/title]}]}
+(defresolver details*
+  {:input [:item/id
+           :item/title
+           :item/ingested-at
+           :item/doc-type
+           [:? :item/byline]
+           [:? :item/author-name]
+           [:? :item/site-name]
+           [:? :item/url]
+           [:? :item/published-at]
+           [:? :item/length]
+           [:? :item/rec-type]
+           [:? {:item/source [:source/title]}]]
+   :output [:item/ui-details*]}
+  [_ {:item/keys [doc-type
+                  byline
+                  author-name
+                  url
+                  published-at
+                  ingested-at
+                  length
+                  rec-type
+                  source]}]
   {:item/ui-details*
    (fn [{:keys [show-author show-reading-time label-type]
          :or {show-reading-time true
@@ -71,7 +73,10 @@
                :text label))]
           (filter some?)))})
 
-(defresolver details [{:item/keys [ui-details*]}]
+(defresolver details
+  {:input [:item/ui-details*]
+   :output [:item/ui-details]}
+  [_ {:item/keys [ui-details*]}]
   {:item/ui-details
    (fn [params]
      (detail-list (ui-details* params)))})
@@ -125,14 +130,16 @@
                        "h-[5.5rem]"
                        rounded]}]])]])
 
-(defresolver item-read-more-card [{:item/keys [id ui-details title excerpt unread image-url url]}]
-  {::pco/input [:item/id
-                :item/unread
-                :item/ui-details
-                (? :item/title)
-                (? :item/image-url)
-                (? :item/excerpt)
-                (? :item/url)]}
+(defresolver item-read-more-card
+  {:input [:item/id
+           :item/unread
+           :item/ui-details
+           [:? :item/title]
+           [:? :item/image-url]
+           [:? :item/excerpt]
+           [:? :item/url]]
+   :output [:item/ui-read-more-card]}
+  [_ {:item/keys [id ui-details title excerpt unread image-url url]}]
   {:item/ui-read-more-card
    (fn [{:keys [highlight-unread on-click-route show-author on-click-params new-tab]}]
      [:a {:href (if on-click-route
@@ -161,6 +168,11 @@
                      :image-url image-url})])
 
 (defresolver ad-preview-card
+  {:input [[:? :ad/url-with-protocol]
+           [:? :ad/title]
+           [:? :ad/description]
+           [:? :ad/image-url]]
+   :output [:ad/ui-preview-card]}
   [{:biff/keys [base-url]}
    {:ad/keys [url-with-protocol title description image-url]
     :or {title "Lorem ipsum dolor sit amet"
@@ -170,11 +182,6 @@
                           "ullamco laboris nisi ut aliquip ex ea commodo consequat.")
          url-with-protocol "https://example.com"
          image-url (str base-url "/android-chrome-512x512.png")}}]
-  {::pco/input [(? :ad/url-with-protocol)
-                (? :ad/title)
-                (? :ad/description)
-                (? :ad/image-url)]
-   ::pco/output [:ad/ui-preview-card]}
   {:ad/ui-preview-card
    (ad-card-base {:href url-with-protocol
                   :ad/url-with-protocol url-with-protocol
@@ -182,19 +189,21 @@
                   :ad/description description
                   :ad/image-url image-url})})
 
-(defresolver ad-read-more-card [{:keys [session]}
-                                {:ad/keys [url-with-protocol
-                                           recording-url
-                                           title
-                                           description
-                                           image-url]}]
-  {::pco/input [:ad/id
-                :ad/url-with-protocol
-                :ad/recording-url
-                :ad/click-cost
-                :ad/title
-                :ad/description
-                :ad/image-url]}
+(defresolver ad-read-more-card
+  {:input [:ad/id
+           :ad/url-with-protocol
+           :ad/recording-url
+           :ad/click-cost
+           :ad/title
+           :ad/description
+           :ad/image-url]
+   :output [:ad/ui-read-more-card]}
+  [{:keys [session]}
+   {:ad/keys [url-with-protocol
+              recording-url
+              title
+              description
+              image-url]}]
   {:ad/ui-read-more-card
    (fn [{:keys [on-click-params]}]
      (ad-card-base {:href (recording-url
@@ -206,17 +215,20 @@
                     :ad/description description
                     :ad/image-url image-url}))})
 
-(defresolver rec-read-more-card [props]
-  {::pco/input [(? :item/ui-read-more-card)
-                (? :ad/ui-read-more-card)]
-   ::pco/output [:rec/ui-read-more-card]}
+(defresolver rec-read-more-card
+  {:input [[:? :item/ui-read-more-card]
+           [:? :ad/ui-read-more-card]]
+   :output [:rec/ui-read-more-card]}
+  [_ props]
   (when-some [ui-card (some props [:item/ui-read-more-card :ad/ui-read-more-card])]
     {:rec/ui-read-more-card ui-card}))
 
-(defresolver small-card [{:item/keys [id title ui-details]}]
-  #::pco{:input [:item/id
-                 (? :item/title)
-                 :item/ui-details]}
+(defresolver small-card
+  {:input [:item/id
+           [:? :item/title]
+           :item/ui-details]
+   :output [:item/ui-small-card]}
+  [_ {:item/keys [id title ui-details]}]
   {:item/ui-small-card
    [:a {:href (href routes/read-item id)
         :class '[block
@@ -228,10 +240,10 @@
     [:.text-neut-800.mr-6.line-clamp-2 (ui-details {:show-author true :show-reading-time false})]]})
 
 (def module
-  {:resolvers [details*
-               details
-               ad-preview-card
-               ad-read-more-card
-               item-read-more-card
-               rec-read-more-card
-               small-card]})
+  {:biff.graph/resolvers [details*
+                          details
+                          ad-preview-card
+                          ad-read-more-card
+                          item-read-more-card
+                          rec-read-more-card
+                          small-card]})

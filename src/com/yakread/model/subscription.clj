@@ -1,13 +1,15 @@
 (ns com.yakread.model.subscription
   (:require
    [clojure.string :as str]
-   [com.wsscode.pathom3.connect.operation :as pco :refer [? defresolver]]
+   [com.biffweb.graph :as biff.graph :refer [defresolver]]
    [com.yakread.lib.core :as lib.core]
    [com.yakread.lib.serialize :as lib.serialize]))
 
-(defresolver user-subs [{:biff/keys [query]} {:keys [user/id]}]
-  #::pco{:output [{:user/subscriptions [:sub/id]}
-                  {:user/unsubscribed [:sub/id]}]}
+(defresolver user-subs
+  {:input [:user/id]
+   :output [{:user/subscriptions [:sub/id]}
+            {:user/unsubscribed [:sub/id]}]}
+  [{:biff/keys [query]} {:keys [user/id]}]
   (let [{subbed false
          unsubbed true} (->> (query {:select [:sub/id :sub/email-unsubscribed-at]
                                      :from :sub
@@ -16,18 +18,24 @@
     {:user/subscriptions (mapv #(select-keys % [:sub/id]) (or subbed []))
      :user/unsubscribed (mapv #(select-keys % [:sub/id]) (or unsubbed []))}))
 
-(defresolver email-title [{:keys [sub/email-from]}]
-  #::pco{:input [:sub/email-from]}
-  {:sub/title (str/replace email-from #"\s<.*>" "")})
+(defresolver email-title
+  {:input [[:? :sub/email-from]]
+   :output [:sub/title]}
+  [_ {:keys [sub/email-from]}]
+  (when email-from
+    {:sub/title (str/replace email-from #"\s<.*>" "")}))
 
-(defresolver feed-sub-title [{:keys [sub/feed]}]
-  {::pco/input [{:sub/feed [(? :feed/title)
-                            :feed/url]}]}
+(defresolver feed-sub-title
+  {:input [{:sub/feed [[:? :feed/title]
+                       :feed/url]}]
+   :output [:sub/title]}
+  [_ {:keys [sub/feed]}]
   {:sub/title ((some-fn :feed/title :feed/url) feed)})
 
-(defresolver email-subtitle [{:biff/keys [query]} {:sub/keys [id record-type]}]
-  {::pco/input [:sub/id :sub/record-type]
-   ::pco/output [:sub/subtitle]}
+(defresolver email-subtitle
+  {:input [:sub/id :sub/record-type]
+   :output [:sub/subtitle]}
+  [{:biff/keys [query]} {:sub/keys [id record-type]}]
   (when (= record-type :sub.record-type/email)
     (when-some [{:item/keys [email-reply-to]}
                 (first (query {:select :item/email-reply-to
@@ -37,13 +45,16 @@
                                :limit 1}))]
       {:sub/subtitle email-reply-to})))
 
-(defresolver feed-sub-subtitle [{:keys [sub/feed]}]
-  #::pco{:input [{:sub/feed [:feed/url]}]}
+(defresolver feed-sub-subtitle
+  {:input [{:sub/feed [:feed/url]}]
+   :output [:sub/subtitle]}
+  [_ {:keys [sub/feed]}]
   {:sub/subtitle (:feed/url feed)})
 
-(defresolver latest-email-item [{:biff/keys [query]} {:sub/keys [record-type id]}]
-  {::pco/input [:sub/id :sub/record-type]
-   ::pco/output [{:sub/latest-item [:item/id]}]}
+(defresolver latest-email-item
+  {:input [:sub/id :sub/record-type]
+   :output [{:sub/latest-item [:item/id]}]}
+  [{:biff/keys [query]} {:sub/keys [record-type id]}]
   (when (= record-type :sub.record-type/email)
     (when-some [item (first (query {:select :item/id
                                     :from :item
@@ -52,7 +63,10 @@
                                     :limit 1}))]
       {:sub/latest-item item})))
 
-(defresolver sub-id->xt-id [{:keys [sub/id]}]
+(defresolver sub-id->xt-id
+  {:input [:sub/id]
+   :output [:xt/id]}
+  [_ {:keys [sub/id]}]
   {:xt/id id})
 
 (defn- record-type->source-key [record-type]
@@ -73,10 +87,11 @@
   [row]
   (or (:item/email-sub-id row) (:item/feed-id row)))
 
-(defresolver total [{:biff/keys [query]} inputs]
-  {::pco/input [:sub/id :sub/record-type (? :sub/feed-id)]
-   ::pco/output [:sub/total]
-   ::pco/batch? true}
+(defresolver total
+  {:input [:sub/id :sub/record-type [:? :sub/feed-id]]
+   :output [:sub/total]
+   :batch true}
+  [{:biff/keys [query]} inputs]
   (let [source->sub-id (into {} (map (juxt sub-source-id :sub/id)) inputs)
         results (->> (into []
                            cat
@@ -98,10 +113,11 @@
                               {:sub/id id
                                :sub/total 0}))))
 
-(defresolver items-read [{:biff/keys [query]} inputs]
-  {::pco/input [:sub/id :sub/user-id :sub/record-type (? :sub/feed-id)]
-   ::pco/output [:sub/items-read]
-   ::pco/batch? true}
+(defresolver items-read
+  {:input [:sub/id :sub/user-id :sub/record-type [:? :sub/feed-id]]
+   :output [:sub/items-read]
+   :batch true}
+  [{:biff/keys [query]} inputs]
   (let [source->sub-id (into {} (map (juxt sub-source-id :sub/id)) inputs)
         results (->> (into []
                            cat
@@ -134,15 +150,19 @@
                               {:sub/id id
                                :sub/items-read 0}))))
 
-(defresolver items-unread [{:sub/keys [total items-read]}]
+(defresolver items-unread
+  {:input [:sub/total :sub/items-read]
+   :output [:sub/items-unread :sub/unread]}
+  [_ {:sub/keys [total items-read]}]
   {:sub/items-unread (- total items-read)
    ;; for backwards compat
    :sub/unread (- total items-read)})
 
-(defresolver published-at [{:biff/keys [query]} inputs]
-  {::pco/input [:sub/id :sub/record-type :sub/created-at (? :sub/feed-id)]
-   ::pco/output [:sub/published-at]
-   ::pco/batch? true}
+(defresolver published-at
+  {:input [:sub/id :sub/record-type :sub/created-at [:? :sub/feed-id]]
+   :output [:sub/published-at]
+   :batch true}
+  [{:biff/keys [query]} inputs]
   (let [source->sub-id (into {} (map (juxt sub-source-id :sub/id)) inputs)
         results (->> (into []
                            cat
@@ -165,10 +185,11 @@
                               {:sub/id id
                                :sub/published-at created-at}))))
 
-(defresolver items [{:biff/keys [query]} inputs]
-  {::pco/input [:sub/id :sub/record-type (? :sub/feed-id)]
-   ::pco/output [{:sub/items [:item/id]}]
-   ::pco/batch? true}
+(defresolver items
+  {:input [:sub/id :sub/record-type [:? :sub/feed-id]]
+   :output [{:sub/items [:item/id]}]
+   :batch true}
+  [{:biff/keys [query]} inputs]
   (let [source->sub-id (into {} (map (juxt sub-source-id :sub/id)) inputs)
         results (->> (into []
                            cat
@@ -190,10 +211,11 @@
                               {:sub/id id
                                :sub/items []}))))
 
-(defresolver latest-item [{:biff/keys [query]} inputs]
-  {::pco/input [:sub/id :sub/record-type :sub/published-at (? :sub/feed-id)]
-   ::pco/output [{:sub/latest-item [:item/id]}]
-   ::pco/batch? true}
+(defresolver latest-item
+  {:input [:sub/id :sub/record-type :sub/published-at [:? :sub/feed-id]]
+   :output [{:sub/latest-item [:item/id]}]
+   :batch true}
+  [{:biff/keys [query]} inputs]
   (let [source->sub-id (into {} (map (juxt sub-source-id :sub/id)) inputs)
         results (->> (into []
                            cat
@@ -215,8 +237,9 @@
                             :sub/id
                             results)))
 
-(defresolver from-params [{:biff/keys [query] :keys [session path-params params]} _]
-  {::pco/output [{:params/sub [:sub/id :sub/user-id]}]}
+(defresolver from-params
+  {:output [{:params/sub [:sub/id :sub/user-id]}]}
+  [{:biff/keys [query] :keys [session path-params params]} _]
   (let [sub-id (or (:sub/id params)
                    (lib.serialize/url->uuid (:sub-id path-params)))
         [sub] (when (some? sub-id)
@@ -227,8 +250,9 @@
       {:params/sub sub})))
 
 ;; TODO turn from-params into a batch resolver and delete this
-(defresolver params-checked [{:biff/keys [query] :keys [session params]} _]
-  #::pco{:output [{:params.checked/subscriptions [:sub/id]}]}
+(defresolver params-checked
+  {:output [{:params.checked/subscriptions [:sub/id]}]}
+  [{:biff/keys [query] :keys [session params]} _]
   (let [sub-ids (mapv #(some-> % name parse-uuid) (keys (:subs params)))
         subs* (when (not-empty sub-ids)
                 (query {:select [:sub/id :sub/user-id]
@@ -240,11 +264,12 @@
       {:params.checked/subscriptions
        (mapv #(select-keys % [:sub/id]) subs*)})))
 
-(defresolver unread-items [{:biff/keys [query]} subscriptions]
-  #::pco{:input [:sub/user-id
-                 {:sub/items [:item/id]}]
-         :output [{:sub/unread-items [:item/id]}]
-         :batch? true}
+(defresolver unread-items
+  {:input [:sub/user-id
+           {:sub/items [:item/id]}]
+   :output [{:sub/unread-items [:item/id]}]
+   :batch true}
+  [{:biff/keys [query]} subscriptions]
   (let [all-item-ids (into [] (comp (mapcat :sub/items) (map :item/id)) subscriptions)
         results (when (not-empty all-item-ids)
                   (query {:select [:user-item/user-id :user-item/item-id]
@@ -267,10 +292,11 @@
               {:sub/unread-items unread-items}))
           subscriptions)))
 
-(defresolver mv [{:biff/keys [query]} subs*]
-  {::pco/input  [:sub/id]
-   ::pco/output [{:sub/mv [:mv-sub/id]}]
-   ::pco/batch?  true}
+(defresolver mv
+  {:input  [:sub/id]
+   :output [{:sub/mv [:mv-sub/id]}]
+   :batch  true}
+  [{:biff/keys [query]} subs*]
   (let [sub-ids (mapv :sub/id subs*)
         results (mapv (fn [{:mv-sub/keys [id sub-id]}]
                         {:sub/id sub-id
@@ -280,20 +306,20 @@
                               :where [:in :mv-sub/sub-id sub-ids]}))]
     (lib.core/restore-order subs* :sub/id results)))
 
-(def module {:resolvers [user-subs
-                         sub-id->xt-id
-                         email-title
-                         feed-sub-title
-                         items-unread
-                         published-at
-                         items
-                         latest-item
-                         from-params
-                         params-checked
-                         unread-items
-                         feed-sub-subtitle
-                         latest-email-item
-                         email-subtitle
-                         total
-                         items-read
-                         mv]})
+(def module {:biff.graph/resolvers [user-subs
+                                    sub-id->xt-id
+                                    email-title
+                                    feed-sub-title
+                                    items-unread
+                                    published-at
+                                    items
+                                    latest-item
+                                    from-params
+                                    params-checked
+                                    unread-items
+                                    feed-sub-subtitle
+                                    latest-email-item
+                                    email-subtitle
+                                    total
+                                    items-read
+                                    mv]})

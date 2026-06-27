@@ -3,23 +3,22 @@
   [com.yakread.lib.sqlite :refer :all]
   [com.yakread.model.schema :as schema]],
  :tests
- [{:doc "sqlite-resolvers creates resolvers from columns",
+ [{:doc "make-resolvers creates resolvers from columns",
    :eval
    (let
-    [resolvers (sqlite-resolvers schema/columns)]
+    [resolvers (make-resolvers schema/columns)]
     (pos? (count resolvers))),
    :result true}
   _
-  {:doc "sqlite-resolvers resolver has batch? true",
+  {:doc "make-resolvers resolver has batch true",
    :eval
    (let
     [resolvers
-     (sqlite-resolvers schema/columns)
+     (make-resolvers schema/columns)
      first-resolver
      (first resolvers)]
     (->
      first-resolver
-     :config
-     :com.wsscode.pathom3.connect.operation/batch?)),
+     :biff.graph/batch)),
    :result true}
   _]}

@@ -1,7 +1,7 @@
-(ns com.yakread.model.user.export 
+(ns com.yakread.model.user.export
   (:require
    [clojure.data.csv :as csv]
-   [com.wsscode.pathom3.connect.operation :as pco :refer [defresolver]]
+   [com.biffweb.graph :as biff.graph :refer [defresolver]]
    [rum.core :as rum]))
 
 (defn- generate-opml [urls]
@@ -14,8 +14,10 @@
            (for [url urls]
              [:<> "    " [:outline {:type "rss" :xmlUrl url}] "\n"])]])))
 
-(defresolver feed-subs [{:biff/keys [query]} {:keys [user/id]}]
-  {::pco/input [:user/id]}
+(defresolver feed-subs
+  {:input [:user/id]
+   :output [:user.export/feed-subs]}
+  [{:biff/keys [query]} {:keys [user/id]}]
   {:user.export/feed-subs
    (->> (query {:select :feed/url
                 :from :sub
@@ -26,29 +28,30 @@
         generate-opml)})
 
 (defn- item-resolver [op-name output-key query-key csv-label]
-  (pco/resolver
-   op-name
-   {::pco/input [:user/id]
-    ::pco/output [output-key]}
-   (fn [{:biff/keys [query]} {:keys [user/id]}]
-     {output-key
-      (let [rows (->> (query {:select [query-key
-                                       :user-item/viewed-at
-                                       :item/url :item/title :item/author-name]
-                              :from :user-item
-                              :join [:item [:= :user-item/item-id :item/id]]
-                              :where [:and
-                                      [:= :user-item/user-id id]
-                                      [:is-not query-key nil]]})
-                      (sort-by query-key #(compare %2 %1))
-                      (mapv (juxt :item/url
-                                  :item/title
-                                  :item/author-name
-                                  query-key
-                                  :user-item/viewed-at))
-                      (cons ["URL" "Title" "Author" csv-label "Read at"]))]
-        (with-out-str
-         (csv/write-csv *out* rows)))})))
+  (biff.graph/resolver
+   {:id (keyword (namespace op-name) (name op-name))
+    :input [:user/id]
+    :output [output-key]
+    :resolve-fn
+    (fn [{:biff/keys [query]} {:keys [user/id]}]
+      {output-key
+       (let [rows (->> (query {:select [query-key
+                                        :user-item/viewed-at
+                                        :item/url :item/title :item/author-name]
+                               :from :user-item
+                               :join [:item [:= :user-item/item-id :item/id]]
+                               :where [:and
+                                       [:= :user-item/user-id id]
+                                       [:is-not query-key nil]]})
+                       (sort-by query-key #(compare %2 %1))
+                       (mapv (juxt :item/url
+                                   :item/title
+                                   :item/author-name
+                                   query-key
+                                   :user-item/viewed-at))
+                       (cons ["URL" "Title" "Author" csv-label "Read at"]))]
+         (with-out-str
+           (csv/write-csv *out* rows)))})}))
 
 (def bookmarks (item-resolver `bookmarks
                               :user.export/bookmarks
@@ -61,6 +64,6 @@
                               "Favorited at"))
 
 (def module
-  {:resolvers [feed-subs
-               bookmarks
-               favorites]})
+  {:biff.graph/resolvers [feed-subs
+                          bookmarks
+                          favorites]})
