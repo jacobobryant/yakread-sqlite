@@ -227,7 +227,7 @@
   (.format local-time (DateTimeFormatter/ofPattern "h:mm a")))
 
 (defresolver main-settings
-  {:input [[:? {:session/user [:user/id :user/email :user/digest-days :user/send-digest-at [:? :user/timezone] [:? :user/use-original-links]]}]]
+  {:input [{[:? :session/user] [:user/id :user/email :user/digest-days :user/send-digest-at [:? :user/timezone] [:? :user/use-original-links]]}]
    :output [::main-settings]}
   [{:biff/keys [query]} {:keys [session/user]}]
   {::main-settings
@@ -270,7 +270,7 @@
        [:div (ui/button {:type "submit"} "Save")])))})
 
 (defresolver premium
-  {:input [[:? {:session/user [[:? :user/plan] [:? :user/cancel-at] :user/premium :user/timezone]}]]
+  {:input [{[:? :session/user] [[:? :user/plan] [:? :user/cancel-at] :user/premium :user/timezone]}]
    :output [::premium]}
   [_ {:keys [session/user]}]
   {::premium
@@ -315,7 +315,7 @@
           [:.h-6]])]))})
 
 (defresolver account
-  {:input [[:? {:session/user [:user/email :user/account-deletable [:? :user/account-deletable-message]]}]]
+  {:input [{[:? :session/user] [:user/email :user/account-deletable [:? :user/account-deletable-message]]}]
    :output [::account]}
   [_ {:keys [session/user]}]
   {::account
@@ -339,7 +339,7 @@
 
 (fx/defroute-graph page "/settings"
   [:app.shell/app-shell
-   [:? {:session/user [:user/id]}]
+   {[:? :session/user] [:user/id]}
    ::main-settings
    ::premium
    ::account]

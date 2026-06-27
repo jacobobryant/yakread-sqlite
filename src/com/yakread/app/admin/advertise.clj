@@ -137,7 +137,7 @@
                         :ad/updated-at
                         [:? :ad/chargeable]
                         [:? :ad/amount-pending]
-                        [:? {:ad/pending-charge [:ad-credit/id [:? :ad-credit/stripe-status]]}]]}
+                        {[:? :ad/pending-charge] [:ad-credit/id [:? :ad-credit/stripe-status]]}]}
            {:session/user [:user/timezone]}]
    :output [::ads-table]}
   [{:keys [biff/now]}

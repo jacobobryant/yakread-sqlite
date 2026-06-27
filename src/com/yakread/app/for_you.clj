@@ -131,18 +131,18 @@
                                :do-update-set {:fields [:created-at :cost :source]}}]))]}))))
 
 (fx/defroute-graph page-content-route "/for-you/content"
-  [[:? {:session/user
-        [[:? {:user/current-item
-              [:item/ui-read-more-card]}]
-         {:user/for-you-recs
-          [[:? :item/id]
-           [:? :ad/id]
-           :rec/ui-read-more-card]}]}]
-   [:? {:session/anon
-        [{:user/discover-recs
-          [:item/id
-           :item/url
-           :item/ui-read-more-card]}]}]]
+  [{[:? :session/user]
+    [{[:? :user/current-item]
+      [:item/ui-read-more-card]}
+     {:user/for-you-recs
+      [[:? :item/id]
+       [:? :ad/id]
+       :rec/ui-read-more-card]}]}
+   {[:? :session/anon]
+    [{:user/discover-recs
+      [:item/id
+       :item/url
+       :item/ui-read-more-card]}]}]
 
   :get
   (fn [{:keys [biff/now params]} {:keys [user/discover-recs session/user session/anon]
@@ -208,8 +208,8 @@
                                      :skip-ads (:skip-ads params)
                                      :t       (:t params)}))]
   (fx/defroute-graph read-page-route "/item/:item-id"
-    [[:? {:params/item [:item/id
-                        [:? :item/url]]}]
+    [{[:? :params/item] [:item/id
+                         [:? :item/url]]}
      {:session/user [[:? :user/use-original-links]]}]
 
     :get

@@ -41,7 +41,7 @@
 
 (fx/defroute-graph page "/read-later/add"
   [:app.shell/app-shell
-   [:? {:session/user [:user/id]}]]
+   {[:? :session/user] [:user/id]}]
 
   :get
   (fn [{:keys [biff/base-url params]}

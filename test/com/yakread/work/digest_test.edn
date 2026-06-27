@@ -123,10 +123,10 @@
      {:entity {:user/id "user1"},
       :query
       [[:? :digest/payload]
-       [:? {:digest/subject-item [:item/id :item/title]}]
-       [:? {:user/ad-rec [:ad/id]}]
-       [:? {:user/icymi-recs [:item/id]}]
-       [:? {:user/digest-discover-recs [:item/id]}]]}],
+       {[:? :digest/subject-item] [:item/id :item/title]}
+       {[:? :user/ad-rec] [:ad/id]}
+       {[:? :user/icymi-recs] [:item/id]}
+       {[:? :user/digest-discover-recs] [:item/id]}]}],
     :biff.fx/next :end,
     :session {:uid "user1"}}}
   _

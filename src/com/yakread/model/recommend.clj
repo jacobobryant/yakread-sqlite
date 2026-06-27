@@ -544,11 +544,11 @@
                                  :item/rec-type
                                  :ad/click-cost]}]}
   [ctx {:user/keys [id]}]
-  (let [input (->> [[[:? {:user/for-you-sub-recs [:item/id :item/n-skipped :item/rec-type]}]]
-                    [[:? {:user/for-you-bookmark-recs [:item/id :item/n-skipped :item/rec-type]}]
+  (let [input (->> [[{[:? :user/for-you-sub-recs] [:item/id :item/n-skipped :item/rec-type]}]
+                    [{[:? :user/for-you-bookmark-recs] [:item/id :item/n-skipped :item/rec-type]}
                      {:user/discover-recs [:item/id
                                            :item/rec-type]}
-                     [:? {:user/ad-rec [:ad/id :item/rec-type :ad/click-cost]}]]]
+                     {[:? :user/ad-rec] [:ad/id :item/rec-type :ad/click-cost]}]]
                    (pmap (fn [query]
                            (lib.graph/query ctx {:entity {:user/id id}
                                                  :query query})))
@@ -569,8 +569,8 @@
     {:user/for-you-recs recs}))
 
 (defresolver icymi-recs
-  {:input [[:? {:user/icymi-sub-recs [:item/id :item/n-skipped-with-digests :item/rec-type]}]
-           [:? {:user/icymi-bookmark-recs [:item/id :item/n-skipped-with-digests :item/rec-type]}]]
+  {:input [{[:? :user/icymi-sub-recs] [:item/id :item/n-skipped-with-digests :item/rec-type]}
+           {[:? :user/icymi-bookmark-recs] [:item/id :item/n-skipped-with-digests :item/rec-type]}]
    :output [{:user/icymi-recs [:item/id
                                :item/rec-type]}]}
   [_ {:user/keys [icymi-sub-recs icymi-bookmark-recs]}]

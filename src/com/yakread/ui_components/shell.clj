@@ -21,7 +21,7 @@
     "/css/main.css"))
 
 (defresolver pages
-  {:input [[:? {:user/current [[:? :user/roles]]}]]
+  {:input [{[:? :user/current] [[:? :user/roles]]}]
    :output [{:app.shell/pages
              [:app.shell.page/route-sym
               :app.shell.page/active-ns
@@ -59,7 +59,7 @@
                                                :active (str/starts-with? route-ns (or active-ns (namespace route-sym)))})))))})
 
 (defresolver app-head
-  {:input [[:? {:session/user [:user/id [:? :user/timezone*]]}]]
+  {:input [{[:? :session/user] [:user/id [:? :user/timezone*]]}]
    :output [:app.shell/app-head]}
   [_ {user :session/user}]
   {:app.shell/app-head
@@ -99,7 +99,7 @@
          :font-families ["Inter:wght@400;500;600;700"]})
 
 (defresolver sidebar
-  {:input [[:? {:user/current [:user/email]}]
+  {:input [{[:? :user/current] [:user/email]}
            {:app.shell/pages
             [:app.shell.page/href
              :app.shell.page/title

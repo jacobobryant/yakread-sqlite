@@ -162,7 +162,7 @@
     :text-color "white"}))
 
 (defresolver html
-  {:input [[:? {:digest/subject-item [:item/clean-title]}]
+  {:input [{[:? :digest/subject-item] [:item/clean-title]}
            ::settings
            [:? ::sponsored]
            [:? ::subscriptions]

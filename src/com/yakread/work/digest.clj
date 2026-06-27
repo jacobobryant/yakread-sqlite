@@ -71,11 +71,11 @@
     {:biff.fx/graph [:biff.fx/graph
                      {:entity {:user/id (:user/id user)}
                       :query  [[:? :digest/payload]
-                               [:? {:digest/subject-item [:item/id
-                                                          :item/title]}]
-                               [:? {:user/ad-rec [:ad/id]}]
-                               [:? {:user/icymi-recs [:item/id]}]
-                               [:? {:user/digest-discover-recs [:item/id]}]]}]
+                               {[:? :digest/subject-item] [:item/id
+                                                           :item/title]}
+                               {[:? :user/ad-rec] [:ad/id]}
+                               {[:? :user/icymi-recs] [:item/id]}
+                               {[:? :user/digest-discover-recs] [:item/id]}]}]
      :biff.fx/next :end
      ;; hack until model code is refactored to not use session.
      :session {:uid (:user/id user)}})

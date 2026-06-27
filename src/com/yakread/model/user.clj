@@ -112,7 +112,7 @@
     {:user/mv mv-user}))
 
 (defresolver account-deletable
-  {:input [[:? {:user/ad [:ad/balance]}]
+  {:input [{[:? :user/ad] [:ad/balance]}
            [:? :user/plan]
            [:? :user/cancel-at]]
    :output [:user/account-deletable

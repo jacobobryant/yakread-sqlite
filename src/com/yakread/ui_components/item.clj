@@ -32,7 +32,7 @@
            [:? :item/published-at]
            [:? :item/length]
            [:? :item/rec-type]
-           [:? {:item/source [:source/title]}]]
+           {[:? :item/source] [:source/title]}]
    :output [:item/ui-details*]}
   [_ {:item/keys [doc-type
                   byline

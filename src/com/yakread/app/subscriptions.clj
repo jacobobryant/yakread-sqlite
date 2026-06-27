@@ -15,10 +15,10 @@
 (fx/defroute-graph unsubscribe
   [{:params/sub [:sub/id
                  :sub/record-type
-                 [:? {:sub/latest-item
-                      [:item/id
-                       [:? :item/email-list-unsubscribe]
-                       [:? :item/email-list-unsubscribe-post]]}]]}
+                 {[:? :sub/latest-item]
+                  [:item/id
+                   [:? :item/email-list-unsubscribe]
+                   [:? :item/email-list-unsubscribe-post]]}]}
    [:? :params/redirect-url]]
 
   :post
@@ -221,7 +221,7 @@
 
 (fx/defroute-graph page-route "/subscriptions"
   [:app.shell/app-shell
-   [:? {:user/current [:user/id]}]]
+   {[:? :user/current] [:user/id]}]
 
   :get
   (fn [{:keys [params]} {:keys [app.shell/app-shell] user :user/current}]

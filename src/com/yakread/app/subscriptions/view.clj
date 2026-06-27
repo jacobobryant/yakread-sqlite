@@ -32,9 +32,9 @@
 
 (fx/defroute-graph mark-all-read
   [{:session/user [:user/id]}
-   [:? {:params/sub [:sub/id
-                     {:sub/items [:item/id
-                                  :item/unread]}]}]]
+   {[:? :params/sub] [:sub/id
+                      {:sub/items [:item/id
+                                   :item/unread]}]}]
 
   :post
   (fn [{:keys [biff/now]} {:keys [session/user params/sub]}]
@@ -57,10 +57,10 @@
                                      :do-update-set {:fields [:skipped-at]}}]]}))))))
 
 (fx/defroute-graph read-content-route "/sub-item/:item-id/content"
-  [[:? {:params/item [:item/ui-read-content
-                      {:item/sub [:sub/id
-                                  :sub/title
-                                  [:? :sub/subtitle]]}]}]]
+  [{[:? :params/item] [:item/ui-read-content
+                       {:item/sub [:sub/id
+                                   :sub/title
+                                   [:? :sub/subtitle]]}]}]
 
   :get
   (fn [_ {{:item/keys [ui-read-content sub]
@@ -80,8 +80,8 @@
 (let [record-click-url (fn [item]
                          (href mark-read {:item/id (:item/id item)}))]
   (fx/defroute-graph read-page-route "/sub-item/:item-id"
-    [[:? {:params/item [:item/id
-                        [:? :item/url]]}]
+    [{[:? :params/item] [:item/id
+                         [:? :item/url]]}
      {:session/user [[:? :user/use-original-links]]}]
 
     :get
@@ -149,9 +149,9 @@
 
 (fx/defroute-graph page-route "/subscription/:sub-id"
   [:app.shell/app-shell
-   [:? {:params/sub [:sub/id
-                     :sub/title
-                     [:? :sub/subtitle]]}]]
+   {[:? :params/sub] [:sub/id
+                      :sub/title
+                      [:? :sub/subtitle]]}]
 
   :get
   (fn [_ {:keys [app.shell/app-shell params/sub]}]

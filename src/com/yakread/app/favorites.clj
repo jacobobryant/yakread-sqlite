@@ -45,7 +45,7 @@
 
 (fx/defroute-graph page "/favorites"
   [:app.shell/app-shell
-   [:? {:user/current [:user/id]}]]
+   {[:? :user/current] [:user/id]}]
 
   :get
   (fn [_ {:keys [app.shell/app-shell] user :user/current}]

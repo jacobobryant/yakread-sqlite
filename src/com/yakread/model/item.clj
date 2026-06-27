@@ -132,7 +132,7 @@
 
 (defresolver image-from-feed
   {:input [[:? :item/feed-url]
-           [:? {:item/feed [:feed/image-url]}]]
+           {[:? :item/feed] [:feed/image-url]}]
    :output [:item/image-url]
    :batch true}
   [{:biff/keys [query]} items]
@@ -151,12 +151,12 @@
           items)))
 
 (defresolver unread
-  {:input [[:? {:item/user-item
-                [[:? :user-item/viewed-at]
-                 [:? :user-item/skipped-at]
-                 [:? :user-item/favorited-at]
-                 [:? :user-item/disliked-at]
-                 [:? :user-item/reported-at]]}]]
+  {:input [{[:? :item/user-item]
+            [[:? :user-item/viewed-at]
+             [:? :user-item/skipped-at]
+             [:? :user-item/favorited-at]
+             [:? :user-item/disliked-at]
+             [:? :user-item/reported-at]]}]
    :output [:item/unread]}
   [_ {:keys [item/user-item]}]
   {:item/unread (not (lib.user-item/read? user-item))})

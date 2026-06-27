@@ -15,7 +15,7 @@
 
 (fx/defroute-graph page "/favorites/add"
   [:app.shell/app-shell
-   [:? {:session/user [:user/id]}]]
+   {[:? :session/user] [:user/id]}]
 
   :get
   (fn [{:keys [params biff/base-url] :as ctx}

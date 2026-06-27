@@ -75,10 +75,10 @@
                        {:entity {:user/id id}
                         :query [:user/id
                                 [:? :user/email-username]
-                                [:? {:user/subscriptions [:sub/id
-                                                          [:? :sub/feed-id]]}]
-                                [:? {:user/ad [:ad/id
-                                               [:? :ad/customer-id]]}]
+                                {[:? :user/subscriptions] [:sub/id
+                                                           [:? :sub/feed-id]]}
+                                {[:? :user/ad] [:ad/id
+                                                [:? :ad/customer-id]]}
                                 [:? :user/customer-id]]}]
        :biff.fx/next :delete}))
 

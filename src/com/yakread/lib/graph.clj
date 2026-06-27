@@ -17,7 +17,7 @@
               (let [[k v] (first item)]
                 (if (and (vector? k)
                          (= :? (first k)))
-                  [:? {(second k) (normalize-query v)}]
+                  {[:? (second k)] (normalize-query v)}
                   {k (normalize-query v)}))
 
               :else

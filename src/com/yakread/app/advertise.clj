@@ -101,8 +101,8 @@
 (fx/defroute-graph add-payment-method
   [{:session/user
     [:user/email
-     [:? {:user/ad
-          [[:? :ad/customer-id]]}]]}]
+     {[:? :user/ad]
+      [[:? :ad/customer-id]]}]}]
 
   :post
   (fn [{:keys [biff/secret]} {:keys [session/user]}]
@@ -167,12 +167,12 @@
 (fx/defroute-graph save-ad
   [{:session/user
     [:user/id
-     [:? {:user/ad
-          [[:? :ad/url]
-           [:? :ad/title]
-           [:? :ad/description]
-           [:? :ad/image-url]
-           :ad/approve-state]}]]}]
+     {[:? :user/ad]
+      [[:? :ad/url]
+       [:? :ad/title]
+       [:? :ad/description]
+       [:? :ad/image-url]
+       :ad/approve-state]}]}]
 
   :post
   (fn [{:keys [biff.form/params biff/now]} {:keys [session/user]}]
@@ -262,8 +262,8 @@
                  :ad/url]]
   (defresolver form-ad
     {:input [{:session/user
-              [[:? {:user/ad [:ad/id]}]]}
-             [:? {::form-ad-params form-keys}]]
+              [{[:? :user/ad] [:ad/id]}]}
+             {[:? ::form-ad-params] form-keys}]
      :output [{::form-ad (into [:ad/id] form-keys)}]}
     [ctx params]
     {::form-ad (-> (:biff.form/params ctx)
@@ -443,25 +443,25 @@
 ;; TODO add param to app-shell for including plausible
 (fx/defroute-graph page-route "/advertise"
   [:app.shell/app-shell
-   [:? {:session/user
-        [:user/id
-         [:? {:user/ad
-              [[:? :ad/bid]
-               [:? :ad/budget]
-               [:? :ad/url]
-               [:? :ad/title]
-               [:? :ad/description]
-               [:? :ad/image-url]
-               [:? :ad/paused]
-               [:? :ad/balance]
-               [:? :ad/payment-failed]
-               [:? :ad/card-details]
-               :ad/n-clicks
-               :ad/ui-preview-card
-               :ad/state
-               :ad/incomplete-fields]}]]}]
-   [:? {:session/anon
-        [:ad/ui-preview-card]}]]
+   {[:? :session/user]
+    [:user/id
+     {[:? :user/ad]
+      [[:? :ad/bid]
+       [:? :ad/budget]
+       [:? :ad/url]
+       [:? :ad/title]
+       [:? :ad/description]
+       [:? :ad/image-url]
+       [:? :ad/paused]
+       [:? :ad/balance]
+       [:? :ad/payment-failed]
+       [:? :ad/card-details]
+       :ad/n-clicks
+       :ad/ui-preview-card
+       :ad/state
+       :ad/incomplete-fields]}]}
+   {[:? :session/anon]
+    [:ad/ui-preview-card]}]
 
   :get
   (fn [{:keys [params]}

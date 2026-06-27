@@ -136,9 +136,9 @@
 
 (fx/defroute-graph page-route "/subscriptions/add"
   [:app.shell/app-shell
-   [:? {:user/current [:user/id
-                       [:? :user/email-username]
-                       [:? :user/suggested-email-username]]}]]
+   {[:? :user/current] [:user/id
+                        [:? :user/email-username]
+                        [:? :user/suggested-email-username]]}]
 
   :get
   (fn [{:biff/keys [domain base-url] :keys [params] :as ctx}

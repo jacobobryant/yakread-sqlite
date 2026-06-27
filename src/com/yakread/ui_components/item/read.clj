@@ -133,7 +133,7 @@
            [:? :item/title]
            [:? :item/share-button]
            [:? :item/email-reply-to]
-           [:? {:item/sub [:sub/id :sub/title]}]]
+           {[:? :item/sub] [:sub/id :sub/title]}]
    :output [:item/ui-button-bar]}
   [{:keys [com.yakread/sign-redirect]}
    {:item/keys [id title sub like-button share-button email-reply-to]}]

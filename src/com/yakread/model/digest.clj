@@ -78,7 +78,7 @@
            [:? :user/from-the-sample]
            [:? :digest/html]
            [:? :digest/text]
-           [:? {:digest/subject-item [:item/id :item/title]}]]
+           {[:? :digest/subject-item] [:item/id :item/title]}]
    :output [:digest/payload]}
   [{:mailersend/keys [from reply-to]}
    {:user/keys [email from-the-sample]
